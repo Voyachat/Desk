@@ -1,0 +1,10 @@
+node_modules/
+lib/
+dist/
+coverage/
+.artifacts/
+*.tsbuildinfo
+.aidesktop-dev/
+.env
+.env.*
+.DS_Store

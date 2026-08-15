@@ -1,0 +1,1 @@
+.seat { position: sticky; z-index: 12; bottom: 0; flex: none; margin-top: auto; padding-top: 18px; background: linear-gradient(to bottom, transparent, var(--dsw-alias-bg-base) 26%); }

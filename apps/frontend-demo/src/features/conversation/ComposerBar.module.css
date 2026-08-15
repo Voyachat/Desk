@@ -1,0 +1,31 @@
+.root { display: flex; align-items: center; flex-direction: column; padding: 8px 32px 11px; }
+.root[data-variant='hero'] { padding: 0; }
+.card { position: relative; width: min(780px, 100%); overflow: visible; border: 1px solid var(--dsw-alias-border-l2); border-radius: 22px; background: var(--dsw-specific-input-major); box-shadow: var(--dsw-shadow-composer); color: var(--dsw-alias-label-primary); }
+.card textarea { display: block; width: 100%; min-height: 51px; max-height: 180px; padding: 16px 18px 4px; box-sizing: border-box; resize: none; overflow-y: auto; border: 0; outline: 0; background: transparent; color: var(--dsw-alias-label-primary); font: inherit; font-size: 14px; line-height: 1.45; }
+.card textarea::placeholder { color: var(--dsw-alias-label-caption); }
+.toolbar { display: flex; align-items: center; justify-content: space-between; min-height: 41px; padding: 0 10px 7px; }
+.leftTools, .rightTools { display: flex; align-items: center; gap: 4px; }
+.roundButton, .send { display: grid; place-items: center; width: 31px; height: 31px; border: 0; border-radius: 50%; cursor: pointer; }
+.roundButton { background: var(--dsw-alias-fill-l2); color: var(--dsw-alias-label-secondary); }
+.roundButton:hover { background: var(--dsw-alias-fill-hover); }
+.send { background: var(--dsw-alias-state-business-primary); color: #fff; transition: opacity 120ms ease, transform 120ms ease; }
+.send:not(:disabled):hover { transform: translateY(-1px); }
+.send:disabled { opacity: .38; cursor: default; }
+.textButton { display: flex; align-items: center; gap: 5px; height: 28px; padding: 0 8px; border: 0; border-radius: 14px; background: transparent; color: var(--dsw-alias-label-secondary); font-size: 11px; cursor: pointer; }
+.textButton:hover { background: var(--dsw-alias-fill-hover); }
+.textButton em { color: var(--dsw-alias-label-caption); font-size: 10px; font-style: normal; }
+.menuRoot { position: relative; }
+.menu { position: absolute; z-index: 40; bottom: 35px; left: 0; width: 248px; padding: 7px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 13px; background: var(--dsw-alias-bg-elevated); box-shadow: var(--dsw-shadow-lv3); }
+.modelMenu { right: 0; left: auto; }
+.menuTitle { padding: 6px 9px; color: var(--dsw-alias-label-tertiary); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+.menu > button { display: flex; align-items: center; width: 100%; min-height: 46px; padding: 6px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-label-secondary); text-align: left; cursor: pointer; }
+.menu > button:hover, .menu > button[data-selected] { background: var(--dsw-alias-fill-hover); }
+.menuIcon { display: grid; place-items: center; width: 27px; height: 27px; flex: none; border-radius: 8px; background: var(--dsw-alias-fill-l2); }
+.menu > button > span:nth-child(2) { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; margin-left: 8px; }
+.menu b { color: var(--dsw-alias-label-primary); font-size: 11px; font-weight: 500; }
+.menu small { color: var(--dsw-alias-label-tertiary); font-size: 9px; }
+.contextDot { display: grid; place-items: center; width: 24px; height: 24px; }
+.contextDot i { width: 12px; height: 12px; box-sizing: border-box; border: 2px solid var(--dsw-alias-border-l2); border-top-color: var(--dsw-alias-state-business-primary); border-radius: 50%; }
+.footer { padding-top: 7px; color: var(--dsw-alias-label-caption); font-size: 9px; }
+.footer span { padding: 0 3px; }
+@media (max-width: 760px) { .textButton span, .textButton em { display: none; } }

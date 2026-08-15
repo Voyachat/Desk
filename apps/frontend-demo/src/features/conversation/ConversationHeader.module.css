@@ -1,0 +1,15 @@
+.header { flex: none; height: 81px; padding: 16px 28px 0; box-sizing: border-box; border-bottom: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base); }
+.titleRow { display: flex; align-items: center; justify-content: space-between; height: 32px; }
+.titleCluster { display: flex; min-width: 0; align-items: center; gap: 12px; }
+.titleCluster strong { overflow: hidden; max-width: 340px; color: var(--dsw-alias-label-primary); font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.preset, .runStatus { display: inline-flex; align-items: center; gap: 5px; color: var(--dsw-alias-label-tertiary); font-size: 12px; white-space: nowrap; }
+.runStatus { padding-left: 12px; border-left: 1px solid var(--dsw-alias-border-l2); }
+.runStatus i { width: 6px; height: 6px; border-radius: 50%; background: var(--dsw-alias-state-business-primary); }
+.runStatus[data-status='waiting-approval'] i { background: var(--dsw-alias-state-warn-label); }
+.runStatus[data-status='completed'] i { background: var(--dsw-alias-state-success-label); }
+.logButton { display: flex; align-items: center; gap: 6px; height: 32px; padding: 0 13px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 17px; background: transparent; color: var(--dsw-alias-label-primary); font-size: 12px; cursor: pointer; }
+.logButton:hover { background: var(--dsw-alias-fill-hover); }
+.tabs { display: flex; gap: 31px; height: 33px; }
+.tabs button { position: relative; height: 33px; padding: 0; border: 0; background: transparent; color: var(--dsw-alias-label-tertiary); font-size: 13px; font-weight: 500; cursor: pointer; }
+.tabs button[data-active] { color: var(--dsw-alias-state-business-primary); }
+.tabs button[data-active]::after { position: absolute; right: 0; bottom: 0; left: 0; height: 2px; border-radius: 2px 2px 0 0; background: var(--dsw-alias-state-business-primary); content: ''; }

@@ -1,0 +1,20 @@
+.hero { position: relative; display: flex; width: 100%; height: 100%; min-height: 480px; align-items: center; flex-direction: column; justify-content: center; overflow: hidden; padding-bottom: 20px; box-sizing: border-box; }
+.glow { position: absolute; top: 20%; left: 50%; width: 520px; height: 240px; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(ellipse, var(--dsw-specific-hero-glow) 0, transparent 70%); pointer-events: none; }
+.title { position: relative; display: flex; align-items: center; gap: 10px; }
+.title svg { color: var(--dsw-alias-state-business-primary); }
+.title h1 { margin: 0; color: var(--dsw-alias-label-primary); font-size: 25px; font-weight: 600; letter-spacing: -.5px; }
+.hero > p { position: relative; margin: 10px 0 24px; color: var(--dsw-alias-label-tertiary); font-size: 12px; }
+.chips { position: relative; display: flex; gap: 9px; margin-bottom: 14px; }
+.chipRoot { position: relative; }
+.chip { display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 11px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 15px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-secondary); font-size: 11px; cursor: pointer; }
+.chip:hover { background: var(--dsw-alias-fill-hover); }
+.picker { position: absolute; bottom: 38px; left: 0; z-index: 20; width: 260px; padding: 7px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 13px; background: var(--dsw-alias-bg-elevated); box-shadow: var(--dsw-shadow-lv3); }
+.pickerLabel { padding: 6px 9px; color: var(--dsw-alias-label-tertiary); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+.picker button { display: flex; align-items: center; width: 100%; min-height: 44px; padding: 6px 9px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-label-secondary); text-align: left; cursor: pointer; }
+.picker button:hover, .picker button[data-selected] { background: var(--dsw-alias-fill-hover); }
+.picker button > span { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; margin-left: 9px; }
+.picker b { color: var(--dsw-alias-label-primary); font-size: 11px; font-weight: 500; }
+.picker small { overflow: hidden; color: var(--dsw-alias-label-tertiary); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.composer { position: relative; width: min(780px, calc(100% - 64px)); }
+.hint { display: flex; align-items: center; gap: 7px; margin-top: 10px; color: var(--dsw-alias-label-caption); font-size: 9px; }
+.hint i { width: 2px; height: 2px; border-radius: 50%; background: currentColor; }

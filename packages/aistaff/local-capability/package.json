@@ -1,0 +1,49 @@
+{
+  "name": "@deepseek-ai/dsh-aistaff-local-capability",
+  "description": "Renderer-safe local capability service definition and Host coordinator",
+  "version": "0.1.0-rc.5",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./object-layer": {
+      "types": "./lib/types/object-layer.d.ts",
+      "default": "./lib/object-layer.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/object-layer.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "workspace:^",
+    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@deepseek-ai/dsh-invariants": "workspace:^"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "workspace:^",
+    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@deepseek-ai/dsh-invariants": "workspace:^"
+  }
+}

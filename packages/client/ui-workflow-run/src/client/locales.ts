@@ -1,0 +1,83 @@
+/** `workflowRun` namespace dictionaries. */
+
+/** Dictionary namespace owned by this plugin. */
+export const NS = 'workflowRun'
+
+/** Simplified Chinese dictionary (the key-set source of truth). */
+export const zh = {
+  'run.title': '{name}',
+  'run.members.one': '{count} 个成员',
+  'run.members.other': '{count} 个成员',
+  'run.empty': '没有启动成员',
+  'phase.unassigned': '未分阶段',
+  'phase.empty': '空阶段名',
+  'statusCount.running': '运行中 {count}',
+  'statusCount.pending': '等待中 {count}',
+  'statusCount.succeeded': '成功 {count}',
+  'statusCount.failed': '失败 {count}',
+  'statusCount.cancelled': '已取消 {count}',
+  'statusCount.interrupted': '已中断 {count}',
+  'member.empty': '空成员名',
+  'member.open': '打开 {name}',
+  'status.running': '运行中',
+  'status.pending': '等待中',
+  'status.succeeded': '成功',
+  'status.failed': '失败',
+  'status.cancelled': '已取消',
+  'status.interrupted': '已中断',
+  'recovery.resumable': '可从头重新运行',
+  'action.inspect': '检查调用',
+  'action.retry': '从头重试',
+  'action.resume': '从头重新运行',
+  'action.confirm': '确认从头运行',
+  'action.running': '正在启动…',
+  'action.retryFailed': '启动失败，请重试',
+  'dashboard.trigger.one': '工作流 {count}',
+  'dashboard.trigger.other': '工作流 {count}',
+  'dashboard.aria': '当前会话工作流看板',
+  'dashboard.steps.one': '{count} 个步骤',
+  'dashboard.steps.other': '{count} 个步骤',
+  'dashboard.inspect': '详情',
+  'dashboard.close': '关闭工作流看板',
+}
+
+/** English dictionary (same key set). */
+export const en: Record<WorkflowRunKey, string> = {
+  'run.title': '{name}',
+  'run.members.one': '{count} member',
+  'run.members.other': '{count} members',
+  'run.empty': 'No members started',
+  'phase.unassigned': 'Unphased',
+  'phase.empty': 'Empty phase name',
+  'statusCount.running': 'Running {count}',
+  'statusCount.pending': 'Pending {count}',
+  'statusCount.succeeded': 'Succeeded {count}',
+  'statusCount.failed': 'Failed {count}',
+  'statusCount.cancelled': 'Cancelled {count}',
+  'statusCount.interrupted': 'Interrupted {count}',
+  'member.empty': 'Empty member name',
+  'member.open': 'Open {name}',
+  'status.running': 'Running',
+  'status.pending': 'Pending',
+  'status.succeeded': 'Succeeded',
+  'status.failed': 'Failed',
+  'status.cancelled': 'Cancelled',
+  'status.interrupted': 'Interrupted',
+  'recovery.resumable': 'Can restart from the beginning',
+  'action.inspect': 'Inspect call',
+  'action.retry': 'Retry from start',
+  'action.resume': 'Restart from the beginning',
+  'action.confirm': 'Confirm restart',
+  'action.running': 'Starting…',
+  'action.retryFailed': 'Start failed. Try again.',
+  'dashboard.trigger.one': '{count} workflow',
+  'dashboard.trigger.other': '{count} workflows',
+  'dashboard.aria': 'Current session workflow dashboard',
+  'dashboard.steps.one': '{count} step',
+  'dashboard.steps.other': '{count} steps',
+  'dashboard.inspect': 'Details',
+  'dashboard.close': 'Close workflow dashboard',
+}
+
+/** Union of this namespace's dictionary keys. */
+export type WorkflowRunKey = keyof typeof zh

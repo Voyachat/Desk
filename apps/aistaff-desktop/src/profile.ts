@@ -1,0 +1,101 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+const PROFILE_BUNDLES = [
+  '@deepseek-ai/dsh-base',
+  '@deepseek-ai/dsh-web-app',
+  '@deepseek-ai/dsh-aistaff-product-bundle',
+] as const
+
+const EMPTY_LEGACY_PROFILE_PATCH = `# User overrides for the bundled AI Staff profile.\n[]\n`
+const MODEL_ONLY_PROFILE_PATCH = `# AI Staff model defaults. API keys are resolved from the named environment variables.\n- id: llm-pi-ai
+  config:
+    providers:
+      google:
+        apiKeyEnv: GEMINI_API_KEY
+        models:
+          - id: gemini-3.6-flash
+      dashscope:
+        displayName: DashScope
+        apiKeyEnv: DASHSCOPE_API_KEY
+        api: openai-completions
+        baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
+        models:
+          - id: qwen-plus
+            name: Qwen Plus
+
+- id: agent-default-model
+  config:
+    provider: google
+    model: gemini-3.6-flash
+`
+const PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always require interactive approval.\n- id: approval
+  config:
+    policy: ask
+
+- id: permission
+  config:
+    defaultPreset: workspace-write
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: ask
+
+# API keys are resolved from the named environment variables.\n- id: llm-pi-ai
+  config:
+    providers:
+      google:
+        apiKeyEnv: GEMINI_API_KEY
+        models:
+          - id: gemini-3.6-flash
+      dashscope:
+        displayName: DashScope
+        apiKeyEnv: DASHSCOPE_API_KEY
+        api: openai-completions
+        baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
+        models:
+          - id: qwen-plus
+            name: Qwen Plus
+
+- id: agent-default-model
+  config:
+    provider: google
+    model: gemini-3.6-flash
+`
+const PROFILE_WORKSPACE = `packages:\n  - .\n\nnodeLinker: hoisted\nautoInstallPeers: false\n`
+
+/** Create the isolated AI Staff profile without overwriting user changes. */
+export function ensureAistaffProfile(dshHome: string): string {
+  const profileDir = join(dshHome, 'profiles', 'aistaff')
+  mkdirSync(profileDir, { recursive: true })
+  writeOnce(join(profileDir, 'package.json'), `${JSON.stringify({
+    name: 'dsh-profile-aistaff',
+    private: true,
+    dependencies: {},
+    dsh: { profile: { bundles: PROFILE_BUNDLES } },
+  }, undefined, 2)}\n`)
+  writeProfilePatch(join(profileDir, 'cordis.patch.yml'))
+  writeOnce(join(profileDir, 'pnpm-workspace.yaml'), PROFILE_WORKSPACE)
+  return profileDir
+}
+
+function writeOnce(file: string, content: string): void {
+  if (!existsSync(file)) writeFileSync(file, content, { encoding: 'utf8', mode: 0o600 })
+}
+
+function writeProfilePatch(file: string): void {
+  if (!existsSync(file)) {
+    writeFileSync(file, PROFILE_PATCH, { encoding: 'utf8', mode: 0o600 })
+    return
+  }
+  const existing = readFileSync(file, 'utf8')
+  if (existing === EMPTY_LEGACY_PROFILE_PATCH || existing === MODEL_ONLY_PROFILE_PATCH) {
+    writeFileSync(file, PROFILE_PATCH, 'utf8')
+  }
+}

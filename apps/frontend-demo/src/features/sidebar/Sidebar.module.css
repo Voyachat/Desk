@@ -1,0 +1,47 @@
+.root { display: flex; flex-direction: column; width: 280px; height: 100%; padding: 18px 14px 12px; box-sizing: border-box; color: var(--dsw-alias-label-primary); }
+button { font: inherit; }
+.brandRow { display: flex; align-items: center; justify-content: space-between; height: 42px; padding: 0 4px; }
+.wordmark { display: flex; align-items: center; gap: 6px; border: 0; background: none; color: var(--dsw-alias-label-primary); font-size: 21px; font-weight: 700; cursor: pointer; }
+.wordmark b { margin-left: 3px; padding: 2px 4px; border-radius: 2px; background: var(--dsw-alias-label-primary); color: var(--dsw-specific-sidebar-fill); font-size: 9px; letter-spacing: .2px; }
+.fish { display: inline-grid; place-items: center; width: 25px; height: 25px; transform: rotate(-15deg); font-size: 26px; line-height: 1; }
+.iconButton, .headerActions button { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
+.iconButton:hover, .headerActions button:hover { background: var(--dsw-alias-fill-hover); color: var(--dsw-alias-label-primary); }
+.newSession { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 40px; margin-top: 13px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 13px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 1px rgba(15, 17, 21, .02); }
+.newSession:hover { border-color: var(--dsw-alias-border-l3); background: var(--dsw-alias-fill-hover); }
+.workspaceHeader { display: flex; align-items: center; justify-content: space-between; margin-top: 24px; padding: 0 4px; color: var(--dsw-alias-label-tertiary); font-size: 14px; }
+.headerActions { position: relative; display: flex; align-items: center; gap: 2px; }
+.browser { flex: 1; min-height: 0; margin-top: 14px; overflow-y: auto; scrollbar-width: thin; }
+.workspaceGroup { margin-bottom: 22px; }
+.groupTitle { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 7px; color: var(--dsw-alias-label-primary); font-size: 14px; font-weight: 500; }
+.groupTitle svg { color: var(--dsw-alias-state-business-primary); }
+.sessionList { display: flex; flex-direction: column; gap: 2px; margin-top: 3px; }
+.session { position: relative; display: flex; align-items: center; width: 100%; height: 37px; padding: 0 12px 0 30px; border: 0; border-radius: 9px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; }
+.session:hover, .session[data-active], .employee:hover, .employee[data-active] { background: var(--dsw-specific-sidebar-selected); }
+.sessionTitle { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.sessionTime { margin-left: auto; padding-left: 8px; color: var(--dsw-alias-label-tertiary); font-size: 11px; }
+.waitDot { width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: var(--dsw-alias-state-warn-label); }
+.extensionGroup { padding-top: 16px; border-top: 1px solid var(--dsw-alias-border-l1); }
+.extensionTitle { display: flex; align-items: center; justify-content: space-between; padding: 0 8px 8px; color: var(--dsw-alias-label-tertiary); font-size: 12px; }
+.extensionTitle > span:first-child { display: flex; align-items: center; gap: 7px; }
+.extensionCount { font-variant-numeric: tabular-nums; }
+.employee { display: flex; align-items: center; width: 100%; min-height: 48px; padding: 6px 8px; border: 0; border-radius: 9px; background: transparent; color: var(--dsw-alias-label-primary); cursor: pointer; text-align: left; }
+.employeeAvatar { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 9px; background: var(--aidesktop-employee-fill); color: var(--aidesktop-employee-label); }
+.employeeText { display: flex; flex: 1; min-width: 0; flex-direction: column; gap: 2px; margin-left: 9px; }
+.employeeText b { overflow: hidden; text-overflow: ellipsis; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.employeeText small { overflow: hidden; color: var(--dsw-alias-label-tertiary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.approvalBadge { padding: 2px 5px; border-radius: 5px; background: var(--dsw-alias-state-warn-secondary); color: var(--dsw-alias-state-warn-label); font-size: 9px; }
+.inbox { display: flex; align-items: center; gap: 9px; width: 100%; height: 36px; padding: 0 10px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-label-secondary); font-size: 12px; cursor: pointer; }
+.inbox:hover { background: var(--dsw-alias-fill-hover); }
+.inbox b { margin-left: auto; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%; background: var(--dsw-alias-state-business-secondary); color: var(--dsw-alias-state-business-primary); font-size: 10px; }
+.settings { display: flex; align-items: center; gap: 10px; width: 100%; height: 38px; padding: 0 7px; border: 0; border-radius: 8px; background: transparent; color: var(--dsw-alias-label-primary); font-size: 13px; cursor: pointer; }
+.settings:hover { background: var(--dsw-alias-fill-hover); }
+.viewMenu { position: absolute; top: 34px; right: 0; z-index: 30; width: 184px; padding: 7px; border: 1px solid var(--dsw-alias-border-l2); border-radius: 12px; background: var(--dsw-alias-bg-elevated); box-shadow: var(--dsw-shadow-lv3); color: var(--dsw-alias-label-primary); }
+.viewMenu button { display: flex; justify-content: space-between; width: 100%; height: 32px; padding: 0 8px; font-size: 12px; }
+.menuLabel { padding: 5px 8px; color: var(--dsw-alias-label-tertiary); font-size: 10px; text-transform: uppercase; letter-spacing: .4px; }
+.menuDivider { height: 1px; margin: 5px 0; background: var(--dsw-alias-border-l1); }
+.rail { display: flex; align-items: center; flex-direction: column; width: 56px; height: 100%; padding: 16px 0 12px; box-sizing: border-box; }
+.railBrand, .railButton { position: relative; display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 10px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
+.railBrand { color: var(--dsw-alias-label-primary); margin-bottom: 14px; }
+.railButton:hover, .railBrand:hover { background: var(--dsw-alias-fill-hover); }
+.railSpacer { flex: 1; }
+.railBadge { position: absolute; top: 7px; right: 7px; width: 5px; height: 5px; border: 1px solid var(--dsw-specific-sidebar-fill); border-radius: 50%; background: var(--dsw-alias-state-warn-label); }

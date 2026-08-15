@@ -1,0 +1,17 @@
+# Production Cloud Employee Experience. Gateway inputs belong to the deployment;
+# cloud-provider rejects a missing input service instead of installing a Fixture.
+- insert:
+    - id: aistaff-cloud-provider
+      name: '@deepseek-ai/dsh-aistaff-cloud-provider'
+      config:
+        protocolOffer: '1.0-1.7'
+        requestTimeoutMs: 15000
+        pageLimit: 50
+        selectionRenewalSkewMs: 60000
+        reconnectDelayMs: 1000
+
+    - id: aistaff-employee-experience-remote
+      name: '@deepseek-ai/dsh-aistaff-employee-experience-remote'
+
+    - id: aistaff-cloud-client-product
+      name: '@deepseek-ai/dsh-aistaff-cloud-client-product'

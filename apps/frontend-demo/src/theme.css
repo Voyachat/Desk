@@ -1,0 +1,46 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #0f1115;
+  background: #fff;
+  font-synthesis: none;
+  --dsw-alias-bg-base: #ffffff;
+  --dsw-alias-bg-elevated: #ffffff;
+  --dsw-alias-bg-subtle: #f7f8fa;
+  --dsw-alias-bg-inverse: #202329;
+  --dsw-alias-label-primary: #16181d;
+  --dsw-alias-label-secondary: #626872;
+  --dsw-alias-label-tertiary: #9297a0;
+  --dsw-alias-label-caption: #adb2b8;
+  --dsw-alias-label-inverse: #ffffff;
+  --dsw-alias-border-l1: rgba(15, 17, 21, .07);
+  --dsw-alias-border-l2: rgba(15, 17, 21, .12);
+  --dsw-alias-border-l3: rgba(15, 17, 21, .22);
+  --dsw-alias-fill-l2: #f1f3f6;
+  --dsw-alias-fill-hover: rgba(15, 17, 21, .055);
+  --dsw-alias-state-business-primary: #4d7fe9;
+  --dsw-alias-state-business-secondary: #edf3ff;
+  --dsw-alias-state-warn-label: #b56a16;
+  --dsw-alias-state-warn-secondary: #fff4df;
+  --dsw-alias-state-success-label: #257b55;
+  --dsw-alias-state-success-secondary: #e8f7ef;
+  --dsw-alias-state-danger-label: #c34b4b;
+  --dsw-specific-sidebar-fill: #f7f8fa;
+  --dsw-specific-sidebar-selected: #e9ebee;
+  --dsw-specific-message-user: #edf3ff;
+  --dsw-specific-input-major: #ffffff;
+  --dsw-specific-hero-glow: rgba(88, 135, 235, .16);
+  --dsw-shadow-lv2: 0 7px 20px rgba(15, 17, 21, .08);
+  --dsw-shadow-lv3: 0 12px 35px rgba(15, 17, 21, .13);
+  --dsw-shadow-composer: 0 1px 2px rgba(15, 17, 21, .03), 0 8px 28px rgba(15, 17, 21, .07);
+  --aidesktop-employee-fill: #f4eaff;
+  --aidesktop-employee-label: #7b52b8;
+  --aidesktop-employee-surface: #fbf7ff;
+  --ds-transition-duration-slow: 180ms;
+  --ds-ease-in-out: cubic-bezier(.4, 0, .2, 1);
+}
+* { box-sizing: border-box; }
+html, body, #root { width: 100%; height: 100%; margin: 0; }
+body { min-width: 760px; overflow: hidden; }
+button, input, textarea { font-family: inherit; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible { outline: 2px solid color-mix(in srgb, var(--dsw-alias-state-business-primary) 48%, transparent); outline-offset: 1px; }
+::selection { background: #dbe7ff; }

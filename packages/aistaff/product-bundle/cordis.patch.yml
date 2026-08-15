@@ -1,0 +1,19 @@
+# Aistaff product rows are an additive layer over dsh-base + dsh-web-app.
+- insert:
+    - id: aistaff-product-projection
+      name: '@deepseek-ai/dsh-aistaff-product-projection'
+      config:
+        defaultApprovalRisk: medium
+        employees:
+          - id: local-assistant
+            name: 本地助理
+            role: 本地基础问题处理
+            status: ready
+            capabilities:
+              - local-task
+
+    - id: aistaff-product-remote
+      name: '@deepseek-ai/dsh-aistaff-product-remote'
+
+    - id: aistaff-client-product
+      name: '@deepseek-ai/dsh-aistaff-client-product'
