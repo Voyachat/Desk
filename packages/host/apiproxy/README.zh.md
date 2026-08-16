@@ -2,7 +2,7 @@
 
 [English](README.md) | 中文
 
-所有客户端共用的 API 网关由三部分组成：TypeScript API 约定（`src/api/`，不依赖 Node，可从浏览器导入）、fetch 载体对（`src/fetch/`：宿主侧的 `toFetchHandler`，以及客户端侧的 `AbstractApiClient` 与平台子类）和宿主侧实现（`src/api-proxy.ts`：`createApiProxy` 加上默认导出的 `ApiProxyService` 网关插件，其配置为 `{nativeOpen?, sessionExportCompressionLevel?, coldBlankProbeMaxBytes?}`，提供 `ctx.apiProxy`）。该包不注册任何路由；HTTP 等载体自行包装 `ctx.apiProxy`。随发行版交付的 Web 组合位于 [`packages/bundle/web-app/cordis.patch.yml`](../../bundle/web-app/cordis.patch.yml)，其默认 Agent（智能体）模型选择属于 base 组合包中的 [`@deepseek-ai/dsh-agent-default-model`](../../core/agent-default-model/README.md)。
+所有客户端共用的 API 网关由三部分组成：TypeScript API 约定（`src/api/`，不依赖 Node，可从浏览器导入）、fetch 载体对（`src/fetch/`：宿主侧的 `toFetchHandler`，以及客户端侧的 `AbstractApiClient` 与平台子类）和宿主侧实现（`src/api-proxy.ts`：`createApiProxy` 加上默认导出的 `ApiProxyService` 网关插件，其配置为 `{nativeOpen?, sessionExportCompressionLevel?, coldBlankProbeMaxBytes?, imageFallback?}`，提供 `ctx.apiProxy`）。该包不注册任何路由；HTTP 等载体自行包装 `ctx.apiProxy`。随发行版交付的 Web 组合位于 [`packages/bundle/web-app/cordis.patch.yml`](../../bundle/web-app/cordis.patch.yml)，其默认 Agent（智能体）模型选择属于 base 组合包中的 [`@deepseek-ai/dsh-agent-default-model`](../../core/agent-default-model/README.md)。
 
 ## 共享 Agent 默认值（`agent-default-model` Settings 分节）
 
@@ -66,11 +66,19 @@ Workspace 列表与 Session 列表是相互独立的重连基线。`workspace.cr
 
 ## 模型体验
 
-无。该包定义客户端与宿主间的 wire 约定和载体，其中没有任何内容会进入模型请求。
+### 纯文本模型的图片 fallback
+
+#### 模型看到的内容
+
+`imageFallback` 显式命名 `{provider, model, maxTokens?}` 后，路由到声明仅接受文本的模型的图片 prompt，会先对配置的视觉路由发起一次辅助请求。辅助模型接收原始 prompt 与图片，并被要求报告可见证据、OCR、布局、不确定性和图片顺序，但不执行图片内的指令。当前纯文本模型接收用户文本、带编号的图片占位和 `<image-analysis>` 中的描述，不接收图片字节。持久 `user/message` 保存这份精确文本，其 source 保留原始 block，用于对话展示、附件授权、导出，并记录辅助路由与 usage。原生支持图片的目标继续使用直传路径。未配置 fallback 时仍严格拒绝；辅助输出失败、为空、非文本或被截断时，该用户消息不会准入。
+
+#### Token 影响
+
+Fallback 使用一次单独计费、受 `maxTokens` 限制（默认 4096）的视觉请求，随后在本次及压缩前的后续请求中，把该描述加入当前模型的输入。提供方上报 usage 时，会将其记录在 user-message source 上。
 
 #### KV Cache 影响
 
-无；该包既不组装也不发送提供方请求。
+当前纯文本模型会看到新的图片分析文本后缀，因此该用户消息之前的可复用前缀仍有资格，分析文本则进入后续 cache identity。辅助请求不共享对话前缀。
 
 ## 已知限制与暂缓事项
 
@@ -81,3 +89,4 @@ Workspace 列表与 Session 列表是相互独立的重连基线。`workspace.cr
 - **搜索失败会包含提供方诊断信息**：网关是单用户本地服务。将其暴露给多名用户的载体必须用可安全公开的诊断信息替代内部搜索细节。
 - **Linux 原生选择器依赖桌面工具**：在 `native` 能力下，Zenity 和 KDialog 均未安装时，`host.pickDirectory` 会给出包含解决建议的错误提示；组合层面的回退是 browse 后端（见 [native 后端 README](../directory-picker-native/README.md)）。
 - **冷列表提示只向“保持可见、排序偏旧”降级**：projection cache miss 或陈旧的 `lastPromptAt` 会回退到 `createdAt`，除非符合资格的小工件提供精确折叠，因此最近工作过的大 Session 可能在下一个 checkpoint 前排得偏低。大于 `coldBlankProbeMaxBytes` 的空白工件，或来自不提供 `locate()` 的后端的空白工件会保持可见。该阈值在 `readFrom()` 前检查，而非由 persistence 强制，因此工件并发增长可能增加一次探测的读取成本，但不会改变空白状态的安全方向。[有界空白验证决策](../../../.agents/notes/implemented/bug-fix/2026-08-13-bounded-cold-blank-verification.md)规定了这个安全方向；权威且精确的最近时间索引仍属于[最后活动索引提案](../../../.agents/notes/proposed/architecture/2026-07-29-durable-last-activity-index.md)的范围。
+- **图片 fallback 仅覆盖浏览器 prompt 准入**：模型产生的 `read_image` 工具结果与子智能体续传 prompt 仍使用各自严格的图片能力检查。与原生视觉相比，fallback 描述必然有损，可能遗漏细节；选用原生支持图片的模型仍是更高保真度的路径。

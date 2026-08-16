@@ -969,3 +969,81 @@ describe('configurable-provider directory', () => {
     })
   })
 })
+describe('model-family enrichment', () => {
+  it('fills a hand-declared model with its family capacities and modalities', () => {
+    const resolved = resolveProfiles({
+      dashscope: {
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        models: [{ id: 'qwen3.7-max' }, { id: 'kimi/kimi-k2.6' }],
+      },
+    })
+    const models = resolved.get('dashscope')?.piProvider.getModels() ?? []
+
+    expect(models).toMatchObject([
+      { id: 'qwen3.7-max', contextWindow: 1_000_000, maxTokens: 131_072, input: ['text'] },
+      { id: 'kimi/kimi-k2.6', contextWindow: 262_144, maxTokens: 262_144, input: ['text', 'image'] },
+    ])
+  })
+
+  it('offers a known reasoning family its selectable efforts', async () => {
+    const ctx = await harness({
+      providers: {
+        dashscope: {
+          api: 'openai-completions',
+          baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+          models: [{ id: 'qwen3.7-flash' }],
+        },
+      },
+    })
+
+    // An id-only adopted row gains the efforts its family is known for,
+    // where pi-ai would otherwise advertise nothing.
+    const info = await ctx.llm.resolveModelInfo('dashscope', 'qwen3.7-flash')
+    expect(info.reasoning?.efforts.map(effort => effort.id)).toEqual(expect.arrayContaining(['off', 'low', 'medium', 'high']))
+  })
+
+  it('lets an explicit entry outrank the family facts', () => {
+    const resolved = resolveProfiles({
+      dashscope: {
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        models: [
+          { id: 'qwen3.7-max', contextWindow: 8192, maxTokens: 512, reasoningEfforts: false },
+        ],
+      },
+    })
+    const models = resolved.get('dashscope')?.piProvider.getModels() ?? []
+
+    expect(models).toMatchObject([{ id: 'qwen3.7-max', contextWindow: 8192, maxTokens: 512, reasoning: false }])
+  })
+
+  it('leaves an installed catalog model to its own authority', () => {
+    const [catalogModel] = getBuiltinModels('deepseek')
+    if (catalogModel === undefined) throw new Error('the installed catalog ships no deepseek model')
+    const resolved = resolveProfiles({ deepseek: {} })
+    const models = resolved.get('deepseek')?.piProvider.getModels() ?? []
+
+    const materialized = models.find(model => model.id === catalogModel.id)
+    expect(materialized?.contextWindow).toBe(catalogModel.contextWindow)
+    expect(materialized?.maxTokens).toBe(catalogModel.maxTokens)
+  })
+
+  it('keeps the route fallbacks below the family facts', () => {
+    const resolved = resolveProfiles({
+      dashscope: {
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        defaultContextWindow: 4096,
+        defaultMaxTokens: 256,
+        models: [{ id: 'glm-5.2' }, { id: 'mystery-model' }],
+      },
+    })
+    const models = resolved.get('dashscope')?.piProvider.getModels() ?? []
+
+    expect(models).toMatchObject([
+      { id: 'glm-5.2', contextWindow: 1_000_000, maxTokens: 131_072 },
+      { id: 'mystery-model', contextWindow: 4096, maxTokens: 256 },
+    ])
+  })
+})

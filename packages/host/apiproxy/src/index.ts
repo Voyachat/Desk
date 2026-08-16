@@ -17,6 +17,7 @@ import z from '@deepseek-ai/schemastery'
 import type {} from '@deepseek-ai/dsh-agent-default-model'
 import type { ApiProxy } from './api/index.ts'
 import { createApiProxy, DEFAULT_COLD_BLANK_PROBE_MAX_BYTES } from './api-proxy.ts'
+import type { ImageFallbackConfig } from './image-fallback.ts'
 import {
   DEFAULT_SESSION_LOG_COMPRESSION_LEVEL,
   type SessionLogCompressionLevel,
@@ -29,6 +30,9 @@ export { AbstractApiClient, InProcessApiClient } from './fetch/client.ts'
 export type { IApiClient } from './fetch/client.ts'
 export { createApiProxy } from './api-proxy.ts'
 export type { ApiProxyDefaults } from './api-proxy.ts'
+
+/** Default output cap for one configured image-to-text fallback request. */
+export const DEFAULT_IMAGE_FALLBACK_MAX_TOKENS = 4_096
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
@@ -59,6 +63,19 @@ export interface Config {
    * @default 1024
    */
   coldBlankProbeMaxBytes?: number
+  /**
+   * Explicit image-capable route used to describe images before a text-only
+   * session model receives the prompt. Omission preserves strict refusal and
+   * never sends image data to another provider implicitly.
+   */
+  imageFallback?: false | {
+    /** Registered provider route that receives the original images. */
+    provider: string
+    /** Exact image-capable model on that route. */
+    model: string
+    /** Maximum output tokens for one image-analysis call. @default 4096 */
+    maxTokens?: number
+  }
 }
 
 /**
@@ -77,6 +94,14 @@ export class ApiProxyService extends Service implements ApiProxy {
     sessionExportCompressionLevel: z.number().step(1).min(0).max(9)
       .default(DEFAULT_SESSION_LOG_COMPRESSION_LEVEL) as z<SessionLogCompressionLevel>,
     coldBlankProbeMaxBytes: z.natural().default(DEFAULT_COLD_BLANK_PROBE_MAX_BYTES),
+    imageFallback: z.union([
+      z.const(false),
+      z.object({
+        provider: z.string().required(),
+        model: z.string().required(),
+        maxTokens: z.number().step(1).min(1).default(DEFAULT_IMAGE_FALLBACK_MAX_TOKENS),
+      }),
+    ]).default(false),
   })
 
   readonly sessions: ApiProxy['sessions']
@@ -95,6 +120,14 @@ export class ApiProxyService extends Service implements ApiProxy {
 
   constructor(ctx: Context, config: Config) {
     super(ctx, 'apiProxy')
+    const imageFallback: ImageFallbackConfig | undefined = config.imageFallback === undefined
+      || config.imageFallback === false
+      ? undefined
+      : {
+        provider: config.imageFallback.provider,
+        model: config.imageFallback.model,
+        maxTokens: config.imageFallback.maxTokens ?? DEFAULT_IMAGE_FALLBACK_MAX_TOKENS,
+      }
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ctx.agentDefaultModel.currentSelection(),
       saveDefaultModelSelection: selection => ctx.agentDefaultModel.saveSelection(selection),
@@ -106,6 +139,7 @@ export class ApiProxyService extends Service implements ApiProxy {
       ...(config.coldBlankProbeMaxBytes === undefined
         ? {}
         : { coldBlankProbeMaxBytes: config.coldBlankProbeMaxBytes }),
+      ...imageFallback === undefined ? {} : { imageFallback },
     })
     this.sessions = api.sessions
     this.subagents = api.subagents

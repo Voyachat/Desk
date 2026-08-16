@@ -563,13 +563,22 @@ function buildAlphaLog(): SessionEvent[] {
   push({ type: 'step/end', data: { turn: 72, step: 0 } })
   push({ type: 'turn/end', data: { turn: 72, reason: { kind: 'max-tokens' } } })
 
-  // Turn 73: user and assistant images share one durable fixture object.
-  // The todo turn remains last so its standing projection stays visible.
+  // Turn 73: the user image is presentation-only after a text-model fallback,
+  // while the assistant image remains native. Both share one durable fixture
+  // object. The todo turn remains last so its standing projection stays visible.
   push({ type: 'turn/start', data: { turn: 73 } })
   push({
     type: 'user/message',
     surfaceOp: 'append',
-    data: userMessage([{ type: 'image', attachment: FIXTURE_IMAGE_REF }, ...text('历史用户图片')]),
+    data: userMessage(
+      text('历史用户图片[Image 1]\n\n<image-analysis source="auxiliary-vision-model">fixture fallback visual description</image-analysis>'),
+      {
+        kind: 'user',
+        rpcId: RpcId('fixture-image-fallback'),
+        displayContent: [{ type: 'image', attachment: FIXTURE_IMAGE_REF }, ...text('历史用户图片')],
+        imageFallback: { provider: 'fixture', model: 'fx-vision', usage: { inputTokens: 12, outputTokens: 4 } },
+      },
+    ),
   })
   push({ type: 'step/start', data: { turn: 73, step: 0 } })
   push({

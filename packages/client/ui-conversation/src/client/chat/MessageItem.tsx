@@ -39,6 +39,13 @@ function contentParts(content: readonly unknown[]): {
   return { text: texts.join(''), images, rest }
 }
 
+/** Prefer the original prompt blocks retained by Host image fallback metadata. */
+function displayedUserContent(content: readonly unknown[], source: unknown): readonly unknown[] {
+  if (typeof source !== 'object' || source === null || Array.isArray(source)) return content
+  const displayContent = (source as { displayContent?: unknown }).displayContent
+  return Array.isArray(displayContent) ? displayContent : content
+}
+
 function retrySeconds(milliseconds: number): number {
   return Math.max(1, Math.ceil(milliseconds / 1_000))
 }
@@ -155,6 +162,10 @@ function modelFailureCopy(
     case 'provider-unavailable': return {
       title: t('message.turnError.providerUnavailable.title'),
       hint: t('message.turnError.providerUnavailable.hint'),
+    }
+    case 'model-access': return {
+      title: t('message.turnError.modelAccess.title'),
+      hint: t('message.turnError.modelAccess.hint'),
     }
     case 'context-window': return {
       title: t('message.turnError.contextWindow.title'),
@@ -308,7 +319,7 @@ export const UserMessageNodeView = memo(function UserMessageNodeView({
   const data = node.data
   return (
     <UserStyleBubble
-      content={data.content}
+      content={displayedUserContent(data.content, data.source)}
       imageLoader={loadImage}
       t={t}
       actions={text => (

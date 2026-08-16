@@ -11,6 +11,10 @@
 - Electron 和 Forge 以版本化依赖方式采用，不复制或 fork 源码。添加依赖时，其许可证和传递依赖声明一并加入 `THIRD_PARTY_NOTICES.md`。
 - 第一版打包运行时位于 ASAR 之外。Cordis 包发现、profile 包链接、客户端 bundle、worker 入口、原生 addon 和辅助可执行文件都需要真实文件系统路径。后续改用 ASAR 时，必须证明每个此类路径在所有目标平台均已解包且可执行。
 
+### 产品图标
+
+每次 AI Staff macOS 打包都以 [`apps/aistaff-desktop/assets/app-icon.jpg`](../apps/aistaff-desktop/assets/app-icon.jpg) 作为产品原图，并使用由它生成的 `app-icon.icns` 作为发行图标。Electron Forge 必须把同一份 ICNS 同时传给 `packagerConfig.icon` 和 DMG maker 的 `icon`；构建不得回退到 Electron 默认图标，也不得为 DMG 使用另一份图标。替换产品原图必须经过明确的产品决策，重新生成完整的 16–1024 px ICNS 尺寸集，并同步更新 Forge 配置测试。
+
 ## 当前运行时拓扑
 
 Web 前端是由 Host 组装的插件应用，不是独立静态 SPA。`apps/web` 构建外壳，[`@deepseek-ai/dsh-client-modules`](../packages/client/modules/README.md) 发现每个 `dsh.client` 声明、提供其 `lib/client.js` 并注入 `window.__DSH_BOOT__`。[`@deepseek-ai/dsh-client-connection`](../packages/client/connection/README.md) 通过 HTTP 承载一元请求，并通过 WebSocket 承载 mux 和 host 事件流。

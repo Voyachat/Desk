@@ -475,9 +475,12 @@ describe('endpoint interrogation', () => {
 
     fireEvent.click(screen.getByText(en.fetchModels))
     await screen.findByText(en.fetchTitle)
-    // The already-configured row starts unchecked; the new one starts checked.
+    expect(screen.getByText(en.fetchDescription)).toBeTruthy()
+    // A listing cannot prove account activation or chat support, so both rows
+    // require an explicit choice.
     const boxes = [...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
-    expect(boxes.map(box => box.checked)).toEqual([false, true])
+    expect(boxes.map(box => box.checked)).toEqual([false, false])
+    fireEvent.click(boxes[1]!)
     fireEvent.click(screen.getByText(en.fetchAdopt))
 
     fireEvent.click(screen.getByText(en.apply))
@@ -583,7 +586,7 @@ describe('endpoint interrogation', () => {
     expect(mutate).not.toHaveBeenCalled()
   })
 
-  it('toggles a candidate off and back on before adopting', async () => {
+  it('requires an explicit candidate selection before adopting', async () => {
     const discover = vi.fn(() => Promise.resolve(ok({
       models: [{ id: 'a' }, { id: 'b', maxTokens: 2048 }],
     })))
@@ -593,9 +596,10 @@ describe('endpoint interrogation', () => {
     fireEvent.click(screen.getByText(en.fetchModels))
     await screen.findByText(en.fetchTitle)
     const boxes = [...document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')]
-    const first = boxes[0] as HTMLInputElement
-    fireEvent.click(first)
-    fireEvent.click(first)
+    expect(buttonNamed(en.fetchAdopt).disabled).toBe(true)
+    fireEvent.click(boxes[0]!)
+    fireEvent.click(boxes[1]!)
+    expect(buttonNamed(en.fetchAdopt).disabled).toBe(false)
     fireEvent.click(screen.getByText(en.fetchAdopt))
     fireEvent.click(screen.getByText(en.apply))
 

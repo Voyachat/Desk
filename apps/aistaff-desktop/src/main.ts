@@ -1,7 +1,7 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
-import type { BrowserWindow as BrowserWindowInstance } from 'electron'
-import { app, BrowserWindow, dialog, session } from './electron-api.js'
+import type { BrowserWindow as BrowserWindowInstance, MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, dialog, Menu, session, shell } from './electron-api.js'
 import { loadModelCredentials } from './model-credentials.js'
 import { ensureAistaffProfile } from './profile.js'
 import { resolveProxyEnvironment } from './proxy-environment.js'
@@ -37,6 +37,7 @@ if (!app.requestSingleInstanceLock()) {
 }
 
 async function startApplication(): Promise<void> {
+  installApplicationMenu()
   const userData = app.getPath('userData')
   const dshHome = join(userData, 'dsh')
   const workspace = join(userData, 'workspace')
@@ -90,10 +91,42 @@ async function startApplication(): Promise<void> {
   await window.loadURL(runtimeUrl.href)
 }
 
+/** Install the branded menu; the Help submenu opens the bundled legal texts. */
+function installApplicationMenu(): void {
+  const template: MenuItemConstructorOptions[] = [
+    ...(process.platform === 'darwin' ? [{ role: 'appMenu' as const }] : []),
+    { role: 'editMenu' },
+    { role: 'viewMenu' },
+    { role: 'windowMenu' },
+    {
+      role: 'help',
+      submenu: [
+        {
+          label: '用户协议',
+          click: () => { void openLegalDocument('USER_AGREEMENT.zh-CN.md') },
+        },
+        {
+          label: '开源软件许可',
+          click: () => { void openLegalDocument('third-party', 'deepseek-harness', 'LICENSE') },
+        },
+      ],
+    },
+  ]
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+/** Open one document of the legal bundle shipped inside the app resources. */
+async function openLegalDocument(...parts: string[]): Promise<void> {
+  const root = app.isPackaged ? join(process.resourcesPath, 'legal') : join(app.getAppPath(), 'legal')
+  const target = join(root, ...parts)
+  const errorMessage = await shell.openPath(target)
+  if (errorMessage !== '') dialog.showErrorBox('Voyaseek', `无法打开 ${target}\n${errorMessage}`)
+}
+
 function reportStartupFailure(error: unknown): void {
   if (shutdownStarted) return
   const message = error instanceof Error ? error.message : String(error)
-  process.stderr.write(`AI Staff failed to start: ${message}\n`)
-  if (app.isReady()) dialog.showErrorBox('AI Staff 无法启动', message)
+  process.stderr.write(`Voyaseek failed to start: ${message}\n`)
+  if (app.isReady()) dialog.showErrorBox('Voyaseek 无法启动', message)
   app.quit()
 }

@@ -6,6 +6,7 @@ export type FailureDisplayCategory =
   | 'network'
   | 'timeout'
   | 'provider-unavailable'
+  | 'model-access'
   | 'context-window'
   | 'invalid-request'
   | 'configuration'
@@ -50,6 +51,7 @@ const CATEGORY_BY_CODE = new Map<string, FailureDisplayCategory>([
   ['STREAM_CLOSED', 'provider-unavailable'],
   ['MALFORMED_RESPONSE', 'provider-unavailable'],
   ['EMPTY_RESPONSE', 'provider-unavailable'],
+  ['MODEL_ACCESS_DENIED', 'model-access'],
   ['CONTEXT_WINDOW_EXCEEDED', 'context-window'],
   ['INVALID_REQUEST', 'invalid-request'],
   ['UNSUPPORTED_CONTENT', 'invalid-request'],

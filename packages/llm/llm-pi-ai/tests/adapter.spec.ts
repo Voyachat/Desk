@@ -900,3 +900,54 @@ describe('abort wiring', () => {
     expect(server.requests).toHaveLength(1)
   })
 })
+describe('conversation directory filtering', () => {
+  it('hides the models an agent conversation cannot use', async () => {
+    const adapter = adapterOf({
+      gateway: {
+        api: 'openai-completions',
+        baseURL: 'https://gateway.test',
+        models: [
+          { id: 'qwen-plus' },
+          { id: 'qwen-image-3.0' },
+          { id: 'qwen3.7-text-embedding' },
+          { id: 'qwen3-tts-flash' },
+          { id: 'qwen-mt-flash' },
+          { id: 'mystery-model' },
+        ],
+      },
+    })
+
+    const listed = await adapter.listModels('gateway')
+
+    // Chat models stay listed, including one the knowledge base has never
+    // seen; the image generator, embedding and TTS endpoints, and the
+    // tool-less translation model leave the directory.
+    expect(listed.map(model => model.id)).toEqual(['qwen-plus', 'mystery-model'])
+  })
+
+  it('keeps a model its entry gave its own modalities', async () => {
+    const adapter = adapterOf({
+      gateway: {
+        api: 'openai-completions',
+        baseURL: 'https://gateway.test',
+        models: [
+          { id: 'qwen-image-3.0' },
+          { id: 'qwen-image-3.0-pro', input: ['text'] },
+        ],
+      },
+    })
+
+    const listed = await adapter.listModels('gateway')
+
+    // A declared modality is the profile author's answer to what the
+    // endpoint serves, and it outranks the classification.
+    expect(listed.map(model => model.id)).toEqual(['qwen-image-3.0-pro'])
+  })
+
+  it('never filters what the installed catalog ships', async () => {
+    const adapter = adapterOf({ deepseek: {} })
+    const catalogIds = getBuiltinModels('deepseek').map(model => model.id)
+    const listed = await adapter.listModels('deepseek')
+    expect(listed.map(model => model.id).sort()).toEqual([...catalogIds].sort())
+  })
+})

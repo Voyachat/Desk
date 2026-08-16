@@ -374,3 +374,62 @@ describe('probe key format', () => {
     expect(headers.has('authorization')).toBe(false)
   })
 })
+describe('listing classification', () => {
+  it('offers only the models an agent conversation can use', async () => {
+    const server = await listingServer({
+      body: JSON.stringify({
+        data: [
+          { id: 'qwen-plus' },
+          { id: 'qwen3.7-max' },
+          { id: 'qwen-image-3.0' },
+          { id: 'qwen3.7-text-embedding' },
+          { id: 'qwen3-tts-flash' },
+          { id: 'qwen3-asr-flash' },
+          { id: 'wan2.7-image' },
+          { id: 'qwen3.5-livetranslate-flash-realtime' },
+          { id: 'qwen-mt-flash' },
+          { id: 'some-gateway-specialty' },
+        ],
+      }),
+    })
+    const ctx = await harness()
+
+    const models = await ctx.llm.discoverModels('llm-pi-ai', { baseURL: `${server.url}/v1`, apiKey: 'probe-key' })
+
+    // Chat models survive, including one the knowledge base has never seen;
+    // embeddings, image generators, TTS and ASR endpoints, realtime sockets,
+    // and the tool-less translation model do not.
+    expect(models.map(model => model.id))
+      .toEqual(['qwen-plus', 'qwen3.7-max', 'some-gateway-specialty'])
+  })
+
+  it('lends a known chat family the capacities its listing withheld', async () => {
+    const server = await listingServer({
+      body: JSON.stringify({
+        data: [
+          { id: 'qwen3.7-max' },
+          { id: 'qwen3.7-plus-2026-05-26' },
+          // A capacity the endpoint itself discloses outranks the family's.
+          { id: 'kimi-k2.6', context_length: 4096 },
+        ],
+      }),
+    })
+    const ctx = await harness()
+
+    const models = await ctx.llm.discoverModels('llm-pi-ai', { baseURL: `${server.url}/v1`, apiKey: 'probe-key' })
+
+    expect(models).toEqual([
+      { id: 'qwen3.7-max', contextWindow: 1_000_000, maxTokens: 131_072 },
+      { id: 'qwen3.7-plus-2026-05-26', contextWindow: 1_000_000, maxTokens: 65_536 },
+      { id: 'kimi-k2.6', contextWindow: 4096, maxTokens: 262_144 },
+    ])
+  })
+
+  it('keeps an installed catalog route answering from the registry, unfiltered', async () => {
+    // The classifier guards wire listings alone: pi-ai's own registry is the
+    // authority for its own providers, whatever it ships.
+    const ctx = await harness()
+    const models = await ctx.llm.discoverModels('llm-pi-ai', { provider: 'deepseek' })
+    expect(models.length).toBeGreaterThan(0)
+  })
+})

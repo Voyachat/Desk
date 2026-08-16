@@ -330,6 +330,13 @@ function installScrollMetrics(element: HTMLElement, initialHeight: number, clien
   }
 }
 
+/** Expand every activity fold so member seats mount (they start collapsed). */
+function expandActivityFolds(view: ReturnType<typeof render>): void {
+  for (const row of view.container.querySelectorAll('[data-activity-fold] [data-disclosure-row]')) {
+    fireEvent.click(row)
+  }
+}
+
 describe('Chat node rendering', () => {
 
   it('threads the injected file-mention vocabulary into the closing prose only', () => {
@@ -387,6 +394,7 @@ describe('ChatView', () => {
       nodes: [{ ...toolResult(3, 'w1'), call: null }],
     })
     const view = render(<h.ChatView {...h.props} />)
+    expandActivityFolds(view)
     expect(view.getByTestId('tool-seat-w1')).toBeTruthy()
     expect(h.toolOwners[0]).toMatchObject({ callId: 'w1', toolName: '' })
   })
@@ -429,7 +437,13 @@ describe('ChatView', () => {
     })
     const view = render(<h.ChatView {...h.props} />)
     expect(view.getByText('do the thing')).toBeTruthy()
+    // The turn never closes here, so the narration stays visible while the
+    // tool run folds into one collapsed activity row.
     expect(view.getByText('running tools')).toBeTruthy()
+    expect(view.getByText('已处理')).toBeTruthy()
+    expect(view.queryByTestId('tool-seat-a')).toBeNull()
+    expect(view.queryByTestId('tool-seat-b')).toBeNull()
+    expandActivityFolds(view)
     expect(view.getByTestId('tool-seat-a').textContent).toBe('bash:a')
     expect(view.getByTestId('tool-seat-b').textContent).toBe('bash:b')
     expect([...view.container.querySelectorAll('[data-chat-flow-key]')].map(row => ({
@@ -615,6 +629,7 @@ describe('ChatView', () => {
       'network',
       'timeout',
       'provider-unavailable',
+      'model-access',
       'context-window',
       'invalid-request',
       'configuration',
@@ -631,6 +646,7 @@ describe('ChatView', () => {
       '无法连接模型服务请检查网络、代理和服务地址，然后重试。',
       '模型响应超时请稍后重试；若持续发生，请检查网络或缩短请求。',
       '模型服务暂时不可用请稍后重试，或切换到其他可用模型。',
+      '当前账号未开通此模型请在模型提供方控制台开通，或切换到已开通的对话模型。',
       '上下文长度超限请缩短输入、开启新会话，或先压缩上下文后重试。',
       '模型拒绝了请求请检查输入和请求参数，必要时切换模型后重试。',
       '当前模型配置不可用请检查模型与参数设置，或切换到其他可用模型后重试。',

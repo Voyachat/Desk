@@ -13,6 +13,7 @@ describe('model failure display projection', () => {
     ['TIMEOUT', 'timeout'],
     ['LLM_STREAM_IDLE_TIMEOUT', 'timeout'],
     ['SERVER', 'provider-unavailable'],
+    ['MODEL_ACCESS_DENIED', 'model-access'],
     ['CONTEXT_WINDOW_EXCEEDED', 'context-window'],
     ['INVALID_REQUEST', 'invalid-request'],
     ['UNSUPPORTED_OPTION', 'configuration'],

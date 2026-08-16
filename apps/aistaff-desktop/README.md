@@ -8,6 +8,8 @@ Provider requests follow an explicit launch proxy or one credential-free HTTP(S)
 
 The app is installed by the repository pnpm workspace. Its local npm lock records the audited registry-only Electron and Forge dependency graph; do not install this package with npm or run a workspace install concurrently with runtime staging.
 
+The product icon follows the [desktop packaging rule](../../docs/electron-packaging.md#product-icon).
+
 The packaged runtime also carries the release `aistaff-desktop-supervisor` sidecar as a physical executable. Staging verifies its x86_64 Mach-O architecture, system-only dynamic libraries, executable mode, and absence of workspace paths. The current `aistaff` profile does not start its production control provider, and the sidecar receives no Store data key or control capabilities; shipping the dormant binary is not production `capability_only` activation.
 
 Run `pnpm --filter @deepseek-ai/dsh-aistaff-desktop typecheck`, `test`, and `build` from the repository root. A release build is deliberately serial: run `pnpm --filter @deepseek-ai/dsh-aistaff-desktop stage:runtime`, restore workspace links with `pnpm install --offline`, then run `npm run make` from `apps/aistaff-desktop`. The final npm command runs the existing script only; do not run `npm install` or `npm ci`. Runtime staging uses pnpm's legacy deploy implementation, while `make` consumes only the resulting physical `aistaff-desktop-runtime/runtime` directory and produces the macOS x86_64 DMG artifact.

@@ -130,11 +130,12 @@ describe('session export compression config', () => {
     expect(ApiProxyService.Config({})).toEqual({
       sessionExportCompressionLevel: 6,
       coldBlankProbeMaxBytes: 1024,
+      imageFallback: false,
     })
     expect(ApiProxyService.Config({ sessionExportCompressionLevel: 0 }))
-      .toEqual({ sessionExportCompressionLevel: 0, coldBlankProbeMaxBytes: 1024 })
+      .toEqual({ sessionExportCompressionLevel: 0, coldBlankProbeMaxBytes: 1024, imageFallback: false })
     expect(ApiProxyService.Config({ sessionExportCompressionLevel: 9 }))
-      .toEqual({ sessionExportCompressionLevel: 9, coldBlankProbeMaxBytes: 1024 })
+      .toEqual({ sessionExportCompressionLevel: 9, coldBlankProbeMaxBytes: 1024, imageFallback: false })
     for (const value of [-1, 10, 1.5]) {
       expect(() => ApiProxyService.Config({ sessionExportCompressionLevel: value } as never)).toThrow()
     }
@@ -144,12 +145,27 @@ describe('session export compression config', () => {
 describe('cold blank probe config', () => {
   it('accepts a per-Session byte bound including zero and rejects invalid bounds', () => {
     expect(ApiProxyService.Config({ coldBlankProbeMaxBytes: 0 }))
-      .toEqual({ sessionExportCompressionLevel: 6, coldBlankProbeMaxBytes: 0 })
+      .toEqual({ sessionExportCompressionLevel: 6, coldBlankProbeMaxBytes: 0, imageFallback: false })
     expect(ApiProxyService.Config({ coldBlankProbeMaxBytes: 2048 }))
-      .toEqual({ sessionExportCompressionLevel: 6, coldBlankProbeMaxBytes: 2048 })
+      .toEqual({ sessionExportCompressionLevel: 6, coldBlankProbeMaxBytes: 2048, imageFallback: false })
     for (const value of [-1, 1.5]) {
       expect(() => ApiProxyService.Config({ coldBlankProbeMaxBytes: value })).toThrow()
     }
+  })
+})
+
+describe('image fallback config', () => {
+  it('defaults the output cap and rejects incomplete or non-positive routes', () => {
+    expect(ApiProxyService.Config({ imageFallback: { provider: 'vision', model: 'eyes' } }))
+      .toEqual({
+        sessionExportCompressionLevel: 6,
+        coldBlankProbeMaxBytes: 1024,
+        imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 4096 },
+      })
+    expect(() => ApiProxyService.Config({ imageFallback: { provider: 'vision' } } as never)).toThrow()
+    expect(() => ApiProxyService.Config({
+      imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 0 },
+    })).toThrow()
   })
 })
 
@@ -633,17 +649,19 @@ describe('session.export download endpoint', () => {
     expect(Object.keys(files).sort()).toEqual(['media/nested-1.webp', 'session.jsonl'])
   })
 
-  it('scans the wrapped, inserted, and chunk carriers plus non-object content items', async () => {
+  it('scans display, wrapped, inserted, and chunk carriers plus non-object content items', async () => {
     const block = (id: string, mediaType: string) =>
       `{"type":"image","attachment":{"attachmentId":"${id}","mediaType":"${mediaType}","bytes":4,"width":2,"height":2}}`
     const wrapped = `{"type":"assistant/message","seq":2,"time":2000,"data":{"message":{"role":"assistant","content":["noise",${block('wrapped-1', 'image/jpeg')}]}}}`
     const inserted = `{"type":"context/inserted","seq":3,"time":3000,"data":{"inserted":[{"content":[${block('inserted-1', 'image/gif')}]}]}}`
     const chunk = `{"type":"assistant/chunk","seq":4,"time":4000,"data":{"chunk":{"type":"block-end","block":${block('chunk-1', 'image/png')}}}}`
+    const displayed = `{"type":"user/message","seq":5,"time":5000,"data":{"content":[{"type":"text","text":"fallback"}],"source":{"kind":"user","displayContent":[${block('display-1', 'image/png')}]}}}`
     const root = artifact('session-root', undefined, [
       '{"type":"session","version":0,"id":"session-root","createdAt":1000}',
       wrapped,
       inserted,
       chunk,
+      displayed,
     ].join('\n') + '\n')
     const api = await buildApi({ 'session-root': root })
     const response = await toFetchHandler(api).fetch(
@@ -652,6 +670,7 @@ describe('session.export download endpoint', () => {
     const files = unzipSync(await responseBytes(response))
     expect(Object.keys(files).sort()).toEqual([
       'media/chunk-1.png',
+      'media/display-1.png',
       'media/inserted-1.gif',
       'media/wrapped-1.jpg',
       'session.jsonl',

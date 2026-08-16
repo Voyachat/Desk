@@ -75,6 +75,7 @@ export function stageRuntime() {
     stageSupervisorSidecar(builtSupervisor, stageDir)
     materializeLinks(stageDir)
     removeDeployMetadata(stageDir)
+    pruneDevelopmentArtifacts(stageDir)
     rejectLinks(stageDir)
     verifyRuntime(stageDir)
 
@@ -303,6 +304,7 @@ function rejectLinks(directory) {
 /** Verify the complete physical runtime consumed by Electron Forge. */
 export function verifyRuntime(runtimeRoot) {
   rejectLinks(runtimeRoot)
+  rejectDevelopmentArtifacts(runtimeRoot)
   const required = [
     'apps/cli/lib/bin.js',
     supervisorRuntimePath,
@@ -344,4 +346,44 @@ function findPath(directory, predicate) {
     }
   }
   return undefined
+}
+
+/**
+ * Strip development-only artifacts a deployed closure still carries: source
+ * maps and incremental-build metadata. They expose the complete internal
+ * structure of first-party packages to anyone who unpacks the app and serve
+ * nothing at runtime.
+ */
+function pruneDevelopmentArtifacts(runtimeRoot) {
+  let removed = 0
+  const walk = (directory) => {
+    for (const entry of readdirSync(directory)) {
+      const path = join(directory, entry)
+      const metadata = lstatSync(path)
+      if (metadata.isSymbolicLink()) continue
+      if (metadata.isDirectory()) { walk(path); continue }
+      if (entry.endsWith('.map') || entry.endsWith('.tsbuildinfo')) {
+        rmSync(path)
+        removed += 1
+      }
+    }
+  }
+  walk(runtimeRoot)
+  process.stdout.write('Pruned ' + String(removed) + ' development artifacts from the staged runtime\n')
+}
+
+/** Refuse a runtime that still carries source maps or build metadata. */
+function rejectDevelopmentArtifacts(runtimeRoot) {
+  const walk = (directory) => {
+    for (const entry of readdirSync(directory)) {
+      const path = join(directory, entry)
+      const metadata = lstatSync(path)
+      if (metadata.isSymbolicLink()) continue
+      if (metadata.isDirectory()) { walk(path); continue }
+      if (entry.endsWith('.map') || entry.endsWith('.tsbuildinfo')) {
+        throw new Error('runtime contains a development artifact: ' + relative(runtimeRoot, path))
+      }
+    }
+  }
+  walk(runtimeRoot)
 }

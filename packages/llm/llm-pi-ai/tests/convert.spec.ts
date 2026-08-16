@@ -719,6 +719,10 @@ describe('mapStopReason / mapUsage', () => {
       .toMatchObject({ kind: 'error', failure: { code: 'TRANSPORT' } })
     expect(mapStopReason(assistant({
       stopReason: 'error',
+      errorMessage: 'HTTP 400: The product is not activated, please activate it and try again.',
+    }))).toMatchObject({ kind: 'error', failure: { code: 'MODEL_ACCESS_DENIED' } })
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
       errorMessage: 'HTTP 400: input exceeds the model context window limit',
     }))).toMatchObject({ kind: 'error', failure: { code: CONTEXT_WINDOW_EXCEEDED_CODE } })
     expect(mapStopReason(assistant({

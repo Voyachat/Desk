@@ -23,6 +23,8 @@ import type {
   Provider,
   ThinkingLevelMap,
 } from '@earendil-works/pi-ai'
+import { classifyModel } from './model-families.ts'
+import type { ModelFamilyFacts } from './model-families.ts'
 
 /**
  * Pricing for a model the installed catalog does not describe. The harness
@@ -436,6 +438,23 @@ export interface RouteCatalog {
 }
 
 /**
+ * The entry reasoning resolution reads: the configured entry itself, or one
+ * carrying its family's effort declaration when the entry names none. A family
+ * declaration is what turns an id-only adopted row — no reasoning metadata, so
+ * pi-ai would advertise nothing and the selector would offer nothing — into a
+ * model whose known reasoning levels are selectable. It never displaces a
+ * decision the profile made: an entry's own `reasoningEfforts`, including
+ * `false`, wins untouched.
+ * @param entry - the configured model entry.
+ * @param facts - the family facts materialization derived for it, when any.
+ * @returns the entry reasoning resolution should read.
+ */
+function reasoningSource(entry: PiAiModelProfile, facts: ModelFamilyFacts | undefined): PiAiModelProfile {
+  if (entry.reasoningEfforts !== undefined || facts?.reasoningEfforts === undefined) return entry
+  return { ...entry, reasoningEfforts: facts.reasoningEfforts }
+}
+
+/**
  * Materialize one route's catalog by merging the installed catalog defaults
  * under the configured entries. A route with no configured `models` serves the
  * installed catalog unchanged, which is what keeps an existing
@@ -494,6 +513,13 @@ export function resolveRouteModels(request: RouteCatalogRequest): RouteCatalog {
     if (seen.has(entry.id)) invalid(provider, `lists model "${entry.id}" more than once`)
     seen.add(entry.id)
     const base = defaults.get(entry.id)
+    // Family knowledge fills only what a route the installed catalog does not
+    // ship leaves open: an installed entry is the authority for its own model,
+    // while a hand-declared one — the id-only row a listing adoption writes —
+    // gains the capacities and reasoning its family is known for. The facts
+    // stay advisory: the entry's own fields sit above them, the route's
+    // defaults below.
+    const family = base === undefined ? classifyModel(entry.id).facts : undefined
     const api = request.api ?? base?.api ?? routeApi
     if (api === undefined) {
       invalid(provider, `model "${entry.id}" needs an api; the installed catalog does not describe it, so set the`
@@ -507,11 +533,11 @@ export function resolveRouteModels(request: RouteCatalogRequest): RouteCatalog {
     // discloses nothing but ids still yields a serviceable route. The fallback
     // is a guess by construction, which is why it is a configurable route field
     // rather than a constant buried here.
-    const contextWindow = entry.contextWindow ?? base?.contextWindow ?? request.defaultContextWindow
+    const contextWindow = entry.contextWindow ?? base?.contextWindow ?? family?.contextWindow ?? request.defaultContextWindow
     if (!Number.isInteger(contextWindow) || contextWindow <= 0) {
       invalid(provider, `model "${entry.id}" contextWindow must be a positive integer`)
     }
-    const maxTokens = entry.maxTokens ?? base?.maxTokens ?? request.defaultMaxTokens
+    const maxTokens = entry.maxTokens ?? base?.maxTokens ?? family?.maxTokens ?? request.defaultMaxTokens
     if (!Number.isInteger(maxTokens) || maxTokens <= 0) {
       invalid(provider, `model "${entry.id}" maxTokens must be a positive integer`)
     }
@@ -530,11 +556,14 @@ export function resolveRouteModels(request: RouteCatalogRequest): RouteCatalog {
       api,
       provider,
       baseUrl,
-      input: declaredInput(entry.input) ?? base?.input ?? [...request.defaultInput],
+      input: declaredInput(entry.input)
+        ?? base?.input
+        ?? (family?.input !== undefined ? [...family.input] : undefined)
+        ?? [...request.defaultInput],
       cost: base?.cost ?? NO_COST,
       contextWindow,
       maxTokens,
-      ...resolveModelReasoning(provider, entry, base),
+      ...resolveModelReasoning(provider, reasoningSource(entry, family), base),
       ...resolveModelCompat(provider, entry, request.compat, base, api),
     }
   })

@@ -41,6 +41,26 @@
 .headlineText {
   grid-row: 1;
   grid-column: 2;
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+/* Brand slogan stack: Chinese primary line on top, English secondary below. */
+.headlinePrimary {
+  font-size: 26px;
+  line-height: 32px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-primary);
+}
+
+.headlineSecondary {
+  font-size: 13px;
+  line-height: 18px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--dsw-alias-label-caption);
 }
 
 .previewBadge {

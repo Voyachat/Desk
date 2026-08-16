@@ -49,8 +49,10 @@ import type {
 } from '@deepseek-ai/dsh-llm'
 import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
 import { idleWatchdog, timeoutOf } from '@deepseek-ai/dsh-timeout'
+import { catalogModels } from './catalog.ts'
 import type { ResolvedPiAiProviderProfile } from './config.ts'
 import { toPiContext } from './context.ts'
+import { classifyModel } from './model-families.ts'
 import { toStreamChunks } from './stream.ts'
 
 /** One resolution's frozen view: the profiles and the collection built from them. */
@@ -168,6 +170,26 @@ function reasoningInfo(
   }
 }
 
+/**
+ * Whether the directory offers one configured model for agent conversations.
+ * Family knowledge hides the models an OpenAI-compatible listing advertises
+ * beside its chat models — embeddings, image generators, TTS voices, realtime
+ * sockets — and the chat models that refuse the tool calls every agent request
+ * carries. Membership stays advisory exactly as before: a hidden model still
+ * dispatches when a session selects one, so nothing here can strand a running
+ * conversation. Two answers outrank the classifier: an entry that declared its
+ * own input modalities states what its endpoint serves, and a model the
+ * installed pi-ai catalog ships is pi-ai's own claim, not this module's guess.
+ * @param model - model id as configured on the route.
+ * @param profile - the resolved route the model belongs to.
+ * @returns whether the directory should list the model.
+ */
+function servesAgentConversation(model: string, profile: ResolvedPiAiProviderProfile): boolean {
+  if (profile.modelsWithDeclaredInput.has(model)) return true
+  if (catalogModels(profile.provider).has(model)) return true
+  return classifyModel(model).agentServable
+}
+
 /** Merge deployment headers while removing case-insensitive attribution collisions. */
 function requestHeaders(headers: Readonly<Record<string, string>> | undefined): Record<string, string> {
   const attribution = attributionHeaders()
@@ -238,13 +260,15 @@ export class PiAiAdapter extends LlmAdapter {
   override listModels(provider: string): Promise<readonly LlmModelInfo[]> {
     return Promise.resolve().then(() => {
       const snapshot = this.current()
-      this.profileOf(snapshot, provider)
-      return snapshot.models.getModels(provider).map(model => ({
-        provider,
-        id: model.id,
-        name: model.name,
-        inputModalities: [...model.input],
-      }))
+      const profile = this.profileOf(snapshot, provider)
+      return snapshot.models.getModels(provider)
+        .filter(model => servesAgentConversation(model.id, profile))
+        .map(model => ({
+          provider,
+          id: model.id,
+          name: model.name,
+          inputModalities: [...model.input],
+        }))
     })
   }
 

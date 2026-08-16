@@ -128,6 +128,27 @@ function registerTextOnly(ctx: Context): void {
   }('Text Only', []))
 }
 
+function providePromptImages(ctx: Context): void {
+  ctx.provide('attachments', {
+    imageLimits: {
+      maxImageBytes: 4,
+      maxImagesPerMessage: 2,
+      maxMessageImageBytes: 4,
+      maxImagePixels: 4,
+      mediaTypes: ['image/png'],
+    },
+    validateImage: () => Promise.resolve(),
+    saveImage: (input: { data: Uint8Array; mediaType: 'image/png'; name?: string }) => Promise.resolve({
+      attachmentId: 'att-fallback',
+      mediaType: input.mediaType,
+      bytes: input.data.byteLength,
+      width: 1,
+      height: 1,
+      ...input.name === undefined ? {} : { name: input.name },
+    }),
+  } as never)
+}
+
 describe('Web session model selection', () => {
   it('validates an ordered image batch before persisting any member', async () => {
     const { ctx, agent, sessionId } = await harness()
@@ -196,6 +217,152 @@ describe('Web session model selection', () => {
     await ctx.fiber.dispose()
   })
 
+  it('translates image prompts through the configured vision route for a text-only model', async () => {
+    const { ctx, agent, sessionId } = await harness({ provider: 'text-only', model: 'plain' })
+    registerTextOnly(ctx)
+    providePromptImages(ctx)
+    const requests: GenerateOptions[] = []
+    ctx.llm.registerAdapter(['vision'], new class extends CatalogAdapter {
+      override resolveModel(provider: string, model: string): Promise<LlmResolvedModelInfo> {
+        return Promise.resolve({ provider, id: model, name: model, inputModalities: ['text', 'image'] })
+      }
+
+      override async *stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
+        requests.push(options)
+        yield { type: 'block-end', index: 0, block: { type: 'text', text: 'Image 1\nA settings dialog with an error banner.' } }
+        yield { type: 'usage', usage: { inputTokens: 21, outputTokens: 9 } }
+        yield { type: 'finish', reason: { kind: 'stop' } }
+      }
+    }('Vision', []))
+    const followup = vi.fn()
+    Object.assign(agent, { followup })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
+      imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 512 },
+      cwd: '/tmp',
+    })
+
+    const response = await api.sessions.prompt(request({
+      sessionId,
+      mode: 'queue' as const,
+      content: [
+        { type: 'text' as const, text: 'How can I fix this?' },
+        { type: 'image' as const, mediaType: 'image/png' as const, data: 'AQ==', name: 'dialog.png' },
+      ],
+    }))
+
+    expect(response.result.ok).toBe(true)
+    expect(requests).toHaveLength(1)
+    expect(requests[0]).toMatchObject({ provider: 'vision', model: 'eyes', maxTokens: 512, sessionId })
+    expect(requests[0]?.messages[0]?.content).toEqual([
+      { type: 'text', text: 'How can I fix this?' },
+      { type: 'text', text: '\n[Image 1 (dialog.png)]\n' },
+      {
+        type: 'image',
+        attachment: {
+          attachmentId: 'att-fallback', mediaType: 'image/png', bytes: 1, width: 1, height: 1, name: 'dialog.png',
+        },
+      },
+    ])
+    const message = followup.mock.calls[0]?.[0] as UserMessage
+    expect(message.content).toEqual([
+      { type: 'text', text: 'How can I fix this?' },
+      { type: 'text', text: '[Image 1: dialog.png]' },
+      {
+        type: 'text',
+        text: '\n\n<image-analysis source="auxiliary-vision-model">\nImage 1\nA settings dialog with an error banner.\n</image-analysis>',
+      },
+    ])
+    expect(message.content.some(block => block.type === 'image')).toBe(false)
+    expect(message.source).toMatchObject({
+      kind: 'user',
+      imageFallback: {
+        provider: 'vision', model: 'eyes', usage: { inputTokens: 21, outputTokens: 9 },
+      },
+      displayContent: [
+        { type: 'text', text: 'How can I fix this?' },
+        { type: 'image', attachment: { attachmentId: 'att-fallback', name: 'dialog.png' } },
+      ],
+    })
+    await ctx.fiber.dispose()
+  })
+
+  it('does not admit an image prompt when configured fallback analysis is incomplete', async () => {
+    const { ctx, agent, sessionId } = await harness({ provider: 'text-only', model: 'plain' })
+    registerTextOnly(ctx)
+    providePromptImages(ctx)
+    ctx.llm.registerAdapter(['vision'], new class extends CatalogAdapter {
+      override resolveModel(provider: string, model: string): Promise<LlmResolvedModelInfo> {
+        return Promise.resolve({ provider, id: model, name: model, inputModalities: ['text', 'image'] })
+      }
+
+      override async *stream(): AsyncIterable<StreamChunk> {
+        yield { type: 'text-delta', index: 0, text: 'partial' }
+        yield { type: 'finish', reason: { kind: 'max-tokens' } }
+      }
+    }('Vision', []))
+    const followup = vi.fn()
+    Object.assign(agent, { followup })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
+      imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 8 },
+      cwd: '/tmp',
+    })
+
+    const response = await api.sessions.prompt(request({
+      sessionId,
+      mode: 'queue' as const,
+      content: [{ type: 'image' as const, mediaType: 'image/png' as const, data: 'AQ==' }],
+    }))
+
+    expect(response.result).toMatchObject({
+      ok: false,
+      error: { code: 'attachment-error', details: { reason: 'IMAGE_FALLBACK_FAILED' } },
+    })
+    expect(followup).not.toHaveBeenCalled()
+    await ctx.fiber.dispose()
+  })
+
+  it('reports configured fallback transport failures as image admission failures', async () => {
+    const { ctx, agent, sessionId } = await harness({ provider: 'text-only', model: 'plain' })
+    registerTextOnly(ctx)
+    providePromptImages(ctx)
+    ctx.llm.registerAdapter(['vision'], new class extends CatalogAdapter {
+      override resolveModel(provider: string, model: string): Promise<LlmResolvedModelInfo> {
+        return Promise.resolve({ provider, id: model, name: model, inputModalities: ['text', 'image'] })
+      }
+
+      override stream(): AsyncIterable<StreamChunk> {
+        return {
+          [Symbol.asyncIterator]: () => ({
+            next: () => Promise.reject(new Error('provider response must not reach the client')),
+          }),
+        }
+      }
+    }('Vision', []))
+    const followup = vi.fn()
+    Object.assign(agent, { followup })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
+      imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 8 },
+      cwd: '/tmp',
+    })
+
+    const response = await api.sessions.prompt(request({
+      sessionId,
+      mode: 'queue' as const,
+      content: [{ type: 'image' as const, mediaType: 'image/png' as const, data: 'AQ==' }],
+    }))
+
+    expect(response.result).toMatchObject({
+      ok: false,
+      error: { code: 'attachment-error', details: { reason: 'IMAGE_FALLBACK_FAILED' } },
+    })
+    expect(JSON.stringify(response)).not.toContain('provider response')
+    expect(followup).not.toHaveBeenCalled()
+    await ctx.fiber.dispose()
+  })
+
   it('refuses a text-only selection while durable or pending image content remains visible', async () => {
     const { ctx, agent, sessionId } = await harness()
     registerTextOnly(ctx)
@@ -249,8 +416,9 @@ describe('Web session model selection', () => {
       target: 'next-turn',
       start: 0,
       inserted: [{
-        id: 'queued-image', role: 'user', source: { kind: 'user' },
-        content: [{ type: 'image', attachment: ref }],
+        id: 'queued-image', role: 'user',
+        source: { kind: 'user', displayContent: [{ type: 'image', attachment: ref }] },
+        content: [{ type: 'text', text: 'fallback description' }],
       }],
     } as never)
 

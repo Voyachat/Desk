@@ -1,0 +1,24 @@
+/* Theme switch for the raster wordmark variants (see BrandWordmark.tsx). */
+
+.root {
+  display: inline-flex;
+  align-items: center;
+}
+
+.root img {
+  display: block;
+  height: 100%;
+  width: auto;
+}
+
+.dark {
+  display: none;
+}
+
+:global(body[data-ds-dark-theme]) .light {
+  display: none;
+}
+
+:global(body[data-ds-dark-theme]) .dark {
+  display: block;
+}

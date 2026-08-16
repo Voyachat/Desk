@@ -2,8 +2,8 @@
   "name": "@deepseek-ai/dsh-aistaff-desktop",
   "version": "0.1.0-rc.5",
   "private": true,
-  "description": "AI Staff desktop application",
-  "license": "Apache-2.0",
+  "description": "Voyaseek desktop application",
+  "license": "MIT",
   "type": "module",
   "main": "dist/main.js",
   "scripts": {

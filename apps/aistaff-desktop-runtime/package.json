@@ -2,8 +2,8 @@
   "name": "@deepseek-ai/dsh-aistaff-desktop-runtime",
   "version": "0.1.0-rc.5",
   "private": true,
-  "description": "Deploy manifest for the self-contained AI Staff desktop runtime",
-  "license": "Apache-2.0",
+  "description": "Deploy manifest for the self-contained Voyaseek desktop runtime",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "stage": "node scripts/stage-runtime.mjs",

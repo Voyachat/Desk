@@ -1,7 +1,10 @@
 // ChatView: the default conversation view — one stable keyed parent list over
 // final business Nodes, plus paging, pending steering and bottom-follow.
 // Each row dispatches through 'conversation.chat.node'; ui-tool owns the
-// tool-call renderer and its recursive root/subcall composition.
+// tool-call renderer and its recursive root/subcall composition. Consecutive
+// internal-execution Nodes (tool calls, thinking, mid-turn narration of a
+// Turn that closed with a final answer) fold into one ActivityFold row, so
+// the flow reads like the conversation, not the execution log.
 //
 // Scroll: when nested under `[data-conversation-scroll]` (active conversation
 // column), that host is the scrollport and this view is flow content; when
@@ -11,11 +14,17 @@
 // Render economics: order changes only when rows enter, leave or move. Each
 // ChatNodeSeat subscribes to one Node key, so Assistant deltas and Tool
 // lifecycle updates replace only their own row without remounting it.
+// Grouping derives from order plus structural closing facts; the only
+// content-level input is a boolean "the streaming partial already shows
+// prose", which flips at most twice per step.
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { ConversationTimelineSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
 import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
+import { collectFoldFacts, groupChatFlow, partialHasVisibleProse } from './activity-fold.ts'
+import { ActivityFold } from './ActivityFold.tsx'
 import { PendingSteeringBubble } from './MessageItem.tsx'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
 import { formatRunDuration } from './message-chrome.ts'
@@ -150,6 +159,9 @@ export function ChatView({
   const order = useSession(s => s.chat.order)
   const nodeStore = useSession(s => s.chat.nodes)
   const timeline = useSession(s => s.chat.timeline)
+  // The only content-level grouping input: flips when the streaming step
+  // starts/stops producing user-facing prose, never per chunk otherwise.
+  const partialProse = useSession(s => partialHasVisibleProse(s.chat.legacy.partial))
   const inbox = useSession(s => s.queue)
   // Workspace root off the session list row: path summaries display relative to it.
   const cwd = useSessions(s => s.byId[sessionId]?.cwd)
@@ -190,6 +202,33 @@ export function ChatView({
   const lastNode = lastKey === null ? undefined : nodeStore.get(lastKey)
   const lastSteeringId = pendingSteering[pendingSteering.length - 1]?.id ?? null
   const followSig = `${openState}:${firstSeq}:${lastKey}:${order.length}:${running ? 1 : 0}:${lastSteeringId ?? ''}`
+
+  // Activity folding: structural closing facts plus the prose flip decide
+  // which consecutive Nodes collapse into one disclosure row. Recomputed on
+  // flow-shape changes only; member content updates never regroup.
+  const foldFacts = useMemo(() => collectFoldFacts(order, nodeStore), [order, nodeStore])
+  const rows = useMemo(
+    () => groupChatFlow(order, nodeStore, foldFacts, partialProse),
+    [order, nodeStore, foldFacts, partialProse],
+  )
+  const hasRunningFold = rows.some(row => row.kind === 'fold' && row.running)
+
+  const renderMember = (nodeKey: string): ReactNode => (
+    <ChatNodeSeat
+      key={nodeKey}
+      nodeKey={nodeKey}
+      useSession={useSession}
+      selectedCallId={selectedCallId}
+      cwd={cwd}
+      openFile={openFile}
+      inspectCall={inspectCall}
+      forkAt={forkAt}
+      loadImage={loadImage}
+      fileMentions={fileMentions}
+      renderSlot={renderSlot}
+      t={t}
+    />
+  )
 
   const toBottom = (el: HTMLElement): void => {
     anchorRef.current = null
@@ -379,28 +418,28 @@ export function ChatView({
               </button>
             </div>
           )}
-          {order.map(nodeKey => (
-            <ChatNodeSeat
-              key={nodeKey}
-              nodeKey={nodeKey}
-              useSession={useSession}
-              selectedCallId={selectedCallId}
-              cwd={cwd}
-              openFile={openFile}
-              inspectCall={inspectCall}
-              forkAt={forkAt}
-              loadImage={loadImage}
-              fileMentions={fileMentions}
-              renderSlot={renderSlot}
-              t={t}
-            />
-          ))}
+          {rows.map(row => row.kind === 'node'
+            ? renderMember(row.key)
+            : (
+              <ActivityFold
+                key={row.key}
+                members={row.members}
+                running={row.running}
+                toolCalls={row.toolCalls}
+                startTime={row.startTime}
+                endTime={row.endTime}
+                renderMember={renderMember}
+                t={t}
+              />
+            ))}
           {/* No pending placeholders: questions (ui-user-questions) and approvals
               (ApprovalPanel) both take over the composer, so a flow card would
               double-render the same wait. */}
           {/* Turn-level loading signal: rides the whole running turn (first-token
-              wait, tool execution, streaming) so it never flickers per step. */}
-          {running && <TurnStatus startTime={runningTurnStart} t={t} />}
+              wait, tool execution, streaming) so it never flickers per step. A
+              running activity fold already carries the working signal, so the
+              status only covers the node-less first-token wait. */}
+          {running && !hasRunningFold && <TurnStatus startTime={runningTurnStart} t={t} />}
           {pendingSteering.map(item => (
             <PendingSteeringBubble key={item.id} content={item.content} loadImage={loadImage} t={t} />
           ))}

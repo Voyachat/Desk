@@ -36,6 +36,7 @@ export function attachmentErrorText(
 ): string {
   switch (reason) {
     case 'MODEL_DOES_NOT_SUPPORT_IMAGES': return t('image.modelUnsupported')
+    case 'IMAGE_FALLBACK_FAILED': return t('image.fallbackFailed')
     case 'SUBAGENT_IMAGE_UNSUPPORTED': return t('image.subagentUnsupported')
     case 'IMAGE_TOO_MANY_PIXELS': return t('image.tooManyPixels')
     // Undecodable bytes or a declared type its bytes contradict: solvable by

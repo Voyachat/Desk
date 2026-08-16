@@ -6,7 +6,7 @@
 
 import type { MessageId } from '@deepseek-ai/dsh-llm/brand'
 import type { AttachmentIdType, ImageAttachmentLimits, ImageAttachmentRef, ImageMediaType } from '@deepseek-ai/dsh-attachment'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm/types'
+import type { ContentBlock, TokenUsage } from '@deepseek-ai/dsh-llm/types'
 import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session/types'
 // The pure-type outlet: api/ is browser-importable, and the package root's
 // cordis Context merge (via dsh-agent) must not enter client aggregates.
@@ -52,7 +52,15 @@ declare module '@deepseek-ai/dsh-llm' {
      * carries no transport vocabulary; rpcId and the optional Host-validated browser zone are
      * durable JSON fields passed back to the client with the event.
      */
-    'user-rpc': { kind: 'user'; rpcId: RpcId; clientTimeZone?: string }
+    'user-rpc': {
+      kind: 'user'
+      rpcId: RpcId
+      clientTimeZone?: string
+      /** Original image prompt rendered by clients when `content` holds its text fallback. */
+      displayContent?: ContentBlock[]
+      /** Auxiliary route and usage that produced the text fallback. */
+      imageFallback?: { provider: string; model: string; usage?: TokenUsage }
+    }
   }
 }
 
@@ -339,6 +347,9 @@ export interface SessionsApi {
 
   /**
    * Sends text and temporary image bytes to an ordinary session Agent after durable host admission.
+   * A configured image fallback analyzes images through its explicit vision route when the selected
+   * model is text-only; the durable model content becomes text while the source retains the original
+   * display content and auxiliary-call attribution.
    * Browser callers attach their current IANA zone;
    * the Host validates, canonicalizes, and records it on that exact user message. Omission remains
    * valid for non-browser callers. Session-backed subagents reject with `agent-busy` and use

@@ -29,7 +29,7 @@ const MODEL_ONLY_PROFILE_PATCH = `# AI Staff model defaults. API keys are resolv
     provider: google
     model: gemini-3.6-flash
 `
-const PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always require interactive approval.\n- id: approval
+const PRE_IMAGE_FALLBACK_PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always require interactive approval.\n- id: approval
   config:
     policy: ask
 
@@ -68,6 +68,56 @@ const PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always r
     provider: google
     model: gemini-3.6-flash
 `
+const PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always require interactive approval.\n- id: approval
+  config:
+    policy: ask
+
+- id: permission
+  config:
+    defaultPreset: workspace-write
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: ask
+
+# API keys are resolved from the named environment variables.\n- id: llm-pi-ai
+  config:
+    providers:
+      google:
+        apiKeyEnv: GEMINI_API_KEY
+        models:
+          - id: gemini-3.6-flash
+            input: [text, image]
+      dashscope:
+        displayName: DashScope
+        apiKeyEnv: DASHSCOPE_API_KEY
+        api: openai-completions
+        baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
+        models:
+          - id: qwen-plus
+            name: Qwen Plus
+          - id: qwen3.7-flash
+            name: Qwen 3.7 Flash
+            input: [text, image]
+
+- id: api-gateway
+  config:
+    imageFallback:
+      provider: dashscope
+      model: qwen3.7-flash
+      maxTokens: 4096
+
+- id: agent-default-model
+  config:
+    provider: google
+    model: gemini-3.6-flash
+`
 const PROFILE_WORKSPACE = `packages:\n  - .\n\nnodeLinker: hoisted\nautoInstallPeers: false\n`
 
 /** Create the isolated AI Staff profile without overwriting user changes. */
@@ -95,7 +145,9 @@ function writeProfilePatch(file: string): void {
     return
   }
   const existing = readFileSync(file, 'utf8')
-  if (existing === EMPTY_LEGACY_PROFILE_PATCH || existing === MODEL_ONLY_PROFILE_PATCH) {
+  if (existing === EMPTY_LEGACY_PROFILE_PATCH
+    || existing === MODEL_ONLY_PROFILE_PATCH
+    || existing === PRE_IMAGE_FALLBACK_PROFILE_PATCH) {
     writeFileSync(file, PROFILE_PATCH, 'utf8')
   }
 }

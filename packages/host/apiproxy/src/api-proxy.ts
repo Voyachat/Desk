@@ -109,6 +109,10 @@ import {
   inspectApiRemoteSession,
 } from '@deepseek-ai/dsh-api-remotes'
 import { canOpenNativePath, openNativePath, openNativeTextFile } from './native-path-opener.ts'
+import {
+  ImageFallbackError, translateImagesForTextModel,
+} from './image-fallback.ts'
+import type { ImageFallbackConfig } from './image-fallback.ts'
 
 /** Page size when history is called without maxMessages. */
 const DEFAULT_MAX_MESSAGES = 50
@@ -205,24 +209,31 @@ function imageBlockIn(content: unknown, match: (ref: ImageAttachmentRef) => bool
   return undefined
 }
 
-/** Search every durable event carrier that can own model-visible content. */
+/** Search every durable event carrier that can authorize an image reference. */
 function imageInEvent(event: SessionEvent, match: (ref: ImageAttachmentRef) => boolean): ImageAttachmentRef | undefined {
   const data = event.data as {
     content?: unknown
-    message?: { content?: unknown }
-    inserted?: Array<{ content?: unknown }>
+    source?: { displayContent?: unknown }
+    message?: { content?: unknown; source?: { displayContent?: unknown } }
+    inserted?: Array<{ content?: unknown; source?: { displayContent?: unknown } }>
     chunk?: { type?: unknown; block?: unknown }
   }
   const direct = imageBlockIn(data.content, match)
   if (direct !== undefined) return direct
+  const displayed = imageBlockIn(data.source?.displayContent, match)
+  if (displayed !== undefined) return displayed
   if (data.message !== undefined) {
     const wrapped = imageBlockIn(data.message.content, match)
     if (wrapped !== undefined) return wrapped
+    const wrappedDisplay = imageBlockIn(data.message.source?.displayContent, match)
+    if (wrappedDisplay !== undefined) return wrappedDisplay
   }
   if (data.inserted !== undefined) {
     for (const message of data.inserted) {
       const inserted = imageBlockIn(message.content, match)
       if (inserted !== undefined) return inserted
+      const insertedDisplay = imageBlockIn(message.source?.displayContent, match)
+      if (insertedDisplay !== undefined) return insertedDisplay
     }
   }
   if (event.type === 'assistant/chunk' && data.chunk?.type === 'block-end') {
@@ -659,6 +670,8 @@ export interface ApiProxyDefaults {
   sessionExportCompressionLevel?: SessionLogCompressionLevel
   /** Maximum artifact size eligible for one cold blankness read. */
   coldBlankProbeMaxBytes?: number
+  /** Explicit vision route used to translate image prompts for text-only models. */
+  imageFallback?: ImageFallbackConfig
   /**
    * Whether handing a path to the native opener can work at all — the
    * `hasDocument` capability the preset roster reports, and the switch
@@ -1132,6 +1145,13 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
   const muxQueues = new Set<FrameQueue<RpcRequest<MuxFrame>>>()
   const imageAdmissionChains = new WeakMap<Agent, Promise<void>>()
 
+  /** Use a prompt's original content for wire presentation after image fallback translation. */
+  function presentationMessage(message: UserMessage): UserMessage {
+    const source = message.source as MessageSource & { displayContent?: readonly ContentBlock[] }
+    if (source.displayContent === undefined) return message
+    return freezeMessage({ ...message, content: [...source.displayContent] })
+  }
+
   /** Serialize image admission with model selection for one agent. */
   function serializeImageAdmission<T>(agent: Agent, operation: () => Promise<T>): Promise<T> {
     const result = (imageAdmissionChains.get(agent) ?? Promise.resolve()).then(operation)
@@ -1335,14 +1355,16 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         : messages
     }
     return [
-      ...project('next-turn').map(message => ({ id: message.id, placement: 'queued' as const, message })),
+      ...project('next-turn').map(message => ({
+        id: message.id, placement: 'queued' as const, message: presentationMessage(message),
+      })),
       ...project('next-step').map(message => ({
         id: message.id,
         // Only user-origin messages are steering; injected context (approval
         // notices, task completion, attached snapshots) is not a user action
         // and must not render as a pending steering bubble.
         placement: message.source.kind === 'user' ? 'steering' as const : 'context' as const,
-        message,
+        message: presentationMessage(message),
       })),
     ]
   }
@@ -2474,7 +2496,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         if ('refused' in resolved) return resolved.refused
         const agent = resolved.agent
         // Request identity and optional browser zone ride the exact durable user message.
-        const source: MessageSource = {
+        const baseSource: MessageSource = {
           kind: 'user',
           rpcId: request.rpcId,
           ...(canonicalTimeZone === undefined ? {} : { clientTimeZone: canonicalTimeZone }),
@@ -2486,15 +2508,35 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
               const current = selectionFor(agent).current
               const modelInfo = await ctx.llm.resolveModelInfo(current.provider, current.model)
               if (modelInfo.inputModalities !== undefined && !modelInfo.inputModalities.includes('image')) {
-                return err(request, {
-                  code: 'attachment-error',
-                  message: `Model "${current.model}" does not support image input.`,
-                  details: { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
+                if (defaults.imageFallback === undefined) {
+                  return err(request, {
+                    code: 'attachment-error',
+                    message: `Model "${current.model}" does not support image input.`,
+                    details: { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
+                  })
+                }
+                const displayContent = await durablePromptContent(ctx, content)
+                const translated = await translateImagesForTextModel(
+                  ctx,
+                  defaults.imageFallback,
+                  displayContent,
+                  agent.session.id,
+                )
+                const message: UserMessage = createUserMessage({
+                  content: translated.content,
+                  source: {
+                    ...baseSource,
+                    displayContent: translated.displayContent,
+                    imageFallback: translated.attribution,
+                  },
                 })
+                if (mode === 'steer') agent.steer(message)
+                else agent.followup(message)
+                return ok(request, { accepted: true as const })
               }
             }
             const durable = await durablePromptContent(ctx, content)
-            const message: UserMessage = createUserMessage({ content: durable, source })
+            const message: UserMessage = createUserMessage({ content: durable, source: baseSource })
             if (mode === 'steer') agent.steer(message)
             else agent.followup(message)
           } catch (error: unknown) {
@@ -2503,6 +2545,13 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
                 code: 'attachment-error',
                 message: error.message,
                 details: { reason: error.code },
+              })
+            }
+            if (error instanceof ImageFallbackError) {
+              return err(request, {
+                code: 'attachment-error',
+                message: 'The configured image-analysis model could not prepare this prompt.',
+                details: { reason: 'IMAGE_FALLBACK_FAILED' },
               })
             }
             return err(request, {
@@ -2607,7 +2656,11 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           }))
         }
         if (action.kind === 'edit') {
-          agent.inbox.replace(itemId, freezeMessage({ ...message, content: action.content }))
+          const { displayContent: _displayContent, imageFallback: _imageFallback, ...source } = message.source as MessageSource & {
+            displayContent?: readonly ContentBlock[]
+            imageFallback?: unknown
+          }
+          agent.inbox.replace(itemId, freezeMessage({ ...message, content: action.content, source }))
         } else {
           agent.inbox.remove(itemId)
           if (action.kind === 'steer') agent.steer(message)

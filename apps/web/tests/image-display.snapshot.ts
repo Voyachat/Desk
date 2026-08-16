@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 // Multimodal image surfaces over the BUILT client graph (the code-mode-fixture
 // idiom: real bundles via AppWebEntry, keyless FixtureApiClient transport).
-// Opens the fixture history session whose turn 73 carries an image in BOTH a
-// user message and an assistant message, and pins the product surfaces: the
+// Opens the fixture history session whose turn 73 carries a fallback-retained
+// user image and a native assistant image, and pins the product surfaces: the
 // history ImageGallery loading real fixture bytes through the authorized
 // sessions.attachment route, the single-click ImageLightbox, and the composer
 // intake chain (paste → ordered thumbnail rail → image-only send enablement → remove).
@@ -64,6 +64,8 @@ it('renders the history image pair through the authorized attachment route and o
       ],
     }
   `)
+  expect(screen.getByText('历史用户图片')).toBeTruthy()
+  expect(screen.queryByText(/fixture fallback visual description/)).toBeNull()
   const userImage = document.querySelector<HTMLElement>('[data-align="end"] img')!
 
   // A single click opens the original-size lightbox; Escape/close dismisses it.

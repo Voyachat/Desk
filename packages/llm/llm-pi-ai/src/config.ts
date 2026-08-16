@@ -166,6 +166,14 @@ export interface ResolvedPiAiProviderProfile
    * own, so a catalog capability must not appear here.
    */
   configuredMaxTokens: ReadonlyMap<string, number>
+  /**
+   * Model ids whose entry declared its own input modalities. A declaration is
+   * the profile author's answer to what the endpoint serves, and it outranks
+   * the family classification the directory otherwise applies, so a model the
+   * classifier would not offer can still be listed once its entry says what
+   * it accepts.
+   */
+  modelsWithDeclaredInput: ReadonlySet<string>
 }
 
 /** Plugin configuration: the provider routes this instance owns. */
@@ -347,6 +355,11 @@ export function resolveProfiles(
       defaultContextWindow: source.defaultContextWindow ?? DEFAULT_CONTEXT_WINDOW,
       defaultMaxTokens: source.defaultMaxTokens ?? DEFAULT_MAX_TOKENS,
     })
+    const modelsWithDeclaredInput = new Set(
+      (source.models ?? [])
+        .filter(entry => (entry.input?.length ?? 0) > 0)
+        .map(entry => entry.id),
+    )
     const { apiKeyEnv, retryPolicy, models: _models, displayName: _displayName, ...rest } = source
     resolved.set(provider, {
       ...rest,
@@ -358,6 +371,7 @@ export function resolveProfiles(
       ...rest.headers === undefined ? {} : { headers: { ...rest.headers } },
       ...rest.thinkingBudgets === undefined ? {} : { thinkingBudgets: { ...rest.thinkingBudgets } },
       configuredMaxTokens: catalog.configuredMaxTokens,
+      modelsWithDeclaredInput,
       piProvider: buildProvider({
         provider,
         displayName,

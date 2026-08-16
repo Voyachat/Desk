@@ -1,4 +1,28 @@
 # Aistaff product rows are an additive layer over dsh-base + dsh-web-app.
+
+# Product identity: this deployment presents the agent as Voyaseek. The
+# upstream harness identity sentence is suppressed (MIT attribution travels
+# with the distributed code in the desktop legal bundle, not with runtime
+# text); the persona keeps the web-app variables it already relied on.
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    persona: >-
+      You are Voyaseek, a coding agent powered by the {{model}} model. Your working directory is {{cwd}}.
+
+# Desktop customers are end users of the Voyaseek product, not Harness
+# developers iterating a checkout: the model-visible Web-surface orientation
+# (HMR update contract, harness-source line, DSH_WEB_URL bash variable) is
+# suppressed so the agent never presents the upstream developer workflow or
+# its branding. printUrl stays on because the Electron shell keys its
+# readiness on the URL line. Only `config` is replaced; the web-app row's
+# `inject: [webStartup]` persists, so the trustedHosts expression still binds.
+- id: web-runtime
+  config:
+    printUrl: true
+    surfaceContext: false
+    trustedHosts: !!js ctx.webStartup.trustedHosts
+
 - insert:
     - id: aistaff-product-projection
       name: '@deepseek-ai/dsh-aistaff-product-projection'

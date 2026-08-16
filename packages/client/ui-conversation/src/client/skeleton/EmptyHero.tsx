@@ -1,8 +1,8 @@
-// Hero chrome for the blank-draft phase of ConversationRoot: fish headline,
-// glow backdrop, and the workspace row. Pure presentation — the resident
-// composer is NOT rendered here (it keeps its own stable tree position in
-// ConversationRoot so the textarea survives the hero → composer flip); CSS
-// positions it over this shell's glow area during the hero phase.
+// Hero chrome for the blank-draft phase of ConversationRoot: mark + slogan
+// headline, glow backdrop, and the workspace row. Pure presentation — the
+// resident composer is NOT rendered here (it keeps its own stable tree
+// position in ConversationRoot so the textarea survives the hero → composer
+// flip); CSS positions it over this shell's glow area during the hero phase.
 
 import { useId } from 'react'
 import type { ReactNode, RefObject } from 'react'
@@ -117,11 +117,19 @@ export function HeroShell({ t, children }: HeroShellProps) {
     <div className={css.root}>
       <div className={css.stack}>
         <div className={css.headline}>
-          {/* figma 34:10412: fish 34×25 leading the headline, gap 10. */}
+          {/* Mark 34 leading the slogan, gap 10. */}
           <span className={css.fishHitbox}>
             <FishLogo size={34} className={css.fish} />
           </span>
-          <span className={css.headlineText}>{t('hero.headline')}</span>
+          {/* Brand slogan: locale copy is always the bilingual pair, Chinese
+              line on top, English line below (split on the newline). */}
+          <span className={css.headlineText}>
+            {t('hero.headline').split('\n').map((line, index) => (
+              <span key={line} className={index === 0 ? css.headlinePrimary : css.headlineSecondary}>
+                {line}
+              </span>
+            ))}
+          </span>
           <span className={css.previewBadge}>{t('hero.preview')}</span>
         </div>
         <div className={css.body}>

@@ -42,6 +42,7 @@ describe('attachment rejection copy', () => {
 
   it('maps user-solvable reasons to limit-naming copy', () => {
     expect(attachmentErrorText(t, 'MODEL_DOES_NOT_SUPPORT_IMAGES')).toBe('当前模型不支持图片，请切换支持图片的模型')
+    expect(attachmentErrorText(t, 'IMAGE_FALLBACK_FAILED')).toBe('图片解析失败，请检查视觉模型配置或切换支持图片的模型')
     expect(attachmentErrorText(t, 'SUBAGENT_IMAGE_UNSUPPORTED')).toBe('子智能体会话暂不支持图片')
     expect(attachmentErrorText(t, 'IMAGE_TOO_MANY_PIXELS')).toBe('图片分辨率过大，请压缩后重试')
     expect(attachmentErrorText(t, 'INVALID_IMAGE')).toBe('仅支持 PNG、JPG、WebP、GIF 格式的图片')

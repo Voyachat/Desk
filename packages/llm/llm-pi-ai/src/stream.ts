@@ -40,6 +40,12 @@ function classifyPiAiError(message: string): string {
   if (/\b(?:401|403)\b/.test(message)) return 'AUTH'
   if (isQuotaExceededError(message)) return QUOTA_EXCEEDED_CODE
   if (/\b429\b|rate.?limit/i.test(message)) return 'RATE_LIMIT'
+  // pi-ai currently flattens provider errors to text. Keep this narrow to
+  // explicit account activation wording so an ordinary bad parameter remains
+  // INVALID_REQUEST even when both arrive as HTTP 400.
+  if (/\b(?:product|model)\b[^\r\n]{0,80}\b(?:is not activated|has not been activated|is not enabled for (?:this|your) account)\b/i.test(message)) {
+    return 'MODEL_ACCESS_DENIED'
+  }
   if (/\b400\b|invalid.?request/i.test(message)) return 'INVALID_REQUEST'
   if (/\b5\d\d\b/.test(message)) return 'SERVER'
   if (/\btime(?:d)?\s*out\b|timeout/i.test(message)) return 'TIMEOUT'

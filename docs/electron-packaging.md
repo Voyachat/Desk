@@ -11,6 +11,10 @@ This reference defines how DeepSeek Harness is packaged as a desktop application
 - Electron and Forge are adopted as versioned dependencies, not copied or forked source. Their licenses and transitive notices join `THIRD_PARTY_NOTICES.md` when the dependencies are added.
 - The first packaged runtime remains outside ASAR. Cordis package discovery, profile package links, client bundles, worker entrypoints, native addons, and helper executables require real filesystem paths. A later ASAR change must prove every such path is unpacked and executable on each target.
 
+### Product icon
+
+Every AI Staff macOS package uses [`apps/aistaff-desktop/assets/app-icon.jpg`](../apps/aistaff-desktop/assets/app-icon.jpg) as the product artwork and its generated `app-icon.icns` as the distribution icon. Electron Forge must pass that same ICNS file to both `packagerConfig.icon` and the DMG maker `icon`; a build must not fall back to Electron's default icon or use a separate DMG icon. Replacing the product artwork requires an explicit product decision, regeneration of the complete 16–1024 px ICNS set, and updates to the Forge configuration test.
+
 ## Current runtime topology
 
 The Web frontend is a Host-assembled plugin application, not a standalone static SPA. `apps/web` builds the shell, while [`@deepseek-ai/dsh-client-modules`](../packages/client/modules/README.md) discovers each `dsh.client` declaration, serves its `lib/client.js`, and injects `window.__DSH_BOOT__`. [`@deepseek-ai/dsh-client-connection`](../packages/client/connection/README.md) carries unary requests over HTTP and the mux and host event streams over WebSocket.

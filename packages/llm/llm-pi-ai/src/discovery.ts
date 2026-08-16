@@ -17,7 +17,11 @@
  * shape a gateway, a self-hosted server, and the official endpoints all agree
  * on, which is the case this action exists for; every other protocol reports
  * that it cannot be interrogated so the surface falls back to hand-entry
- * rather than guessing a response shape.
+ * rather than guessing a response shape. A wire listing is additionally
+ * narrowed to the models an agent conversation can use — endpoints list their
+ * embeddings, image generators, and voice models beside their chat models —
+ * and known chat families lend the capacities the listing withheld
+ * ({@link adoptableModels}).
  *
  * @module dsh-llm-pi-ai/discovery
  */
@@ -26,6 +30,7 @@ import { INVALID_CREDENTIAL_CODE, LlmError, normalizeApiKey } from '@deepseek-ai
 import type { LlmDiscoveredModel, LlmModelDiscoveryRequest } from '@deepseek-ai/dsh-llm'
 import { attributionHeaders } from '@deepseek-ai/dsh-llm'
 import { catalogModels } from './catalog.ts'
+import { classifyModel } from './model-families.ts'
 
 /**
  * Protocols whose model listing this module can read: the two that speak
@@ -280,5 +285,38 @@ export async function discoverModels(
   } catch (error: unknown) {
     throw new LlmError(`${url} did not answer with JSON`, 'DISCOVERY_FAILED', { cause: error })
   }
-  return readListing(body)
+  return adoptableModels(readListing(body))
+}
+
+/**
+ * The candidates an endpoint's listing yields for adoption. Endpoints such as
+ * DashScope list every model they host beside their chat models — embeddings,
+ * image generators, TTS voices, realtime sockets — and an agent conversation
+ * can use none of them; adopting one only surfaces the mismatch as a failed
+ * turn. Classification removes them here, where the surface still offers the
+ * whole chat catalog, instead of mid-conversation. Models the classifier does
+ * not know stay offered: hiding an unknown id would break a gateway this
+ * knowledge base has never seen. Known chat families also lend the capacities
+ * their listing withheld, so an adopted row materializes with its real context
+ * window instead of the route's guess.
+ * @param listed - every entry the listing disclosed, in endpoint order.
+ * @returns the servable candidates, endpoint order preserved.
+ */
+function adoptableModels(listed: readonly LlmDiscoveredModel[]): LlmDiscoveredModel[] {
+  const models: LlmDiscoveredModel[] = []
+  for (const model of listed) {
+    const family = classifyModel(model.id)
+    if (!family.agentServable) continue
+    const facts = family.facts
+    models.push({
+      ...model,
+      ...model.contextWindow === undefined && facts?.contextWindow !== undefined
+        ? { contextWindow: facts.contextWindow }
+        : {},
+      ...model.maxTokens === undefined && facts?.maxTokens !== undefined
+        ? { maxTokens: facts.maxTokens }
+        : {},
+    })
+  }
+  return models
 }
