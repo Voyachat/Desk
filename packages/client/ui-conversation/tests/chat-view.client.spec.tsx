@@ -667,7 +667,8 @@ describe('ChatView', () => {
     const h = makeHarness({
       nodes: [toolResult(3, 'a')],
     })
-    render(<h.ChatView {...h.props} />)
+    const view = render(<h.ChatView {...h.props} />)
+    expandActivityFolds(view)
     expect(h.toolOwners[0]?.inspectCall).toBe(h.inspectCall)
   })
 
@@ -887,6 +888,7 @@ describe('ChatView', () => {
       nodes: [user(1, 'q'), assistant(2, 'old answer'), toolResult(3, 'a')],
     })
     const view = render(<h.ChatView {...h.props} />)
+    expandActivityFolds(view)
     const tool = view.getByTestId('tool-seat-a')
     const beforeHtml = tool.innerHTML
     act(() => {
@@ -914,6 +916,8 @@ describe('ChatView', () => {
       return <div data-testid="counting-row" />
     })
     const view = render(<h.ChatView {...h.props} />)
+    // The tool run starts folded; expanding mounts the member seat once.
+    expandActivityFolds(view)
     expect(view.getByTestId('counting-row')).toBeTruthy()
     const afterMount = rowRenders
     act(() => {
@@ -927,18 +931,76 @@ describe('ChatView', () => {
 
   it('updates the selected call id handed to the Tool seat', () => {
     const h = makeHarness({ nodes: [toolResult(3, 'a')] })
-    render(<h.ChatView {...h.props} />)
+    const view = render(<h.ChatView {...h.props} />)
+    expandActivityFolds(view)
     expect(h.toolOwners.at(-1)?.selectedCallId).toBeUndefined()
     act(() => { h.setSelection({ turnSeq: 3, callId: 'a', toolName: 'bash' }) })
     expect(h.toolOwners.at(-1)?.selectedCallId).toBe('a')
   })
 
-  it('hands running calls to a live Tool group', () => {
+  it('folds a completed turn\'s internal activity into one row and keeps the final answer visible', () => {
+    const h = makeHarness({
+      nodes: [
+        user(1, 'check the leaderboard'),
+        assistant(2, 'on it, fetching data', 1),
+        toolResult(3, 'a'),
+        assistant(4, 'let me parse', 1),
+        toolResult(5, 'b'),
+        assistant(6, 'final answer', 1),
+      ],
+      turnEnds: new Map([[1, 7]]),
+    })
+    const view = render(<h.ChatView {...h.props} />)
+    // Only the user bubble, the final answer, and the turn footer stay
+    // outside the fold.
+    expect(view.getByText('check the leaderboard')).toBeTruthy()
+    expect(view.getByText('final answer')).toBeTruthy()
+    expect(view.queryByText('on it, fetching data')).toBeNull()
+    expect(view.queryByText('let me parse')).toBeNull()
+    expect(view.queryByTestId('tool-seat-a')).toBeNull()
+    expect(view.queryByTestId('tool-seat-b')).toBeNull()
+    expect(view.getByText('已处理')).toBeTruthy()
+    expect(view.getByText('3秒 · 2 步')).toBeTruthy()
+    expandActivityFolds(view)
+    expect(view.getByText('on it, fetching data')).toBeTruthy()
+    expect(view.getByText('let me parse')).toBeTruthy()
+    expect(view.getByTestId('tool-seat-a')).toBeTruthy()
+    expect(view.getByTestId('tool-seat-b')).toBeTruthy()
+  })
+
+  it('keeps a streaming answer visible while earlier thinking stays folded', () => {
+    const h = makeHarness({
+      running: true,
+      nodes: [user(1, 'q')],
+      partial: { turn: 1, step: 1, blocks: [{ kind: 'reasoning', text: 'hmm' }] },
+    })
+    const view = render(<h.ChatView {...h.props} />)
+    expect(view.getByText('正在处理')).toBeTruthy()
+    expect(view.queryByText('Deep diving...')).toBeNull()
+    expect(view.queryByText('hmm')).toBeNull()
+    act(() => {
+      h.set({
+        partial: {
+          turn: 1,
+          step: 1,
+          blocks: [{ kind: 'reasoning', text: 'hmm' }, { kind: 'text', text: 'the answer' }],
+        },
+      })
+    })
+    // The streaming step leaves the fold once prose arrives.
+    expect(view.getByText('the answer')).toBeTruthy()
+  })
+
+  it('hands running calls to a live Tool group and lets the fold carry the working signal', () => {
     const h = makeHarness({ runningCalls: [runningCall('r1')], running: true })
     const view = render(<h.ChatView {...h.props} />)
+    // The running call folds into one live activity row; its disclosure
+    // replaces the bare Deep-diving status while the fold exists.
+    expect(view.getByText('正在处理')).toBeTruthy()
+    expect(view.queryByText('Deep diving...')).toBeNull()
+    expandActivityFolds(view)
     expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
     expect(h.toolOwners[0]?.block).toMatchObject({ callId: 'r1', argsRaw: '{"command":"cmd-r1"}' })
-    expect(view.getByRole('status').textContent).toBe('Deep diving...')
   })
 
   it('keeps the Tool renderer mounted when a running call settles into log order', () => {
@@ -969,6 +1031,7 @@ describe('ChatView', () => {
         : opts?.fallback ?? null
     }) as ChatViewSlotProps['renderSlot']
     const view = render(<h.ChatView {...h.props} />)
+    expandActivityFolds(view)
     const tool = view.getByTestId('stateful-tool')
     const row = view.container.querySelector('[data-chat-flow-key="fixture:tool:r1"]')
     expect(tool.dataset.state).toBe('running')
@@ -1021,7 +1084,8 @@ describe('ChatView', () => {
       calls.push({ key, owner, ...(opts?.entryKey !== undefined ? { entryKey: opts.entryKey } : {}) })
       return opts?.fallback ?? null
     })
-    render(<h.ChatView {...h.props} />)
+    const view = render(<h.ChatView {...h.props} />)
+    expandActivityFolds(view)
     expect(calls).toHaveLength(1)
     expect(calls[0]).toMatchObject({
       key: 'conversation.chat.node',
