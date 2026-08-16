@@ -1047,3 +1047,63 @@ describe('model-family enrichment', () => {
     ])
   })
 })
+
+describe('endpoint wire corrections', () => {
+  it('disables the developer system role for the DashScope endpoint', () => {
+    const resolved = resolveProfiles({
+      dashscope: {
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        models: [{ id: 'deepseek-v4-pro' }],
+      },
+    })
+    const models = resolved.get('dashscope')?.piProvider.getModels() ?? []
+
+    // DashScope answers role 'developer' with HTTP 400; the materialized
+    // model forces pi-ai onto the universal system role instead.
+    expect(models).toMatchObject([{ id: 'deepseek-v4-pro', compat: { supportsDeveloperRole: false } }])
+  })
+
+  it('applies the same correction to the international DashScope endpoint', () => {
+    const resolved = resolveProfiles({
+      dashscope: {
+        api: 'openai-completions',
+        baseURL: 'https://dashscope-intl.aliyuncs.com/compatible-mode/v1',
+        models: [{ id: 'qwen3.8-max' }],
+      },
+    })
+    const models = resolved.get('dashscope')?.piProvider.getModels() ?? []
+
+    expect(models).toMatchObject([{ id: 'qwen3.8-max', compat: { supportsDeveloperRole: false } }])
+  })
+
+  it('leaves an unrecognized gateway to pi-ai URL detection', () => {
+    const resolved = resolveProfiles({
+      'acme-gateway': {
+        api: 'openai-completions',
+        baseURL: 'https://gateway.acme.example/v1',
+        models: [{ id: 'deepseek-v4-pro' }],
+      },
+    })
+    const models = resolved.get('acme-gateway')?.piProvider.getModels() ?? []
+    const compat = models[0]?.compat as OpenAICompletionsCompat | undefined
+
+    expect(compat?.supportsDeveloperRole).toBeUndefined()
+  })
+
+  it('keeps a configured reasoning switch beside the endpoint correction', () => {
+    const resolved = resolveProfiles({
+      dashscope: {
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        compat: { thinkingFormat: 'deepseek' },
+        models: [{ id: 'deepseek-v4-pro' }],
+      },
+    })
+    const models = resolved.get('dashscope')?.piProvider.getModels() ?? []
+
+    expect(models).toMatchObject([
+      { id: 'deepseek-v4-pro', compat: { thinkingFormat: 'deepseek', supportsDeveloperRole: false } },
+    ])
+  })
+})

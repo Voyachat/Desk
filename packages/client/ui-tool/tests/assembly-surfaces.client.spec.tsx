@@ -91,12 +91,22 @@ async function bench(nodes: ToolResultNode[]) {
   return runtime
 }
 
+/** Render the root and expand every activity fold: these cases assert Tool
+ *  rows, which the conversation view folds collapsed by default. */
+function renderRootExpanded(runtime: SlotTestRuntime) {
+  const view = runtime.renderRoot()
+  for (const row of view.container.querySelectorAll('[data-activity-fold] [data-disclosure-row]')) {
+    fireEvent.click(row)
+  }
+  return view
+}
+
 describe('todo_write assembly (product registrations, no outlet twins)', () => {
   it('reaches the keyed toolview row and the dock plan strip, and the strip follows projection retirement', async () => {
     const runtime = await bench([todoResult(3)])
     // The dock strip reads the host-computed 'todos' projection.
     runtime.sessions.behavior(SID).projections.set('todos', TODOS)
-    const view = runtime.renderRoot()
+    const view = renderRootExpanded(runtime)
 
     // Keyed toolview registration took the row (summary derived from args).
     const row = view.container.querySelector('[data-tool="todo_write"]')
@@ -131,7 +141,7 @@ describe('terminal card assembly', () => {
       // An unregistered tool with terminal views: GenericToolCard fallback.
       bashResult(4, 'c-fallback', { call: { name: 'fx-bash', argsRaw: '{"command":"ls -la"}' } }),
     ])
-    const view = runtime.renderRoot()
+    const view = renderRootExpanded(runtime)
 
     // Keyed BashRow: collapsed by default, the whole summary row is the toggle.
     const keyedRow = view.container.querySelector('[data-sample="bash"]')

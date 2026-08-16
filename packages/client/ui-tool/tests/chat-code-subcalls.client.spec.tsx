@@ -183,7 +183,13 @@ async function bench(snapshot: ConversationSnapshot) {
 }
 
 function mountApp(slots: SlotRegistry) {
-  return render(<>{slots.renderSlot('root', {})}</>)
+  const view = render(<>{slots.renderSlot('root', {})}</>)
+  // Activity folds start collapsed; these Tool-presentation cases read the
+  // member rows, so expand every fold once after mount.
+  for (const row of view.container.querySelectorAll('[data-activity-fold] [data-disclosure-row]')) {
+    fireEvent.click(row)
+  }
+  return view
 }
 
 describe('run_code sub-calls through the real chat machinery', () => {

@@ -10,7 +10,7 @@
 // the declaration then land through slots.inject when the chat entry appears.
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, fireEvent } from '@testing-library/react'
 import type { ISession, SessionId, ToolResultNode } from '@deepseek-ai/dsh-client-runtime/client'
 import type { PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
 import { SlotTestRuntime, stubSettingsScope } from '@deepseek-ai/dsh-client-test-runtime'
@@ -88,13 +88,23 @@ async function bench(nodes: ToolResultNode[]) {
   return { runtime, slots: runtime.slots, layout }
 }
 
+/** Render the root and expand every activity fold: these cases assert Tool
+ *  rows, which the conversation view folds collapsed by default. */
+function renderRootExpanded(runtime: SlotTestRuntime) {
+  const view = runtime.renderRoot()
+  for (const row of view.container.querySelectorAll('[data-activity-fold] [data-disclosure-row]')) {
+    fireEvent.click(row)
+  }
+  return view
+}
+
 describe('keyed toolview hole through the real machinery', () => {
   it('dispatches registered rows by entryKey and unregistered tools to the GenericToolCard fallback', async () => {
     const b = await bench([
       toolResult(3, 'c1', 'bash'),
       toolResult(4, 'c2', 'mystery', '{"n":1}'),
     ])
-    const view = b.runtime.renderRoot()
+    const view = renderRootExpanded(b.runtime)
     // bash: the sample plugin's keyed registration took the row (root
     // session → global arm, decided inside the component off useSessions).
     expect(view.container.querySelector('[data-sample="bash"]')).not.toBeNull()
@@ -112,7 +122,7 @@ describe('keyed toolview hole through the real machinery', () => {
       toolResult(5, 'cordis-3', 'cordis_stop', '{"id":"dyn-2"}'),
       toolResult(6, 'cordis-4', 'cordis_undefine', '{"id":"dyn-2"}'),
     ])
-    const view = b.runtime.renderRoot()
+    const view = renderRootExpanded(b.runtime)
 
     // Every one of these rows is user-visible on each model define/run, so each
     // names its act and carries the package id rather than falling back to the
@@ -130,7 +140,7 @@ describe('keyed toolview hole through the real machinery', () => {
 
   it('file-path clicks travel owner openFile → chat inject → workspaces.openPath', async () => {
     const b = await bench([toolResult(3, 'c1', 'read', '{"path":"src/a.ts"}')])
-    const view = b.runtime.renderRoot()
+    const view = renderRootExpanded(b.runtime)
     view.getByText('src/a.ts').click()
     expect(b.layout.openDetails).not.toHaveBeenCalled()
     await vi.waitFor(() => {
@@ -141,7 +151,7 @@ describe('keyed toolview hole through the real machinery', () => {
 
   it('bash summary clicks do not open details or host paths', async () => {
     const b = await bench([toolResult(3, 'c1', 'bash')])
-    const view = b.runtime.renderRoot()
+    const view = renderRootExpanded(b.runtime)
     view.getByText('Build').click()
     expect(b.layout.openDetails).not.toHaveBeenCalled()
     expect(b.runtime.workspaces.calls.some(c => c.method === 'openPath')).toBe(false)
@@ -150,7 +160,7 @@ describe('keyed toolview hole through the real machinery', () => {
 
   it('a live keyed registration takes over its tool row and unload reverts to the fallback', async () => {
     const b = await bench([toolResult(3, 'c2', 'mystery', '{"n":1}')])
-    const view = b.runtime.renderRoot()
+    const view = renderRootExpanded(b.runtime)
     expect(view.getByText('Tool call')).toBeTruthy()
     let dispose = (): void => {}
     dispose = b.slots.register(
@@ -191,7 +201,7 @@ describe('keyed toolview hole through the real machinery', () => {
     }, ({ mark, poke }: ToolCallViewProps & { mark: string; poke: () => void }) => (
       <button data-testid="probe-row" onClick={poke}>{mark}</button>
     ))
-    const view = b.runtime.renderRoot()
+    const view = renderRootExpanded(b.runtime)
     const row = view.getByTestId('probe-row')
     expect(row.textContent).toBe(`for:${SID}`)
     row.click()

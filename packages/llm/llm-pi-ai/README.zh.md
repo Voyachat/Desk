@@ -89,6 +89,8 @@ profile 的 `models` 列表是*替换*该路由已安装 catalog，而不是扩�
 
 思考级别如何在协议中传输——单独一个 `reasoning_effort`、DeepSeek 的 `thinking: {type}` 加上档位、z.ai 的 `thinking` 对象，诸如此类——就是 pi-ai 的 `compat.thinkingFormat`，pi-ai 会从端点 URL 猜测它；私有网关的 URL 什么也说明不了，于是说 DeepSeek 方言的网关只会收到 OpenAI 方言的请求，且无从更正。因此 `compat.thinkingFormat` 与 `compat.supportsReasoningEffort` 既可配置在路由上（作为其模型的默认值），也可按模型配置（逐字段胜出），解析顺序为模型 → 路由 → 已安装 catalog 条目 → pi-ai 按 URL 得出的猜测；设置路由级开关会为路由上的每个模型遮蔽 catalog 条目的值，而且除了重述其值，没有任何写法能把某个字段交还给 catalog。`thinkingFormat` 接受 pi-ai 可分派的各种格式，但不含两个 `chat-template` 变体：它们需要的 `chatTemplateKwargs` 本配置并不暴露。两个开关都只存在于 `openai-completions` 上——其余协议的推理形状由协议本身承载——因此在其他协议的模型上设置模型级开关会使解析失败，路由级开关会跳过其他协议的模型，而完全没有 `openai-completions` 模型的路由则会被拒绝。pi-ai compat 面的其余部分（`supportsStore`、`maxTokensField`……）保持自动检测，特意不在此处开放配置。
 
+有些 wire 事实属于端点而不是任何 profile，物化会在上述 compat 链之后应用它们并使其获胜。DashScope 的 OpenAI 兼容端点拒绝 `developer` 消息角色，而 pi-ai 基于 URL 的探测只把该主机识别为一个 OpenAI 兼容端点，会为每个 reasoning 模型的系统提示发送 `developer` 角色——一旦 agent 请求携带系统提示，该模型便以 HTTP 400 失败。因此经 `dashscope.aliyuncs.com` 与 `dashscope-intl.aliyuncs.com` 服务的模型物化时会禁用 `supportsDeveloperRole`，其系统提示改走所有 OpenAI 兼容端点都接受的 `system` 角色。
+
 条目与已安装 catalog 都没有给出尺寸的模型，会先查模型族知识库，再回退到该路由的 `defaultContextWindow`（262,144）与 `defaultMaxTokens`（32,768），因此一份只公布 id 的列表同样能产出可服务的路由。路由回退值本质上都是猜测，这正是它们作为路由字段、供网关服务更小模型的部署一次性更正的原因，而不是埋在适配器里的常量；回退值只用于给模型定尺寸，绝不会变成单次请求上限。同一个知识库还会为手工声明的模型补上其所属族的输入模态与可选推理档位，在解析顺序中位于显式条目之下、路由默认之上；分类器本身见「模型族知识库」一节。
 
 请求模态的解析顺序是：条目的 `input` → 已安装 catalog 条目 → 路由的 `defaultInput`（默认 `[text]`），与上面两个容量字段的顺序和「回退值」定位完全一致。因此 catalog 模型保留 catalog 为它记录的模态，更窄的路由默认值也绝不会把它剥掉；而**未被 catalog 描述的**模型全都接受图片的网关，只需在路由上写一次 `[text, image]`，不必逐条目写。条目的空列表与缺省同义——它描述的是一个什么都不接受的模型，因此不作答，解析继续往下走——这正是当 `models` 条目点到某个 catalog 模型却不声明模态时，该模型仍保留 catalog 自有模态的原因。路由的那个则不得为空，因为它下面已经没有可以代为作答的层级。

@@ -33,8 +33,8 @@ describe('managed DSH runtime', () => {
     const calls: unknown[][] = []
     const onLog = vi.fn()
     const runtime = new ManagedRuntime({
-      executable: '/Applications/AI Staff.app/Contents/MacOS/AI Staff',
-      entry: '/Applications/AI Staff.app/Contents/Resources/runtime/apps/cli/lib/bin.js',
+      executable: '/Applications/Voyaseek.app/Contents/MacOS/Voyaseek',
+      entry: '/Applications/Voyaseek.app/Contents/Resources/runtime/apps/cli/lib/bin.js',
       dshHome: '/tmp/aistaff-home',
       cwd: '/tmp/aistaff-workspace',
       credentialEnvironment: MODEL_CREDENTIAL_ENVIRONMENT,
@@ -51,10 +51,10 @@ describe('managed DSH runtime', () => {
     child.stdout.write('dsh web: http://127.0.0.1:53100\n')
     await expect(started).resolves.toMatchObject({ href: 'http://127.0.0.1:53100/' })
     expect(calls).toHaveLength(1)
-    expect(calls[0]?.[0]).toBe('/Applications/AI Staff.app/Contents/MacOS/AI Staff')
+    expect(calls[0]?.[0]).toBe('/Applications/Voyaseek.app/Contents/MacOS/Voyaseek')
     expect(calls[0]?.[1]).toEqual([
       '--expose-internals',
-      '/Applications/AI Staff.app/Contents/Resources/runtime/apps/cli/lib/bin.js',
+      '/Applications/Voyaseek.app/Contents/Resources/runtime/apps/cli/lib/bin.js',
       '--profile', 'aistaff', '--port', '0',
     ])
     expect(calls[0]?.[2]).toMatchObject({

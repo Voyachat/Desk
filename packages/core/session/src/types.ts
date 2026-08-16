@@ -96,6 +96,14 @@ export interface SessionHeader {
    * would replay history the model can no longer act on.
    */
   readonly agentPreset?: string
+  /**
+   * Agent driver runtime this session's agent runs under (e.g. the default
+   * loop or an alternative driver registered with the loop factory). Durable
+   * because the runtime decides how history is produced: a resume under a
+   * different driver would continue a transcript that driver cannot drive.
+   * Absent means the deployment default driver.
+   */
+  readonly agentRuntime?: string
 }
 
 /**
@@ -118,6 +126,7 @@ export interface CreateSessionOptions {
     readonly origin?: 'subagent'
     readonly delegationDepth?: number
     readonly agentPreset?: string
+    readonly agentRuntime?: string
   }
 }
 

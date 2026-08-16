@@ -28,6 +28,9 @@ import type {} from '@deepseek-ai/dsh-tools'
 import type { SessionPersistence } from '@deepseek-ai/dsh-session-persistence'
 import { ReactLoopAgent } from './agent.ts'
 import { DEFAULT_MAX_PARALLEL_TOOL_CALLS } from './constants.ts'
+import type { AgentDriver, AgentDriverFactory } from './driver.ts'
+
+export type { AgentDriver, AgentDriverFactory, CreateDriverInput } from './driver.ts'
 
 /** Fiber states that cannot own or serve a new lifecycle. */
 const INACTIVE_STATES: ReadonlySet<FiberState> = new Set([
@@ -148,7 +151,7 @@ function assertAgentOptions(options: AgentOptions): void {
 
 /** Prepared-but-unpublished agent resources sharing one memoized teardown. */
 interface PreparedAgent {
-  agent: ReactLoopAgent
+  agent: AgentDriver
   /** Aborts when the factory unloads, the caller cancels, or teardown begins — ends any setup await. */
   signal: AbortSignal
   /** Enter registries, announce, notify session-start, and start the machine. */
@@ -315,6 +318,8 @@ export class AgentLoop extends Service implements AgentFactory {
   private readonly ownership: FactoryOwnership
   /** Plain holder prevents Cordis from re-tracing the factory's dependency context through a caller shadow. */
   private readonly runtime: { ctx: Context }
+  /** Alternative driver factories keyed by their runtime id. */
+  private readonly driverFactories = new Map<string, AgentDriverFactory>()
 
   constructor(ctx: Context, config: Config) {
     super(ctx, 'agentLoop')
@@ -486,7 +491,7 @@ export class AgentLoop extends Service implements AgentFactory {
     callerSignal?.addEventListener('abort', onCallerAbort, { once: true })
     this.ownership.signal.addEventListener('abort', onFactoryTeardown, { once: true })
 
-    let machine: ReactLoopAgent | undefined
+    let machine: AgentDriver | undefined
     let detachSession: (() => void) | undefined
     let detachAgent: (() => void) | undefined
     let disposing: Promise<void> | undefined
@@ -546,7 +551,7 @@ export class AgentLoop extends Service implements AgentFactory {
       throw abort.signal.reason instanceof Error ? abort.signal.reason : new Error(String(abort.signal.reason))
     }
     try {
-      const agent = machine = new ReactLoopAgent(loopCtx, id, options, session)
+      const agent = machine = this.constructDriver(loopCtx, id, options, session)
       machineReady.resolve()
       assertLive()
 
@@ -597,6 +602,57 @@ export class AgentLoop extends Service implements AgentFactory {
     }
   }
 
+  /**
+   * Construct the driver for one prepared session. When the session header
+   * names an agent runtime, the matching registered factory supplies the
+   * driver; a named runtime with no registered factory fails loud instead of
+   * silently falling back to the default loop. An absent runtime keeps the
+   * default driver.
+   * @param loopCtx - the loop runtime context handed to the default driver.
+   * @param id - shared agent/session identity.
+   * @param options - concrete loop options.
+   * @param session - prepared session whose header selects the runtime.
+   * @returns the constructed, unpublished driver.
+   */
+  private constructDriver(loopCtx: Context, id: SessionId, options: AgentOptions, session: Session): AgentDriver {
+    const runtime = session.header.agentRuntime
+    if (runtime === undefined) return new ReactLoopAgent(loopCtx, id, options, session)
+    const factory = this.driverFactories.get(runtime)
+    if (factory === undefined) {
+      throw new Error(`no agent driver registered for runtime "${runtime}"`)
+    }
+    return factory.createDriver({ id, options, session })
+  }
+
+  /**
+   * Register an alternative driver factory for one exact runtime id. Sessions
+   * whose header records that id construct their driver through the factory;
+   * every other session keeps the default loop driver. Duplicate runtime ids
+   * fail loud. Effect-scoped: the returned disposer and the registering fiber
+   * both remove the registration.
+   * @param factory - the driver factory to register under its runtime id.
+   * @returns the disposer that removes the registration.
+   */
+  registerDriverFactory(factory: AgentDriverFactory): () => void {
+    return this.ctx.effect(() => {
+      if (this.driverFactories.has(factory.runtime)) {
+        throw new Error(`an agent driver for runtime "${factory.runtime}" is already registered`)
+      }
+      this.driverFactories.set(factory.runtime, factory)
+      return () => { this.driverFactories.delete(factory.runtime) }
+    }, 'agentLoop.registerDriverFactory()')
+  }
+
+  /**
+   * List the alternative driver runtime ids currently registered, in
+   * registration order. The default loop runtime is not listed: it serves any
+   * session whose header names no runtime. Callers (e.g. the API gateway) use
+   * this to validate a caller-requested runtime before persisting it.
+   * @returns a snapshot of registered alternative runtime ids.
+   */
+  driverRuntimes(): readonly string[] {
+    return [...this.driverFactories.keys()]
+  }
   /**
    * Create an owned agent on a caller-supplied session id.
    * @param ownerCtx - caller context that structurally owns the lifecycle.

@@ -1,4 +1,5 @@
 import { createRequire } from 'node:module'
+import { existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { MakerDMG } from '@electron-forge/maker-dmg'
 import { FusesPlugin } from '@electron-forge/plugin-fuses'
@@ -8,6 +9,30 @@ import { describe, expect, it } from 'vitest'
 const require = createRequire(import.meta.url)
 
 describe('desktop Forge configuration', () => {
+  it('ships the Voyaseek product identity and the legal bundle', () => {
+    const forgeConfig = require('../forge.config.cjs') as {
+      readonly packagerConfig?: {
+        readonly appBundleId?: string
+        readonly executableName?: string
+        readonly name?: string
+        readonly extraResource?: readonly string[]
+      }
+    }
+    const packager = forgeConfig.packagerConfig
+    expect(packager?.appBundleId).toBe('ai.voyaseek.desktop')
+    expect(packager?.executableName).toBe('Voyaseek')
+    expect(packager?.name).toBe('Voyaseek')
+
+    // The legal bundle must ride inside Resources/ next to the notices it
+    // complements: the user agreement links the MIT text by relative path.
+    const resources = packager?.extraResource ?? []
+    const legalDir = resources.find(entry => entry.endsWith(`${'legal'}`))
+    expect(legalDir).toBeDefined()
+    expect(existsSync(resolve(legalDir!, 'USER_AGREEMENT.zh-CN.md'))).toBe(true)
+    expect(existsSync(resolve(legalDir!, 'third-party', 'deepseek-harness', 'LICENSE'))).toBe(true)
+    expect(resources.some(entry => entry.endsWith('THIRD_PARTY_NOTICES.md'))).toBe(true)
+  })
+
   it('keeps the complete Electron fuse policy explicit without OS cookie-key storage', async () => {
     const forgeConfig = require('../forge.config.cjs') as {
       readonly makers?: readonly unknown[]

@@ -66,7 +66,7 @@ const PRE_IMAGE_FALLBACK_PROFILE_PATCH = `# AI Staff desktop defaults. Elevated 
     provider: google
     model: gemini-3.6-flash
 `
-const EXPECTED_PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always require interactive approval.\n- id: approval
+const EXPECTED_PROFILE_PATCH = `# Voyaseek desktop defaults. Elevated operations always require interactive approval.\n- id: approval
   config:
     policy: ask
 
@@ -121,7 +121,7 @@ afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true })
 })
 
-describe('AI Staff profile initialization', () => {
+describe('Voyaseek profile initialization', () => {
   it('creates the product bundle profile with Gemini and DashScope routes', () => {
     const home = mkdtempSync(join(tmpdir(), 'aistaff-profile-'))
     temporaryDirectories.push(home)

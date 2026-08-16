@@ -53,7 +53,7 @@ describe('desktop main lifecycle', () => {
       }),
       whenReady: vi.fn(async () => undefined),
       getPath: vi.fn((name: string) => name === 'userData' ? userData : join(userData, 'home')),
-      getAppPath: vi.fn(() => '/Applications/AI Staff.app/Contents/Resources/app.asar'),
+      getAppPath: vi.fn(() => '/Applications/Voyaseek.app/Contents/Resources/app.asar'),
       isReady: vi.fn(() => true),
       quit,
     }
@@ -70,7 +70,9 @@ describe('desktop main lifecycle', () => {
       app,
       BrowserWindow,
       dialog: { showErrorBox },
+      Menu: { setApplicationMenu: vi.fn(), buildFromTemplate: vi.fn((template: unknown) => ({ template })) },
       session: { defaultSession: { resolveProxy: vi.fn(async () => 'DIRECT') } },
+      shell: { openPath: vi.fn(async () => '') },
     }))
     vi.doMock('../src/runtime-paths.js', () => ({
       resolveRuntimeEntry: vi.fn(() => process.execPath),

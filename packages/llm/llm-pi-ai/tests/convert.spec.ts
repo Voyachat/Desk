@@ -721,6 +721,16 @@ describe('mapStopReason / mapUsage', () => {
       stopReason: 'error',
       errorMessage: 'HTTP 400: The product is not activated, please activate it and try again.',
     }))).toMatchObject({ kind: 'error', failure: { code: 'MODEL_ACCESS_DENIED' } })
+    // DashScope's exact live wordings for an unactivated model: one spelling
+    // of the id names the product, the other answers access_denied.
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
+      errorMessage: '400: {"message":"The product is not activated, please confirm that you have activated products and try again after activation.","type":"invalid_request_error","param":null,"code":"invalid_parameter_error"}',
+    }))).toMatchObject({ kind: 'error', failure: { code: 'MODEL_ACCESS_DENIED' } })
+    expect(mapStopReason(assistant({
+      stopReason: 'error',
+      errorMessage: '400: {"message":"Access denied","type":"access_denied","param":null,"code":"access_denied"}',
+    }))).toMatchObject({ kind: 'error', failure: { code: 'MODEL_ACCESS_DENIED' } })
     expect(mapStopReason(assistant({
       stopReason: 'error',
       errorMessage: 'HTTP 400: input exceeds the model context window limit',

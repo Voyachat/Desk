@@ -14,7 +14,7 @@ describe('model credentials', () => {
   it('loads only supported keys and prefers the native DashScope name', () => {
     const home = createHome()
     writeSecret(home, 'gemini.env', [
-      '# shared with AI Staff',
+      '# shared with Voyaseek',
       'GEMINI_API_KEY="gemini-value"',
       'IGNORED_KEY=ignored-value',
     ].join('\n'))

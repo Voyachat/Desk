@@ -41,9 +41,14 @@ function classifyPiAiError(message: string): string {
   if (isQuotaExceededError(message)) return QUOTA_EXCEEDED_CODE
   if (/\b429\b|rate.?limit/i.test(message)) return 'RATE_LIMIT'
   // pi-ai currently flattens provider errors to text. Keep this narrow to
-  // explicit account activation wording so an ordinary bad parameter remains
-  // INVALID_REQUEST even when both arrive as HTTP 400.
-  if (/\b(?:product|model)\b[^\r\n]{0,80}\b(?:is not activated|has not been activated|is not enabled for (?:this|your) account)\b/i.test(message)) {
+  // explicit account-activation and entitlement wording so an ordinary bad
+  // parameter remains INVALID_REQUEST even when both arrive as HTTP 400. A
+  // 401/403 refusal is already classified AUTH above; DashScope answers one
+  // unactivated-model spelling with a 400 "Access denied"/"access_denied"
+  // body and the other with "The product is not activated" — one account
+  // fact, two wordings.
+  if (/\b(?:product|model)\b[^\r\n]{0,80}\b(?:is not activated|has not been activated|is not enabled for (?:this|your) account)\b/i.test(message)
+    || /\baccess[ _-]denied\b/i.test(message)) {
     return 'MODEL_ACCESS_DENIED'
   }
   if (/\b400\b|invalid.?request/i.test(message)) return 'INVALID_REQUEST'

@@ -68,7 +68,7 @@ const PRE_IMAGE_FALLBACK_PROFILE_PATCH = `# AI Staff desktop defaults. Elevated 
     provider: google
     model: gemini-3.6-flash
 `
-const PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always require interactive approval.\n- id: approval
+const PROFILE_PATCH = `# Voyaseek desktop defaults. Elevated operations always require interactive approval.\n- id: approval
   config:
     policy: ask
 
@@ -120,7 +120,7 @@ const PROFILE_PATCH = `# AI Staff desktop defaults. Elevated operations always r
 `
 const PROFILE_WORKSPACE = `packages:\n  - .\n\nnodeLinker: hoisted\nautoInstallPeers: false\n`
 
-/** Create the isolated AI Staff profile without overwriting user changes. */
+/** Create the isolated Voyaseek profile without overwriting user changes. */
 export function ensureAistaffProfile(dshHome: string): string {
   const profileDir = join(dshHome, 'profiles', 'aistaff')
   mkdirSync(profileDir, { recursive: true })

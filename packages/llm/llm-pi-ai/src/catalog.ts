@@ -289,6 +289,35 @@ function sharedCatalogApi(defaults: ReadonlyMap<string, Model<Api>>): string | u
   return apis.size === 1 ? [...apis][0] : undefined
 }
 
+/**
+ * Wire-compatibility corrections an endpoint imposes on every model served
+ * through it, applied after the profile compat chain so they win: how a
+ * system prompt travels is the endpoint's decision, not the model's.
+ * DashScope's OpenAI-compatible endpoint refuses the `developer` role
+ * (`"developer" is not one of ['system', ...]`), while pi-ai's URL-derived
+ * detection knows the endpoint only as an unrecognized OpenAI-compatible
+ * host and sends `developer` for every reasoning model — failing each one
+ * with HTTP 400 once a request carries a system prompt. Sending `system`
+ * instead is the universal OpenAI-compatible shape, so the correction cannot
+ * narrow an endpoint that did accept the role.
+ * @param baseUrl - the resolved endpoint the model is served through.
+ * @returns compat fields to spread into the model, or nothing.
+ */
+function endpointCompatCorrections(baseUrl: string): { supportsDeveloperRole: false } | Record<string, never> {
+  let host: string
+  try {
+    host = new URL(baseUrl).hostname
+  } catch {
+    // A baseURL that is not a URL cannot be matched to a known endpoint;
+    // resolution's own baseURL checks own the diagnostic for such a value.
+    return {}
+  }
+  if (host === 'dashscope.aliyuncs.com' || host === 'dashscope-intl.aliyuncs.com') {
+    return { supportsDeveloperRole: false }
+  }
+  return {}
+}
+
 /** The reasoning fields one materialized model carries. */
 interface ModelReasoning {
   /** Whether the model reasons at all; `false` makes pi-ai ignore the map. */
@@ -385,6 +414,9 @@ function resolveModelReasoning(
  * @param route - the route-level switches, when any.
  * @param base - the installed catalog entry of the same id, when one exists.
  * @param api - the model's resolved wire protocol.
+ * @param corrections - endpoint-owned compat facts ({@link endpointCompatCorrections});
+ *   they sit above the whole profile chain because the endpoint, not the
+ *   profile, decides how a request is spoken to it.
  * @returns a `compat` field to spread into the model, or nothing.
  */
 function resolveModelCompat(
@@ -393,10 +425,12 @@ function resolveModelCompat(
   route: PiAiCompatProfile | undefined,
   base: Model<Api> | undefined,
   api: string,
+  corrections: OpenAICompletionsCompat,
 ): { compat: OpenAICompletionsCompat } | Record<string, never> {
   const thinkingFormat = entry.compat?.thinkingFormat ?? route?.thinkingFormat
   const supportsReasoningEffort = entry.compat?.supportsReasoningEffort ?? route?.supportsReasoningEffort
-  if (thinkingFormat === undefined && supportsReasoningEffort === undefined) return {}
+  const corrected = Object.keys(corrections).length > 0 && api === 'openai-completions'
+  if (!corrected && thinkingFormat === undefined && supportsReasoningEffort === undefined) return {}
   if (api !== 'openai-completions') {
     if (entry.compat?.thinkingFormat !== undefined || entry.compat?.supportsReasoningEffort !== undefined) {
       invalid(provider, `model "${entry.id}" sets compat reasoning switches, but its api is "${api}";`
@@ -416,6 +450,7 @@ function resolveModelCompat(
       ...inherited,
       ...thinkingFormat === undefined ? {} : { thinkingFormat },
       ...supportsReasoningEffort === undefined ? {} : { supportsReasoningEffort },
+      ...corrections,
     },
   }
 }
@@ -564,7 +599,7 @@ export function resolveRouteModels(request: RouteCatalogRequest): RouteCatalog {
       contextWindow,
       maxTokens,
       ...resolveModelReasoning(provider, reasoningSource(entry, family), base),
-      ...resolveModelCompat(provider, entry, request.compat, base, api),
+      ...resolveModelCompat(provider, entry, request.compat, base, api, endpointCompatCorrections(baseUrl)),
     }
   })
   if (routeCompatDefined && !models.some(model => model.api === 'openai-completions')) {
