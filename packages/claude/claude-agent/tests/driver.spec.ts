@@ -23,15 +23,21 @@ interface CapturedQuery {
 class FakeSdk {
   readonly captured: CapturedQuery[] = []
   private scripts: SDKMessage[][] = []
+  /** Per-call behavior; tests swap it to hang or fail the next query. */
+  impl: (input: CapturedQuery) => Query = input => this.scriptedStream(input)
 
   /** Queue the message stream the next query call yields. */
   script(messages: SDKMessage[]): void {
     this.scripts.push(messages)
   }
 
-  /** The query entry point handed to the engine config. */
+  /** The stable query entry point handed to the engine config. */
   query = (input: { prompt: string; options: Options }): Query => {
     this.captured.push(input)
+    return this.impl(input)
+  }
+
+  private scriptedStream(_input: CapturedQuery): Query {
     const messages = this.scripts.shift() ?? []
     const stream: AsyncIterable<SDKMessage> = {
       async * [Symbol.asyncIterator]() {
@@ -106,9 +112,9 @@ describe('ClaudeSdkAgent', () => {
     await driver.whenIdle()
 
     expect(sdk.captured).toHaveLength(1)
-    expect(sdk.captured[0].prompt).toBe('do the task')
-    expect(sdk.captured[0].options.cwd).toBe('/tmp/claude-work')
-    expect(sdk.captured[0].options.resume).toBeUndefined()
+    expect(sdk.captured[0]!.prompt).toBe('do the task')
+    expect(sdk.captured[0]!.options.cwd).toBe('/tmp/claude-work')
+    expect(sdk.captured[0]!.options.resume).toBeUndefined()
 
     expect(eventTypes(session)).toEqual([
       'agent/inbox/spliced',
@@ -139,8 +145,8 @@ describe('ClaudeSdkAgent', () => {
     await driver.whenIdle()
 
     expect(sdk.captured).toHaveLength(2)
-    expect(sdk.captured[0].options.resume).toBeUndefined()
-    expect(sdk.captured[1].options.resume).toBe('claude-9')
+    expect(sdk.captured[0]!.options.resume).toBeUndefined()
+    expect(sdk.captured[1]!.options.resume).toBe('claude-9')
     expect(eventTypes(session).filter(type => type === 'turn/start')).toHaveLength(2)
   })
 
@@ -170,7 +176,7 @@ describe('ClaudeSdkAgent', () => {
     sdk.script(successScript('claude-42', 'again'))
     sendPrompt(rebuilt, 'next')
     await rebuilt.whenIdle()
-    expect(sdk.captured[1].options.resume).toBe('claude-42')
+    expect(sdk.captured[1]!.options.resume).toBe('claude-42')
   })
 
   it('records tool exchanges with paired call and result events', async () => {
@@ -233,17 +239,16 @@ describe('ClaudeSdkAgent', () => {
   it('closes an aborted turn with the cancellation cause', async () => {
     const { session, driver, sdk } = await makeDriver()
     // A stream that hangs until its abort controller fires.
-    sdk.query = ((input: { prompt: string; options: Options }): Query => {
-      sdk.captured.push(input)
+    sdk.impl = (input: CapturedQuery): Query => {
       const signal = input.options.abortController!.signal
       const stream: AsyncIterable<SDKMessage> = {
         async * [Symbol.asyncIterator]() {
-          await new Promise<never>((resolve, reject) => {
+          // Hang until the abort controller fires; the rejection ends the drain.
+          await new Promise<never>((_resolve, reject) => {
             signal.addEventListener('abort', () => {
               reject(signal.reason instanceof Error ? signal.reason : new Error('aborted'))
             }, { once: true })
           })
-          resolve()
         },
       }
       return {
@@ -251,9 +256,12 @@ describe('ClaudeSdkAgent', () => {
         close: () => undefined,
         interrupt: async () => undefined,
       } as unknown as Query
-    })
+    }
     sendPrompt(driver, 'long task')
     expect(driver.status).toBe('running')
+    // Let the drain microtask open the turn and hang inside the fake stream.
+    await new Promise(resolve => setTimeout(resolve, 10))
+    expect(sdk.captured).toHaveLength(1)
     driver.cancel({ kind: 'user' })
     await driver.whenIdle()
     expect(driver.status).toBe('idle')

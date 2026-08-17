@@ -52,6 +52,12 @@ export interface SessionSummary {
    * session actually runs rather than the deployment's current default.
    */
   agentPreset?: string
+  /**
+   * Agent driver runtime this session runs under; absent means the
+   * deployment's default loop driver. Fixed at creation, so the row labels
+   * exactly what the session runs for its whole life.
+   */
+  agentRuntime?: string
   parentId?: SessionId
   /** Coarse durable origin for navigation filtering; not a continuation capability. */
   origin?: 'subagent'
@@ -683,6 +689,7 @@ export class SessionRuntime implements ISessions {
         ...(entry.parentSessionId !== undefined ? { parentId: entry.parentSessionId } : {}),
         ...(entry.origin !== undefined ? { origin: entry.origin } : {}),
         ...(entry.agentPreset !== undefined ? { agentPreset: entry.agentPreset } : {}),
+        ...(entry.agentRuntime !== undefined ? { agentRuntime: entry.agentRuntime } : {}),
       }
     }
     if (current !== undefined && currentAddress !== undefined) {

@@ -4,8 +4,9 @@
 // Assistant steps, and — once a Turn closed with a final answer — its
 // mid-turn narration too. A streaming Assistant step leaves the fold the
 // moment it starts producing prose, so a final answer never streams inside a
-// collapsed row. Everything else (user rows, errors, turn footers, …) stays
-// a barrier that splits runs.
+// collapsed row, and a running question call stays in place because the
+// reader — not the agent — is on the hook. Everything else (user rows,
+// errors, turn footers, …) stays a barrier that splits runs.
 
 import type {
   AssistantBlock, ChatConversationViewNode, PartialAssistant,
@@ -83,6 +84,9 @@ export function collectFoldFacts(
   return { closingSeqs, closedWithClosing }
 }
 
+/** Tool name of the interactive question call (`ask_user_question`). */
+const ASK_USER_TOOL = 'ask_user_question'
+
 /**
  * Decide whether one Node belongs inside an activity fold.
  * @param node - flow Node, when resolvable.
@@ -96,7 +100,14 @@ export function isFoldable(
   partialProse: boolean,
 ): node is ChatNode {
   if (node === undefined) return false
-  if (node.kind === 'tool-call') return true
+  if (node.kind === 'tool-call') {
+    const root = (node as ChatNode<'tool-call'>).data.root
+    // A running question call waits on the reader, not on execution; keep it
+    // in place so the pending question stays legible beside the composer it
+    // takes over. Answered calls fold like any other tool row.
+    if (isRunningTool(root) && root.name === ASK_USER_TOOL) return false
+    return true
+  }
   if (node.kind !== 'assistant-step') return false
   const data = (node as ChatNode<'assistant-step'>).data
   if (data.status === 'running') {

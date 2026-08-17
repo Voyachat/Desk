@@ -216,6 +216,12 @@ export interface SessionSummary {
    */
   agentPreset?: string
   /**
+   * Agent driver runtime this session runs under (header passthrough); absent
+   * means the deployment's default loop driver. Fixed at creation: a session
+   * keeps the runtime that produced its history.
+   */
+  agentRuntime?: string
+  /**
    * Projection baseline for this row, with zero log loads: attached sessions
    * read the registry's live watermark cut; cold sessions read the persisted
    * projection cache's stored rows — as stale as that session's last durable
@@ -265,9 +271,20 @@ export interface SessionsApi {
    * the session header, so a later resume rebuilds the same agent. An unknown
    * id fails with `agent-preset-not-found`, and a preset whose composition
    * cannot be mounted fails with `agent-preset-invalid`.
+   *
+   * `agentRuntime` names the driver runtime that drives the new session's
+   * agent; omitted, the deployment's default loop driver serves it. The value
+   * is stored on the session header, so a later resume rebuilds the same
+   * driver. An id no registered driver serves fails with `runtime-not-found`.
    */
-  create(request: RpcRequest<{ workspaceId?: WorkspaceId; cwd?: string; sessionId?: SessionId; agentPreset?: string }>):
-  Promise<RpcResponse<{ sessionId: SessionId; agentPreset?: string }>>
+  create(request: RpcRequest<{
+    workspaceId?: WorkspaceId
+    cwd?: string
+    sessionId?: SessionId
+    agentPreset?: string
+    agentRuntime?: string
+  }>):
+  Promise<RpcResponse<{ sessionId: SessionId; agentPreset?: string; agentRuntime?: string }>>
 
   /**
    * Reads a window of history events; page boundaries align to append-origin message

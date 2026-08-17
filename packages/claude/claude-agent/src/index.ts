@@ -133,12 +133,21 @@ export function apply(ctx: Context, config: Config): void {
   }
   const childEnv = claudeChildEnv(resolved)
   const cwdFallback = process.cwd()
+  // Driver scopes root in an injected context so publication can reach the
+  // session and agent registries through them, exactly like the default loop.
+  let driverCtx: Context | undefined
+  ctx.inject(['sessions', 'agents'], (inner) => {
+    driverCtx = inner
+  })
   const factory: AgentDriverFactory = {
     runtime: resolved.runtime,
     createDriver: ({ id, options, session }) => {
+      if (driverCtx === undefined) {
+        throw new Error('claude-agent: driver scope context is not ready (sessions/agents inject pending)')
+      }
       const cwd = session.header.cwd ?? cwdFallback
       return new ClaudeSdkAgent(
-        ctx,
+        driverCtx,
         id,
         options,
         session,

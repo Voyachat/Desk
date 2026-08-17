@@ -41,3 +41,11 @@
 
     - id: aistaff-client-product
       name: '@deepseek-ai/dsh-aistaff-client-product'
+
+    # Claude Agent SDK driver: sessions created under the claude runtime are
+    # orchestrated by Claude Code instead of the DSH loop. Endpoint and
+    # credentials ride the ANTHROPIC_* environment variables (the SDK child
+    # inherits the scrubbed parent env); the browser half is the
+    # claude-runtime-ui composer chip in the web-app roster.
+    - id: claude-agent
+      name: '@deepseek-ai/dsh-claude-agent'

@@ -16,7 +16,7 @@ import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
-import { connectFreshWorkspace, newEnglishPage, saveFailureShot } from './support.ts'
+import { connectFreshWorkspace, expandActivityFolds, newEnglishPage, saveFailureShot } from './support.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./snapshots/web-search-round', import.meta.url))
 const FIXTURE = fileURLToPath(new URL('./snapshots/web-search-round/session.jsonl', import.meta.url))
@@ -236,6 +236,9 @@ describe('web e2e: shipped default web search', () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-search-aria'))
     await expect.poll(() => page.getByText('SEARCH_DONE', { exact: true }).count(), { timeout: 15_000 })
       .toBeGreaterThanOrEqual(1)
+    // The settled search row folds into the turn's activity row; expand it
+    // so the card golden covers the rendered card, not the fold summary.
+    await expandActivityFolds(page)
     await page.locator('[data-tool="web_search"]').waitFor({ timeout: 10_000 })
     const snapshot = await captureStableAria(page, '[class*="centerCol"]', scaffold.workspaceCwd)
     await compareOrRefreshGolden(UI_EXPECTED, snapshot, MODE)
@@ -243,6 +246,7 @@ describe('web e2e: shipped default web search', () => {
 
   it.skipIf(MODE === 'record')('scrolls the capped source list inside the fixed-height container', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-search-sources-scroll'))
+    await expandActivityFolds(page)
     const row = page.locator('[data-tool="web_search"] [data-expandable]').first()
     await row.click()
     await expect.poll(() => row.getAttribute('aria-expanded'), { timeout: 5_000 }).toBe('true')

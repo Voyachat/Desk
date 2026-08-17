@@ -189,6 +189,11 @@ describe('isFoldable', () => {
     expect(isFoldable(tool('c1', { running: true }), EMPTY_FACTS, true)).toBe(true)
   })
 
+  it('keeps a running question call in place but folds it once answered', () => {
+    expect(isFoldable(tool('q1', { running: true, name: 'ask_user_question' }), EMPTY_FACTS, false)).toBe(false)
+    expect(isFoldable(tool('q1', { name: 'ask_user_question' }), EMPTY_FACTS, false)).toBe(true)
+  })
+
   it('keeps the streaming step visible once the partial shows prose', () => {
     const runningStep = assistantStep('a1', { status: 'running', blocks: [reasoning('hm')] })
     expect(isFoldable(runningStep, EMPTY_FACTS, false)).toBe(true)

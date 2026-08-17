@@ -7,7 +7,7 @@
 import { describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import AgentRegistry, { Inbox } from '@deepseek-ai/dsh-agent'
-import type { Agent, AgentCancelCause, AgentOptions, AgentStatus, InboxTarget } from '@deepseek-ai/dsh-agent'
+import type { AgentCancelCause, AgentOptions, AgentStatus, InboxTarget } from '@deepseek-ai/dsh-agent'
 import AgentLoop from '@deepseek-ai/dsh-agent-loop'
 import type { AgentDriver, AgentDriverFactory } from '@deepseek-ai/dsh-agent-loop'
 import LlmRuntime, { createUserMessage } from '@deepseek-ai/dsh-llm'
@@ -131,11 +131,11 @@ describe('agent-loop driver factory', () => {
     expect(handle.agent.session.header.agentRuntime).toBe('claude')
 
     handle.agent.followup(createUserMessage({ content: [{ type: 'text', text: 'hi' }], source: { kind: 'user' } }))
-    expect(stubs[0].deliveries).toEqual([{ target: 'next-turn', wakeup: true }])
+    expect(stubs[0]!.deliveries).toEqual([{ target: 'next-turn', wakeup: true }])
 
     await handle.dispose()
     expect(ctx.agents.get(SessionId('claude-session'))).toBeUndefined()
-    expect(stubs[0].scopeDisposalObserved).toBe(true)
+    expect(stubs[0]!.scopeDisposalObserved).toBe(true)
     dispose()
   })
 

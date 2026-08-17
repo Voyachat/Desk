@@ -10,6 +10,9 @@
 - text: "Use the read tool twice in one assistant message: read a.txt and b.txt. Then reply with the single word DONE and stop. 7/25 {{clock}}"
 - button "Copy":
   - img
+- button "Processed 2 steps" [expanded]:
+  - img
+  - text: Processed 2 steps
 - button "Think The user wants me to read a.txt and b.txt, then reply with \"DONE\". Let me do both reads in parallel.":
   - img
   - img
@@ -49,6 +52,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Read Only"': Read Only
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

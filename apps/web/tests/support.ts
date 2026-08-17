@@ -109,6 +109,38 @@ export async function connectFreshWorkspaceZh(page: Page, root: string, name = '
     .waitFor({ timeout: 15_000 })
 }
 
+/**
+ * Expand every collapsed turn-activity fold. ChatView folds each turn's
+ * internal thinking, tool, and mid-turn narration rows into one collapsed
+ * disclosure (`已处理` / `正在处理`); scenarios that drive or count those
+ * member rows need them mounted. Safe to call when no fold is present.
+ * @param page - Playwright page over a rendered conversation column.
+ */
+export async function expandActivityFolds(page: Page): Promise<void> {
+  for (let pass = 0; pass < 8; pass += 1) {
+    // Only the fold's own disclosure row (direct child of the fold root):
+    // member seats carry their own disclosure rows that must stay untouched.
+    const collapsed = page.locator('[data-activity-fold] > div > [data-disclosure-row][aria-expanded="false"]')
+    if ((await collapsed.count()) === 0) return
+    await collapsed.first().click()
+  }
+}
+
+/**
+ * Collapse every expanded turn-activity fold, restoring the default chrome.
+ * Use after a scenario expanded folds only to observe member rows, so later
+ * assertions see the same DOM they would on a fresh page (member seats,
+ * including their args/result text, unmount again).
+ * @param page - Playwright page over a rendered conversation column.
+ */
+export async function collapseActivityFolds(page: Page): Promise<void> {
+  for (let pass = 0; pass < 8; pass += 1) {
+    const open = page.locator('[data-activity-fold] > div > [data-disclosure-row][aria-expanded="true"]')
+    if ((await open.count()) === 0) return
+    await open.first().click()
+  }
+}
+
 /** Failure evidence goes to the gitignored .artifacts/ (repo convention). */
 export async function saveFailureShot(page: Page, name: string): Promise<void> {
   const dir = fileURLToPath(new URL('../../../.artifacts', import.meta.url))

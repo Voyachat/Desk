@@ -16,6 +16,9 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
+- button "Processed 1 steps" [expanded]:
+  - img
+  - text: Processed 1 steps
 - 'button "Think The user wants me to write a single `run_code` program that:"':
   - img
   - img
@@ -47,6 +50,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

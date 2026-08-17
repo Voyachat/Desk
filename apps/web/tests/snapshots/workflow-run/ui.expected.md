@@ -5,14 +5,10 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
-- button "Think The user wants me to use the workflow tool exactly once with specific parameters. Let me carefully follow the instructions:":
+- button "Processed {{duration}} · 1 steps":
   - img
   - img
-  - text: "Think The user wants me to use the workflow tool exactly once with specific parameters. Let me carefully follow the instructions:"
-- button "Tool call workflow ·":
-  - img
-  - img
-  - text: Tool call workflow ·
+  - text: Processed {{duration}} · 1 steps
 - button "snapshot-flow 1 member Succeeded" [expanded]:
   - img
   - text: snapshot-flow 1 member Succeeded

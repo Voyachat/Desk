@@ -17,18 +17,10 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
-- 'button "Think The user wants me to plan a small change to add a `--greeting` flag to a CLI. They explicitly told me not to read or write any files, and to call exit_plan_mode with a short plan. Let me do that directly."':
+- button "Processed 1 steps":
   - img
   - img
-  - text: "Think The user wants me to plan a small change to add a `--greeting` flag to a CLI. They explicitly told me not to read or write any files, and to call exit_plan_mode with a short plan. Let me do that directly."
-- paragraph:
-  - text: Since the user has explicitly asked me not to read or write any files and to go straight to planning, I'll proceed with
-  - code: exit_plan_mode
-  - text: .
-- 'button "Tool call exit_plan_mode · # Add `--greeting` flag to CLI"':
-  - img
-  - img
-  - text: "Tool call exit_plan_mode · # Add `--greeting` flag to CLI"
+  - text: Processed 1 steps
 - 'button "Think The plan was approved. The user''s last instruction says: \"Once the plan is approved, reply with the single word DONE and stop.\" So I should just reply with DONE and stop."':
   - img
   - img
@@ -47,6 +39,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

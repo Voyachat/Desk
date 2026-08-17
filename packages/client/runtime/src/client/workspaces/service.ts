@@ -84,9 +84,12 @@ export class WorkspaceRuntime implements IWorkspaces {
    * store and `sessions.binding(id)` resolves synchronously — draft hand-off
    * may write the new scope's machine before opening.
    * @param workspaceId - chosen Workspace (must be in the workspace list).
+   * @param opts - optional agent driver runtime the connected session must run
+   * under (absent = default loop driver). Reuse only matches a blank session
+   * created under the same runtime; otherwise a fresh session is minted.
    * @returns the reused or newly created session id.
    */
-  async connectWorkspace(workspaceId: WorkspaceId): Promise<SessionId> {
+  async connectWorkspace(workspaceId: WorkspaceId, opts: { agentRuntime?: string } = {}): Promise<SessionId> {
     const workspace = this.list.getSnapshot().items.find(item => item.workspaceId === workspaceId)
     if (workspace === undefined) throw new Error(`workspaces.connectWorkspace: unknown workspace ${workspaceId}`)
     // Coalesce concurrent connects: a create's summary lands without cwd
@@ -106,10 +109,14 @@ export class WorkspaceRuntime implements IWorkspaces {
     for (const id of sessions.ids) {
       const summary = sessions.byId[id]
       if (summary !== undefined && summary.blank && summary.cwd === workspace.path
+        && summary.agentRuntime === opts.agentRuntime
         && workspace.sessionIds.includes(summary.id)
         && !archived.includes(summary.id)) return summary.id
     }
-    const attempt = this.sessions.create({ workspaceId })
+    const attempt = this.sessions.create({
+      workspaceId,
+      ...opts.agentRuntime === undefined ? {} : { agentRuntime: opts.agentRuntime },
+    })
       .finally(() => { this.connecting.delete(workspaceId) })
     this.connecting.set(workspaceId, attempt)
     return attempt

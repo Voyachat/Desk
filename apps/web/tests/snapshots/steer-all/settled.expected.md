@@ -16,14 +16,10 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
-- button "Think The user wants me to ask them a checkpoint question first, then continue with whatever they interject. Let me do exactly that.":
+- button "Processed 1 steps":
   - img
   - img
-  - text: Think The user wants me to ask them a checkpoint question first, then continue with whatever they interject. Let me do exactly that.
-- button "Ask question 1/1 answered":
-  - img
-  - img
-  - text: Ask question 1/1 answered
+  - text: Processed 1 steps
 - text: "Interjection: include the word BANANA in your final reply. {{clock}}"
 - button "Copy":
   - img
@@ -44,6 +40,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

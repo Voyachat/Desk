@@ -548,6 +548,7 @@ function sessionListFields(header: SessionHeader, events: readonly SessionEvent[
   origin?: 'subagent'
   cwd?: string
   agentPreset?: string
+  agentRuntime?: string
 } {
   // The preset comes from the log, not the header: a session that switched
   // while blank ran its turns under the newer composition, and a picker
@@ -558,6 +559,9 @@ function sessionListFields(header: SessionHeader, events: readonly SessionEvent[
     ...header.origin === undefined ? {} : { origin: header.origin },
     ...header.cwd === undefined ? {} : { cwd: header.cwd },
     ...agentPreset === undefined ? {} : { agentPreset },
+    // Runtime is header-only: it is fixed at creation and never reselected,
+    // so the creation-time value is exactly what the session runs.
+    ...header.agentRuntime === undefined ? {} : { agentRuntime: header.agentRuntime },
   }
 }
 
@@ -1054,7 +1058,22 @@ class AgentPresetConflict extends Error {
   }
 }
 
-/** Requested identity already belongs to a session with another project cwd. */
+/** Requested agent runtime differs from the one a resumed session already records. */
+class RuntimeConflict extends Error {
+  constructor(
+    readonly sessionId: SessionId,
+    readonly requestedRuntime: string,
+    readonly existingRuntime: string | undefined,
+  ) {
+    super(
+      existingRuntime === undefined
+        ? `session "${sessionId}" runs the default loop driver; requested runtime `
+        + `runtime ${JSON.stringify(requestedRuntime)}. A session's runtime is fixed at creation.`
+        : `session "${sessionId}" already runs agent runtime ${JSON.stringify(existingRuntime)}; `
+        + `requested ${JSON.stringify(requestedRuntime)}. A session's runtime is fixed at creation.`,
+    )
+  }
+}/** Requested identity already belongs to a session with another project cwd. */
 class SessionCwdConflict extends Error {
   constructor(
     readonly sessionId: SessionId,
@@ -1642,6 +1661,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
     cwd: string,
     checkPersistedIdentity: boolean,
     presetId?: string,
+    runtime?: string,
   ): Promise<Agent> {
     let creation = sessionCreations.get(sessionId)
     if (creation === undefined) {
@@ -1672,6 +1692,9 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           // while blank ran every turn under the newer composition.
           const storedPreset = resolveSessionPreset({ header: inspected.meta, events: inspected.events })
           assertPresetUnchanged(sessionId, presetId, storedPreset)
+          if (runtime !== undefined && inspected.meta.agentRuntime !== runtime) {
+            throw new RuntimeConflict(sessionId, runtime, inspected.meta.agentRuntime)
+          }
           // The stored preset wins over anything the request names: a resumed
           // session's history was produced under that composition, and
           // rebuilding it differently would replay tool calls the model can no
@@ -1695,6 +1718,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           meta: {
             cwd,
             ...composition.agentPreset === undefined ? {} : { agentPreset: composition.agentPreset },
+            ...runtime === undefined ? {} : { agentRuntime: runtime },
           },
           setup: composition.setup,
         })).agent
@@ -2201,9 +2225,31 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         }
         const cwd = workspace?.path ?? request.payload.cwd ?? defaults.cwd
         const requestedPreset = request.payload.agentPreset
+        const requestedRuntime = request.payload.agentRuntime
+        if (requestedRuntime !== undefined) {
+          const available = ctx.get('agentLoop')?.driverRuntimes() ?? []
+          if (!available.includes(requestedRuntime)) {
+            return err(request, {
+              code: 'runtime-not-found',
+              message: `no agent driver registered for runtime "${requestedRuntime}"`,
+              details: { agentRuntime: requestedRuntime, available },
+            })
+          }
+        }
         try {
-          await ensureSession(sessionId, cwd, request.payload.sessionId !== undefined, requestedPreset)
+          await ensureSession(sessionId, cwd, request.payload.sessionId !== undefined, requestedPreset, requestedRuntime)
         } catch (error: unknown) {
+          if (error instanceof RuntimeConflict) {
+            return err(request, {
+              code: 'runtime-conflict',
+              message: error.message,
+              details: {
+                sessionId: error.sessionId,
+                requestedRuntime: error.requestedRuntime,
+                ...error.existingRuntime === undefined ? {} : { existingRuntime: error.existingRuntime },
+              },
+            })
+          }
           if (error instanceof AgentPresetConflict) {
             return err(request, {
               code: 'agent-preset-conflict',
@@ -2258,7 +2304,12 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         // allowed and the row `session.list` serves for the same session.
         const created = ctx.agents.get(sessionId)
         const createdPreset = created === undefined ? undefined : resolveSessionPreset(created.session)
-        return ok(request, { sessionId, ...createdPreset === undefined ? {} : { agentPreset: createdPreset } })
+        const createdRuntime = created === undefined ? undefined : created.session.header.agentRuntime
+        return ok(request, {
+          sessionId,
+          ...createdPreset === undefined ? {} : { agentPreset: createdPreset },
+          ...createdRuntime === undefined ? {} : { agentRuntime: createdRuntime },
+        })
       },
 
       async history(request) {
@@ -2452,6 +2503,11 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
               ...forkComposition.agentPreset === undefined
                 ? {}
                 : { agentPreset: forkComposition.agentPreset },
+              // The seeded history was produced under the source's driver;
+              // rebuilding it under another runtime would strand that history.
+              ...source.header.agentRuntime === undefined
+                ? {}
+                : { agentRuntime: source.header.agentRuntime },
             },
             agentOptions: agentOptions(),
             setup: forkComposition.setup,

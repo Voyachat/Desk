@@ -18,7 +18,7 @@ import {
   webSnapshotMode,
   type WebScaffold,
 } from './scaffold.ts'
-import { connectFreshWorkspace, conversationContextKey, newEnglishPage, saveFailureShot } from './support.ts'
+import { connectFreshWorkspace, conversationContextKey, expandActivityFolds, newEnglishPage, saveFailureShot } from './support.ts'
 
 const MODE = webSnapshotMode()
 const TURN_COUNT = 12
@@ -312,6 +312,9 @@ describe('web e2e: continuous conversation grown through the composer', () => {
       expect(results[0]?.data.message.content[0].isError).toBe(false)
       expect(toolResultText(results[0]!)).toBe(`${spec.toolResultMarker}\n`)
 
+      // The turn's tool row folds away once it settles; open the activity fold
+      // so the keyed row mounts before its disclosure contract is exercised.
+      await expandActivityFolds(page)
       const toolRow = page.locator(`[data-chat-call-id="${spec.callId}"]`)
       await expect.poll(() => toolRow.count(), { timeout: 10_000 }).toBe(1)
       expect(await toolRow.textContent()).toContain(spec.toolResultMarker)

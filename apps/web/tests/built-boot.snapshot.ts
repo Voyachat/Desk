@@ -12,7 +12,7 @@
 // workspace graph can prove that transport-to-row path end to end.
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { expect, it } from 'vitest'
-import { installAssembledBootEnv, mountAssembledApp } from './assembled-boot.ts'
+import { expandActivityFolds, installAssembledBootEnv, mountAssembledApp } from './assembled-boot.ts'
 
 installAssembledBootEnv()
 
@@ -38,8 +38,14 @@ it('boots the built plugin graph and renders a fixture session end to end', asyn
   expect(waitingRow.querySelector('[data-state="ongoing"]')).toBeNull()
   within(waitingRow).getByText('Waiting for answer')
 
-  // Opening a session reaches chat content through the fixture transport.
+  // Opening a session reaches chat content through the fixture transport; the
+  // turn's internal rows fold away by default, so open the activity fold
+  // before asserting on the keyed rows it owns.
   fireEvent.click(waitingTitle)
+  await waitFor(() => {
+    expect(document.querySelector('[data-activity-fold]')).not.toBeNull()
+  }, { timeout: 10_000 })
+  expandActivityFolds()
   await waitFor(() => {
     expect(document.querySelector('[data-sample="bash"]')).not.toBeNull()
   }, { timeout: 10_000 })

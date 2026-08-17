@@ -274,6 +274,40 @@ describe('WorkspaceRuntime', () => {
     api.onCreate = () => Promise.resolve(ok({ sessionId: sid('s-fresh-2') }))
     await expect(workspaces.connectWorkspace(wid('alpha'))).resolves.toBe('s-fresh-2')
   })
+  it('connectWorkspace matches the requested agent runtime on reuse and create', async () => {
+    const ctx = new Context()
+    const api = new FakeApiClient()
+    const sessions = new SessionRuntime(ctx, api, fakeRemote())
+    const workspaces = new WorkspaceRuntime(ctx, api, sessions)
+    api.onWorkspaceList = () => Promise.resolve(ok({
+      items: [workspace('alpha', [sid('s-default-blank'), sid('s-claude-blank')])] as never[],
+    }))
+    api.onList = () => Promise.resolve(ok({
+      items: [
+        // Member blank under the default loop driver.
+        { sessionId: sid('s-default-blank'), updatedAt: 1, running: false, blank: true, cwd: '/w/alpha' },
+        // Member blank minted under the claude driver.
+        { sessionId: sid('s-claude-blank'), updatedAt: 2, running: false, blank: true, cwd: '/w/alpha', agentRuntime: 'claude' },
+      ] as never[],
+    }))
+    await Promise.all([workspaces.refresh(), sessions.refresh()])
+    await Promise.resolve()
+
+    // No runtime requested: the default-driver blank is reused, never the claude one.
+    await expect(workspaces.connectWorkspace(wid('alpha'))).resolves.toBe('s-default-blank')
+    expect(api.callsOf('session.create')).toEqual([])
+
+    // Runtime requested: the matching claude blank is reused.
+    await expect(workspaces.connectWorkspace(wid('alpha'), { agentRuntime: 'claude' }))
+      .resolves.toBe('s-claude-blank')
+    expect(api.callsOf('session.create')).toEqual([])
+
+    // Runtime requested with no matching blank: the create payload carries it.
+    api.onCreate = () => Promise.resolve(ok({ sessionId: sid('s-other-blank') }))
+    await expect(workspaces.connectWorkspace(wid('alpha'), { agentRuntime: 'other' }))
+      .resolves.toBe('s-other-blank')
+    expect(api.callsOf('session.create')).toEqual([{ workspaceId: 'alpha', agentRuntime: 'other' }])
+  })
 
   it('a rejected first prompt keeps the blank session eligible for connectWorkspace reuse', async () => {
     const ctx = new Context()

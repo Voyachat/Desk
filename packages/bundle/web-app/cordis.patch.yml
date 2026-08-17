@@ -267,6 +267,12 @@
     - id: ui-plan
       name: '@deepseek-ai/dsh-client-ui-plan'
 
+    # Runtime selector: the composer chip choosing the agent driver a session
+    # runs under (DSH loop or the Claude Agent SDK driver), paired with the
+    # host-plane dsh-claude-agent row in the runtime composition.
+    - id: claude-runtime-ui
+      name: '@deepseek-ai/dsh-claude-runtime-ui'
+
     - id: ui-user-questions
       name: '@deepseek-ai/dsh-client-ui-user-questions'
 

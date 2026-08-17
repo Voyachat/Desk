@@ -16,6 +16,9 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
+- button "Processed 1 steps" [expanded]:
+  - img
+  - text: Processed 1 steps
 - button "Search DeepSeek Harness snapshot search":
   - img
   - img
@@ -34,6 +37,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

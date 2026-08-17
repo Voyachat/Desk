@@ -9,7 +9,7 @@
 // reaches a model or the network.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { act, cleanup } from '@testing-library/react'
+import { act, cleanup, fireEvent } from '@testing-library/react'
 import { afterEach, beforeEach, vi } from 'vitest'
 import type { WebBootEntry } from '@deepseek-ai/dsh-client-modules/client'
 import { AppWebEntry } from '@deepseek-ai/dsh-client-web'
@@ -143,6 +143,23 @@ export function mountAssembledApp(): void {
  */
 export function hasClass(el: Element, name: string): boolean {
   return [...el.classList].some(cls => cls === name || cls.endsWith(`_${name}`) || cls.startsWith(`_${name}_`) || cls.includes(`_${name}_`))
+}
+
+/**
+ * Expand every collapsed activity fold so its member rows mount in jsdom.
+ * Turn activity folds away by default; assembled snapshots that assert on a
+ * specific tool/think row must open the fold first. The selector targets only
+ * each fold's own disclosure row (`[data-activity-fold] > div > [data-disclosure-row]`),
+ * never the member rows' own disclosures that appear once the body mounts.
+ */
+export function expandActivityFolds(): void {
+  for (let pass = 0; pass < 8; pass += 1) {
+    const collapsed = [...document.querySelectorAll(
+      '[data-activity-fold] > div > [data-disclosure-row][aria-expanded="false"]',
+    )]
+    if (collapsed.length === 0) return
+    for (const row of collapsed) act(() => { fireEvent.click(row) })
+  }
 }
 
 /**

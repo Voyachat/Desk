@@ -10,7 +10,7 @@ import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, seedSession, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
-import { newEnglishPage, saveFailureShot } from './support.ts'
+import { expandActivityFolds, newEnglishPage, saveFailureShot } from './support.ts'
 
 const FIXTURE = fileURLToPath(new URL('../../../examples/acp-agent/tests/snapshots/skill-load/session.jsonl', import.meta.url))
 const SNAPSHOT_DIR = fileURLToPath(new URL('./snapshots/skill-tool-row', import.meta.url))
@@ -42,6 +42,8 @@ describe.skipIf(MODE === 'record')('web e2e: dedicated Skill tool row', () => {
     const sessionRow = page.locator('[role="treeitem"]').nth(1)
     await sessionRow.waitFor({ timeout: 10_000 })
     await sessionRow.click()
+    // Turn activity folds collapsed by default; the Skill row lives inside one.
+    await expandActivityFolds(page)
     await page.locator('[data-tool="skill"]').waitFor({ timeout: 15_000 })
   }, 120_000)
 

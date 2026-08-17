@@ -991,6 +991,21 @@ describe('ChatView', () => {
     expect(view.getByText('the answer')).toBeTruthy()
   })
 
+  it('mounts the streaming think row inside the expanded running fold', () => {
+    const h = makeHarness({
+      running: true,
+      nodes: [user(1, 'q')],
+      partial: { turn: 1, step: 1, blocks: [{ kind: 'reasoning', text: 'hmm' }] },
+    })
+    const view = render(<h.ChatView {...h.props} />)
+    // Collapsed: the reasoning streams hidden inside the running fold.
+    expect(view.container.querySelector('[data-variant="think"][data-state="running"]')).toBeNull()
+    expandActivityFolds(view)
+    const think = view.container.querySelector('[data-variant="think"][data-state="running"]')
+    expect(think).toBeTruthy()
+    expect(think!.querySelector('[data-follow-end]')).toBeTruthy()
+  })
+
   it('hands running calls to a live Tool group and lets the fold carry the working signal', () => {
     const h = makeHarness({ runningCalls: [runningCall('r1')], running: true })
     const view = render(<h.ChatView {...h.props} />)

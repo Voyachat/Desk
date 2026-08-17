@@ -20,7 +20,7 @@ import {
   webSnapshotMode,
   type WebScaffold,
 } from './scaffold.ts'
-import { newEnglishPage, saveFailureShot } from './support.ts'
+import { expandActivityFolds, newEnglishPage, saveFailureShot } from './support.ts'
 
 const MODE = webSnapshotMode()
 const HISTORY_SESSION_ID = 'chat-scroll-history-e2e'
@@ -408,6 +408,19 @@ async function expectBottom(page: Page): Promise<void> {
   }).toBeLessThanOrEqual(1)
 }
 
+/**
+ * Re-pin the transcript to the floor programmatically. Expanding an activity
+ * fold grows the flow below the current scrollTop without moving the flow tip,
+ * so the follow-scroll never re-pins on its own; scenarios that expand folds
+ * while parked at the bottom restore the floor explicitly afterwards.
+ */
+async function pinToBottom(page: Page): Promise<void> {
+  await page.locator('[data-conversation-scroll]').evaluate((host) => {
+    host.scrollTop = host.scrollHeight - host.clientHeight
+  })
+  await nextPaint(page)
+}
+
 async function expectMarkerAboveComposer(page: Page, marker: string): Promise<void> {
   const geometry = await page.getByText(marker, { exact: false }).last().evaluate((node) => {
     const row = node.closest('[data-chat-flow-key], [data-streaming]')
@@ -563,6 +576,10 @@ describe('web e2e: long Chat scroll contract', () => {
         await composer.fill(LIVE_TOOL_PROMPT)
         await world.page.getByRole('button', { name: 'Send message', exact: true }).click()
         await expect.poll(() => fileExists(readyPath), { timeout: 15_000 }).toBe(true)
+        // The live tool call folds into the running activity row; open it so
+        // the keyed running row is observable for the scroll-away cycle.
+        await expandActivityFolds(world.page)
+        await pinToBottom(world.page)
         const liveRow = world.page.locator(`[data-chat-call-id="${LIVE_TOOL_CALL_ID}"] [data-sample="bash"]`)
         await liveRow.waitFor({ timeout: 15_000 })
         expect(await liveRow.getAttribute('data-state')).toBe('running')
@@ -746,6 +763,11 @@ describe('web e2e: long Chat scroll contract', () => {
         INPUTS_FIXTURE,
         INPUTS_FIXTURE.markers.assistant(INPUTS_FIXTURE.turns),
       )
+      // Focus rides the last seeded tool row, which folds away on cold resume;
+      // open the activity fold so it mounts and is tabbable, then re-pin the
+      // floor the expansion displaced.
+      await expandActivityFolds(world.page)
+      await pinToBottom(world.page)
       await expectBottom(world.page)
       const backToBottom = world.page.getByRole('button', { name: 'Back to bottom', exact: true })
 

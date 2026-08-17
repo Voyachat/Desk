@@ -18,6 +18,9 @@
   - img
   - img
   - text: Context injection skill-catalog
+- button "Processed 1 steps" [expanded]:
+  - img
+  - text: Processed 1 steps
 - button "Think Load the requested skill.":
   - img
   - img
@@ -45,6 +48,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

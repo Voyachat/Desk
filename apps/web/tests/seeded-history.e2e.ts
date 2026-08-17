@@ -25,7 +25,7 @@ import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, realizeSeedFixture, recordFixture, seedSession, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
-import { newEnglishPage, saveFailureShot } from './support.ts'
+import { expandActivityFolds, newEnglishPage, saveFailureShot } from './support.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./snapshots/seeded-history', import.meta.url))
 const SEED = fileURLToPath(new URL('./snapshots/seeded-history/seed.jsonl', import.meta.url))
@@ -282,7 +282,9 @@ describe('web e2e: seeded history renders through cold resume', () => {
     }).toBe(1)
     expect(await page.getByText('Context compacted', { exact: true }).count()).toBe(0)
     // Tool cards render from logged tool/call + tool/result alone (views are
-    // host-recomputed per page; the generic card is the documented default).
+    // host-recomputed per page; the generic card is the documented default);
+    // turn-activity folds hide the member rows until expanded.
+    await expandActivityFolds(page)
     const toolRows = page.locator('[data-variant], [data-sample]')
     await expect.poll(() => toolRows.count(), { timeout: 10_000 }).toBeGreaterThanOrEqual(2)
     expect(await page.getByText('a.txt', { exact: false }).count()).toBeGreaterThan(0)

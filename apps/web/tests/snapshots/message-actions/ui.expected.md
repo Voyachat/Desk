@@ -25,21 +25,11 @@
 - button "Branch into a new conversation" [disabled]:
   - img
 - text: Available only on the last message of a completed turn 7/25 {{clock}} Ran for {{duration}} TTFT {{duration}} {{throughput}} tok/s
-- button "Read a.txt":
+- button "Processed 2 steps":
   - img
   - img
-  - text: Read
-  - button "a.txt"
-- button "Read b.txt":
-  - img
-  - img
-  - text: Read
-  - button "b.txt"
-- button "Think Both files have been read. a.txt contains \"alpha\" and b.txt contains \"beta\". I'll now reply with DONE as instructed.":
-  - img
-  - img
-  - text: Think Both files have been read. a.txt contains "alpha" and b.txt contains "beta". I'll now reply with DONE as instructed.
-- text: Stopped Now give the final answer. 7/25 {{clock}}
+  - text: Processed 2 steps
+- text: Now give the final answer. 7/25 {{clock}}
 - button "Copy":
   - img
 - paragraph: DONE
@@ -56,6 +46,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

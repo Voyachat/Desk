@@ -20,7 +20,7 @@
 - button "Settings":
   - img
   - text: Settings
-- text: Into the Unknown Preview
+- text: 伟大征程，始于微光。 Every Great Journey Begins with a Glimmer Preview
 - button "Choose workspace":
   - img
   - text: workspace
@@ -34,6 +34,10 @@
   - img
 - tooltip "Commands"
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

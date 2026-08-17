@@ -15,7 +15,7 @@ import {
   type WebScaffold,
 } from './scaffold.ts'
 import {
-  connectFreshWorkspace, newEnglishPage, REPO_ROOT, saveFailureShot,
+  collapseActivityFolds, connectFreshWorkspace, expandActivityFolds, newEnglishPage, REPO_ROOT, saveFailureShot,
 } from './support.ts'
 
 const MODE = webSnapshotMode()
@@ -137,6 +137,14 @@ describe.skipIf(MODE === 'record')('web e2e: durable workflow run in Chat', () =
     })
     await page.setViewportSize({ width: 1280, height: 800 })
 
+    // The live member button unmounts when the run settles; if settlement
+    // races ahead during the geometry block, the terminal record mounts
+    // inside a collapsed activity fold. Expand folds until the member
+    // button is reachable, then open the child conversation.
+    await expect.poll(async () => {
+      await expandActivityFolds(page)
+      return await member.count()
+    }, { timeout: 15_000, interval: 100 }).toBeGreaterThan(0)
     await member.click()
     await page.getByText(CHILD_PROMPT, { exact: true }).waitFor({ timeout: 15_000 })
 
@@ -145,14 +153,21 @@ describe.skipIf(MODE === 'record')('web e2e: durable workflow run in Chat', () =
     await settled
     await page.locator('[data-workflow-run][data-run-status="succeeded"]').waitFor()
 
+    // The workflow's own tool-call seat folds into the turn's activity row;
+    // expand folds to count flow kinds, then collapse again so the member
+    // seats (and their args text) unmount before the later text assertions.
+    await expandActivityFolds(page)
     expect(await page.locator('[data-chat-flow-kind="tool-call"]').count()).toBeGreaterThanOrEqual(1)
     expect(await page.locator('[data-chat-flow-kind="workflow-run"]').count()).toBe(1)
+    await collapseActivityFolds(page)
     const terminalWorkflow = page.getByRole('button', { name: /^snapshot-flow/ })
     await terminalWorkflow.waitFor()
     expect(await terminalWorkflow.getAttribute('aria-expanded')).toBe('false')
     expect(await terminalWorkflow.evaluate(element => getComputedStyle(element).cursor)).toBe('pointer')
     await terminalWorkflow.click()
-    const terminalPhase = page.getByRole('button', { name: /^Run/ })
+    // `Run <n>` (not bare /^Run/): the composer's Runtime-mode chip also
+    // exposes a button whose name starts with "Run".
+    const terminalPhase = page.getByRole('button', { name: /^Run \d/ })
     await terminalPhase.waitFor()
     expect(await terminalPhase.getAttribute('aria-expanded')).toBe('false')
     expect(await terminalPhase.evaluate(element => getComputedStyle(element).cursor)).toBe('pointer')
@@ -182,7 +197,9 @@ describe.skipIf(MODE === 'record')('web e2e: durable workflow run in Chat', () =
     await workflow.waitFor({ timeout: 15_000 })
     expect(await workflow.getAttribute('aria-expanded')).toBe('false')
     await workflow.click()
-    const phase = page.getByRole('button', { name: /^Run/ })
+    // `Run <n>` (not bare /^Run/): the composer's Runtime-mode chip also
+    // exposes a button whose name starts with "Run".
+    const phase = page.getByRole('button', { name: /^Run \d/ })
     await phase.waitFor()
     expect(await phase.getAttribute('aria-expanded')).toBe('false')
     await phase.click()

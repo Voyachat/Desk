@@ -6,4 +6,5 @@
   - option "goal set or view the goal for a long-running task"
   - option "permission Switch the permission preset (sandbox mode + approval policy)"
   - option "plan Enter or leave plan mode"
+  - option "workflow-retry restart an interrupted or failed workflow from its logged source call"
   - option "model Select the model for this conversation"

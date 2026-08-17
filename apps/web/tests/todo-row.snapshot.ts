@@ -14,7 +14,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { hasClass, installAssembledBootEnv, mountAssembledApp, REFRESHING_GOLDEN } from './assembled-boot.ts'
+import { expandActivityFolds, hasClass, installAssembledBootEnv, mountAssembledApp, REFRESHING_GOLDEN } from './assembled-boot.ts'
 
 const EXPECTED = join(process.cwd(), 'apps/web/tests/snapshots/todo-row/parallel-plan.expected.txt')
 
@@ -46,6 +46,12 @@ describe('assembled todo surfaces', () => {
 
     const tree = await screen.findByRole('tree', { name: 'Sessions' }, { timeout: 10_000 })
     fireEvent.click(await within(tree).findByText('Fixture 历史会话'))
+    // The todo turn's keyed row folds away by default; open the activity fold
+    // so it mounts before the shape is read.
+    await waitFor(() => {
+      expect(document.querySelector('[data-activity-fold]')).not.toBeNull()
+    }, { timeout: 10_000 })
+    expandActivityFolds()
     // The todo turn is the fixture's last, so wait for its keyed row rather
     // than for chat content in general.
     const row = await waitFor(() => {

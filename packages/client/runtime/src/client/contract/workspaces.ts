@@ -17,9 +17,12 @@ export interface IWorkspaces {
   /**
    * Connect a Workspace to its reusable or freshly created blank session.
    * @param workspaceId - target workspace.
+   * @param opts - optional agent driver runtime the connected session must run
+   * under (absent = default loop driver); reuse matches only a blank session
+   * created under the same runtime.
    * @returns the connected session id.
    */
-  connectWorkspace(workspaceId: WorkspaceId): Promise<SessionId>
+  connectWorkspace(workspaceId: WorkspaceId, opts?: { agentRuntime?: string }): Promise<SessionId>
   /**
    * The New Session flow: connect the explicit, current-Session, or recent
    * Workspace and open the resulting session; failures surface on the session

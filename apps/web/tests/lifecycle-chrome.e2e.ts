@@ -21,7 +21,7 @@ import {
   acknowledgeReloadConnectionLoss, assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
-import { connectFreshWorkspace, newEnglishPage, saveFailureShot } from './support.ts'
+import { connectFreshWorkspace, expandActivityFolds, newEnglishPage, saveFailureShot } from './support.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./snapshots/lifecycle-chrome', import.meta.url))
 const FIXTURE = join(SNAPSHOT_DIR, 'session.jsonl')
@@ -177,6 +177,11 @@ describe('web e2e: lifecycle & chrome (workspace flow / reload / dark mode)', ()
       try {
         await input.press('Enter')
         if (MODE !== 'record') {
+          // The streaming think row now lives inside the running activity
+          // fold; wait for the fold to appear and open it so the row's
+          // follow-tail geometry is observable.
+          await page.locator('[data-activity-fold][data-state="running"]').first().waitFor({ timeout: 10_000 })
+          await expandActivityFolds(page)
           const liveTail = page.locator('[data-variant="think"][data-state="running"] [data-follow-end]')
           await expect.poll(async () => await liveTail.evaluate(element => (
             element.scrollWidth > element.clientWidth

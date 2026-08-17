@@ -22,16 +22,20 @@
   - img
   - text: Think The user wants me to begin with "Reading the workspace now." and call bash with "echo alpha" in the same message. Then after the tool result, reply with the single word DONE and stop.
 - paragraph: Reading the workspace now.
-- button "Bash Print alpha to stdout":
+- button "Processed 1 steps":
   - img
   - img
-  - text: Bash Print alpha to stdout
+  - text: Processed 1 steps
 - paragraph: partial
 - status: Deep diving...
 - textbox "Message the agent"
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

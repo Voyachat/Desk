@@ -17,6 +17,11 @@ export interface SessionsPortSummary {
   blank: boolean
   cwd?: string
   updatedAt: number
+  /**
+   * Agent driver runtime the session runs under; absent = default loop
+   * driver. Blank-reuse matches only a session minted under the same runtime.
+   */
+  agentRuntime?: string
 }
 
 /** Session-list facts sibling domains read: readiness, selection, and the row map. */
@@ -33,10 +38,11 @@ export interface SessionsPort {
   readonly list: ObservableSnapshot<SessionsPortList>
   /**
    * Create a session on the host.
-   * @param opts - target workspace.
+   * @param opts - target workspace and, optionally, the agent driver runtime
+   * the new session runs under (absent = default loop driver).
    * @returns the new session id.
    */
-  create(opts: { workspaceId: WorkspaceId }): Promise<SessionId>
+  create(opts: { workspaceId: WorkspaceId; agentRuntime?: string }): Promise<SessionId>
   /**
    * Select a session as current.
    * @param id - session id (must exist in the list store).

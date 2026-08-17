@@ -27,6 +27,8 @@ export interface SessionListEntry {
   cwd?: string
   /** Agent preset the session's agent was composed from (summary passthrough). */
   agentPreset?: string
+  /** Agent driver runtime the session runs under (summary passthrough); absent = default loop driver. */
+  agentRuntime?: string
   /** Current host-computed projection values for list consumers. */
   projectionValues?: Readonly<Partial<SessionProjectionMap>>
   /** User interaction currently blocking this session, derived from live mux frames. */

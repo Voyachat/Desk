@@ -16,14 +16,10 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
-- button "Think The user wants me to run a simple bash command and reply with \"DONE\".":
+- button "Processed 1 steps":
   - img
   - img
-  - text: Think The user wants me to run a simple bash command and reply with "DONE".
-- button "Bash Echo the test string":
-  - img
-  - img
-  - text: Bash Echo the test string
+  - text: Processed 1 steps
 - button "Think The command executed successfully and output \"WEB_E2E_OK\". I just need to reply with \"DONE\".":
   - img
   - img
@@ -42,6 +38,10 @@
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
 - button "Select model, current DeepSeek-V4-Flash":
   - text: DeepSeek-V4-Flash
   - img

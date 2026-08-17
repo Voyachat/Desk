@@ -19,7 +19,7 @@ import {
   webSnapshotMode,
   type WebScaffold,
 } from './scaffold.ts'
-import { conversationContextKey, newEnglishPage, saveFailureShot } from './support.ts'
+import { conversationContextKey, expandActivityFolds, newEnglishPage, saveFailureShot } from './support.ts'
 
 const MODE = webSnapshotMode()
 const SESSION_ID = 'chat-long-interactions-e2e'
@@ -193,9 +193,13 @@ describe('web e2e: long Chat interaction contract', () => {
     if (boundary === undefined) throw new Error(`turn ${String(BRANCH_TURN)} has no turn/end event`)
     const expectedUserText = textContent(branchUserEvent.data.content)
 
-    await wheelUntilMounted(page, `[data-chat-call-id="${TARGET_CALL_2}"]`, -1_100)
     const toolUserKey = messageKey(toolUserEvent)
     const toolAssistantKey = assistantKey(toolAssistantEvent)
+    // The turn's tool rows fold away on cold resume; scroll to the fold-barrier
+    // user row (which mounts on its own), then open the activity fold that owns
+    // the keyed tool rows so they mount for the identity assertions.
+    await wheelUntilMounted(page, `[data-chat-anchor-key="${toolUserKey}"]`, -1_100)
+    await expandActivityFolds(page)
     const toolUserRow = page.locator(`[data-chat-anchor-key="${toolUserKey}"]`)
     const toolAssistantRow = page.locator(`[data-chat-anchor-key="${toolAssistantKey}"]`)
     const call1 = page.locator(`[data-chat-call-id="${TARGET_CALL_1}"]`)
@@ -203,8 +207,8 @@ describe('web e2e: long Chat interaction contract', () => {
 
     await expect.poll(() => toolUserRow.count(), { timeout: 10_000 }).toBe(1)
     await expect.poll(() => toolAssistantRow.count(), { timeout: 10_000 }).toBe(1)
-    expect(await call1.count()).toBe(1)
-    expect(await call2.count()).toBe(1)
+    await expect.poll(() => call1.count(), { timeout: 10_000 }).toBe(1)
+    await expect.poll(() => call2.count(), { timeout: 10_000 }).toBe(1)
     expect(await toolUserRow.getAttribute('data-chat-flow-kind')).toBe('user')
     expect(await toolAssistantRow.getAttribute('data-chat-flow-kind')).toBe('assistant-step')
     expect(await toolUserRow.textContent()).toContain(toolUserMarker)

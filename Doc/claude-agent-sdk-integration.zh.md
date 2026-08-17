@@ -162,3 +162,18 @@ ui-conversation：
   （用户消息）与输出（assistant/工具事件），模型侧上下文由 SDK resume 保证一致。
 - Claude 模式暂不支持 DSH 工具（tools 注册表）与 subagent 委托 —— SDK 用自己的内置工具；
   DSH 工具互通走 MCP 桥（P1/P2，SDK 支持 mcpServers 配置，可把 dsh 工具暴露为 MCP）。
+## 7. 落地情况（实现记录）
+
+P0 已按本设计落地，其中一处范围调整：
+
+- **空白会话的 selectRuntime 未实现为原位切换**：宿主没有会话删除/重建通道
+  （api-proxy 不持有 AgentHandle、持久化层无 remove API），原位换 runtime 需要
+  新增整条拆除路径。实际落地为“创建时选择 + 切换即换会话”：`session.create`
+  接受并校验 `agentRuntime`（`runtime-not-found`/`runtime-conflict`），composer
+  芯片切换时以目标 runtime 连接当前工作区（复用同 runtime 的空白会话，否则新建）
+  并打开落点会话。会话终身携带创建时的 runtime，与 agentPreset 语义对齐。
+- **选择器 roster v1 为静态两档**（本机/Claude）：后续读取宿主
+  `driverRuntimes()` 注册表即可扩展到更多驱动（已写入 ui-runtime 的 Known
+  Limitations）。
+- 组合接线：宿主驱动行落在 Aistaff 产品 bundle（`packages/aistaff/product-bundle`
+  的 cordis.patch.yml），浏览器芯片行落在 web-app roster；base 部署两者皆无。
