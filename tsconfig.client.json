@@ -3,7 +3,8 @@
   // Split from the host aggregate because both sides merge cordis Context
   // under the same keys (sessions, loader) with different services; shared
   // leaves (session/llm/tools/apiproxy/...) build once and are referenced by
-  // both programs through each client package's own references.
+  // both programs through each client package's own references. The one test
+  // that deliberately composes both faces lives in tsconfig.hybrid.json.
   "extends": "./tsconfig.base.client.json",
   "compilerOptions": {
     "noEmit": true,
@@ -25,6 +26,7 @@
     "packages/*/*/tests/**/*.client.tsx",
     "packages/*/*/tests/**/*.client.ts",
     // Client package outside packages/client with a local CSS module face.
+    "packages/claude/ui-runtime/src/css-modules.d.ts",
     "packages/extensions/ui-cordis/src/css-modules.d.ts",
     "packages/client/tsdown.client.ts",
     "scripts/client-bundle-css.spec.ts",

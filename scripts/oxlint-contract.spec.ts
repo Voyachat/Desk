@@ -213,9 +213,9 @@ export const longProbe = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 +
       throw new Error('package.json must contain scripts and devDependencies objects')
     }
 
-    expect(packageJson.scripts['lint:contracts-ready']).toBe('tsx scripts/run-oxlint.ts .')
+    expect(packageJson.scripts['lint:contracts-ready']).toBe('tsx scripts/run-oxlint.ts --changed')
     expect(packageJson.scripts['lint:fix:contracts-ready']).toBe(
-      'tsx scripts/run-oxlint.ts --config .oxlintrc.staged.json packages/typert/generator/tests/fixtures/type-model --fix && tsx scripts/run-oxlint.ts . --fix',
+      'tsx scripts/run-oxlint.ts --config .oxlintrc.staged.json packages/typert/generator/tests/fixtures/type-model --fix && tsx scripts/run-oxlint.ts --changed --fix',
     )
     expect(packageJson.devDependencies).not.toHaveProperty('eslint')
     expect(packageJson.devDependencies).not.toHaveProperty('@typescript-eslint/parser')
@@ -225,6 +225,24 @@ export const longProbe = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 +
     expect(lefthook).toContain('scripts/run-oxlint.ts --config .oxlintrc.staged.json --fix')
     expect(lefthook).not.toContain('node_modules/.bin/eslint')
     expect(lefthook).not.toContain('eslint.format.config.mjs')
+  })
+
+  it('strictly lints an untracked TypeScript change', async () => {
+    const suffix = randomUUID()
+    const path = join(repositoryRoot, 'scripts', `changed-lint-probe-${suffix}.ts`)
+
+    try {
+      await writeFile(path, 'export const value={answer:1};\n')
+      const result = runRepositoryOxlint(['--changed', '--format', 'unix'])
+      const output = normalizedOutput(result)
+
+      expect(result.error).toBeUndefined()
+      expect(result.status, output).toBe(1)
+      expect(output).toContain(relative(repositoryRoot, path).replaceAll('\\', '/'))
+      expect(output).toContain('@stylistic')
+    } finally {
+      await rm(path, { force: true })
+    }
   })
 
   it('reports an unused suppression', async () => {

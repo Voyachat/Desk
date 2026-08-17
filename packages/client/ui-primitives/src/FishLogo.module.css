@@ -1,0 +1,30 @@
+/* Theme switch for the monochrome mark variants (see FishLogo.tsx). */
+
+.root {
+  display: inline-grid;
+  flex: none;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.root img {
+  grid-area: 1 / 1;
+  display: block;
+  height: 100%;
+  width: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.root .dark {
+  display: none;
+}
+
+:global(body[data-ds-dark-theme]) .root .light {
+  display: none;
+}
+
+:global(body[data-ds-dark-theme]) .root .dark {
+  display: block;
+}

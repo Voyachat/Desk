@@ -1,0 +1,23 @@
+{
+  // One cross-runtime integration spec boots the Host runner and its real
+  // Client loader in the same process. Keep that deliberate Context merge in
+  // its own program so neither aggregate inherits the other face's services.
+  "extends": "./tsconfig.base.client.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rewriteRelativeImportExtensions": false,
+    "types": ["node"]
+  },
+  "files": [
+    "packages/extensions/cordis-host-runner/tests/development-hmr.spec.ts",
+    "packages/extensions/cordis-host-runner/tests/helpers.ts"
+  ],
+  "references": [
+    { "path": "./vendor/cordis" },
+    { "path": "./vendor/loader" },
+    { "path": "./packages/client/modules" },
+    { "path": "./packages/client/runtime" },
+    { "path": "./packages/extensions/cordis-client-runner" },
+    { "path": "./packages/extensions/cordis-host-runner" }
+  ]
+}

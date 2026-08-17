@@ -10,6 +10,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import {
   collectEvents as collectEventsWithPolicy,
   collectServices as collectServicesWithPolicy,
+  projectCordisCatalog,
   renderPageRegion,
 } from '../src/cordis-catalog.ts'
 import type {
@@ -52,17 +53,13 @@ const TYPE_FIXTURES = [
   '',
 ].join('\n')
 
-/** Materialize one independently compilable package and its host aggregate. */
-function writeProject(root: string, source: string): void {
-  const packageRoot = join(root, 'packages', 'group', 'fix')
+/** Materialize one independently compilable package. */
+function writePackage(root: string, directory: string, packageName: string, source: string): void {
+  const packageRoot = join(root, 'packages', 'group', directory)
   const sourceRoot = join(packageRoot, 'src')
   mkdirSync(sourceRoot, { recursive: true })
-  writeFileSync(join(root, 'tsconfig.host.json'), JSON.stringify({
-    files: [],
-    references: [{ path: './packages/group/fix' }],
-  }))
   writeFileSync(join(packageRoot, 'package.json'), JSON.stringify({
-    name: '@fixture/fix',
+    name: packageName,
     private: true,
     type: 'module',
     exports: {
@@ -83,6 +80,15 @@ function writeProject(root: string, source: string): void {
     include: ['src'],
   }))
   writeFileSync(join(sourceRoot, 'index.ts'), `${TYPE_FIXTURES}${source}`)
+}
+
+/** Materialize one independently compilable package and its host aggregate. */
+function writeProject(root: string, source: string): void {
+  writeFileSync(join(root, 'tsconfig.host.json'), JSON.stringify({
+    files: [],
+    references: [{ path: './packages/group/fix' }],
+  }))
+  writePackage(root, 'fix', '@fixture/fix', source)
 }
 
 /** Write a fixture package exposing one `interface Events` block and return the
@@ -124,7 +130,7 @@ afterEach(() => {
   while (roots.length) rmSync(roots.pop()!, { recursive: true, force: true })
 })
 
-describe.skip('gen-cordis-catalog collectEvents', { timeout: 60_000 }, () => {
+describe('gen-cordis-catalog collectEvents', { timeout: 60_000 }, () => {
   it('extracts a well-formed event with its @mode and JSDoc', () => {
     const events = collectEvents(make(
       '    /**\n     * A thing happened.\n     * @param id - which thing.\n     * @mode emit\n     */\n    \'fix/happened\'(id: string): void',
@@ -239,7 +245,7 @@ describe.skip('gen-cordis-catalog collectEvents', { timeout: 60_000 }, () => {
   })
 })
 
-describe.skip('gen-cordis-catalog collectServices', () => {
+describe('gen-cordis-catalog collectServices', () => {
   const WELL_FORMED = `/** Fixture service. */
 export class FixService {
   /**
@@ -262,6 +268,7 @@ export class FixService {
     expect(services[0]).toMatchObject({ key: 'fix', type: 'FixService', abstract: false, doc: 'Fixture service.' })
     expect(services[0]?.methods).toHaveLength(3)
     expect(services[0]?.methods[0]).toEqual({
+      kind: 'method',
       signature: 'run(id: string): string',
       jsDoc: '/**\n * Do the thing.\n * @param id - which thing to do.\n * @returns the outcome of doing it.\n */',
     })
@@ -339,5 +346,63 @@ export class FixService {
       '/** Fixture service. */\nexport class FixService {\n  private hidden(id: string): string { return id }\n  protected hook(): void {}\n  static helper(): void {}\n}',
     ))
     expect(services[0]?.methods).toHaveLength(0)
+  })
+})
+
+describe('gen-cordis-catalog package exclusions', { timeout: 60_000 }, () => {
+  it('omits excluded services and their exported declarations from the runtime catalog', () => {
+    const root = mkdtempSync(join(tmpdir(), 'cordis-catalog-'))
+    roots.push(root)
+    writeFileSync(join(root, 'tsconfig.host.json'), JSON.stringify({
+      files: [],
+      references: [
+        { path: './packages/group/included' },
+        { path: './packages/group/excluded' },
+      ],
+    }))
+    writePackage(root, 'included', '@fixture/included', `
+export interface SharedPayload { included: true }
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    included: IncludedService
+  }
+}
+/** Included fixture service. */
+export class IncludedService {
+  /**
+   * Read the included payload.
+   * @returns the included payload.
+   */
+  read(): SharedPayload { return { included: true } }
+}
+`)
+    writePackage(root, 'excluded', '@fixture/excluded', `
+export interface SharedPayload { excluded: true }
+declare module '@deepseek-ai/cordis' {
+  interface Context {
+    excluded: ExcludedService
+  }
+}
+/** Excluded fixture service. */
+export class ExcludedService {
+  /**
+   * Read the excluded payload.
+   * @returns the excluded payload.
+   */
+  read(): SharedPayload { return { excluded: true } }
+}
+`)
+    const policy: CordisCatalogPolicy = {
+      ...TEST_POLICY,
+      linkedTypePages: { ...TEST_POLICY.linkedTypePages, SharedPayload: 'fixture.md' },
+      excludedPackages: ['@fixture/excluded'],
+    }
+    const { model, projector } = projectCordisCatalog(root, policy)
+
+    expect(model.services.map(service => service.key)).toEqual(['included'])
+    const runtimeApi = projector.renderRuntimeApi(model)
+    expect(runtimeApi).toContain('included: true')
+    expect(runtimeApi).not.toContain('excluded: true')
+    expect(runtimeApi).not.toContain('ctx.excluded')
   })
 })

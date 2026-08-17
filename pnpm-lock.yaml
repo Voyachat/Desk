@@ -1407,6 +1407,31 @@ importers:
         specifier: workspace:^
         version: link:../../typert/registry
 
+  packages/aistaff/language-policy:
+    dependencies:
+      '@deepseek-ai/dsh-settings':
+        specifier: workspace:^
+        version: link:../../settings/settings
+      '@deepseek-ai/dsh-tools':
+        specifier: workspace:^
+        version: link:../../core/tools
+      '@deepseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@deepseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@deepseek-ai/dsh-agent':
+        specifier: workspace:^
+        version: link:../../core/agent
+      '@deepseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@deepseek-ai/dsh-session':
+        specifier: workspace:^
+        version: link:../../core/session
+
   packages/aistaff/local-capability:
     devDependencies:
       '@deepseek-ai/cordis':
@@ -1473,15 +1498,15 @@ importers:
       '@deepseek-ai/dsh-aistaff-client-product':
         specifier: workspace:^
         version: link:../client-product
+      '@deepseek-ai/dsh-aistaff-language-policy':
+        specifier: workspace:^
+        version: link:../language-policy
       '@deepseek-ai/dsh-aistaff-product-projection':
         specifier: workspace:^
         version: link:../product-projection
       '@deepseek-ai/dsh-aistaff-product-remote':
         specifier: workspace:^
         version: link:../product-remote
-      '@deepseek-ai/dsh-claude-agent':
-        specifier: workspace:^
-        version: link:../../claude/claude-agent
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:^
@@ -2056,6 +2081,9 @@ importers:
       '@deepseek-ai/dsh-app-boot':
         specifier: workspace:^
         version: link:../../boot/app-boot
+      '@deepseek-ai/dsh-claude-agent':
+        specifier: workspace:^
+        version: link:../../claude/claude-agent
       '@deepseek-ai/dsh-claude-runtime-ui':
         specifier: workspace:^
         version: link:../../claude/ui-runtime

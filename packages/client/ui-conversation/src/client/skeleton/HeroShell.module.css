@@ -90,9 +90,8 @@
   justify-content: center;
 }
 
-/* Keep the hero mark in the same primary ink as its headline. */
+/* The hero mark is monochrome raster art; keep its swim animation origin. */
 .fish {
-  color: var(--dsw-alias-label-primary);
   transform-origin: 50% 60%;
 }
 

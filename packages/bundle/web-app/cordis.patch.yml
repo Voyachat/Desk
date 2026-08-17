@@ -273,6 +273,14 @@
     - id: claude-runtime-ui
       name: '@deepseek-ai/dsh-claude-runtime-ui'
 
+    # Claude Agent SDK driver: sessions created under the claude runtime are
+    # orchestrated by Claude Code instead of the DSH loop. Endpoint and
+    # credentials ride the ANTHROPIC_* environment variables or this row's
+    # config (baseUrl/authToken/apiKey/model); the browser half is the
+    # claude-runtime-ui composer chip directly above.
+    - id: claude-agent
+      name: '@deepseek-ai/dsh-claude-agent'
+
     - id: ui-user-questions
       name: '@deepseek-ai/dsh-client-ui-user-questions'
 

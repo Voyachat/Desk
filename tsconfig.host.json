@@ -1,5 +1,5 @@
 {
-  // Host aggregate (one of the two check units; see tsconfig.json). packages/client
+  // Host aggregate (one of the three check units; see tsconfig.json). packages/client
   // type-checks in tsconfig.client.json: the two sides merge cordis Context under
   // the same keys, one program cannot see both.
   "extends": "./tsconfig.base.json",
@@ -103,6 +103,7 @@
     "packages/*/*/tests/**/*.client.tsx",
     "packages/*/*/tests/**/*.client.spec.ts",
     "packages/*/*/tests/**/*.client.spec.tsx",
+    "packages/extensions/cordis-host-runner/tests/development-hmr.spec.ts",
     "packages/client/tsdown.client.ts",
     "scripts/client-bundle-css.spec.ts",
     "packages/typert/generator/tests/fixtures/**",
@@ -310,6 +311,7 @@
     { "path": "./packages/aistaff/product-contracts" },
     { "path": "./packages/aistaff/product-projection" },
     { "path": "./packages/aistaff/product-remote" },
+    { "path": "./packages/aistaff/language-policy" },
     { "path": "./packages/aistaff/product-bundle" },
     { "path": "./packages/sdk/client" },
     { "path": "./packages/sdk/protocol" },

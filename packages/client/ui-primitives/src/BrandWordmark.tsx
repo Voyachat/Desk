@@ -16,7 +16,7 @@ import type { IconProps } from './icons/props.ts'
 export function BrandWordmark({ size = 24, className }: IconProps) {
   const composed = className === undefined ? styles.root : `${styles.root} ${className}`
   return (
-    <span className={composed} style={{ height: size }} aria-hidden="true">
+    <span className={composed} style={{ width: size * 11 / 3, height: size }} aria-hidden="true">
       <img src="/voyaseek-wordmark-light.png" className={styles.light} alt="" draggable={false} />
       <img src="/voyaseek-wordmark-dark.png" className={styles.dark} alt="" draggable={false} />
     </span>

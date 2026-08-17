@@ -39,13 +39,15 @@
     - id: aistaff-product-remote
       name: '@deepseek-ai/dsh-aistaff-product-remote'
 
+    # Product language policy: the standing default-output-language section,
+    # the per-conversation input-language adaptation context, and the
+    # persisted explicit language rules (`language_rule` tool). Additive over
+    # the upstream `user:locale` guidance; both read the same settings
+    # preference, and this row owns the product default beneath it.
+    - id: aistaff-language-policy
+      name: '@deepseek-ai/dsh-aistaff-language-policy'
+      config:
+        defaultLocale: zh
+
     - id: aistaff-client-product
       name: '@deepseek-ai/dsh-aistaff-client-product'
-
-    # Claude Agent SDK driver: sessions created under the claude runtime are
-    # orchestrated by Claude Code instead of the DSH loop. Endpoint and
-    # credentials ride the ANTHROPIC_* environment variables (the SDK child
-    # inherits the scrubbed parent env); the browser half is the
-    # claude-runtime-ui composer chip in the web-app roster.
-    - id: claude-agent
-      name: '@deepseek-ai/dsh-claude-agent'

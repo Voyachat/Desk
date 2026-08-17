@@ -116,7 +116,11 @@ describe('web e2e: Cloud local-read conformance flow', () => {
     expect(await dialog.innerHTML()).not.toMatch(FORBIDDEN_RENDERER_DATA)
 
     await interactionSection.getByRole('button', { name: '允许本次只读', exact: true }).click()
-    await dialog.getByText('本地回执：已完成', { exact: true }).waitFor({ timeout: 20_000 })
+    // The local receipt belongs to the pending interaction card and can unmount
+    // in the same refresh that publishes its durable Cloud receipt. Wait on
+    // that authoritative projection instead of racing the transient card.
+    const receiptSection = dialog.locator('section[aria-labelledby="aistaff-cloud-receipt-title"]')
+    await receiptSection.getByText('已完成', { exact: true }).waitFor({ timeout: 20_000 })
 
     const materialSection = dialog.locator('section[aria-labelledby="aistaff-cloud-material-title"]')
     await materialSection.getByText('本机目录列表', { exact: true }).waitFor({ timeout: 20_000 })
@@ -124,8 +128,6 @@ describe('web e2e: Cloud local-read conformance flow', () => {
     await materialSection.getByText(/归档/).waitFor()
     expect(await materialSection.locator('script, img, iframe, object, embed').count()).toBe(0)
 
-    const receiptSection = dialog.locator('section[aria-labelledby="aistaff-cloud-receipt-title"]')
-    await receiptSection.getByText('已完成', { exact: true }).waitFor({ timeout: 20_000 })
     await activitySection.getByText('已完成', { exact: true }).waitFor({ timeout: 20_000 })
     await interactionSection.getByText('当前没有需要你处理的请求', { exact: true }).waitFor({ timeout: 20_000 })
     expect(await dialog.textContent()).not.toContain('真实本机')

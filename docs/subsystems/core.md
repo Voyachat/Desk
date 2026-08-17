@@ -359,6 +359,26 @@ Concrete agent factory and driver service.
 create(id: SessionId, options: AgentOptions = {}, meta: Pick<SessionHeader, 'cwd'> = {}): Agent
 
 /**
+ * Register an alternative driver factory for one exact runtime id. Sessions
+ * whose header records that id construct their driver through the factory;
+ * every other session keeps the default loop driver. Duplicate runtime ids
+ * fail loud. Effect-scoped: the returned disposer and the registering fiber
+ * both remove the registration.
+ * @param factory - the driver factory to register under its runtime id.
+ * @returns the disposer that removes the registration.
+ */
+registerDriverFactory(factory: AgentDriverFactory): () => void
+
+/**
+ * List the alternative driver runtime ids currently registered, in
+ * registration order. The default loop runtime is not listed: it serves any
+ * session whose header names no runtime. Callers (e.g. the API gateway) use
+ * this to validate a caller-requested runtime before persisting it.
+ * @returns a snapshot of registered alternative runtime ids.
+ */
+driverRuntimes(): readonly string[]
+
+/**
  * Create an owned agent on a caller-supplied session id.
  * @param ownerCtx - caller context that structurally owns the lifecycle.
  * @param options - identities, session seed/metadata, loop options, setup, and cancellation.
@@ -377,7 +397,7 @@ async resume(ownerCtx: Context, options: ResumeAgentOptions): Promise<AgentHandl
 
 Types: [SessionHeader](persistence.md)
 
-Source: [`packages/core/agent-loop/src/index.ts:296`](../../packages/core/agent-loop/src/index.ts)
+Source: [`packages/core/agent-loop/src/index.ts:299`](../../packages/core/agent-loop/src/index.ts)
 
 <a id="ctxagentpresets--agentpresets"></a>
 
@@ -720,7 +740,7 @@ list(): Agent[]
 roots(): Agent[]
 ```
 
-Source: [`packages/core/agent/src/index.ts:256`](../../packages/core/agent/src/index.ts)
+Source: [`packages/core/agent/src/index.ts:257`](../../packages/core/agent/src/index.ts)
 
 <a id="agent-events"></a>
 
@@ -1043,7 +1063,7 @@ A declarative agent entry failed before it could publish a live agent. Consumers
 'agent-loop/config-start-failed'(payload: { sessionId: SessionId; error: unknown }): void
 ```
 
-Source: [`packages/core/agent-loop/src/index.ts:183`](../../packages/core/agent-loop/src/index.ts)
+Source: [`packages/core/agent-loop/src/index.ts:186`](../../packages/core/agent-loop/src/index.ts)
 
 <a id="agent-preset-events"></a>
 

@@ -9,7 +9,6 @@ import type { Loader } from '@deepseek-ai/cordis-plugin-loader'
 import type { ClientModuleSystem } from '@deepseek-ai/dsh-client-modules/client'
 import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
 import { DynamicCordisPackageRunner } from '../../cordis-client-runner/src/client/runtime.ts'
-import type { DynamicCordisClientHalf } from '../../cordis-client-runner/src/client/runtime.ts'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DYNAMIC_CORDIS_STORE_DIRECTORY } from '../src/persistence.ts'
 import { AGENT_A, setup } from './helpers.ts'
@@ -85,7 +84,7 @@ describe('dynamic Cordis development working-copy HMR', () => {
     harness.gateway.loadClient = async (source) => {
       clientLoads += 1
       if (heldSecond !== undefined && clientLoads === 2) await heldSecond
-      const result = await client.runner.load({ ...source, agentId: AGENT_A.id } as unknown as DynamicCordisClientHalf)
+      const result = await client.runner.load({ ...source, agentId: AGENT_A.id })
       return result.ok
         ? { ok: true, ...result.waitingFor === undefined ? {} : { waitingFor: result.waitingFor } }
         : { ok: false, message: result.message, ...result.stack === undefined ? {} : { stack: result.stack } }
@@ -122,7 +121,8 @@ describe('dynamic Cordis development working-copy HMR', () => {
     const firstComponent = firstEntry?.component as (() => { type: unknown; props: Record<string, unknown> }) | undefined
     const firstElement = firstComponent?.()
     expect(firstElement?.type).toBeTypeOf('function')
-    const firstRendered = (firstElement?.type as ((props: unknown) => unknown) | undefined)?.(firstElement.props)
+    if (firstElement === undefined) throw new Error('first dynamic client component did not render')
+    const firstRendered = (firstElement.type as (props: unknown) => unknown)(firstElement.props)
     expect(firstRendered).toMatchObject({ type: 'strong', props: { children: 'first' } })
 
     const sourcePath = join(
@@ -173,7 +173,7 @@ describe('dynamic Cordis development working-copy HMR', () => {
         apply(ctx) { ctx.slots.register({ name: 'root' }, () => <Label text="second" />) },
       }
     `
-    const secondGate = Promise.withResolvers<void>()
+    const secondGate = Promise.withResolvers<undefined>()
     heldSecond = secondGate.promise
     writeFileSync(sourcePath, fixedSource, 'utf8')
     await vi.waitFor(() => {
@@ -199,7 +199,7 @@ describe('dynamic Cordis development working-copy HMR', () => {
       expect(harness.runner.inventory()[0]?.packages).toHaveLength(3)
       expect(harness.runner.inventory()[0]?.currentPackageId).toBe(defined.packageId)
     }, { timeout: 2_000 })
-    secondGate.resolve()
+    secondGate.resolve(undefined)
     heldSecond = undefined
     await vi.waitFor(() => {
       const row = harness.runner.inventory()[0]

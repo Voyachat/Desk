@@ -5,10 +5,10 @@
   - img
   - img
   - text: Context injection @deepseek-ai/dsh-system-prompt
-- button "Processed {{duration}} · 1 steps":
+- button "Processed 1 steps":
   - img
   - img
-  - text: Processed {{duration}} · 1 steps
+  - text: Processed 1 steps
 - button "snapshot-flow 1 member Succeeded" [expanded]:
   - img
   - text: snapshot-flow 1 member Succeeded

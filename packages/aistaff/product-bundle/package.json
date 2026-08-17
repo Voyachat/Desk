@@ -33,9 +33,9 @@
   "license": "MIT",
   "dependencies": {
     "@deepseek-ai/dsh-aistaff-client-product": "workspace:^",
+    "@deepseek-ai/dsh-aistaff-language-policy": "workspace:^",
     "@deepseek-ai/dsh-aistaff-product-projection": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-remote": "workspace:^",
-    "@deepseek-ai/dsh-claude-agent": "workspace:^"
+    "@deepseek-ai/dsh-aistaff-product-remote": "workspace:^"
   },
   "peerDependencies": {
     "@deepseek-ai/dsh-invariants": "workspace:^",

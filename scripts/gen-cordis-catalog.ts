@@ -153,6 +153,18 @@ export const SERVICE_WALK_EXEMPTIONS: Record<string, string> = {
   slots: 'client-side interface-typed browser service — packages/client/runtime/README.md owns the API',
   theme: 'client-side interface-typed browser service — packages/client/ui-theme/README.md owns the API',
   workspaces: 'client-side interface-typed browser service — packages/client/runtime/README.md owns the API',
+  aistaffClientGatewayInputs: 'product-plane boot inputs, excluded from the harness catalog — packages/aistaff/cloud-provider/README.md owns the API',
+  aistaffCloudConformance: 'product-plane conformance service, excluded from the harness catalog — packages/aistaff/cloud-conformance/README.md owns the API',
+  aistaffLocalCapabilityConformance: 'product-plane test-only control service, excluded from the harness catalog — packages/aistaff/local-capability-conformance/README.md owns the API',
+  aistaffProduct: 'product-plane projection service, excluded from the harness catalog — packages/aistaff/product-projection/README.md owns the API',
+  aistaffProductPort: 'product-plane client port, excluded from the harness catalog — packages/aistaff/product-remote/README.md owns the API',
+  aistaffProductRemote: 'product-plane remote gateway, excluded from the harness catalog — packages/aistaff/product-remote/README.md owns the API',
+  aistaffSupervisorControl: 'product-plane supervisor control service, excluded from the harness catalog — packages/aistaff/supervisor-control/README.md owns the API',
+  aistaffSupervisorProcess: 'product-plane supervisor process provider, excluded from the harness catalog — packages/aistaff/supervisor-process/README.md owns the API',
+  employeeExperience: 'product-plane employee experience service, excluded from the harness catalog — packages/aistaff/employee-experience/README.md owns the API',
+  employeeExperienceRemote: 'product-plane employee experience remote gateway, excluded from the harness catalog — packages/aistaff/employee-experience-remote/README.md owns the API',
+  localCapability: 'product-plane local capability service, excluded from the harness catalog — packages/aistaff/local-capability/README.md owns the API',
+  localCapabilityRemote: 'product-plane local capability remote gateway, excluded from the harness catalog — packages/aistaff/local-capability-remote/README.md owns the API',
 }
 
 /**
@@ -215,6 +227,7 @@ export const EVENT_WALK_EXEMPTIONS: Record<string, string> = {
 export const LINK_MAP: Readonly<Record<string, string>> = {
   Agent: 'core.md',
   AgentCancelCause: 'core.md',
+  AgentDriverFactory: 'core.md',
   AgentFactory: 'core.md',
   AgentHandle: 'core.md',
   ModelSelection: 'core.md',
@@ -585,6 +598,22 @@ export const CORDIS_CATALOG_POLICY: CordisCatalogPolicy = {
   linkedTypePages: LINK_MAP,
   foundationTypeNames: FOUNDATION_TYPE_NAMES,
   typeLinkExemptions: TYPE_LINK_EXEMPTIONS,
+  // Product-plane services stay out of the harness documentation catalog;
+  // their API contracts live in the owning package READMEs (each key is
+  // named in SERVICE_WALK_EXEMPTIONS so the declared-key scan stays whole).
+  excludedPackages: [
+    '@deepseek-ai/dsh-aistaff-cloud-conformance',
+    '@deepseek-ai/dsh-aistaff-cloud-provider',
+    '@deepseek-ai/dsh-aistaff-employee-experience',
+    '@deepseek-ai/dsh-aistaff-employee-experience-remote',
+    '@deepseek-ai/dsh-aistaff-local-capability',
+    '@deepseek-ai/dsh-aistaff-local-capability-conformance',
+    '@deepseek-ai/dsh-aistaff-local-capability-remote',
+    '@deepseek-ai/dsh-aistaff-product-projection',
+    '@deepseek-ai/dsh-aistaff-product-remote',
+    '@deepseek-ai/dsh-aistaff-supervisor-control',
+    '@deepseek-ai/dsh-aistaff-supervisor-process',
+  ],
   runtimeServiceExclusions: new Set(['cordisInspect', 'dynamicCordisRunner']),
   runtimeServices: [{
     key: 'timer',

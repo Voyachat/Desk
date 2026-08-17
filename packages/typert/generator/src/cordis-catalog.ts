@@ -124,6 +124,13 @@ export interface CordisCatalogPolicy {
   readonly inheritedEvents: readonly InheritedEntry[]
   /** Manually curated framework context members inherited by every plugin. */
   readonly inheritedServices: readonly InheritedEntry[]
+  /**
+   * Package manifest names omitted from the projection entirely. Product
+   * packages whose service API is owned by their READMEs instead of the
+   * harness documentation catalog use this; their Context merges still need
+   * walk exemptions on the caller side.
+   */
+  readonly excludedPackages?: readonly string[]
 }
 
 /** Complete model-level Cordis projection used by every text renderer. */
@@ -373,8 +380,10 @@ export function projectCordisCatalog(scanRoot: string, policy: CordisCatalogPoli
     checkDiagnostics: false,
     caches,
   }).discoverPackages()
+  const excluded = new Set(policy.excludedPackages ?? [])
   const packages = discovery.filter(candidate => candidate.faces.includes(targetFace))
     .map(candidate => candidate.package)
+    .filter(name => !excluded.has(name))
   const workspace = new WorkspaceAnalyzer({
     root: scanRoot,
     faces: [targetFace],
@@ -387,6 +396,7 @@ export function projectCordisCatalog(scanRoot: string, policy: CordisCatalogPoli
   const sourceDeclarations = new WorkspaceAnalyzer({
     root: scanRoot,
     faces: [targetFace],
+    packages,
     checkDiagnostics: false,
     caches,
   }).indexSourceDeclarations()

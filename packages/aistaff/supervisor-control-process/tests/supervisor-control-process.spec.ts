@@ -73,7 +73,11 @@ function readRequest(
   }
 }
 
-async function setup(mode = 'normal', requestTimeoutMs = 2_000): Promise<Context> {
+// The shared default is generous: under aggregate-gate contention the fake
+// carrier's spawn plus handshake can exceed a tight budget and flake into
+// REQUEST_TIMEOUT before the scenario under test even starts. Timeout-positive
+// scenarios pass their own small value instead.
+async function setup(mode = 'normal', requestTimeoutMs = 15_000): Promise<Context> {
   const root = await mkdtemp(join(tmpdir(), 'aidesktop-control-process-'))
   roots.push(root)
   const fixture = resolve(import.meta.dirname, 'fake-supervisor.mjs')
@@ -125,25 +129,25 @@ describe('Rust SupervisorControl process provider', () => {
 
   test.each(['bad-version', 'bad-capabilities', 'bad-capability-order', 'bad-limits'])(
     'fails plugin loading for %s hello',
-    async mode => {
-    const root = await mkdtemp(join(tmpdir(), 'aidesktop-control-process-'))
-    roots.push(root)
-    const fixture = resolve(import.meta.dirname, 'fake-supervisor.mjs')
-    const binary = join(root, 'supervisor')
-    await writeFile(binary, `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(fixture)}\n`, 'utf8')
-    await chmod(binary, 0o700)
-    await writeFile(join(root, 'mode'), mode, 'utf8')
-    const ctx = new Context()
-    const processFiber = await ctx.plugin(SupervisorProcessPlugin, {
-      binaryPath: binary,
-      workingDirectory: root,
-      requestTimeoutMs: 2_000,
-      shutdownTimeoutMs: 100,
-    })
-    fibers.push(processFiber)
-    await expect(ctx.plugin(SupervisorControlProcessPlugin)).rejects.toMatchObject({
-      code: 'RUNTIME_VERSION_MISMATCH',
-    })
+    async (mode) => {
+      const root = await mkdtemp(join(tmpdir(), 'aidesktop-control-process-'))
+      roots.push(root)
+      const fixture = resolve(import.meta.dirname, 'fake-supervisor.mjs')
+      const binary = join(root, 'supervisor')
+      await writeFile(binary, `#!/bin/sh\nexec ${JSON.stringify(process.execPath)} ${JSON.stringify(fixture)}\n`, 'utf8')
+      await chmod(binary, 0o700)
+      await writeFile(join(root, 'mode'), mode, 'utf8')
+      const ctx = new Context()
+      const processFiber = await ctx.plugin(SupervisorProcessPlugin, {
+        binaryPath: binary,
+        workingDirectory: root,
+        requestTimeoutMs: 15_000,
+        shutdownTimeoutMs: 100,
+      })
+      fibers.push(processFiber)
+      await expect(ctx.plugin(SupervisorControlProcessPlugin)).rejects.toMatchObject({
+        code: 'RUNTIME_VERSION_MISMATCH',
+      })
       expect(ctx.get('aistaffSupervisorControl')).toBeUndefined()
     },
   )
@@ -235,8 +239,8 @@ describe('Rust SupervisorControl process provider', () => {
     expect(JSON.stringify(failure)).not.toContain('PRIVATE_LOCAL_PATH_FAILURE')
   })
 
-  test('preserves the original operation identity when the carrier times out', async () => {
-    const ctx = await setup()
+  test('preserves the original operation identity when the carrier times out', { timeout: 10_000 }, async () => {
+    const ctx = await setup('normal', 5_000)
     await expect(ctx.aistaffSupervisorControl.readCapability(
       readRequest('timeout-read', 'file/read_text'),
     )).rejects.toMatchObject({ code: 'OUTCOME_UNKNOWN', operation_id: 'timeout-read' })

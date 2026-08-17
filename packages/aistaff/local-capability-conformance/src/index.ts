@@ -66,7 +66,7 @@ export class ConformanceClock {
    * Read the current deterministic fixture time.
    * @returns the current deterministic fixture time.
    */
-  now = (): Date => new Date(this.instant)
+  now: () => Date = (): Date => new Date(this.instant)
 
   /**
    * Advance deterministic fixture time.
@@ -117,7 +117,7 @@ export class ConformanceDirectorySelector implements HostDirectorySelector {
   private cancel = false
   private readonly rootPath = '/fixture/customer-documents'
   /** Number of native selection calls observed by the fixture. */
-  calls = 0
+  calls: number = 0
 
   /** Cancel the next native selection exactly once. */
   cancelNext(): void {

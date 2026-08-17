@@ -813,6 +813,10 @@ function normalizeAria(snapshot: string, workspaceCwd: string): string {
       /约\d+(?:年(?:\d+个月)?|个月(?:\d+天)?)|\d+(?:天(?:\d+小时(?:\d+分\d+秒)?)?|小时\d+分\d+秒|分\d+秒|(?:\.\d+)?秒)/g,
       duration => duration.startsWith('约') ? duration : '{{duration}}',
     )
+    // ActivityFold deliberately omits sub-second elapsed time. Replay worker
+    // startup can cross that threshold, so assembled snapshots own only the
+    // stable step count; component tests cover duration presentation.
+    .replace(/(Processed|已处理) \{\{duration\}\} · (?=\d+ (?:steps|步))/g, '$1 ')
     .replace(/\d+(?:\.\d+)?(?= tok\/s(?!\w))/g, '{{throughput}}')
     // Seeded compaction prices realized file paths, whose length differs
     // between local worktrees and CI scratch directories.

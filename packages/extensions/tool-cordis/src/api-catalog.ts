@@ -117,6 +117,18 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'the published running agent.',
       },
       {
+        signature: 'registerDriverFactory(factory: AgentDriverFactory): () => void',
+        description: 'Register an alternative driver factory for one exact runtime id. Sessions whose header records that id construct their driver through the factory; every other session keeps the default loop driver. Duplicate runtime ids fail loud. Effect-scoped: the returned disposer and the registering fiber both remove the registration.',
+        parameters: [{ name: 'factory', description: 'the driver factory to register under its runtime id.' }],
+        returns: 'the disposer that removes the registration.',
+      },
+      {
+        signature: 'driverRuntimes(): readonly string[]',
+        description: 'List the alternative driver runtime ids currently registered, in registration order. The default loop runtime is not listed: it serves any session whose header names no runtime. Callers (e.g. the API gateway) use this to validate a caller-requested runtime before persisting it.',
+        parameters: [],
+        returns: 'a snapshot of registered alternative runtime ids.',
+      },
+      {
         signature: 'async createAgent(ownerCtx: Context, options: CreateAgentOptions): Promise<AgentHandle>',
         description: 'Create an owned agent on a caller-supplied session id.',
         parameters: [{ name: 'ownerCtx', description: 'caller context that structurally owns the lifecycle.' }, { name: 'options', description: 'identities, session seed/metadata, loop options, setup, and cancellation.' }],
@@ -2622,6 +2634,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type AgentCancelCause = {\n    readonly kind: \'user\';\n} | {\n    readonly kind: \'parent\';\n} | {\n    readonly kind: \'hook\';\n    readonly reason: string;\n} | {\n    readonly kind: \'disposed\';\n};',
   },
   {
+    name: 'AgentDriver',
+    declaration: 'export interface AgentDriver extends Agent {\n    readonly scope: Scope;\n}',
+  },
+  {
+    name: 'AgentDriverFactory',
+    declaration: 'export interface AgentDriverFactory {\n    readonly runtime: string;\n    createDriver(input: CreateDriverInput): AgentDriver;\n}',
+  },
+  {
     name: 'AgentFactory',
     declaration: 'export interface AgentFactory {\n    createAgent(ownerCtx: Context, options: CreateAgentOptions): Promise<AgentHandle>;\n    resume(ownerCtx: Context, options: ResumeAgentOptions): Promise<AgentHandle>;\n}',
   },
@@ -2730,8 +2750,8 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface BashEnvVariableInfo extends BashEnvVariable {\n    contributor: string;\n    key: DshEnvironmentKey;\n}',
   },
   {
-    name: 'Branded',
-    declaration: 'export type Branded<B extends string> = string & {\n    readonly [BRAND]: B;\n};',
+    name: 'CallId',
+    declaration: 'export type CallId = Branded<\'CallId\'>;',
   },
   {
     name: 'CancelOptions',
@@ -2830,6 +2850,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ConfinedSandboxMode = Exclude<SandboxMode, \'danger-full-access\'>;',
   },
   {
+    name: 'ContentBlock',
+    declaration: 'export type ContentBlock = ContentBlockMap[ContentBlockType];',
+  },
+  {
     name: 'ContentBlockMap',
     declaration: 'export interface ContentBlockMap {\n    \'text\': TextBlock;\n    \'reasoning\': ReasoningBlock;\n    \'image\': ImageBlock;\n    \'tool-call\': ToolCallBlock;\n    \'tool-result\': ToolResultBlock;\n}',
   },
@@ -2899,7 +2923,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'CreateAgentOptions',
-    declaration: 'export interface CreateAgentOptions {\n    readonly sessionId: SessionId;\n    readonly meta?: {\n        readonly cwd?: string;\n        readonly parentSession?: SessionId;\n        readonly seedLength?: number;\n        readonly origin?: \'subagent\';\n        readonly delegationDepth?: number;\n        readonly agentPreset?: string;\n    };\n    readonly seed?: readonly SessionEvent[];\n    readonly agentOptions?: AgentOptions;\n    readonly signal?: AbortSignal;\n    readonly setup?: AgentSetup;\n}',
+    declaration: 'export interface CreateAgentOptions {\n    readonly sessionId: SessionId;\n    readonly meta?: {\n        readonly cwd?: string;\n        readonly parentSession?: SessionId;\n        readonly seedLength?: number;\n        readonly origin?: \'subagent\';\n        readonly delegationDepth?: number;\n        readonly agentPreset?: string;\n        readonly agentRuntime?: string;\n    };\n    readonly seed?: readonly SessionEvent[];\n    readonly agentOptions?: AgentOptions;\n    readonly signal?: AbortSignal;\n    readonly setup?: AgentSetup;\n}',
+  },
+  {
+    name: 'CreateDriverInput',
+    declaration: 'export interface CreateDriverInput {\n    readonly id: SessionId;\n    readonly options: AgentOptions;\n    readonly session: Session;\n}',
   },
   {
     name: 'CreateGoalRequest',
@@ -2911,7 +2939,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'CreateSessionOptions',
-    declaration: 'export interface CreateSessionOptions {\n    readonly seed?: readonly SessionEvent[];\n    readonly meta?: {\n        readonly cwd?: string;\n        readonly parentSession?: SessionId;\n        readonly createdAt?: number;\n        readonly seedLength?: number;\n        readonly origin?: \'subagent\';\n        readonly delegationDepth?: number;\n        readonly agentPreset?: string;\n    };\n}',
+    declaration: 'export interface CreateSessionOptions {\n    readonly seed?: readonly SessionEvent[];\n    readonly meta?: {\n        readonly cwd?: string;\n        readonly parentSession?: SessionId;\n        readonly createdAt?: number;\n        readonly seedLength?: number;\n        readonly origin?: \'subagent\';\n        readonly delegationDepth?: number;\n        readonly agentPreset?: string;\n        readonly agentRuntime?: string;\n    };\n}',
   },
   {
     name: 'CredentialInfo',
@@ -3690,14 +3718,6 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type ScheduledToolPreparation = {\n    kind: \'dispatch\';\n    exec: ToolRunContext;\n} | {\n    kind: \'post-result\';\n    exec: ToolRunContext;\n    result: ToolExecutionResult;\n} | {\n    kind: \'final-result\';\n    exec: ToolRunContext;\n    result: ToolExecutionResult;\n};',
   },
   {
-    name: 'Scoped',
-    declaration: 'export type Scoped<T extends object> = object & {\n    readonly [ScopedBrand]: T;\n};',
-  },
-  {
-    name: 'ScopeKey',
-    declaration: 'export type ScopeKey = object;',
-  },
-  {
     name: 'SearchFileMatches',
     declaration: 'export interface SearchFileMatches {\n    path: string;\n    matches: SearchLineMatch[];\n}',
   },
@@ -3720,6 +3740,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ServerResponse',
     declaration: 'export interface ServerResponse {\n    type: \'server-response\';\n    rpcId: RpcId;\n    result: RpcResult<unknown>;\n}',
+  },
+  {
+    name: 'Session',
+    declaration: 'export class Session {\n    get surface(): SessionSurface;\n    readonly header: SessionHeader;\n    get id(): SessionId;\n    readonly firstLiveSeq: number;\n    static create(id: SessionId, seed?: readonly SessionEvent[], header?: SessionHeader): Session;\n    static fromRestore(id: SessionId, seed: readonly SessionEvent[], header: SessionHeader): Session;\n    get events(): readonly SessionEvent[];\n    get seq(): number;\n    append<T extends SessionEventType>(type: T, data: SessionEventMap[T], ...opts: T extends SurfaceEventType ? [\n        opts: SurfaceIntent\n    ] : [\n    ]): SessionEvent<T>;\n    requestHeader(): EpochHeader | undefined;\n    requestContext(): RequestContext | undefined;\n    deriveMessages(): Message[];\n    deriveEventMessage(event: SessionEvent): Message | null;\n}',
   },
   {
     name: 'SessionAvailability',
@@ -3795,7 +3819,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'SessionHeader',
-    declaration: 'export interface SessionHeader {\n    readonly version: number;\n    readonly id: SessionId;\n    readonly createdAt: number;\n    readonly cwd?: string;\n    readonly parentSession?: SessionId;\n    readonly seedLength?: number;\n    readonly origin?: \'subagent\';\n    readonly delegationDepth?: number;\n    readonly agentPreset?: string;\n}',
+    declaration: 'export interface SessionHeader {\n    readonly version: number;\n    readonly id: SessionId;\n    readonly createdAt: number;\n    readonly cwd?: string;\n    readonly parentSession?: SessionId;\n    readonly seedLength?: number;\n    readonly origin?: \'subagent\';\n    readonly delegationDepth?: number;\n    readonly agentPreset?: string;\n    readonly agentRuntime?: string;\n}',
   },
   {
     name: 'SessionId',
@@ -3890,6 +3914,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type SessionStartSource = \'startup\' | \'resume\' | \'clear\' | \'compact\';',
   },
   {
+    name: 'SessionSurface',
+    declaration: 'export interface SessionSurface {\n    readonly nodes: readonly number[];\n    readonly replaceGeneration: number;\n}',
+  },
+  {
     name: 'SessionSurfaceSnapshot',
     declaration: 'export interface SessionSurfaceSnapshot {\n    session: SessionHeader;\n    capturedThroughSeq: number | null;\n    events: SurfaceEvent[];\n}',
   },
@@ -3976,6 +4004,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'SettingsRegisterOptions',
     declaration: 'export interface SettingsRegisterOptions<T> {\n    base?: Partial<T>;\n    applies?: SettingsApplies;\n    validate?: (value: T) => void;\n}',
+  },
+  {
+    name: 'SettingsScope',
+    declaration: 'export interface SettingsScope<T> {\n    get(): T;\n    watch(callback: (next: T, prev: T) => void | Promise<void>): () => void;\n    update(patch: object): Promise<void>;\n    replace(section: object): Promise<void>;\n}',
   },
   {
     name: 'SettingsUpdateSource',
@@ -4226,6 +4258,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type SurfaceEventType = \'user/message\' | \'assistant/message\' | \'tool/result\';',
   },
   {
+    name: 'SurfaceIntent',
+    declaration: 'export interface SurfaceIntent {\n    surfaceOp: SurfaceOp;\n    sourceEventSeqs?: number[];\n}',
+  },
+  {
     name: 'SurfaceOp',
     declaration: 'export type SurfaceOp = \'append\' | {\n    op: \'replace\';\n    start: number;\n    end: number;\n};',
   },
@@ -4322,6 +4358,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export type TerminalWaitReason = \'stdin_read\' | \'inferred_idle\' | \'timeout\' | \'session_exit\';',
   },
   {
+    name: 'TextBlock',
+    declaration: 'export interface TextBlock {\n    type: \'text\';\n    text: string;\n}',
+  },
+  {
     name: 'TodoItem',
     declaration: 'export interface TodoItem {\n    content: string;\n    status: \'pending\' | \'in_progress\' | \'completed\';\n}',
   },
@@ -4340,6 +4380,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TokenUsage',
     declaration: 'export interface TokenUsage {\n    inputTokens: number;\n    outputTokens: number;\n    cacheReadTokens?: number;\n    cacheWriteTokens?: number;\n    reasoningTokens?: number;\n}',
+  },
+  {
+    name: 'ToolCallBlock',
+    declaration: 'export interface ToolCallBlock {\n    type: \'tool-call\';\n    id: CallId;\n    name: string;\n    arguments: string;\n}',
   },
   {
     name: 'ToolCallKind',
@@ -4484,6 +4528,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TypertEventModel',
     declaration: 'export interface TypertEventModel extends TypertDocumentation {\n    readonly name: string;\n    readonly mode?: string;\n    readonly signature: string;\n}',
+  },
+  {
+    name: 'TypertFace',
+    declaration: 'export type TypertFace = \'host\' | \'client\';',
   },
   {
     name: 'TypertMemberModel',
@@ -4644,6 +4692,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'WorkflowStopReason',
     declaration: 'export type WorkflowStopReason = \'completed\' | \'cancelled\' | \'error\';',
+  },
+  {
+    name: 'Workspace',
+    declaration: 'export interface Workspace {\n    readonly id: WorkspaceId;\n    readonly path: string;\n    readonly title: string;\n    readonly createdAt: string;\n    readonly updatedAt: string;\n    readonly sessionIds: readonly SessionId[];\n    setTitle(title: string): Promise<void>;\n    attachSession(sessionId: SessionId): Promise<void>;\n    insertSessionBefore(sessionId: SessionId, beforeSessionId?: SessionId): Promise<void>;\n    detachSession(sessionId: SessionId): Promise<void>;\n    status(): Promise<\'ok\' | \'missing-dir\'>;\n}',
   },
 ]
 

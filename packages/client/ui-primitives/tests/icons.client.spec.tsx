@@ -55,20 +55,43 @@ describe('ic_ds_ icon set', () => {
 })
 
 describe('FishLogo', () => {
-  it('renders the Voyaseek mark img at the requested square size', () => {
+  it('renders the monochrome Voyaseek mark pair at the requested square size', () => {
     const { container } = render(<primitives.FishLogo />)
-    const img = container.querySelector('img')!
-    expect(img.getAttribute('src')).toBe('/voyaseek-mark.png')
-    expect(img.getAttribute('width')).toBe('24')
-    expect(img.getAttribute('height')).toBe('24')
+    const imgs = container.querySelectorAll('img')
+    expect(imgs).toHaveLength(2)
+    const srcs = [...imgs].map(img => img.getAttribute('src'))
+    expect(srcs).toEqual(['/voyaseek-mark-light.png', '/voyaseek-mark-dark.png'])
+    const wrapper = container.firstElementChild as HTMLElement
+    expect(wrapper.style.width).toBe('24px')
+    expect(wrapper.style.height).toBe('24px')
+    expect(wrapper.getAttribute('aria-hidden')).toBe('true')
+    for (const img of imgs) {
+      expect(img.getAttribute('alt')).toBe('')
+      expect(img.getAttribute('draggable')).toBe('false')
+    }
     expect(container.querySelector('svg')).toBeNull()
   })
 
-  it('forwards size and className to the mark img', () => {
+  it('forwards size and className to the mark wrapper', () => {
     const { container } = render(<primitives.FishLogo size={34} className="x" />)
-    const img = container.querySelector('img')!
-    expect(img.getAttribute('width')).toBe('34')
-    expect(img.getAttribute('height')).toBe('34')
-    expect(img.classList.contains('x')).toBe(true)
+    const wrapper = container.firstElementChild as HTMLElement
+    expect(wrapper.style.width).toBe('34px')
+    expect(wrapper.style.height).toBe('34px')
+    expect(wrapper.classList.contains('x')).toBe(true)
+  })
+})
+
+describe('BrandWordmark', () => {
+  it('stacks the theme pair in a fixed 11:3 container', () => {
+    const { container } = render(<primitives.BrandWordmark />)
+    const wrapper = container.firstElementChild as HTMLElement
+    const imgs = container.querySelectorAll('img')
+    expect(wrapper.style.width).toBe('88px')
+    expect(wrapper.style.height).toBe('24px')
+    expect([...imgs].map(img => img.getAttribute('src'))).toEqual([
+      '/voyaseek-wordmark-light.png',
+      '/voyaseek-wordmark-dark.png',
+    ])
+    expect(wrapper.getAttribute('aria-hidden')).toBe('true')
   })
 })

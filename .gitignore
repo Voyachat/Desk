@@ -5,6 +5,7 @@ coverage/
 .artifacts/
 *.tsbuildinfo
 .aidesktop-dev/
+.sessions/
 .env
 .env.*
 .DS_Store

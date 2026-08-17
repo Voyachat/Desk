@@ -282,7 +282,12 @@
         "./packages/aistaff/*/src",
         "./packages/host/*/src",
         "./packages/client/*/src"
-      ]
+      ],
+      // claude/ packages whose npm name does not match their directory (the
+      // dsh-claude-runtime-ui / ui-runtime split) resolve explicitly instead
+      // of relying on the generic wildcard's dir-name matching.
+      "@deepseek-ai/dsh-claude-agent": ["./packages/claude/claude-agent/src"],
+      "@deepseek-ai/dsh-claude-runtime-ui": ["./packages/claude/ui-runtime/src"]
     }
   }
 }

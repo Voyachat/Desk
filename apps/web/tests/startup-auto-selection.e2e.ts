@@ -69,10 +69,48 @@ describe('web e2e: startup auto-selection', () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-first-workspace-stable-tree'))
     await page.locator(`${ROOT_PHASE}[data-phase="hero"]`).waitFor({ timeout: 15_000 })
     const headline = page.getByText('伟大征程，始于微光。', { exact: true })
-    const fish = headline.locator('xpath=preceding-sibling::span[1]/*[name()="svg"]')
-    const fishHitbox = fish.locator('..')
-    expect(await fish.evaluate(node => getComputedStyle(node).color))
-      .toBe(await headline.evaluate(node => getComputedStyle(node).color))
+    // The mark is a theme-switched monochrome raster pair (light + dark img),
+    // not a currentColor svg. Both variants stay mounted at the same geometry,
+    // while CSS selects one without moving the animated wrapper.
+    const fishHitbox = headline.locator('xpath=../preceding-sibling::span[1]')
+    const lightMark = fishHitbox.locator('img[src="/voyaseek-mark-light.png"]')
+    const darkMark = fishHitbox.locator('img[src="/voyaseek-mark-dark.png"]')
+    const fish = lightMark.locator('..')
+    const lightWordmark = page.locator('img[src="/voyaseek-wordmark-light.png"]')
+    const darkWordmark = page.locator('img[src="/voyaseek-wordmark-dark.png"]')
+    expect(await lightMark.count()).toBe(1)
+    expect(await darkMark.count()).toBe(1)
+    expect(await lightWordmark.count()).toBe(1)
+    expect(await darkWordmark.count()).toBe(1)
+    expect(await lightMark.evaluate(img => ({
+      width: (img as HTMLImageElement).naturalWidth,
+      height: (img as HTMLImageElement).naturalHeight,
+    }))).toEqual({ width: 256, height: 256 })
+    expect(await darkMark.evaluate(img => ({
+      width: (img as HTMLImageElement).naturalWidth,
+      height: (img as HTMLImageElement).naturalHeight,
+    }))).toEqual({ width: 256, height: 256 })
+
+    await page.evaluate(() => { document.body.removeAttribute('data-ds-dark-theme') })
+    expect(await Promise.all([
+      lightMark.evaluate(node => getComputedStyle(node).display),
+      darkMark.evaluate(node => getComputedStyle(node).display),
+      lightWordmark.evaluate(node => getComputedStyle(node).display),
+      darkWordmark.evaluate(node => getComputedStyle(node).display),
+    ])).toEqual(['block', 'none', 'block', 'none'])
+    await page.evaluate(() => { document.body.setAttribute('data-ds-dark-theme', '') })
+    expect(await Promise.all([
+      lightMark.evaluate(node => getComputedStyle(node).display),
+      darkMark.evaluate(node => getComputedStyle(node).display),
+      lightWordmark.evaluate(node => getComputedStyle(node).display),
+      darkWordmark.evaluate(node => getComputedStyle(node).display),
+    ])).toEqual(['none', 'block', 'none', 'block'])
+    await page.evaluate(() => { document.body.removeAttribute('data-ds-dark-theme') })
+
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await fishHitbox.hover()
+    expect(await fish.evaluate(node => getComputedStyle(node).animationName)).toBe('none')
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
     await fishHitbox.hover()
     expect(await fish.evaluate(node => getComputedStyle(node).animationName)).not.toBe('none')
     await page.evaluate(() => {

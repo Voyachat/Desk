@@ -44,7 +44,11 @@ describe.skipIf(MODE === 'record')('web e2e: cancelled Bash row disclosure', () 
     await sessionRow.waitFor({ timeout: 10_000 })
     await sessionRow.click()
     // The cancelled Bash rows fold into the turn's activity row on cold
-    // resume; expand it so the keyed rows are actionable.
+    // resume. Under the full Web suite the fold can mount after the session
+    // row click, so wait for its own disclosure before asking the shared
+    // helper to expand it.
+    await page.locator('[data-activity-fold] > div > [data-disclosure-row]')
+      .waitFor({ timeout: 15_000 })
     await expandActivityFolds(page)
     await page.locator('[data-sample="bash"]').nth(1).waitFor({ timeout: 15_000 })
   }, 120_000)

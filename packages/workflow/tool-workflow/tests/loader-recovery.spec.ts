@@ -115,10 +115,13 @@ describe('real Loader and worker-thread recovery', () => {
       arguments: args,
       agent: parent,
     })
+    // The real worker thread and the subagent round trip must both start
+    // before the crash snapshot; the default 1s waitFor budget flakes under
+    // aggregate-gate contention, so the wait carries the test's own slack.
     await vi.waitFor(() => {
       expect(session.events.some(event => event.type === 'tool-workflow/run-start')).toBe(true)
       expect(session.events.some(event => event.type === 'tool-workflow/agent-start')).toBe(true)
-    })
+    }, { timeout: 15_000 })
     expect(session.events.some(event => event.type === 'tool-workflow/run-end')).toBe(false)
 
     const persistedPrefix = session.events
