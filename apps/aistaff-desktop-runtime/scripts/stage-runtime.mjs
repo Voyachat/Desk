@@ -18,7 +18,7 @@ import {
 } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { dirname, join, relative, resolve, sep } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = resolve(packageDir, '..', '..')
@@ -322,9 +322,24 @@ export function verifyRuntime(runtimeRoot) {
   if (nativeAddon === undefined) throw new Error('runtime is missing the macOS x86_64 node-pty prebuild')
   const spawnHelper = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}prebuilds${sep}darwin-x64${sep}spawn-helper`))
   if (spawnHelper === undefined) throw new Error('runtime is missing the macOS x86_64 node-pty spawn-helper')
+  const languagePolicyChunk = findPath(runtimeRoot, (path) => {
+    const directory = `${sep}@deepseek-ai${sep}dsh-aistaff-language-policy${sep}lib${sep}`
+    return path.includes(directory) && /rules-[A-Za-z0-9_-]+\.js$/.test(path)
+  })
+  if (languagePolicyChunk === undefined) throw new Error('runtime is missing the Aistaff language-policy rule chunk')
+  verifyEsmImport(runtimeRoot, 'node_modules/@deepseek-ai/dsh-aistaff-language-policy/lib/index.js')
   verifySupervisorSidecar(join(runtimeRoot, supervisorRuntimePath))
   rejectRuntimeDevelopmentPaths(runtimeRoot)
   process.stdout.write(`Verified AI Staff runtime closure at ${runtimeRoot}\n`)
+}
+
+function verifyEsmImport(runtimeRoot, entry) {
+  const path = join(runtimeRoot, ...entry.split('/'))
+  run(process.execPath, [
+    '--input-type=module',
+    '--eval',
+    `await import(${JSON.stringify(pathToFileURL(path).href)})`,
+  ], { capture: true, label: `runtime import ${entry}` })
 }
 
 function rejectRuntimeDevelopmentPaths(directory) {

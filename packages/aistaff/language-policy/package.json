@@ -21,6 +21,7 @@
   "files": [
     "lib/index.js",
     "lib/invariant.js",
+    "lib/rules-*.js",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",

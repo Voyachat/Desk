@@ -140,6 +140,9 @@ const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   '@deepseek-ai/dsh-aistaff-cloud-product-bundle': ['cordis.patch.yml'],
   '@deepseek-ai/dsh-aistaff-product-bundle': ['cordis.patch.yml'],
   '@deepseek-ai/dsh-aistaff-client-product': ['lib/cloud-client.js'],
+  // The Host plugin and invariant entry share the compiled rule store through
+  // tsdown's content-hashed runtime chunk.
+  '@deepseek-ai/dsh-aistaff-language-policy': ['lib/rules-*.js'],
   '@deepseek-ai/dsh-aistaff-local-capability': ['lib/object-layer.js'],
   '@deepseek-ai/dsh-client-ui-theme': ['lib/styles'],
   // The Python runtime uses a distinct closed-resolution bin; the public CLI
