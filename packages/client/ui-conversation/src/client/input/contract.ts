@@ -5,12 +5,12 @@
  * conversation wiring layer alone sees the full SessionInput. InputMachine
  * (machine.ts) is package-private and never exported.
  */
-import type { ClientContext, SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
-import type { Branded } from '@deepseek-ai/dsh-brand'
+import type { ClientContext, SnapshotStore } from '@voyaseek-ai/dsh-client-runtime/client'
+import type { Branded } from '@voyaseek-ai/dsh-brand'
 import type {
   ArbitrateKey, ArbitrateOutcome, CommandClaim, ConsumeTokenRequest, PickOutcome,
   ReferenceInsert, SubmitOutcome, TokenSpan,
-} from '@deepseek-ai/dsh-client-ui-input-trigger/client'
+} from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
 import type { QueueRow } from '../contract/queue.ts'
 import type { InputSubmitMode } from '../contract/composer-submission.ts'
 
@@ -221,7 +221,39 @@ export interface InputState {
   readonly paste?: PasteAttemptState
   /** Read-only transient inbox projection (`session/queue`, including pending steering). */
   readonly queue: readonly QueuedMessage[]
+  /** Local optimistic sends awaiting host admission (echo bubbles above the flow). */
+  readonly pendingSends: readonly PendingSend[]
 }
+
+/**
+ * Optimistic send projection: the sink's local pre-admission echo of the
+ * committed draft. Rendered immediately as a flow bubble (unsent images ride
+ * their local blob previews) so image serialization and admission stay off
+ * the visible path; the host's authoritative `session/queue` frame or durable
+ * `user/message` takes over with the same content, so the handoff is invisible.
+ */
+export interface PendingSend {
+  /** Stable identity for this attempt (row key, settle/remove addressing). */
+  readonly sendId: string
+  /** Content as composed: unsent images ride local blob-URL blocks. */
+  readonly content: readonly unknown[]
+  readonly preview: string
+  /** Complete text; null when the message contains non-text blocks. */
+  readonly text: string | null
+  /** Browser-owned ids consumed by this send (rollback re-admits them). */
+  readonly imageIds: readonly DraftAttachmentId[]
+}
+
+/**
+ * One optimistic send staged on a shell: the published echo plus the
+ * authoritative-queue subscription that settles the handoff.
+ */
+export interface StagedPendingSend {
+  /** The published echo row. */
+  readonly send: PendingSend
+  /** Host-queue subscription to release on settle/retract/teardown. */
+  readonly unsubscribe: () => void
+ }
 
 /**
  * One in-flight submission attempt: the ONLY id concept in the submit plane.

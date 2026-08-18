@@ -1,7 +1,7 @@
-import { Context, Service, type Plugin } from '@deepseek-ai/cordis';
+import { Context, Service, type Plugin } from '@voyaseek-ai/cordis';
 import { type ChokidarOptions } from 'chokidar';
-import z from '@deepseek-ai/schemastery';
-declare module '@deepseek-ai/cordis' {
+import z from '@voyaseek-ai/schemastery';
+declare module '@voyaseek-ai/cordis' {
     interface Context {
         hmr: Hmr;
     }

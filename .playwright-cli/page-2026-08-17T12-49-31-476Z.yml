@@ -1,0 +1,67 @@
+- generic [ref=e4]:
+  - generic [ref=e7]:
+    - generic [ref=e8]:
+      - button "新建会话" [ref=e9] [cursor=pointer]
+      - button "收起侧边栏" [ref=e11] [cursor=pointer]
+    - button "新建会话" [ref=e14] [cursor=pointer]:
+      - generic [ref=e17]: 新会话
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: 工作区
+        - generic [ref=e24]:
+          - button "搜索会话" [ref=e25] [cursor=pointer]
+          - textbox "搜索会话…"
+        - generic [ref=e29]:
+          - button "视图选项" [ref=e31] [cursor=pointer]
+          - button "添加工作区" [ref=e34] [cursor=pointer]
+      - tree "会话" [ref=e40]:
+        - generic [ref=e41]:
+          - treeitem "AiDesktop" [expanded] [ref=e43] [cursor=pointer]
+          - treeitem "hi 刚刚" [ref=e51] [cursor=pointer]:
+            - generic [ref=e53]: hi
+            - generic [ref=e54]: 刚刚
+          - treeitem "运行一遍整体的测试并修复发 10小时" [ref=e56] [cursor=pointer]:
+            - generic [ref=e58]: 运行一遍整体的测试并修复发
+            - generic [ref=e59]: 10小时
+          - treeitem "内置claude 10小时" [ref=e61] [cursor=pointer]:
+            - generic [ref=e63]: 内置claude
+            - generic [ref=e64]: 10小时
+          - treeitem "帮我起下网页服务 我在网页上 10小时" [ref=e66] [cursor=pointer]:
+            - generic [ref=e68]: 帮我起下网页服务 我在网页上
+            - generic [ref=e69]: 10小时
+          - treeitem "新会话" [selected] [ref=e71] [cursor=pointer]
+          - button "展开其余 2 个会话" [ref=e74] [cursor=pointer]
+        - treeitem "DsAgent" [ref=e77] [cursor=pointer]
+        - treeitem "DS" [ref=e85] [cursor=pointer]
+        - treeitem "未分组" [ref=e92] [cursor=pointer]
+    - generic [ref=e98]:
+      - button "打开 AI 员工工作台" [ref=e101] [cursor=pointer]:
+        - generic [ref=e102]: AI
+        - generic [ref=e103]: AI 员工
+      - button "设置" [ref=e106] [cursor=pointer]
+  - generic [ref=e120]:
+    - generic [ref=e123]:
+      - generic [ref=e126]:
+        - generic [ref=e127]: 伟大征程，始于微光。
+        - generic [ref=e128]: Every Great Journey Begins with a Glimmer
+      - generic [ref=e129]: 预览版
+    - generic [ref=e130]:
+      - button "选择工作区" [ref=e131] [cursor=pointer]:
+        - generic [ref=e135]: AiDesktop
+      - button "标准模式" [ref=e140] [cursor=pointer]
+    - generic [ref=e150]:
+      - textbox "描述你想要构建的内容" [active] [ref=e153]
+      - generic [ref=e154]:
+        - generic [ref=e155]:
+          - button "命令" [ref=e156] [cursor=pointer]
+          - button "访问模式，当前：Full access" [ref=e161] [cursor=pointer]:
+            - generic [ref=e167]: Full access
+          - button "运行模式" [ref=e174] [cursor=pointer]: 本机模式
+        - generic [ref=e179]:
+          - button "选择模型" [ref=e182] [cursor=pointer]
+          - button "发送消息" [disabled] [ref=e186]
+  - generic [ref=e190]:
+    - generic [ref=e191]:
+      - generic: 详情
+      - button "关闭详情" [ref=e192] [cursor=pointer]
+    - generic [ref=e195]: 点击消息流中的工具行查看详情

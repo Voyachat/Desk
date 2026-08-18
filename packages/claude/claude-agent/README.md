@@ -1,10 +1,10 @@
-# @deepseek-ai/dsh-claude-agent
+# @voyaseek-ai/dsh-claude-agent
 
 Claude Agent SDK driver for DSH sessions: a session created under the
 `claude` runtime is orchestrated by Claude Code (through the official
 `@anthropic-ai/claude-agent-sdk`) instead of the default DSH ReactLoopAgent.
 The package is the host half of the Claude integration; the browser half is
-`@deepseek-ai/dsh-claude-runtime-ui` (the composer runtime selector).
+`@voyaseek-ai/dsh-claude-runtime-ui` (the composer runtime selector).
 
 ## How it works
 

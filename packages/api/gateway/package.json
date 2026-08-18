@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-api-gateway",
+  "name": "@voyaseek-ai/dsh-api-gateway",
   "description": "Typert Remote Host dispatcher and Client API endpoint",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/api/gateway"
   },
   "type": "module",
@@ -36,8 +36,8 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-typert-registry",
-        "@deepseek-ai/dsh-client-connection"
+        "@voyaseek-ai/dsh-typert-registry",
+        "@voyaseek-ai/dsh-client-connection"
       ],
       "platform": "web",
       "immediately": true
@@ -56,20 +56,20 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^"
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-typert-registry": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-host-webserver": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-typert-registry": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
+    "@voyaseek-ai/dsh-host-webserver": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
     "zod": "^4.4.3"
   }
 }

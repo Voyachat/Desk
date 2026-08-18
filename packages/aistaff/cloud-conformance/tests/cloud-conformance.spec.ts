@@ -1,11 +1,11 @@
-import { Context } from '@deepseek-ai/cordis'
-import CloudClientGatewayAdapter from '@deepseek-ai/dsh-aistaff-cloud-client'
-import * as cloudProvider from '@deepseek-ai/dsh-aistaff-cloud-provider'
+import { Context } from '@voyaseek-ai/cordis'
+import CloudClientGatewayAdapter from '@voyaseek-ai/dsh-aistaff-cloud-client'
+import * as cloudProvider from '@voyaseek-ai/dsh-aistaff-cloud-provider'
 import {
   OperationId,
   type EmployeeExperiencePort,
   type EmployeeExperienceSnapshot,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import { describe, expect, it } from 'vitest'
 import * as conformance from '../src/index.ts'
 

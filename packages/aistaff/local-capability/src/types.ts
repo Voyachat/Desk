@@ -1,6 +1,6 @@
 /**
  * Renderer-safe local capability values and Host-only injected inputs.
- * @module @deepseek-ai/dsh-aistaff-local-capability/types
+ * @module @voyaseek-ai/dsh-aistaff-local-capability/types
  */
 
 import type {
@@ -14,11 +14,11 @@ import type {
   OwnerRevision,
   ProductResult,
   ReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
 import type {
   ReadCapabilityResult,
   SupervisorSubjectBinding,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control/types'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control/types'
 
 /** Display-safe state of one Supervisor-owned resource grant. */
 export type LocalResourceState = 'active' | 'expired' | 'revoked'

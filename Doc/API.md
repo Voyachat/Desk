@@ -1157,7 +1157,7 @@ Host 适配 adoption ledger 所指 DSH 源码快照已有的 `ApiProxy`，不新
 | `events.host` | Session 生命周期、运行状态和 host error |
 | `respond` | 回答带 DSH `rpcId` 的 Approval/Question server request |
 
-Electron Loopback 包由 Main 以 `process.execPath`、`ELECTRON_RUN_AS_NODE=1` 和 `process.resourcesPath/runtime` 中的入口启动该 Host，传入 Locked `web` profile、端口 `0` 及[数据文档](./数据.md#31-electron-状态根)分配的 `DSH_HOME`/cwd。启动超时、ready 行格式错误、非 loopback URL 或 child 提前退出统一关闭窗口入口并报告 `UNAVAILABLE`；应用退出必须等待 child tree 结束。
+Electron Loopback 包由 Main 以 `process.execPath`、`ELECTRON_RUN_AS_NODE=1` 和 `process.resourcesPath/runtime` 中的入口启动该 Host，传入 Locked `web` profile、端口 `0` 及[数据文档](./数据.md#31-electron-状态根)分配的 `VOYASEEK_HOME`/cwd。启动超时、ready 行格式错误、非 loopback URL 或 child 提前退出统一关闭窗口入口并报告 `UNAVAILABLE`；应用退出必须等待 child tree 结束。
 
 DSH `RpcResult<T>` 的业务错误不抛异常；Host 保留 code 并映射安全 message。连接丢失后重开 streams，再读取 `session.list` 与目标 `session.history`；`events.mux.since` 当前不是可依赖的恢复协议。
 

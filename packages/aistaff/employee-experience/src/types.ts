@@ -1,9 +1,9 @@
 /**
  * Renderer-safe AI employee experience values shared with a Product Host.
- * @module @deepseek-ai/dsh-aistaff-employee-experience/types
+ * @module @voyaseek-ai/dsh-aistaff-employee-experience/types
  */
 
-import type { Branded } from '@deepseek-ai/dsh-brand'
+import type { Branded } from '@voyaseek-ai/dsh-brand'
 
 /** Identifies one AI employee without exposing its owner representation. */
 export type EmployeeRef = Branded<'AistaffEmployeeRef'>

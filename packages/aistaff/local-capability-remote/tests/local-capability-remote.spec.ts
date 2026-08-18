@@ -1,4 +1,4 @@
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   InteractionRef,
   LocalConsentRef,
@@ -6,13 +6,13 @@ import {
   OperationId,
   OwnerRevision,
   ReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   OperationStatusView,
   ProductError,
   ProductResult,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
-import { LocalCapabilityObjectLayer } from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
+import { LocalCapabilityObjectLayer } from '@voyaseek-ai/dsh-aistaff-local-capability'
 import type {
   AuthorizeLocalOperationInput,
   LocalCapabilityObservation,
@@ -21,10 +21,10 @@ import type {
   RevokeResourceInput,
   SelectDirectoryInput,
   SelectDirectoryResult,
-} from '@deepseek-ai/dsh-aistaff-local-capability/types'
-import TypertGatewayService from '@deepseek-ai/dsh-api-gateway'
-import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
-import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
+} from '@voyaseek-ai/dsh-aistaff-local-capability/types'
+import TypertGatewayService from '@voyaseek-ai/dsh-api-gateway'
+import type { RemoteResult } from '@voyaseek-ai/dsh-typert-protocol'
+import TypertRegistry from '@voyaseek-ai/dsh-typert-registry'
 import { describe, expect, it, vi } from 'vitest'
 import LocalCapabilityRemoteService from '../src/index.ts'
 import {

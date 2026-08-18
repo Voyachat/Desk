@@ -8,244 +8,244 @@ The dsh-base bundle patch every profile applies first; mode bundles (dsh-web-app
 ```mermaid
 flowchart LR
   cfg["packages/bundle/base/cordis.patch.yml<br/>cordis.yml"]
-  plugin_dsh_base_timer["timer<br/>@deepseek-ai/cordis-plugin-timer"]
+  plugin_dsh_base_timer["timer<br/>@voyaseek-ai/cordis-plugin-timer"]
   cfg --> plugin_dsh_base_timer
-  plugin_dsh_base_hmr["hmr<br/>@deepseek-ai/cordis-plugin-hmr"]
+  plugin_dsh_base_hmr["hmr<br/>@voyaseek-ai/cordis-plugin-hmr"]
   cfg --> plugin_dsh_base_hmr
-  plugin_dsh_base_llm["llm<br/>@deepseek-ai/dsh-llm"]
+  plugin_dsh_base_llm["llm<br/>@voyaseek-ai/dsh-llm"]
   cfg --> plugin_dsh_base_llm
-  plugin_dsh_base_session["session<br/>@deepseek-ai/dsh-session"]
+  plugin_dsh_base_session["session<br/>@voyaseek-ai/dsh-session"]
   cfg --> plugin_dsh_base_session
-  plugin_dsh_base_typert["typert<br/>@deepseek-ai/dsh-typert-registry"]
+  plugin_dsh_base_typert["typert<br/>@voyaseek-ai/dsh-typert-registry"]
   cfg --> plugin_dsh_base_typert
-  plugin_dsh_base_typert_loader["typert-loader<br/>@deepseek-ai/dsh-typert-loader"]
+  plugin_dsh_base_typert_loader["typert-loader<br/>@voyaseek-ai/dsh-typert-loader"]
   cfg --> plugin_dsh_base_typert_loader
-  plugin_dsh_base_typert_gateway["typert-gateway<br/>@deepseek-ai/dsh-api-gateway"]
+  plugin_dsh_base_typert_gateway["typert-gateway<br/>@voyaseek-ai/dsh-api-gateway"]
   cfg --> plugin_dsh_base_typert_gateway
-  plugin_dsh_base_session_title["session-title<br/>@deepseek-ai/dsh-session-title"]
+  plugin_dsh_base_session_title["session-title<br/>@voyaseek-ai/dsh-session-title"]
   cfg --> plugin_dsh_base_session_title
-  plugin_dsh_base_session_title_llm["session-title-llm<br/>@deepseek-ai/dsh-session-title-first-prompt-llm"]
+  plugin_dsh_base_session_title_llm["session-title-llm<br/>@voyaseek-ai/dsh-session-title-first-prompt-llm"]
   cfg --> plugin_dsh_base_session_title_llm
-  plugin_dsh_base_user_questions["user-questions<br/>@deepseek-ai/dsh-user-questions"]
+  plugin_dsh_base_user_questions["user-questions<br/>@voyaseek-ai/dsh-user-questions"]
   cfg --> plugin_dsh_base_user_questions
-  plugin_dsh_base_agent["agent<br/>@deepseek-ai/dsh-agent"]
+  plugin_dsh_base_agent["agent<br/>@voyaseek-ai/dsh-agent"]
   cfg --> plugin_dsh_base_agent
-  plugin_dsh_base_agent_default_model["agent-default-model<br/>@deepseek-ai/dsh-agent-default-model"]
+  plugin_dsh_base_agent_default_model["agent-default-model<br/>@voyaseek-ai/dsh-agent-default-model"]
   cfg --> plugin_dsh_base_agent_default_model
-  plugin_dsh_base_jobs["jobs<br/>@deepseek-ai/dsh-jobs-local"]
+  plugin_dsh_base_jobs["jobs<br/>@voyaseek-ai/dsh-jobs-local"]
   cfg --> plugin_dsh_base_jobs
-  plugin_dsh_base_llm_retry["llm-retry<br/>@deepseek-ai/dsh-llm-retry"]
+  plugin_dsh_base_llm_retry["llm-retry<br/>@voyaseek-ai/dsh-llm-retry"]
   cfg --> plugin_dsh_base_llm_retry
-  plugin_dsh_base_settings["settings<br/>@deepseek-ai/dsh-settings-file"]
+  plugin_dsh_base_settings["settings<br/>@voyaseek-ai/dsh-settings-file"]
   cfg --> plugin_dsh_base_settings
-  plugin_dsh_base_credentials["credentials<br/>@deepseek-ai/dsh-credentials-local"]
+  plugin_dsh_base_credentials["credentials<br/>@voyaseek-ai/dsh-credentials-local"]
   cfg --> plugin_dsh_base_credentials
-  plugin_dsh_base_llm_pi_ai["llm-pi-ai<br/>@deepseek-ai/dsh-llm-pi-ai"]
+  plugin_dsh_base_llm_pi_ai["llm-pi-ai<br/>@voyaseek-ai/dsh-llm-pi-ai"]
   cfg --> plugin_dsh_base_llm_pi_ai
-  plugin_dsh_base_session_persistence_jsonl["session-persistence-jsonl<br/>@deepseek-ai/dsh-session-persistence-jsonl"]
+  plugin_dsh_base_session_persistence_jsonl["session-persistence-jsonl<br/>@voyaseek-ai/dsh-session-persistence-jsonl"]
   cfg --> plugin_dsh_base_session_persistence_jsonl
-  plugin_dsh_base_attachment_local["attachment-local<br/>@deepseek-ai/dsh-attachment-local"]
+  plugin_dsh_base_attachment_local["attachment-local<br/>@voyaseek-ai/dsh-attachment-local"]
   cfg --> plugin_dsh_base_attachment_local
-  plugin_dsh_base_session_query_sqlite["session-query-sqlite<br/>@deepseek-ai/dsh-session-query-sqlite"]
+  plugin_dsh_base_session_query_sqlite["session-query-sqlite<br/>@voyaseek-ai/dsh-session-query-sqlite"]
   cfg --> plugin_dsh_base_session_query_sqlite
-  plugin_dsh_base_session_projection["session-projection<br/>@deepseek-ai/dsh-session-projection"]
+  plugin_dsh_base_session_projection["session-projection<br/>@voyaseek-ai/dsh-session-projection"]
   cfg --> plugin_dsh_base_session_projection
-  plugin_dsh_base_session_telemetry_otel["session-telemetry-otel<br/>@deepseek-ai/dsh-session-telemetry-otel"]
+  plugin_dsh_base_session_telemetry_otel["session-telemetry-otel<br/>@voyaseek-ai/dsh-session-telemetry-otel"]
   cfg --> plugin_dsh_base_session_telemetry_otel
-  plugin_dsh_base_subprocess["subprocess<br/>@deepseek-ai/dsh-subprocess-local"]
+  plugin_dsh_base_subprocess["subprocess<br/>@voyaseek-ai/dsh-subprocess-local"]
   cfg --> plugin_dsh_base_subprocess
-  plugin_dsh_base_sandbox["sandbox<br/>@deepseek-ai/dsh-sandbox-local"]
+  plugin_dsh_base_sandbox["sandbox<br/>@voyaseek-ai/dsh-sandbox-local"]
   cfg --> plugin_dsh_base_sandbox
-  plugin_dsh_base_sandbox_policy["sandbox-policy<br/>@deepseek-ai/dsh-sandbox-policy"]
+  plugin_dsh_base_sandbox_policy["sandbox-policy<br/>@voyaseek-ai/dsh-sandbox-policy"]
   cfg --> plugin_dsh_base_sandbox_policy
-  plugin_dsh_base_bash_sandbox["bash-sandbox<br/>@deepseek-ai/dsh-bash-sandbox"]
+  plugin_dsh_base_bash_sandbox["bash-sandbox<br/>@voyaseek-ai/dsh-bash-sandbox"]
   cfg --> plugin_dsh_base_bash_sandbox
-  plugin_dsh_base_pwsh_sandbox["pwsh-sandbox<br/>@deepseek-ai/dsh-pwsh-sandbox"]
+  plugin_dsh_base_pwsh_sandbox["pwsh-sandbox<br/>@voyaseek-ai/dsh-pwsh-sandbox"]
   cfg --> plugin_dsh_base_pwsh_sandbox
-  plugin_dsh_base_approval["approval<br/>@deepseek-ai/dsh-user-approval"]
+  plugin_dsh_base_approval["approval<br/>@voyaseek-ai/dsh-user-approval"]
   cfg --> plugin_dsh_base_approval
-  plugin_dsh_base_permission["permission<br/>@deepseek-ai/dsh-permission-presets"]
+  plugin_dsh_base_permission["permission<br/>@voyaseek-ai/dsh-permission-presets"]
   cfg --> plugin_dsh_base_permission
-  plugin_dsh_base_shell_env["shell-env<br/>@deepseek-ai/dsh-shell-env"]
+  plugin_dsh_base_shell_env["shell-env<br/>@voyaseek-ai/dsh-shell-env"]
   cfg --> plugin_dsh_base_shell_env
-  plugin_dsh_base_tool_bash["tool-bash<br/>@deepseek-ai/dsh-tool-bash"]
+  plugin_dsh_base_tool_bash["tool-bash<br/>@voyaseek-ai/dsh-tool-bash"]
   cfg --> plugin_dsh_base_tool_bash
-  plugin_dsh_base_tool_pwsh["tool-pwsh<br/>@deepseek-ai/dsh-tool-pwsh"]
+  plugin_dsh_base_tool_pwsh["tool-pwsh<br/>@voyaseek-ai/dsh-tool-pwsh"]
   cfg --> plugin_dsh_base_tool_pwsh
-  plugin_dsh_base_tool_jobs["tool-jobs<br/>@deepseek-ai/dsh-tool-jobs"]
+  plugin_dsh_base_tool_jobs["tool-jobs<br/>@voyaseek-ai/dsh-tool-jobs"]
   cfg --> plugin_dsh_base_tool_jobs
-  plugin_dsh_base_fs_observation_policy["fs-observation-policy<br/>@deepseek-ai/dsh-fs-observation-policy"]
+  plugin_dsh_base_fs_observation_policy["fs-observation-policy<br/>@voyaseek-ai/dsh-fs-observation-policy"]
   cfg --> plugin_dsh_base_fs_observation_policy
-  plugin_dsh_base_tool_fs["tool-fs<br/>@deepseek-ai/dsh-tool-fs"]
+  plugin_dsh_base_tool_fs["tool-fs<br/>@voyaseek-ai/dsh-tool-fs"]
   cfg --> plugin_dsh_base_tool_fs
-  plugin_dsh_base_tool_fs_search["tool-fs-search<br/>@deepseek-ai/dsh-tool-fs-search"]
+  plugin_dsh_base_tool_fs_search["tool-fs-search<br/>@voyaseek-ai/dsh-tool-fs-search"]
   cfg --> plugin_dsh_base_tool_fs_search
-  plugin_dsh_base_agent_instructions["agent-instructions<br/>@deepseek-ai/dsh-agent-instructions"]
+  plugin_dsh_base_agent_instructions["agent-instructions<br/>@voyaseek-ai/dsh-agent-instructions"]
   cfg --> plugin_dsh_base_agent_instructions
-  plugin_dsh_base_skill["skill<br/>@deepseek-ai/dsh-skill"]
+  plugin_dsh_base_skill["skill<br/>@voyaseek-ai/dsh-skill"]
   cfg --> plugin_dsh_base_skill
-  plugin_dsh_base_skill_filesystem["skill-filesystem<br/>@deepseek-ai/dsh-skill-filesystem"]
+  plugin_dsh_base_skill_filesystem["skill-filesystem<br/>@voyaseek-ai/dsh-skill-filesystem"]
   cfg --> plugin_dsh_base_skill_filesystem
-  plugin_dsh_base_skill_badge["skill-badge<br/>@deepseek-ai/dsh-skill-badge"]
+  plugin_dsh_base_skill_badge["skill-badge<br/>@voyaseek-ai/dsh-skill-badge"]
   cfg --> plugin_dsh_base_skill_badge
-  plugin_dsh_base_tool_skill["tool-skill<br/>@deepseek-ai/dsh-tool-skill"]
+  plugin_dsh_base_tool_skill["tool-skill<br/>@voyaseek-ai/dsh-tool-skill"]
   cfg --> plugin_dsh_base_tool_skill
-  plugin_dsh_base_commands["commands<br/>@deepseek-ai/dsh-commands"]
+  plugin_dsh_base_commands["commands<br/>@voyaseek-ai/dsh-commands"]
   cfg --> plugin_dsh_base_commands
-  plugin_dsh_base_command_feedback["command-feedback<br/>@deepseek-ai/dsh-command-feedback"]
+  plugin_dsh_base_command_feedback["command-feedback<br/>@voyaseek-ai/dsh-command-feedback"]
   cfg --> plugin_dsh_base_command_feedback
-  plugin_dsh_base_goal["goal<br/>@deepseek-ai/dsh-goal"]
+  plugin_dsh_base_goal["goal<br/>@voyaseek-ai/dsh-goal"]
   cfg --> plugin_dsh_base_goal
-  plugin_dsh_base_goal_round_driver["goal-round-driver<br/>@deepseek-ai/dsh-goal-round-driver"]
+  plugin_dsh_base_goal_round_driver["goal-round-driver<br/>@voyaseek-ai/dsh-goal-round-driver"]
   cfg --> plugin_dsh_base_goal_round_driver
-  plugin_dsh_base_command_goal["command-goal<br/>@deepseek-ai/dsh-command-goal"]
+  plugin_dsh_base_command_goal["command-goal<br/>@voyaseek-ai/dsh-command-goal"]
   cfg --> plugin_dsh_base_command_goal
-  plugin_dsh_base_plan_mode["plan-mode<br/>@deepseek-ai/dsh-plan-mode"]
+  plugin_dsh_base_plan_mode["plan-mode<br/>@voyaseek-ai/dsh-plan-mode"]
   cfg --> plugin_dsh_base_plan_mode
-  plugin_dsh_base_token_meter["token-meter<br/>@deepseek-ai/dsh-token-meter"]
+  plugin_dsh_base_token_meter["token-meter<br/>@voyaseek-ai/dsh-token-meter"]
   cfg --> plugin_dsh_base_token_meter
-  plugin_dsh_base_compaction_basic["compaction-basic<br/>@deepseek-ai/dsh-compaction-basic"]
+  plugin_dsh_base_compaction_basic["compaction-basic<br/>@voyaseek-ai/dsh-compaction-basic"]
   cfg --> plugin_dsh_base_compaction_basic
-  plugin_dsh_base_command_compact["command-compact<br/>@deepseek-ai/dsh-command-compact"]
+  plugin_dsh_base_command_compact["command-compact<br/>@voyaseek-ai/dsh-command-compact"]
   cfg --> plugin_dsh_base_command_compact
-  plugin_dsh_base_subagent["subagent<br/>@deepseek-ai/dsh-subagent"]
+  plugin_dsh_base_subagent["subagent<br/>@voyaseek-ai/dsh-subagent"]
   cfg --> plugin_dsh_base_subagent
-  plugin_dsh_base_subagent_spawn_in_process["subagent-spawn-in-process<br/>@deepseek-ai/dsh-subagent-spawn-in-process"]
+  plugin_dsh_base_subagent_spawn_in_process["subagent-spawn-in-process<br/>@voyaseek-ai/dsh-subagent-spawn-in-process"]
   cfg --> plugin_dsh_base_subagent_spawn_in_process
-  plugin_dsh_base_subagent_fork_in_process["subagent-fork-in-process<br/>@deepseek-ai/dsh-subagent-fork-in-process"]
+  plugin_dsh_base_subagent_fork_in_process["subagent-fork-in-process<br/>@voyaseek-ai/dsh-subagent-fork-in-process"]
   cfg --> plugin_dsh_base_subagent_fork_in_process
-  plugin_dsh_base_tool_subagent_control["tool-subagent-control<br/>@deepseek-ai/dsh-tool-subagent-control"]
+  plugin_dsh_base_tool_subagent_control["tool-subagent-control<br/>@voyaseek-ai/dsh-tool-subagent-control"]
   cfg --> plugin_dsh_base_tool_subagent_control
-  plugin_dsh_base_tool_subagent_list_agents["tool-subagent-list-agents<br/>@deepseek-ai/dsh-tool-subagent-control/list-agents"]
+  plugin_dsh_base_tool_subagent_list_agents["tool-subagent-list-agents<br/>@voyaseek-ai/dsh-tool-subagent-control/list-agents"]
   cfg --> plugin_dsh_base_tool_subagent_list_agents
-  plugin_dsh_base_tool_subagent["tool-subagent<br/>@deepseek-ai/dsh-tool-subagent"]
+  plugin_dsh_base_tool_subagent["tool-subagent<br/>@voyaseek-ai/dsh-tool-subagent"]
   cfg --> plugin_dsh_base_tool_subagent
-  plugin_dsh_base_tool_subagent_fork["tool-subagent-fork<br/>@deepseek-ai/dsh-tool-subagent"]
+  plugin_dsh_base_tool_subagent_fork["tool-subagent-fork<br/>@voyaseek-ai/dsh-tool-subagent"]
   cfg --> plugin_dsh_base_tool_subagent_fork
-  plugin_dsh_base_tool_subagent_report["tool-subagent-report<br/>@deepseek-ai/dsh-tool-subagent-report"]
+  plugin_dsh_base_tool_subagent_report["tool-subagent-report<br/>@voyaseek-ai/dsh-tool-subagent-report"]
   cfg --> plugin_dsh_base_tool_subagent_report
-  plugin_dsh_base_workflow_worker_thread["workflow-worker-thread<br/>@deepseek-ai/dsh-workflow-worker-thread"]
+  plugin_dsh_base_workflow_worker_thread["workflow-worker-thread<br/>@voyaseek-ai/dsh-workflow-worker-thread"]
   cfg --> plugin_dsh_base_workflow_worker_thread
-  plugin_dsh_base_tool_workflow["tool-workflow<br/>@deepseek-ai/dsh-tool-workflow"]
+  plugin_dsh_base_tool_workflow["tool-workflow<br/>@voyaseek-ai/dsh-tool-workflow"]
   cfg --> plugin_dsh_base_tool_workflow
-  plugin_dsh_base_timeout_policy["timeout-policy<br/>@deepseek-ai/dsh-tool-call-timeout-policy"]
+  plugin_dsh_base_timeout_policy["timeout-policy<br/>@voyaseek-ai/dsh-tool-call-timeout-policy"]
   cfg --> plugin_dsh_base_timeout_policy
-  plugin_dsh_base_spill_local["spill-local<br/>@deepseek-ai/dsh-spill-local"]
+  plugin_dsh_base_spill_local["spill-local<br/>@voyaseek-ai/dsh-spill-local"]
   cfg --> plugin_dsh_base_spill_local
-  plugin_dsh_base_spill_policy["spill-policy<br/>@deepseek-ai/dsh-spill-policy"]
+  plugin_dsh_base_spill_policy["spill-policy<br/>@voyaseek-ai/dsh-spill-policy"]
   cfg --> plugin_dsh_base_spill_policy
-  plugin_dsh_base_session_checkpoint_policy["session-checkpoint-policy<br/>@deepseek-ai/dsh-session-checkpoint-policy"]
+  plugin_dsh_base_session_checkpoint_policy["session-checkpoint-policy<br/>@voyaseek-ai/dsh-session-checkpoint-policy"]
   cfg --> plugin_dsh_base_session_checkpoint_policy
-  plugin_dsh_base_tool_result_pruner["tool-result-pruner<br/>@deepseek-ai/dsh-compaction-tool-result-pruner"]
+  plugin_dsh_base_tool_result_pruner["tool-result-pruner<br/>@voyaseek-ai/dsh-compaction-tool-result-pruner"]
   cfg --> plugin_dsh_base_tool_result_pruner
-  plugin_dsh_base_tool_todo["tool-todo<br/>@deepseek-ai/dsh-tool-todo"]
+  plugin_dsh_base_tool_todo["tool-todo<br/>@voyaseek-ai/dsh-tool-todo"]
   cfg --> plugin_dsh_base_tool_todo
-  plugin_dsh_base_tool_goal["tool-goal<br/>@deepseek-ai/dsh-tool-goal"]
+  plugin_dsh_base_tool_goal["tool-goal<br/>@voyaseek-ai/dsh-tool-goal"]
   cfg --> plugin_dsh_base_tool_goal
-  plugin_dsh_base_tool_ralph["tool-ralph<br/>@deepseek-ai/dsh-tool-ralph"]
+  plugin_dsh_base_tool_ralph["tool-ralph<br/>@voyaseek-ai/dsh-tool-ralph"]
   cfg --> plugin_dsh_base_tool_ralph
-  plugin_dsh_base_tool_str_replace_editor["tool-str-replace-editor<br/>@deepseek-ai/dsh-tool-str-replace-editor"]
+  plugin_dsh_base_tool_str_replace_editor["tool-str-replace-editor<br/>@voyaseek-ai/dsh-tool-str-replace-editor"]
   cfg --> plugin_dsh_base_tool_str_replace_editor
-  plugin_dsh_base_repeat_tool_reminder["repeat-tool-reminder<br/>@deepseek-ai/dsh-repeat-tool-reminder"]
+  plugin_dsh_base_repeat_tool_reminder["repeat-tool-reminder<br/>@voyaseek-ai/dsh-repeat-tool-reminder"]
   cfg --> plugin_dsh_base_repeat_tool_reminder
-  plugin_dsh_base_web["web<br/>@deepseek-ai/dsh-web"]
+  plugin_dsh_base_web["web<br/>@voyaseek-ai/dsh-web"]
   cfg --> plugin_dsh_base_web
-  plugin_dsh_base_web_search_deepseek["web-search-deepseek<br/>@deepseek-ai/dsh-web-search-deepseek"]
+  plugin_dsh_base_web_search_deepseek["web-search-deepseek<br/>@voyaseek-ai/dsh-web-search-deepseek"]
   cfg --> plugin_dsh_base_web_search_deepseek
-  plugin_dsh_base_tool_web["tool-web<br/>@deepseek-ai/dsh-tool-web"]
+  plugin_dsh_base_tool_web["tool-web<br/>@voyaseek-ai/dsh-tool-web"]
   cfg --> plugin_dsh_base_tool_web
-  plugin_dsh_base_tools["tools<br/>@deepseek-ai/dsh-tools"]
+  plugin_dsh_base_tools["tools<br/>@voyaseek-ai/dsh-tools"]
   cfg --> plugin_dsh_base_tools
-  plugin_dsh_base_system_prompt["system-prompt<br/>@deepseek-ai/dsh-system-prompt"]
+  plugin_dsh_base_system_prompt["system-prompt<br/>@voyaseek-ai/dsh-system-prompt"]
   cfg --> plugin_dsh_base_system_prompt
-  plugin_dsh_base_agent_loop["agent-loop<br/>@deepseek-ai/dsh-agent-loop"]
+  plugin_dsh_base_agent_loop["agent-loop<br/>@voyaseek-ai/dsh-agent-loop"]
   cfg --> plugin_dsh_base_agent_loop
-  plugin_dsh_base_fs_sandbox["fs-sandbox<br/>@deepseek-ai/dsh-fs-sandbox"]
+  plugin_dsh_base_fs_sandbox["fs-sandbox<br/>@voyaseek-ai/dsh-fs-sandbox"]
   cfg --> plugin_dsh_base_fs_sandbox
-  plugin_dsh_base_llm_deepseek["llm-deepseek<br/>@deepseek-ai/dsh-llm-deepseek"]
+  plugin_dsh_base_llm_deepseek["llm-deepseek<br/>@voyaseek-ai/dsh-llm-deepseek"]
   cfg --> plugin_dsh_base_llm_deepseek
 ```
 
 | Plugin id | Package / module |
 | --- | --- |
-| `timer` | `@deepseek-ai/cordis-plugin-timer` |
-| `hmr` | `@deepseek-ai/cordis-plugin-hmr` |
-| `llm` | `@deepseek-ai/dsh-llm` |
-| `session` | `@deepseek-ai/dsh-session` |
-| `typert` | `@deepseek-ai/dsh-typert-registry` |
-| `typert-loader` | `@deepseek-ai/dsh-typert-loader` |
-| `typert-gateway` | `@deepseek-ai/dsh-api-gateway` |
-| `session-title` | `@deepseek-ai/dsh-session-title` |
-| `session-title-llm` | `@deepseek-ai/dsh-session-title-first-prompt-llm` |
-| `user-questions` | `@deepseek-ai/dsh-user-questions` |
-| `agent` | `@deepseek-ai/dsh-agent` |
-| `agent-default-model` | `@deepseek-ai/dsh-agent-default-model` |
-| `jobs` | `@deepseek-ai/dsh-jobs-local` |
-| `llm-retry` | `@deepseek-ai/dsh-llm-retry` |
-| `settings` | `@deepseek-ai/dsh-settings-file` |
-| `credentials` | `@deepseek-ai/dsh-credentials-local` |
-| `llm-pi-ai` | `@deepseek-ai/dsh-llm-pi-ai` |
-| `session-persistence-jsonl` | `@deepseek-ai/dsh-session-persistence-jsonl` |
-| `attachment-local` | `@deepseek-ai/dsh-attachment-local` |
-| `session-query-sqlite` | `@deepseek-ai/dsh-session-query-sqlite` |
-| `session-projection` | `@deepseek-ai/dsh-session-projection` |
-| `session-telemetry-otel` | `@deepseek-ai/dsh-session-telemetry-otel` |
-| `subprocess` | `@deepseek-ai/dsh-subprocess-local` |
-| `sandbox` | `@deepseek-ai/dsh-sandbox-local` |
-| `sandbox-policy` | `@deepseek-ai/dsh-sandbox-policy` |
-| `bash-sandbox` | `@deepseek-ai/dsh-bash-sandbox` |
-| `pwsh-sandbox` | `@deepseek-ai/dsh-pwsh-sandbox` |
-| `approval` | `@deepseek-ai/dsh-user-approval` |
-| `permission` | `@deepseek-ai/dsh-permission-presets` |
-| `shell-env` | `@deepseek-ai/dsh-shell-env` |
-| `tool-bash` | `@deepseek-ai/dsh-tool-bash` |
-| `tool-pwsh` | `@deepseek-ai/dsh-tool-pwsh` |
-| `tool-jobs` | `@deepseek-ai/dsh-tool-jobs` |
-| `fs-observation-policy` | `@deepseek-ai/dsh-fs-observation-policy` |
-| `tool-fs` | `@deepseek-ai/dsh-tool-fs` |
-| `tool-fs-search` | `@deepseek-ai/dsh-tool-fs-search` |
-| `agent-instructions` | `@deepseek-ai/dsh-agent-instructions` |
-| `skill` | `@deepseek-ai/dsh-skill` |
-| `skill-filesystem` | `@deepseek-ai/dsh-skill-filesystem` |
-| `skill-badge` | `@deepseek-ai/dsh-skill-badge` |
-| `tool-skill` | `@deepseek-ai/dsh-tool-skill` |
-| `commands` | `@deepseek-ai/dsh-commands` |
-| `command-feedback` | `@deepseek-ai/dsh-command-feedback` |
-| `goal` | `@deepseek-ai/dsh-goal` |
-| `goal-round-driver` | `@deepseek-ai/dsh-goal-round-driver` |
-| `command-goal` | `@deepseek-ai/dsh-command-goal` |
-| `plan-mode` | `@deepseek-ai/dsh-plan-mode` |
-| `token-meter` | `@deepseek-ai/dsh-token-meter` |
-| `compaction-basic` | `@deepseek-ai/dsh-compaction-basic` |
-| `command-compact` | `@deepseek-ai/dsh-command-compact` |
-| `subagent` | `@deepseek-ai/dsh-subagent` |
-| `subagent-spawn-in-process` | `@deepseek-ai/dsh-subagent-spawn-in-process` |
-| `subagent-fork-in-process` | `@deepseek-ai/dsh-subagent-fork-in-process` |
-| `tool-subagent-control` | `@deepseek-ai/dsh-tool-subagent-control` |
-| `tool-subagent-list-agents` | `@deepseek-ai/dsh-tool-subagent-control/list-agents` |
-| `tool-subagent` | `@deepseek-ai/dsh-tool-subagent` |
-| `tool-subagent-fork` | `@deepseek-ai/dsh-tool-subagent` |
-| `tool-subagent-report` | `@deepseek-ai/dsh-tool-subagent-report` |
-| `workflow-worker-thread` | `@deepseek-ai/dsh-workflow-worker-thread` |
-| `tool-workflow` | `@deepseek-ai/dsh-tool-workflow` |
-| `timeout-policy` | `@deepseek-ai/dsh-tool-call-timeout-policy` |
-| `spill-local` | `@deepseek-ai/dsh-spill-local` |
-| `spill-policy` | `@deepseek-ai/dsh-spill-policy` |
-| `session-checkpoint-policy` | `@deepseek-ai/dsh-session-checkpoint-policy` |
-| `tool-result-pruner` | `@deepseek-ai/dsh-compaction-tool-result-pruner` |
-| `tool-todo` | `@deepseek-ai/dsh-tool-todo` |
-| `tool-goal` | `@deepseek-ai/dsh-tool-goal` |
-| `tool-ralph` | `@deepseek-ai/dsh-tool-ralph` |
-| `tool-str-replace-editor` | `@deepseek-ai/dsh-tool-str-replace-editor` |
-| `repeat-tool-reminder` | `@deepseek-ai/dsh-repeat-tool-reminder` |
-| `web` | `@deepseek-ai/dsh-web` |
-| `web-search-deepseek` | `@deepseek-ai/dsh-web-search-deepseek` |
-| `tool-web` | `@deepseek-ai/dsh-tool-web` |
-| `tools` | `@deepseek-ai/dsh-tools` |
-| `system-prompt` | `@deepseek-ai/dsh-system-prompt` |
-| `agent-loop` | `@deepseek-ai/dsh-agent-loop` |
-| `fs-sandbox` | `@deepseek-ai/dsh-fs-sandbox` |
-| `llm-deepseek` | `@deepseek-ai/dsh-llm-deepseek` |
+| `timer` | `@voyaseek-ai/cordis-plugin-timer` |
+| `hmr` | `@voyaseek-ai/cordis-plugin-hmr` |
+| `llm` | `@voyaseek-ai/dsh-llm` |
+| `session` | `@voyaseek-ai/dsh-session` |
+| `typert` | `@voyaseek-ai/dsh-typert-registry` |
+| `typert-loader` | `@voyaseek-ai/dsh-typert-loader` |
+| `typert-gateway` | `@voyaseek-ai/dsh-api-gateway` |
+| `session-title` | `@voyaseek-ai/dsh-session-title` |
+| `session-title-llm` | `@voyaseek-ai/dsh-session-title-first-prompt-llm` |
+| `user-questions` | `@voyaseek-ai/dsh-user-questions` |
+| `agent` | `@voyaseek-ai/dsh-agent` |
+| `agent-default-model` | `@voyaseek-ai/dsh-agent-default-model` |
+| `jobs` | `@voyaseek-ai/dsh-jobs-local` |
+| `llm-retry` | `@voyaseek-ai/dsh-llm-retry` |
+| `settings` | `@voyaseek-ai/dsh-settings-file` |
+| `credentials` | `@voyaseek-ai/dsh-credentials-local` |
+| `llm-pi-ai` | `@voyaseek-ai/dsh-llm-pi-ai` |
+| `session-persistence-jsonl` | `@voyaseek-ai/dsh-session-persistence-jsonl` |
+| `attachment-local` | `@voyaseek-ai/dsh-attachment-local` |
+| `session-query-sqlite` | `@voyaseek-ai/dsh-session-query-sqlite` |
+| `session-projection` | `@voyaseek-ai/dsh-session-projection` |
+| `session-telemetry-otel` | `@voyaseek-ai/dsh-session-telemetry-otel` |
+| `subprocess` | `@voyaseek-ai/dsh-subprocess-local` |
+| `sandbox` | `@voyaseek-ai/dsh-sandbox-local` |
+| `sandbox-policy` | `@voyaseek-ai/dsh-sandbox-policy` |
+| `bash-sandbox` | `@voyaseek-ai/dsh-bash-sandbox` |
+| `pwsh-sandbox` | `@voyaseek-ai/dsh-pwsh-sandbox` |
+| `approval` | `@voyaseek-ai/dsh-user-approval` |
+| `permission` | `@voyaseek-ai/dsh-permission-presets` |
+| `shell-env` | `@voyaseek-ai/dsh-shell-env` |
+| `tool-bash` | `@voyaseek-ai/dsh-tool-bash` |
+| `tool-pwsh` | `@voyaseek-ai/dsh-tool-pwsh` |
+| `tool-jobs` | `@voyaseek-ai/dsh-tool-jobs` |
+| `fs-observation-policy` | `@voyaseek-ai/dsh-fs-observation-policy` |
+| `tool-fs` | `@voyaseek-ai/dsh-tool-fs` |
+| `tool-fs-search` | `@voyaseek-ai/dsh-tool-fs-search` |
+| `agent-instructions` | `@voyaseek-ai/dsh-agent-instructions` |
+| `skill` | `@voyaseek-ai/dsh-skill` |
+| `skill-filesystem` | `@voyaseek-ai/dsh-skill-filesystem` |
+| `skill-badge` | `@voyaseek-ai/dsh-skill-badge` |
+| `tool-skill` | `@voyaseek-ai/dsh-tool-skill` |
+| `commands` | `@voyaseek-ai/dsh-commands` |
+| `command-feedback` | `@voyaseek-ai/dsh-command-feedback` |
+| `goal` | `@voyaseek-ai/dsh-goal` |
+| `goal-round-driver` | `@voyaseek-ai/dsh-goal-round-driver` |
+| `command-goal` | `@voyaseek-ai/dsh-command-goal` |
+| `plan-mode` | `@voyaseek-ai/dsh-plan-mode` |
+| `token-meter` | `@voyaseek-ai/dsh-token-meter` |
+| `compaction-basic` | `@voyaseek-ai/dsh-compaction-basic` |
+| `command-compact` | `@voyaseek-ai/dsh-command-compact` |
+| `subagent` | `@voyaseek-ai/dsh-subagent` |
+| `subagent-spawn-in-process` | `@voyaseek-ai/dsh-subagent-spawn-in-process` |
+| `subagent-fork-in-process` | `@voyaseek-ai/dsh-subagent-fork-in-process` |
+| `tool-subagent-control` | `@voyaseek-ai/dsh-tool-subagent-control` |
+| `tool-subagent-list-agents` | `@voyaseek-ai/dsh-tool-subagent-control/list-agents` |
+| `tool-subagent` | `@voyaseek-ai/dsh-tool-subagent` |
+| `tool-subagent-fork` | `@voyaseek-ai/dsh-tool-subagent` |
+| `tool-subagent-report` | `@voyaseek-ai/dsh-tool-subagent-report` |
+| `workflow-worker-thread` | `@voyaseek-ai/dsh-workflow-worker-thread` |
+| `tool-workflow` | `@voyaseek-ai/dsh-tool-workflow` |
+| `timeout-policy` | `@voyaseek-ai/dsh-tool-call-timeout-policy` |
+| `spill-local` | `@voyaseek-ai/dsh-spill-local` |
+| `spill-policy` | `@voyaseek-ai/dsh-spill-policy` |
+| `session-checkpoint-policy` | `@voyaseek-ai/dsh-session-checkpoint-policy` |
+| `tool-result-pruner` | `@voyaseek-ai/dsh-compaction-tool-result-pruner` |
+| `tool-todo` | `@voyaseek-ai/dsh-tool-todo` |
+| `tool-goal` | `@voyaseek-ai/dsh-tool-goal` |
+| `tool-ralph` | `@voyaseek-ai/dsh-tool-ralph` |
+| `tool-str-replace-editor` | `@voyaseek-ai/dsh-tool-str-replace-editor` |
+| `repeat-tool-reminder` | `@voyaseek-ai/dsh-repeat-tool-reminder` |
+| `web` | `@voyaseek-ai/dsh-web` |
+| `web-search-deepseek` | `@voyaseek-ai/dsh-web-search-deepseek` |
+| `tool-web` | `@voyaseek-ai/dsh-tool-web` |
+| `tools` | `@voyaseek-ai/dsh-tools` |
+| `system-prompt` | `@voyaseek-ai/dsh-system-prompt` |
+| `agent-loop` | `@voyaseek-ai/dsh-agent-loop` |
+| `fs-sandbox` | `@voyaseek-ai/dsh-fs-sandbox` |
+| `llm-deepseek` | `@voyaseek-ai/dsh-llm-deepseek` |
 
 Source config: [`packages/bundle/base/cordis.patch.yml`](../../packages/bundle/base/cordis.patch.yml).
 

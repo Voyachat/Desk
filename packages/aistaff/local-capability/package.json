@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-local-capability",
+  "name": "@voyaseek-ai/dsh-aistaff-local-capability",
   "description": "Renderer-safe local capability service definition and Host coordinator",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -35,15 +35,15 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   }
 }

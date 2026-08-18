@@ -12,12 +12,12 @@ import {
   tokenizeSessionFixtureCwd,
   type HarvestedLog,
   type NormalizeContext,
-} from '@deepseek-ai/dsh-acp-snapshot'
-import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@deepseek-ai/dsh-loader-smoke'
+} from '@voyaseek-ai/dsh-acp-snapshot'
+import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@voyaseek-ai/dsh-loader-smoke'
 import {
   decompressZstdFrame,
   scanZstdFrames,
-} from '@deepseek-ai/dsh-session-persistence-jsonl/src/zstd.ts'
+} from '@voyaseek-ai/dsh-session-persistence-jsonl/src/zstd.ts'
 import { describe, expect, it } from 'vitest'
 
 const snapshotsDir = join(dirname(fileURLToPath(import.meta.url)), 'snapshots')
@@ -210,7 +210,7 @@ async function persistedLogs(cwd: string, root: string = join(cwd, '.sessions'))
 
 /** Install the keyless product-CLI adapter into the temporary headless profile. */
 async function prepareCliMockFixture(cwd: string): Promise<void> {
-  const fixtureDir = join(cwd, '.dsh', 'profiles', 'headless', 'snapshot-fixtures')
+  const fixtureDir = join(cwd, '.voyaseek', 'profiles', 'headless', 'snapshot-fixtures')
   await mkdir(fixtureDir, { recursive: true })
   await Promise.all([
     copyFile(cliMockLlmPluginPath, join(fixtureDir, 'cli-mock-llm.ts')),
@@ -235,7 +235,7 @@ describe('headless stream-json snapshots', () => {
       },
       prepare: prepareCliMockFixture,
       inspect: async (cwd) => {
-        const logs = await persistedLogs(cwd, join(cwd, '.dsh', 'sessions'))
+        const logs = await persistedLogs(cwd, join(cwd, '.voyaseek', 'sessions'))
         expect(logs).toHaveLength(1)
         const actual = logs[0]
         if (actual === undefined) throw new Error('the headless profile did not persist its session')

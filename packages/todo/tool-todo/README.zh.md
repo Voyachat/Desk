@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-todo
+# @voyaseek-ai/dsh-tool-todo
 
 [English](README.md) | 中文
 
@@ -30,7 +30,7 @@
 
 ## 会话投影
 
-当组合挂载了 `ctx.sessionProjections`（[`@deepseek-ai/dsh-session-projection`](../../session/session-projection/README.md)）时，本包在一个注入的子插件中注册 `todos` 投影单元：`init` = `null`（尚无写入）、`apply` = 从每个 `todo/write` 取整表，在错误 `turn/end` 时把 `in_progress` 转为 `failed`、把 `pending` 转为 `blocked`，并在后续每个 `turn/start` 清为 `null`（无关事件都返回同一个状态引用）、`view` = 恒等、`stateVersion` = 3。该键在本包中合并进 `SessionProjectionMap`（经 Service Definition 包的 `/types` 出口）；框架驱动该单元，载体通过历史尾页与 `session/projection` 推送帧提供该值。未挂载注册表的组合不受影响。生命周期理由见 [在下一轮次清空 todo 计划](../../../.agents/notes/implemented/feature/2026-07-28-todo-plan-clears-on-next-turn.md)。
+当组合挂载了 `ctx.sessionProjections`（[`@voyaseek-ai/dsh-session-projection`](../../session/session-projection/README.md)）时，本包在一个注入的子插件中注册 `todos` 投影单元：`init` = `null`（尚无写入）、`apply` = 从每个 `todo/write` 取整表，在错误 `turn/end` 时把 `in_progress` 转为 `failed`、把 `pending` 转为 `blocked`，并在后续每个 `turn/start` 清为 `null`（无关事件都返回同一个状态引用）、`view` = 恒等、`stateVersion` = 3。该键在本包中合并进 `SessionProjectionMap`（经 Service Definition 包的 `/types` 出口）；框架驱动该单元，载体通过历史尾页与 `session/projection` 推送帧提供该值。未挂载注册表的组合不受影响。生命周期理由见 [在下一轮次清空 todo 计划](../../../.agents/notes/implemented/feature/2026-07-28-todo-plan-clears-on-next-turn.md)。
 
 ## 导出形状
 

@@ -4,10 +4,10 @@
  * restored session resolves the same conversation language without extra
  * state. Delegation prompts carry `source.kind === 'user'` too, so child
  * agents follow the language their parent spoke.
- * @module @deepseek-ai/dsh-aistaff-language-policy/conversation
+ * @module @voyaseek-ai/dsh-aistaff-language-policy/conversation
  */
 
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from '@voyaseek-ai/dsh-session'
 import { detectLanguage } from './detect.ts'
 
 /** How many recent user messages the fold inspects before giving up. */

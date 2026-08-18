@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-host-directory-picker-browse",
+  "name": "@voyaseek-ai/dsh-host-directory-picker-browse",
   "description": "In-app browsing backend of the directory-picker seam (listing/creation primitives over the host filesystem)",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/host/directory-picker-browse"
   },
   "type": "module",
@@ -32,15 +32,15 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-host-directory-picker": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/dsh-host-directory-picker": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

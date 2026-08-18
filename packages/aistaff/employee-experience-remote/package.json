@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-employee-experience-remote",
+  "name": "@voyaseek-ai/dsh-aistaff-employee-experience-remote",
   "description": "Strict Host-to-Renderer Typert Remote for the Aistaff Employee Experience object layer",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -33,7 +33,7 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-remotes"
+        "@voyaseek-ai/dsh-api-remotes"
       ],
       "platform": "web"
     }
@@ -57,17 +57,17 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-api-gateway": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
-    "@deepseek-ai/dsh-typert-registry": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-api-gateway": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^"
   }
 }

@@ -1,14 +1,14 @@
 /** Production composition seam for the Aistaff Cloud Employee Experience provider. */
 
 import { randomUUID } from 'node:crypto'
-import { Context, Service } from '@deepseek-ai/cordis'
-import CloudClientGatewayAdapter from '@deepseek-ai/dsh-aistaff-cloud-client'
+import { Context, Service } from '@voyaseek-ai/cordis'
+import CloudClientGatewayAdapter from '@voyaseek-ai/dsh-aistaff-cloud-client'
 import type {
   ClientGatewayContractArtifact,
   ClientGatewayTransport,
-} from '@deepseek-ai/dsh-aistaff-cloud-client'
-import type { EmployeeExperienceSnapshot } from '@deepseek-ai/dsh-aistaff-employee-experience'
-import z from '@deepseek-ai/schemastery'
+} from '@voyaseek-ai/dsh-aistaff-cloud-client'
+import type { EmployeeExperienceSnapshot } from '@voyaseek-ai/dsh-aistaff-employee-experience'
+import z from '@voyaseek-ai/schemastery'
 
 /** Context key for production-owned artifact, transport, and semantic hello inputs. */
 export const AISTAFF_CLIENT_GATEWAY_INPUTS_KEY = 'aistaffClientGatewayInputs' as const
@@ -47,7 +47,7 @@ export class AistaffClientGatewayInputs extends Service {
   }
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Production Client Gateway inputs; absent until an owner explicitly supplies them. */
     aistaffClientGatewayInputs?: AistaffClientGatewayInputs

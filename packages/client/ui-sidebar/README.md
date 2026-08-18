@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-sidebar
+# @voyaseek-ai/dsh-client-ui-sidebar
 
 English | [中文](README.zh.md)
 

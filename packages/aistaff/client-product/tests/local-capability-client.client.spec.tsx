@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { useSyncExternalStore } from 'react'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   ActivityRef,
   EmployeeRef,
@@ -12,15 +12,15 @@ import {
   OperationId,
   OwnerRevision,
   ReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   EmployeeExperienceSnapshot,
   OperationStatusView,
   ProductResult,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import {
   LocalCapabilityObjectLayer,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import type {
   AuthorizeLocalOperationInput,
   LocalCapabilityReceiptView,
@@ -28,8 +28,8 @@ import type {
   RevokeResourceInput,
   SelectDirectoryInput,
   SelectDirectoryResult,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
-import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
+import type { SnapshotSelectorHook } from '@voyaseek-ai/dsh-client-ui-slots'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CloudAistaffWorkbench, type CloudWorkbenchInjected } from '../src/cloud-client/CloudAistaffWorkbench.tsx'

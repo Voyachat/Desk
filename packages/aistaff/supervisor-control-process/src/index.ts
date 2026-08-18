@@ -1,12 +1,12 @@
-/** Host SupervisorControl provider over the authenticated Rust sidecar process. @module @deepseek-ai/dsh-aistaff-supervisor-control-process */
+/** Host SupervisorControl provider over the authenticated Rust sidecar process. @module @voyaseek-ai/dsh-aistaff-supervisor-control-process */
 
 import { Buffer } from 'node:buffer'
 import { isAbsolute } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@voyaseek-ai/cordis'
 import {
   SupervisorControlError,
   SupervisorControlPort,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control'
 import type {
   CapabilityContextHandle,
   ReadCapabilityPayload,
@@ -33,13 +33,13 @@ import type {
   SupervisorStepId,
   SupervisorSubjectBinding,
   SupervisorTenantId,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control/types'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control/types'
 import {
   SupervisorProcessError,
   type SupervisorJsonObject,
   type SupervisorProcessCommand,
   type SupervisorProcessService,
-} from '@deepseek-ai/dsh-aistaff-supervisor-process'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-process'
 
 const CONTROL_VERSION = 'aidesktop.supervisor-control.v1'
 const PROCESS_FRAME_BYTE_LIMIT = 64 * 1024

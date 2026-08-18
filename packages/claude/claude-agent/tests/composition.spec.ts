@@ -5,14 +5,14 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
+import { Context } from '@voyaseek-ai/cordis'
+import AgentRegistry from '@voyaseek-ai/dsh-agent'
+import AgentLoop from '@voyaseek-ai/dsh-agent-loop'
+import LlmRuntime from '@voyaseek-ai/dsh-llm'
+import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
+import LocalSubprocessRuntime from '@voyaseek-ai/dsh-subprocess-local'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime from '@voyaseek-ai/dsh-tools'
 import * as claudeAgent from '../src/index.ts'
 import { ClaudeSdkAgent } from '../src/driver.ts'
 

@@ -12,7 +12,7 @@
 
 import {
   createSnapshotStore, type SessionId, type SnapshotStore,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
 
 /** Selector snapshot. */
 export interface RuntimeSelectorState {

@@ -1,9 +1,9 @@
 /** Package-owned invariant companion for the Aistaff Cloud Client adapter. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-aistaff-cloud-client'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-aistaff-cloud-client'
 
 /** Cordis companion plugin name. */
 export const name = 'aistaff-cloud-client-invariant'

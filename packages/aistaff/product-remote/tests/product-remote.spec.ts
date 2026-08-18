@@ -1,8 +1,8 @@
-import { Context } from '@deepseek-ai/cordis'
-import { EmployeeId } from '@deepseek-ai/dsh-aistaff-product-contracts'
-import ProductProjectionService from '@deepseek-ai/dsh-aistaff-product-projection'
-import TypertGatewayService from '@deepseek-ai/dsh-api-gateway'
-import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
+import { Context } from '@voyaseek-ai/cordis'
+import { EmployeeId } from '@voyaseek-ai/dsh-aistaff-product-contracts'
+import ProductProjectionService from '@voyaseek-ai/dsh-aistaff-product-projection'
+import TypertGatewayService from '@voyaseek-ai/dsh-api-gateway'
+import TypertRegistry from '@voyaseek-ai/dsh-typert-registry'
 import { describe, expect, it, vi } from 'vitest'
 import AistaffProductRemoteService from '../src/index.ts'
 import {

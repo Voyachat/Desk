@@ -1,10 +1,10 @@
 # Test-only deterministic Cloud chain. Never include this bundle in a production profile.
 - insert:
     - id: aistaff-cloud-conformance
-      name: '@deepseek-ai/dsh-aistaff-cloud-conformance'
+      name: '@voyaseek-ai/dsh-aistaff-cloud-conformance'
 
     - id: aistaff-cloud-provider
-      name: '@deepseek-ai/dsh-aistaff-cloud-provider'
+      name: '@voyaseek-ai/dsh-aistaff-cloud-provider'
       inject: [aistaffClientGatewayInputs]
       config:
         protocolOffer: '1.0-1.7'
@@ -14,7 +14,7 @@
         reconnectDelayMs: 10
 
     - id: aistaff-employee-experience-remote
-      name: '@deepseek-ai/dsh-aistaff-employee-experience-remote'
+      name: '@voyaseek-ai/dsh-aistaff-employee-experience-remote'
 
     - id: aistaff-cloud-client-product
-      name: '@deepseek-ai/dsh-aistaff-cloud-client-product'
+      name: '@voyaseek-ai/dsh-aistaff-cloud-client-product'

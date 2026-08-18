@@ -1,12 +1,12 @@
 /**
- * File-backed credentials provider over `$DSH_HOME/.credentials.yaml`, layered
+ * File-backed credentials provider over `$VOYASEEK_HOME/.credentials.yaml`, layered
  * against the environment by how much each layer is trusted:
  *
  * ```text
  * inherited process environment      (read-only, wins)
- * > $DSH_HOME/.credentials.yaml      (provider-managed, writable)
+ * > $VOYASEEK_HOME/.credentials.yaml      (provider-managed, writable)
  * > <invocation cwd>/.env            (read-only fallback)
- * > $DSH_HOME/.env                   (read-only fallback)
+ * > $VOYASEEK_HOME/.env                   (read-only fallback)
  * ```
  *
  * The inherited environment wins because `DEEPSEEK_API_KEY=… dsh`, a CI
@@ -32,21 +32,21 @@
  * as the user's environment layer; a store that doubled as the environment
  * layer would shadow non-secret entries behind its precedence, making them
  * silently unreachable.
- * @module @deepseek-ai/dsh-credentials-local
+ * @module @voyaseek-ai/dsh-credentials-local
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Context, Service } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
 import { watch as chokidarWatch } from 'chokidar'
 import { mkdir, readFile, stat } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { Document, parseDocument, type YAMLError } from 'yaml'
-import { withFileLock, writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
-import { canonicalizeWatchPath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
-import { CredentialProvider, credentialRef } from '@deepseek-ai/dsh-credentials'
-import type { CredentialInfo, CredentialRef, ResolvedCredential } from '@deepseek-ai/dsh-credentials'
-import type { LaunchEnvironmentEntry } from '@deepseek-ai/dsh-launch-environment'
+import { withFileLock, writeFileAtomic } from '@voyaseek-ai/dsh-atomic-write'
+import { canonicalizeWatchPath, resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
+import { launchEnvironmentOf } from '@voyaseek-ai/dsh-launch-environment'
+import { CredentialProvider, credentialRef } from '@voyaseek-ai/dsh-credentials'
+import type { CredentialInfo, CredentialRef, ResolvedCredential } from '@voyaseek-ai/dsh-credentials'
+import type { LaunchEnvironmentEntry } from '@voyaseek-ai/dsh-launch-environment'
 
 /** Basename of the credentials document inside the harness home. */
 export const CREDENTIALS_FILENAME = '.credentials.yaml'
@@ -55,7 +55,7 @@ export const CREDENTIALS_FILENAME = '.credentials.yaml'
 export interface Config {
   /** Credentials document path; defaults to `.credentials.yaml` under the harness home. */
   path?: string
-  /** Harness home used when `path` is omitted; defaults to `$DSH_HOME` or `~/.dsh`. */
+  /** Harness home used when `path` is omitted; defaults to `$VOYASEEK_HOME` or `~/.voyaseek`. */
   dshHome?: string
   /** Watch the document and hot-publish external edits; defaults to true. */
   watch?: boolean
@@ -203,7 +203,7 @@ function renderDocument(text: string | undefined, ref: CredentialRef, value: str
   return document.toString()
 }
 
-/** File-backed credentials provider (`$DSH_HOME/.credentials.yaml`). */
+/** File-backed credentials provider (`$VOYASEEK_HOME/.credentials.yaml`). */
 export class LocalCredentialProvider extends CredentialProvider {
   /* jscpd:ignore-start -- deliberate config-surface and lifecycle symmetry with
      settings-file (prefer symmetry for parallel values); extracting the shared

@@ -1,12 +1,12 @@
 /** Host-only Aistaff Client Gateway adapter and Employee Experience provider. */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   EmployeeExperienceObjectLayer,
   EngagementRef,
   OperationId,
   OwnerRevision,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   ActivityView,
   EffectReceiptView,
@@ -23,7 +23,7 @@ import type {
   ProductError,
   ProductResult,
   SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import { CloudClientGatewayError, ClientGatewayTransportError } from './errors.ts'
 import type {
   ClientGatewaySelection,

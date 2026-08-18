@@ -6,22 +6,22 @@ import type {
   JsonValue,
   MaterialBody,
   MaterialView,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   LocalCapabilitySnapshot,
   LocalResourceView,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
-import type { PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
+import type { PropsRuntime, PropsStore } from '@voyaseek-ai/dsh-client-ui-slots'
+import type {} from '@voyaseek-ai/dsh-client-ui-layout/client'
 import { useEffect, useState, type FormEvent } from 'react'
 import css from '../client/AistaffProduct.module.css'
 import type { createCloudProductStore } from './store.ts'
 
-type EmployeeRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').EmployeeRef>
-type EngagementRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').EngagementRef>
-type InteractionRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').InteractionRef>
-type MaterialRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').MaterialRef>
-type OwnerRevision = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').OwnerRevision>
+type EmployeeRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').EmployeeRef>
+type EngagementRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').EngagementRef>
+type InteractionRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').InteractionRef>
+type MaterialRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').MaterialRef>
+type OwnerRevision = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').OwnerRevision>
 
 /** Plain callbacks supplied by the explicit production service adapter. */
 export interface CloudWorkbenchInjected {

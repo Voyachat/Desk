@@ -13,7 +13,7 @@
  *
  * See .agents/notes/implemented/testing/2026-06-19-acp-snapshot-tests.md.
  *
- * @module @deepseek-ai/dsh-acp-snapshot/harness
+ * @module @voyaseek-ai/dsh-acp-snapshot/harness
  */
 import { type AgentUnderTest } from './launcher.ts';
 export type { AgentUnderTest } from './launcher.ts';

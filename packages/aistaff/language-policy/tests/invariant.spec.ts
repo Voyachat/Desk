@@ -1,11 +1,11 @@
 /** Invariant companion tests over real settings commits. */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@deepseek-ai/dsh-settings'
-import InvariantRegistry, { InvariantError } from '@deepseek-ai/dsh-invariants'
-import * as LanguagePolicy from '@deepseek-ai/dsh-aistaff-language-policy'
-import * as LanguagePolicyInvariant from '@deepseek-ai/dsh-aistaff-language-policy/invariant'
+import { Context } from '@voyaseek-ai/cordis'
+import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@voyaseek-ai/dsh-settings'
+import InvariantRegistry, { InvariantError } from '@voyaseek-ai/dsh-invariants'
+import * as LanguagePolicy from '@voyaseek-ai/dsh-aistaff-language-policy'
+import * as LanguagePolicyInvariant from '@voyaseek-ai/dsh-aistaff-language-policy/invariant'
 import { LANGUAGE_POLICY_SETTINGS_NAMESPACE } from '../src/rules.ts'
 
 class MemorySettings extends SettingsProvider {
@@ -40,7 +40,7 @@ describe('language-policy invariants', () => {
     const ctx = await boot()
     await expect(ctx.settings.update(POLICY_NS, { rules: [rule, rule] }))
       .rejects.toThrow(new InvariantError(
-        '@deepseek-ai/dsh-aistaff-language-policy',
+        '@voyaseek-ai/dsh-aistaff-language-policy',
         'language rule id "rule-1" is recorded more than once',
       ))
   })
@@ -72,7 +72,7 @@ describe('language-policy invariants', () => {
     await ctx.plugin(InvariantRegistry, { enabled: true }).await()
     await expect(ctx.plugin(LanguagePolicyInvariant).then(() => undefined)).rejects.toMatchObject({
       code: 'INVARIANT',
-      packageName: '@deepseek-ai/dsh-aistaff-language-policy',
+      packageName: '@voyaseek-ai/dsh-aistaff-language-policy',
     })
   })
 })

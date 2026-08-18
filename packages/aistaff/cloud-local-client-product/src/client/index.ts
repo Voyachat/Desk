@@ -1,6 +1,6 @@
 /** Strict production browser entry for the Cloud and Local Capability workbench. */
 
-import { apply as cloudProductApply } from '@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
+import { apply as cloudProductApply } from '@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
 
 /** Services that must all exist before the V2 workbench registers any UI. */
 export const inject = ['slots', 'employeeExperience', 'localCapability']
@@ -16,9 +16,9 @@ export {
   createLocalCapabilityWorkbenchInjected,
   useEmployeeExperience,
   useLocalCapability,
-} from '@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
+} from '@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
 
 export type {
   CloudWorkbenchInjected,
   LocalCapabilityWorkbenchInjected,
-} from '@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
+} from '@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'

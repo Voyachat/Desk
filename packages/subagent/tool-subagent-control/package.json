@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-tool-subagent-control",
+  "name": "@voyaseek-ai/dsh-tool-subagent-control",
   "description": "Globally named send_message, interrupt_agent, and list_agents tools over ctx.subagents continuations",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/subagent/tool-subagent-control"
   },
   "type": "module",
@@ -37,26 +37,26 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence-jsonl": "workspace:^",
-    "@deepseek-ai/dsh-session-projection": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-subagent-spawn-in-process": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop-testkit": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence-jsonl": "workspace:^",
+    "@voyaseek-ai/dsh-session-projection": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/dsh-subagent-spawn-in-process": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

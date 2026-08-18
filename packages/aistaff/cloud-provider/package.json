@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-cloud-provider",
+  "name": "@voyaseek-ai/dsh-aistaff-cloud-provider",
   "description": "Production composition seam for the Aistaff Cloud Client Gateway Employee Experience provider",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -25,17 +25,17 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-cloud-client": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-cloud-client": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-cloud-client": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-cloud-client": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   }
 }

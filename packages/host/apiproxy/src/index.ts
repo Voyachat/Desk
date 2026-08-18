@@ -1,5 +1,5 @@
 /**
- * @deepseek-ai/dsh-host-apiproxy — the API gateway every client shape shares:
+ * @voyaseek-ai/dsh-host-apiproxy — the API gateway every client shape shares:
  * the ApiProxy contract (api/: types + zod schemas, browser-safe), the fetch
  * carrier pair (fetch/: toFetchHandler on the host side, AbstractApiClient +
  * platform subclasses on the client side), and the host-side implementation
@@ -12,9 +12,9 @@
  * service; sessions that have already logged a selection remain unchanged.
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import type {} from '@deepseek-ai/dsh-agent-default-model'
+import { Context, Service } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import type {} from '@voyaseek-ai/dsh-agent-default-model'
 import type { ApiProxy } from './api/index.ts'
 import { createApiProxy, DEFAULT_COLD_BLANK_PROBE_MAX_BYTES } from './api-proxy.ts'
 import type { ImageFallbackConfig } from './image-fallback.ts'
@@ -34,7 +34,7 @@ export type { ApiProxyDefaults } from './api-proxy.ts'
 /** Default output cap for one configured image-to-text fallback request. */
 export const DEFAULT_IMAGE_FALLBACK_MAX_TOKENS = 4_096
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** The host-side ApiProxy implementation (the transport-agnostic gateway face). */
     apiProxy: ApiProxy

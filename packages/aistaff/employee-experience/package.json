@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-employee-experience",
+  "name": "@voyaseek-ai/dsh-aistaff-employee-experience",
   "description": "Renderer-safe AI employee experience service definition and observable object layer",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -30,13 +30,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-brand": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-brand": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   }
 }

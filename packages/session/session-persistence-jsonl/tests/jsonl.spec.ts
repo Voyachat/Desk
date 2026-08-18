@@ -1,12 +1,12 @@
-import { MessageId, createUserMessage, createMessage } from '@deepseek-ai/dsh-llm'
+import { MessageId, createUserMessage, createMessage } from '@voyaseek-ai/dsh-llm'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { appendFile, mkdtemp, mkdir, rm, readFile, writeFile, readdir, stat, symlink } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import type { Session, SessionEvent, SessionHeader } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
+import type { Session, SessionEvent, SessionHeader } from '@voyaseek-ai/dsh-session'
+import JsonlSessionPersistence from '@voyaseek-ai/dsh-session-persistence-jsonl'
 import {
   encodeSegment, eventLines, logPath, projectDir, projectKey, scanLog, sessionDir, SessionLogScanner, toHeaderLine,
 } from '../src/format.ts'
@@ -161,7 +161,7 @@ describe('JsonlSessionPersistence: format helpers', () => {
   })
 
   it('projectKey normalizes project paths into bounded readable names', () => {
-    expect(projectKey('/Users/qyj/work/deepseek-harness')).toBe('--Users-qyj-work-deepseek-harness--')
+    expect(projectKey('/Users/qyj/work/voyaseek-harness')).toBe('--Users-qyj-work-voyaseek-harness--')
     expect(projectKey('/a/b-c')).toBe(projectKey('/a-b/c'))
     expect(projectKey('C:\\work\\agent')).toBe('--C-work-agent--')
     expect(projectKey('/开发/~agent')).toBe('--~5F00~53D1-~007Eagent--')

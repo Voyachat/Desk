@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { access, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import LlmRuntime, { INVALID_CREDENTIAL_CODE } from '@deepseek-ai/dsh-llm'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { LocalCredentialProvider } from '@deepseek-ai/dsh-credentials-local'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { FileSettingsProvider } from '@deepseek-ai/dsh-settings-file'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek'
+import LlmRuntime, { INVALID_CREDENTIAL_CODE } from '@voyaseek-ai/dsh-llm'
+import { credentialRef } from '@voyaseek-ai/dsh-credentials'
+import { LocalCredentialProvider } from '@voyaseek-ai/dsh-credentials-local'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
+import { FileSettingsProvider } from '@voyaseek-ai/dsh-settings-file'
+import * as LlmDeepSeek from '@voyaseek-ai/dsh-llm-deepseek'
 import { assemble } from './assemble.ts'
 import { closeMockServers, mockServer, textEvents } from './mock-server.ts'
 
@@ -41,7 +41,7 @@ interface Harness {
  * file watching is the providers' own covered concern.
  */
 async function boot(dir: string, config: object): Promise<Harness> {
-  vi.stubEnv('DSH_HOME', dir)
+  vi.stubEnv('VOYASEEK_HOME', dir)
   const ctx = new Context()
   cleanups.push(async () => {
     await ctx.fiber.dispose()

@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
-    from deepseek_harness import RunResult
+    from voyaseek_harness import RunResult
 
 
 EXPECTED_TEXT = "runtime smoke ok"
@@ -71,9 +71,9 @@ SNAPSHOT_DIRECTORY = (
 SNAPSHOT_FILENAMES = ("result.json", "session.jsonl", "session.1.jsonl", "session.2.jsonl")
 CUSTOM_CORDIS = """\
 - id: sdk-jsonrpc-server
-  name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+  name: '@voyaseek-ai/dsh-sdk-jsonrpc-server'
 - id: agent-core
-  name: '@deepseek-ai/dsh-agent-spine-demo'
+  name: '@voyaseek-ai/dsh-agent-spine-demo'
   config:
     workspaceContext: false
     skills:
@@ -82,32 +82,32 @@ CUSTOM_CORDIS = """\
     tools:
       mode: both
 - id: sessions
-  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  name: '@voyaseek-ai/dsh-session-persistence-jsonl'
   config:
     root: !!js process.env.DSH_SESSION_ROOT
     compression: 'none'
 - id: code-runtime
-  name: '@deepseek-ai/dsh-code-runtime-worker-thread'
+  name: '@voyaseek-ai/dsh-code-runtime-worker-thread'
 - id: subagents
-  name: '@deepseek-ai/dsh-subagent'
+  name: '@voyaseek-ai/dsh-subagent'
 - id: subagent-spawn-in-process
-  name: '@deepseek-ai/dsh-subagent-spawn-in-process'
+  name: '@voyaseek-ai/dsh-subagent-spawn-in-process'
   config:
     providerName: spawn
 - id: subagent-tool
-  name: '@deepseek-ai/dsh-tool-subagent'
+  name: '@voyaseek-ai/dsh-tool-subagent'
   config:
     provider: spawn
 - id: workflow-engine
-  name: '@deepseek-ai/dsh-workflow-worker-thread'
+  name: '@voyaseek-ai/dsh-workflow-worker-thread'
   config:
     provider: spawn
 - id: workflow-tool
-  name: '@deepseek-ai/dsh-tool-workflow'
+  name: '@voyaseek-ai/dsh-tool-workflow'
 - id: cordis-host-runner
-  name: '@deepseek-ai/dsh-cordis-host-runner'
+  name: '@voyaseek-ai/dsh-cordis-host-runner'
 - id: cordis-tool
-  name: '@deepseek-ai/dsh-tool-cordis'
+  name: '@voyaseek-ai/dsh-tool-cordis'
 """
 class MockModelHandler(BaseHTTPRequestHandler):
     """Return deterministic text, worker, and orchestration completions."""
@@ -511,12 +511,12 @@ def main() -> None:
 
 
 def smoke_sdk_default(base_url: str) -> None:
-    from deepseek_harness import DeepSeekHarness
+    from voyaseek_harness import VoyaseekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-default-") as temporary:
         root = Path(temporary).resolve()
         sessions = root / "sessions"
-        with DeepSeekHarness(
+        with VoyaseekHarness(
             provider="deepseek-official",
             model="smoke-model",
             cwd=str(root),
@@ -531,14 +531,14 @@ def smoke_sdk_default(base_url: str) -> None:
 
 
 def smoke_sdk_custom(base_url: str, executable: Path) -> None:
-    from deepseek_harness import DeepSeekHarness
+    from voyaseek_harness import VoyaseekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-custom-") as temporary:
         root = Path(temporary).resolve()
         sessions = root / "sessions"
         cordis = root / "cordis.yml"
         cordis.write_text(CUSTOM_CORDIS)
-        with DeepSeekHarness(
+        with VoyaseekHarness(
             provider="deepseek-official",
             model="smoke-model",
             cwd=str(root),
@@ -560,14 +560,14 @@ def smoke_sdk_custom(base_url: str, executable: Path) -> None:
 
 def smoke_sdk_minimal(base_url: str, executable: Path) -> None:
     """Exercise the checked-in minimal composition through the packaged executable."""
-    from deepseek_harness import DeepSeekHarness
+    from voyaseek_harness import VoyaseekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-minimal-") as temporary:
         root = Path(temporary).resolve()
         editor_path = root / "created.txt"
         prompt = f"{MINIMAL_PROMPT}\n{MINIMAL_EDITOR_PATH_PREFIX}{editor_path}"
         sessions = root / "sessions"
-        with DeepSeekHarness(
+        with VoyaseekHarness(
             provider="deepseek-official",
             model="smoke-model",
             cwd=str(root),
@@ -590,14 +590,14 @@ def smoke_sdk_minimal(base_url: str, executable: Path) -> None:
 
 def smoke_sdk_snapshot(base_url: str, executable: Path, update_snapshots: bool) -> None:
     """Drive and compare the advanced SDK/executable behavioral snapshot."""
-    from deepseek_harness import DeepSeekHarness
+    from voyaseek_harness import VoyaseekHarness
 
     with tempfile.TemporaryDirectory(prefix="dsh-sdk-snapshot-") as temporary:
         root = Path(temporary).resolve()
         sessions = root / "sessions"
         cordis = root / "cordis.yml"
         cordis.write_text(CUSTOM_CORDIS)
-        with DeepSeekHarness(
+        with VoyaseekHarness(
             provider="deepseek-official",
             model="smoke-model",
             cwd=str(root),

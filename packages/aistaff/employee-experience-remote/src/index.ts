@@ -1,9 +1,9 @@
 /**
  * Strict Host Typert Remote for the Renderer-safe Employee Experience service.
- * @module @deepseek-ai/dsh-aistaff-employee-experience-remote
+ * @module @voyaseek-ai/dsh-aistaff-employee-experience-remote
  */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import type {
   ActivityView,
   EffectReceiptView,
@@ -21,11 +21,11 @@ import type {
   OperationStatusView,
   ProductResult,
   SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
-import type {} from '@deepseek-ai/dsh-aistaff-employee-experience'
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
+import type {} from '@voyaseek-ai/dsh-aistaff-employee-experience'
+import { Remote, TypertRemoteService } from '@voyaseek-ai/dsh-typert-protocol'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Host Typert facade for Renderer-safe employee operations. */
     employeeExperienceRemote: EmployeeExperienceRemoteService

@@ -1,11 +1,11 @@
 /** Browser-safe local capability Service Definition and replacement object layer. */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import type {
   OperationId,
   OperationStatusView,
   ProductResult,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
 import type {
   AuthorizeLocalOperationInput,
   LocalCapabilityListener,
@@ -20,7 +20,7 @@ import type {
 /** Stable Cordis key for the Renderer-facing local capability. */
 export const LOCAL_CAPABILITY_SERVICE_KEY = 'localCapability' as const
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Renderer-safe local resource, consent, receipt, and operation access. */
     localCapability: LocalCapabilityPort

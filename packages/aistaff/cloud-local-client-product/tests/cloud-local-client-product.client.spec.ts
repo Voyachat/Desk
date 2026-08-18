@@ -12,7 +12,7 @@ describe('cloud and local client product wrapper', () => {
     expect(strictEntry.inject).toEqual(['slots', 'employeeExperience', 'localCapability'])
 
     const source = readFileSync(resolve(root, 'src/client/index.ts'), 'utf8')
-    expect(source).toContain('@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts')
+    expect(source).toContain('@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts')
     expect(source).not.toMatch(/dsh-aistaff-client-product(?:['"]|\/client['"])/)
   })
 
@@ -22,14 +22,14 @@ describe('cloud and local client product wrapper', () => {
       dsh: { client: { inject: string[] } }
     }
     const build = readFileSync(resolve(root, 'tsdown.config.ts'), 'utf8')
-    expect(manifest.name).toBe('@deepseek-ai/dsh-aistaff-cloud-local-client-product')
+    expect(manifest.name).toBe('@voyaseek-ai/dsh-aistaff-cloud-local-client-product')
     expect(manifest.dsh.client.inject).toEqual([
-      '@deepseek-ai/dsh-api-remotes',
-      '@deepseek-ai/dsh-aistaff-employee-experience-remote',
-      '@deepseek-ai/dsh-aistaff-local-capability-remote',
-      '@deepseek-ai/dsh-client-runtime',
-      '@deepseek-ai/dsh-client-ui-layout',
-      '@deepseek-ai/dsh-client-ui-sidebar',
+      '@voyaseek-ai/dsh-api-remotes',
+      '@voyaseek-ai/dsh-aistaff-employee-experience-remote',
+      '@voyaseek-ai/dsh-aistaff-local-capability-remote',
+      '@voyaseek-ai/dsh-client-runtime',
+      '@voyaseek-ai/dsh-client-ui-layout',
+      '@voyaseek-ai/dsh-client-ui-sidebar',
     ])
     expect(build).toContain('banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(PACKAGE_ID)}')
     expect(build).not.toContain('`${PACKAGE_ID}/cloud-client`')
@@ -41,7 +41,7 @@ describe('cloud and local client product wrapper', () => {
     expect(build).not.toContain('CSS_PREFIX + file')
 
     const bundle = readFileSync(resolve(root, 'lib/client.js'), 'utf8')
-    expect(bundle).toContain('@deepseek-ai/dsh-aistaff-cloud-local-client-product')
+    expect(bundle).toContain('@voyaseek-ai/dsh-aistaff-cloud-local-client-product')
     expect(bundle).not.toContain(root)
     expect(bundle).not.toMatch(/Supervisor|Coordinator|path|token|socket|FsTarget/i)
     expect(bundle).not.toMatch(/fixture|aistaffProductPort/i)

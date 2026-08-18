@@ -25,7 +25,7 @@
 
 - insert:
     - id: aistaff-product-projection
-      name: '@deepseek-ai/dsh-aistaff-product-projection'
+      name: '@voyaseek-ai/dsh-aistaff-product-projection'
       config:
         defaultApprovalRisk: medium
         employees:
@@ -37,7 +37,7 @@
               - local-task
 
     - id: aistaff-product-remote
-      name: '@deepseek-ai/dsh-aistaff-product-remote'
+      name: '@voyaseek-ai/dsh-aistaff-product-remote'
 
     # Product language policy: the standing default-output-language section,
     # the per-conversation input-language adaptation context, and the
@@ -45,9 +45,9 @@
     # the upstream `user:locale` guidance; both read the same settings
     # preference, and this row owns the product default beneath it.
     - id: aistaff-language-policy
-      name: '@deepseek-ai/dsh-aistaff-language-policy'
+      name: '@voyaseek-ai/dsh-aistaff-language-policy'
       config:
         defaultLocale: zh
 
     - id: aistaff-client-product
-      name: '@deepseek-ai/dsh-aistaff-client-product'
+      name: '@voyaseek-ai/dsh-aistaff-client-product'

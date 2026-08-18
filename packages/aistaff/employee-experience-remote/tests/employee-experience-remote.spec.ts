@@ -1,4 +1,4 @@
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   ActivityRef,
   ContentRef,
@@ -11,7 +11,7 @@ import {
   OperationId,
   OwnerRevision,
   ReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   ActivityView,
   EffectReceiptView,
@@ -29,10 +29,10 @@ import type {
   ProductError,
   ProductResult,
   SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
-import TypertGatewayService from '@deepseek-ai/dsh-api-gateway'
-import type { RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
-import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
+import TypertGatewayService from '@voyaseek-ai/dsh-api-gateway'
+import type { RemoteResult } from '@voyaseek-ai/dsh-typert-protocol'
+import TypertRegistry from '@voyaseek-ai/dsh-typert-registry'
 import { describe, expect, it, vi } from 'vitest'
 import EmployeeExperienceRemoteService from '../src/index.ts'
 import {

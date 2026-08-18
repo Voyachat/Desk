@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { startMockLlmServer } from '@deepseek-ai/dsh-llm-mock-server'
+import { startMockLlmServer } from '@voyaseek-ai/dsh-llm-mock-server'
 import { execa } from 'execa'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
@@ -83,7 +83,7 @@ function createProfileLifecycleFixture(): ProfileLifecycleFixture {
     '  }, 20)',
     '  // Echo the mounted generation so the hot-reload e2e can assert both an',
     '  // applied override and its removal reverting to this bundle default.',
-    "  writeFileSync(join(process.env.DSH_HOME, 'config-echo'), String(config.generation ?? 'bundle-default'))",
+    "  writeFileSync(join(process.env.VOYASEEK_HOME, 'config-echo'), String(config.generation ?? 'bundle-default'))",
     "  writeFileSync(process.env.RAW_READY_FILE, 'ready')",
     '  void ctx.loader.await().then(() => {',
     "    if (active) writeFileSync(process.env.RAW_SETTLED_FILE, 'settled')",
@@ -137,7 +137,7 @@ function startProfileLifecycle(fixture: ProfileLifecycleFixture, args: readonly 
     input: '',
     reject: false,
     env: {
-      DSH_HOME: fixture.home,
+      VOYASEEK_HOME: fixture.home,
       RAW_READY_FILE: fixture.ready,
       RAW_SETTLED_FILE: fixture.settled,
       RAW_DISPOSED_FILE: fixture.disposed,
@@ -186,7 +186,7 @@ function createEnvironmentProbeProfile(home: string, project: string): void {
     name: 'dsh-profile-environment-probe',
     private: true,
     dependencies: {},
-    dsh: { profile: { bundles: ['@deepseek-ai/dsh-base'] } },
+    dsh: { profile: { bundles: ['@voyaseek-ai/dsh-base'] } },
   }, undefined, 2))
   writeFileSync(join(profileDir, 'cordis.patch.yml'), [
     '- insert:',
@@ -209,7 +209,7 @@ interface StartupFixture {
  * A custom profile whose ordinary provider plugin injects `cmdlineArgs`, plus
  * a row that reads its app-owned service through a `!!js` config expression.
  * Both plugin modules resolve
- * `@deepseek-ai/dsh-cmdline` and `commander` through the profile module
+ * `@voyaseek-ai/dsh-cmdline` and `commander` through the profile module
  * fallback, exactly as an installed out-of-tree bundle does.
  */
 function createStartupFixture(): StartupFixture {
@@ -222,7 +222,7 @@ function createStartupFixture(): StartupFixture {
   mkdirSync(bundleDir, { recursive: true })
   writeFileSync(join(bundleDir, 'startup.mjs'), [
     "import { Command } from 'commander'",
-    "import { parseCmdline } from '@deepseek-ai/dsh-cmdline'",
+    "import { parseCmdline } from '@voyaseek-ai/dsh-cmdline'",
     "export const name = 'fixture-startup'",
     "export const inject = ['cmdlineArgs']",
     'export function apply(ctx) {',
@@ -243,7 +243,7 @@ function createStartupFixture(): StartupFixture {
     '    interrupted = true',
     "    process.emit('SIGTERM')",
     '  }, 20)',
-    "  writeFileSync(join(process.env.DSH_HOME, 'config-echo'), String(config.generation ?? 'bundle-default'))",
+    "  writeFileSync(join(process.env.VOYASEEK_HOME, 'config-echo'), String(config.generation ?? 'bundle-default'))",
     "  writeFileSync(process.env.RAW_READY_FILE, 'ready')",
     '  ctx.effect(() => () => { clearInterval(heartbeat) })',
     '}',
@@ -254,7 +254,7 @@ function createStartupFixture(): StartupFixture {
     "import { join } from 'node:path'",
     "export const name = 'reload-witness'",
     'export function apply(ctx, config = {}) {',
-    "  writeFileSync(join(process.env.DSH_HOME, 'witness'), String(config.generation ?? 'bundle-default'))",
+    "  writeFileSync(join(process.env.VOYASEEK_HOME, 'witness'), String(config.generation ?? 'bundle-default'))",
     '}',
     '',
   ].join('\n'))
@@ -302,7 +302,7 @@ function startStartupProfile(fixture: StartupFixture, args: readonly string[]) {
     timeout: 25_000,
     killSignal: 'SIGKILL',
     env: {
-      DSH_HOME: fixture.home,
+      VOYASEEK_HOME: fixture.home,
       RAW_READY_FILE: fixture.ready,
       RAW_INTERRUPT_FILE: fixture.interrupt,
     },
@@ -330,7 +330,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
     const home = mkdtempSync(join(tmpdir(), 'dsh-app-help-'))
     try {
       const web = await runBuiltBin(['--profile', 'web', '--help'], {
-        DSH_HOME: home,
+        VOYASEEK_HOME: home,
         DSH_TELEMETRY_DISABLED: '1',
       })
       expect(web.code).toBe(0)
@@ -340,7 +340,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       expect(web.stdout).not.toContain('dsh web: http://')
 
       const wildcardHost = await runBuiltBin(['web', '--host', '0.0.0.0'], {
-        DSH_HOME: home,
+        VOYASEEK_HOME: home,
         DSH_TELEMETRY_DISABLED: '1',
       })
       expect(wildcardHost.code).toBe(1)
@@ -349,7 +349,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       expect(wildcardHost.stderr).not.toContain('dsh web: http://')
 
       const headlessHelp = await runBuiltBin(['--profile', 'headless', '--help'], {
-        DSH_HOME: home,
+        VOYASEEK_HOME: home,
         DSH_TELEMETRY_DISABLED: '1',
       })
       expect(headlessHelp.code).toBe(0)
@@ -357,7 +357,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       expect(headlessHelp.stdout).toContain('Usage: dsh --profile headless')
 
       const missingTask = await runBuiltBin(['--profile', 'headless'], {
-        DSH_HOME: home,
+        VOYASEEK_HOME: home,
         DSH_TELEMETRY_DISABLED: '1',
       })
       expect(missingTask.code).toBe(1)
@@ -377,7 +377,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
     const home = mkdtempSync(join(tmpdir(), 'dsh-built-headless-'))
     try {
       const result = await runBuiltBin(['--profile', 'headless', 'answer', 'from', 'the', 'published', 'entry'], {
-        DSH_HOME: home,
+        VOYASEEK_HOME: home,
         DSH_TELEMETRY_DISABLED: '1',
         DEEPSEEK_API_KEY: apiKey,
         DEEPSEEK_BASE_URL: server.baseURL,
@@ -408,7 +408,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
   it('fails loud on a nonexistent profile with the plugin-command hint', async () => {
     const home = mkdtempSync(join(tmpdir(), 'dsh-missing-profile-'))
     try {
-      const result = await runBuiltBin(['--profile', 'nope'], { DSH_HOME: home })
+      const result = await runBuiltBin(['--profile', 'nope'], { VOYASEEK_HOME: home })
       expect(result.code).toBe(1)
       expect(result.stderr).toContain('profile "nope" does not exist')
       expect(result.stderr).toContain('dsh plugin --profile nope add')
@@ -432,7 +432,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       const result = await runBuiltBin(
         ['--profile', 'environment-probe'],
         {
-          DSH_HOME: home,
+          VOYASEEK_HOME: home,
           DSH_TELEMETRY_DISABLED: '1',
           DEEPSEEK_API_KEY: undefined,
           DEEPSEEK_BASE_URL: server.baseURL,
@@ -465,7 +465,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
     const home = mkdtempSync(join(tmpdir(), 'dsh-invalid-patch-'))
     try {
       const result = await runBuiltBin(['--profile', 'web', '--patch', invalidProvider], {
-        DSH_HOME: home,
+        VOYASEEK_HOME: home,
         DEEPSEEK_API_KEY: 'keyless-invalid-config',
         DSH_TELEMETRY_DISABLED: '1',
       })
@@ -523,7 +523,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       writeFileSync(profilePatch, '[]\n')
       await waitForFile(fixture.ready)
       expect(readFileSync(configFile, 'utf8')).toBe('bundle-default')
-      // The home-level user layer ($DSH_HOME/cordis.patch.yml) is live too
+      // The home-level user layer ($VOYASEEK_HOME/cordis.patch.yml) is live too
       // and outranks the per-profile layer.
       rmSync(fixture.ready)
       writeFileSync(join(fixture.home, 'cordis.patch.yml'), [
@@ -641,7 +641,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
         timeout: 60_000,
         killSignal: 'SIGKILL',
         reject: false,
-        env: { DSH_HOME: home },
+        env: { VOYASEEK_HOME: home },
       })
       expect(result.exitCode).toBe(0)
       const manifest = JSON.parse(readFileSync(join(home, 'profiles', 'anchor', 'package.json'), 'utf8')) as {
@@ -670,24 +670,24 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
         name: 'dsh-profile-up',
         private: true,
         dependencies: { 'late-bundle': 'file:./late-bundle' },
-        dsh: { profile: { bundles: ['@deepseek-ai/dsh-base'] } },
+        dsh: { profile: { bundles: ['@voyaseek-ai/dsh-base'] } },
       }))
       writeFileSync(join(profileDir, 'cordis.patch.yml'), '[]\n')
       // v1: no dsh manifest — a plain dependency.
       writeFileSync(join(installed, 'package.json'), JSON.stringify({ name: 'late-bundle', version: '1.0.0' }))
-      const first = await runBuiltBin(['plugin', '--profile', 'up', 'root'], { DSH_HOME: home })
+      const first = await runBuiltBin(['plugin', '--profile', 'up', 'root'], { VOYASEEK_HOME: home })
       expect(first.code).toBe(0)
       let manifest = JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')) as { dsh: { profile: { bundles: string[] } } }
-      expect(manifest.dsh.profile.bundles).toEqual(['@deepseek-ai/dsh-base'])
+      expect(manifest.dsh.profile.bundles).toEqual(['@voyaseek-ai/dsh-base'])
       // v2: the installed package now declares dsh.bundle (an update landed).
       writeFileSync(join(installed, 'package.json'), JSON.stringify({
         name: 'late-bundle', version: '2.0.0', dsh: { bundle: { patch: './cordis.patch.yml' } },
       }))
       writeFileSync(join(installed, 'cordis.patch.yml'), '[]\n')
-      const second = await runBuiltBin(['plugin', '--profile', 'up', 'root'], { DSH_HOME: home })
+      const second = await runBuiltBin(['plugin', '--profile', 'up', 'root'], { VOYASEEK_HOME: home })
       expect(second.code).toBe(0)
       manifest = JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')) as { dsh: { profile: { bundles: string[] } } }
-      expect(manifest.dsh.profile.bundles).toEqual(['@deepseek-ai/dsh-base', 'late-bundle'])
+      expect(manifest.dsh.profile.bundles).toEqual(['@voyaseek-ai/dsh-base', 'late-bundle'])
     } finally {
       rmSync(home, { recursive: true, force: true })
     }
@@ -699,31 +699,31 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
     afterEach(() => { rmSync(home, { recursive: true, force: true }) })
 
     it('prints the web profile bundle layers without a user layer', async () => {
-      const { stdout, code, stderr } = await runBuiltBin(['--profile', 'web', '--dump-default-config'], { DSH_HOME: home })
+      const { stdout, code, stderr } = await runBuiltBin(['--profile', 'web', '--dump-default-config'], { VOYASEEK_HOME: home })
       expect(code).toBe(0)
       expect(stderr).toBe('')
-      expect(stdout).toContain("name: '@deepseek-ai/dsh-agent-loop'")
+      expect(stdout).toContain("name: '@voyaseek-ai/dsh-agent-loop'")
       expect(stdout).toContain('agents: []')
-      expect(stdout).toContain('# == @deepseek-ai/dsh-base')
-      expect(stdout).toContain("name: '@deepseek-ai/dsh-host-webserver'")
+      expect(stdout).toContain('# == @voyaseek-ai/dsh-base')
+      expect(stdout).toContain("name: '@voyaseek-ai/dsh-host-webserver'")
     }, 30_000)
 
     it('prints the headless profile without Host or browser layers', async () => {
       const { stdout, code, stderr } = await runBuiltBin(
         ['--profile', 'headless', '--dump-default-config'],
-        { DSH_HOME: home },
+        { VOYASEEK_HOME: home },
       )
       expect(code).toBe(0)
       expect(stderr).toBe('')
-      expect(stdout).toContain("name: '@deepseek-ai/dsh-headless'")
-      expect(stdout).not.toMatch(/name: '@deepseek-ai\/dsh-host-/)
-      expect(stdout).not.toContain("name: '@deepseek-ai/dsh-web-app'")
-      expect(stdout).not.toMatch(/name: '@deepseek-ai\/dsh-client-/)
+      expect(stdout).toContain("name: '@voyaseek-ai/dsh-headless'")
+      expect(stdout).not.toMatch(/name: '@voyaseek-ai\/dsh-host-/)
+      expect(stdout).not.toContain("name: '@voyaseek-ai/dsh-web-app'")
+      expect(stdout).not.toMatch(/name: '@voyaseek-ai\/dsh-client-/)
     }, 30_000)
 
     it('composes the profile user layer and a --patch overlay in order', async () => {
       // Auto-init the web profile first, then write its user layer.
-      const init = await runBuiltBin(['--profile', 'web', '--dump-default-config'], { DSH_HOME: home })
+      const init = await runBuiltBin(['--profile', 'web', '--dump-default-config'], { VOYASEEK_HOME: home })
       expect(init.code).toBe(0)
       const profilePatch = join(home, 'profiles', 'web', 'cordis.patch.yml')
       writeFileSync(profilePatch, [
@@ -750,7 +750,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       ].join('\n'))
       const { stdout, code, stderr } = await runBuiltBin(
         ['--profile', 'web', '--patch', overlay, '--dump-config'],
-        { DSH_HOME: home },
+        { VOYASEEK_HOME: home },
       )
       expect(code).toBe(0)
       expect(stdout).toContain('provider: configured-provider')

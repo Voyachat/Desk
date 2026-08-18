@@ -1,14 +1,14 @@
 /**
  * Strict Host Typert Remote for the Renderer-safe local capability service.
- * @module @deepseek-ai/dsh-aistaff-local-capability-remote
+ * @module @voyaseek-ai/dsh-aistaff-local-capability-remote
  */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import type {
   OperationId,
   OperationStatusView,
   ProductResult,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
 import type {
   AuthorizeLocalOperationInput,
   LocalCapabilityReceiptView,
@@ -16,12 +16,12 @@ import type {
   RevokeResourceInput,
   SelectDirectoryInput,
   SelectDirectoryResult,
-} from '@deepseek-ai/dsh-aistaff-local-capability/types'
-import type {} from '@deepseek-ai/dsh-aistaff-local-capability'
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+} from '@voyaseek-ai/dsh-aistaff-local-capability/types'
+import type {} from '@voyaseek-ai/dsh-aistaff-local-capability'
+import { Remote, TypertRemoteService } from '@voyaseek-ai/dsh-typert-protocol'
 import { assertLocalCapabilityWireValue } from './wire.ts'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Host Typert facade for Renderer-safe local capability operations. */
     localCapabilityRemote: LocalCapabilityRemoteService

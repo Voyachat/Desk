@@ -10,17 +10,17 @@
  *   the model through the `language_rule` tool and rendered into every
  *   honoring session's runtime context.
  *
- * @module @deepseek-ai/dsh-aistaff-language-policy
+ * @module @voyaseek-ai/dsh-aistaff-language-policy
  */
 
 import { randomUUID } from 'node:crypto'
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { settingsNamespace, type SettingsProvider, type SettingsScope } from '@deepseek-ai/dsh-settings'
-import type {} from '@deepseek-ai/dsh-system-prompt'
+import type { Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import { settingsNamespace, type SettingsProvider, type SettingsScope } from '@voyaseek-ai/dsh-settings'
+import type {} from '@voyaseek-ai/dsh-system-prompt'
 // Type-only: the AssembleContext `agent` merge the context provider reads.
-import type {} from '@deepseek-ai/dsh-agent'
-import { defineTool } from '@deepseek-ai/dsh-tools'
+import type {} from '@voyaseek-ai/dsh-agent'
+import { defineTool } from '@voyaseek-ai/dsh-tools'
 import { conversationLanguage } from './conversation.ts'
 import { languageName } from './detect.ts'
 import { renderLanguageSection, renderPolicyContext } from './prompt-text.ts'

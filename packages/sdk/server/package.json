@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-sdk-jsonrpc-server",
-  "description": "Stdio JSON-RPC server plugin for out-of-process DeepSeek Harness SDK clients",
+  "name": "@voyaseek-ai/dsh-sdk-jsonrpc-server",
+  "description": "Stdio JSON-RPC server plugin for out-of-process Voyaseek Harness SDK clients",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/sdk/server"
   },
   "type": "module",
@@ -32,31 +32,31 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-llm-deepseek": "workspace:^",
+    "@voyaseek-ai/dsh-scope": "workspace:^",
+    "@voyaseek-ai/dsh-sdk-protocol": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-spine-demo": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-sdk-protocol": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence-jsonl": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-spine-demo": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-llm-deepseek": "workspace:^",
+    "@voyaseek-ai/dsh-scope": "workspace:^",
+    "@voyaseek-ai/dsh-sdk-protocol": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence-jsonl": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

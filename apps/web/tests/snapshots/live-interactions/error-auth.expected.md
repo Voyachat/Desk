@@ -12,10 +12,10 @@
 - text: Reply with a one-sentence description of event sourcing, then stop. {{clock}}
 - button "Copy":
   - img
-- button "Context injection @deepseek-ai/dsh-system-prompt":
+- button "Context injection @voyaseek-ai/dsh-system-prompt":
   - img
   - img
-  - text: Context injection @deepseek-ai/dsh-system-prompt
+  - text: Context injection @voyaseek-ai/dsh-system-prompt
 - status: Model authentication failedCheck the API key or sign-in credentials, update them, and retry.
 - group: Diagnostics
 - textbox "Message the agent"

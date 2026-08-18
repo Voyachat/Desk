@@ -1,6 +1,6 @@
 /** Assistant reasoning disclosure, independent of Tool-call presentation. */
 import { useEffect, useRef, useState } from 'react'
-import { DisclosureRow, IconThinkOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { DisclosureRow, IconThinkOutline14 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { useThrottledVisualUpdate } from './use-throttled-visual-update.ts'
 import a11yCss from './accessibility.module.css'
@@ -19,13 +19,17 @@ function latestLine(text: string): string {
 
 /**
  * Render one assistant reasoning block as the Think disclosure row.
+ * Expansion follows the stream: a running block starts open so the chain of
+ * thought reads live, and settles back to the collapsed summary when the
+ * stream ends; a manual toggle overrides the default in both directions.
  * @param props.text - complete or streaming reasoning text.
  * @param props.running - whether this block is the streaming tail.
  * @param props.t - conversation locale seat for the running status.
  * @returns the reasoning disclosure.
  */
 export function ReasoningRow({ text, running, t }: { text: string; running: boolean; t: ChatViewSlotProps['t'] }) {
-  const [expanded, setExpanded] = useState(false)
+  const [override, setOverride] = useState<boolean | null>(null)
+  const expanded = override ?? running
   const summaryRef = useRef<HTMLSpanElement>(null)
   const summary = running ? latestLine(text) : firstLine(text)
   const scheduleSummaryScroll = useThrottledVisualUpdate(() => {
@@ -50,7 +54,7 @@ export function ReasoningRow({ text, running, t }: { text: string; running: bool
         open={expanded}
         expandable
         expandOnRowClick
-        onToggle={() => { setExpanded(value => !value) }}
+        onToggle={() => { setOverride(value => !(value ?? running)) }}
         collapsedContent={(
           <>
             <span className={css.separator} aria-hidden />

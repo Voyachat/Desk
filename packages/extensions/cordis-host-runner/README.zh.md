@@ -1,8 +1,8 @@
-# @deepseek-ai/dsh-cordis-host-runner
+# @voyaseek-ai/dsh-cordis-host-runner
 
 [English](README.md) | 中文
 
-由模型挂载的动态包在 host 侧的那一半：定义注册表、host 半所用的 `node:vm` 沙箱与 fiber 生命周期、invoke handler 表，以及由某个浏览器页面执行的 run 往返。以 `ctx.dynamicCordisRunner` 提供。面向模型的工具在 [`@deepseek-ai/dsh-tool-cordis`](../tool-cordis/README.md) 中；浏览器半由 [`@deepseek-ai/dsh-cordis-client-runner`](../cordis-client-runner/README.md) 装载。
+由模型挂载的动态包在 host 侧的那一半：定义注册表、host 半所用的 `node:vm` 沙箱与 fiber 生命周期、invoke handler 表，以及由某个浏览器页面执行的 run 往返。以 `ctx.dynamicCordisRunner` 提供。面向模型的工具在 [`@voyaseek-ai/dsh-tool-cordis`](../tool-cordis/README.md) 中；浏览器半由 [`@voyaseek-ai/dsh-cordis-client-runner`](../cordis-client-runner/README.md) 装载。
 
 ## 功能
 
@@ -21,15 +21,15 @@
 
 别的会话登记的定义读起来是不存在，而不是被禁止，因此不会跨会话泄漏任何东西。`invoke` 与 `resolveRequestRun` 完全不携带会话：组件的一次调用和页面的一次作答都是页面全局的事实，不属于某一个会话。
 
-本功能拥有四条转发事件，由本包在其 client-safe 的 [`./types`](src/types.ts) 子路径上声明，并由 [`@deepseek-ai/dsh-api-remotes`](../../api/remotes/README.md) 的白名单准许投递——正是这一点让浏览器能经 `ctx.remote.$on` 收到它们：`cordis/request-run`（`{requestId, agentId, id, name, purpose}`——只有元数据，绝无代码）、`cordis/request-run-resolved`（`{requestId, outcome}`）、`dynamicCordisRunner/package`（`{id, name, rev}`），以及 `dynamicCordisRunner/retract`（`{id, rev}`）。后两者是对称的一对运行状态播报：每次全新启动与每次停止都播，与该包有没有浏览器半无关。
+本功能拥有四条转发事件，由本包在其 client-safe 的 [`./types`](src/types.ts) 子路径上声明，并由 [`@voyaseek-ai/dsh-api-remotes`](../../api/remotes/README.md) 的白名单准许投递——正是这一点让浏览器能经 `ctx.remote.$on` 收到它们：`cordis/request-run`（`{requestId, agentId, id, name, purpose}`——只有元数据，绝无代码）、`cordis/request-run-resolved`（`{requestId, outcome}`）、`dynamicCordisRunner/package`（`{id, name, rev}`），以及 `dynamicCordisRunner/retract`（`{id, rev}`）。后两者是对称的一对运行状态播报：每次全新启动与每次停止都播，与该包有没有浏览器半无关。
 
 ## 存储与开发态 HMR
 
-`$DSH_HOME/dynamic-cordis` 是本服务的持久 owner。`registry.json` 是源码、稳定 identity counter、不可变 Package ID 与最后成功激活 Package 指针的原子 commit point。编译后的 JavaScript 先写入 content-addressed 的 `artifacts/<sha256>.js`，随后才 rename manifest。启动时会拒绝软链接形式的 owner／artifact 目录，并在恢复前验证每个被引用 artifact 都是普通文件且 SHA-256 匹配。因此编译或发布失败不会替换最后一次可用 manifest；未被引用的 artifact 只是无害 orphan。
+`$VOYASEEK_HOME/dynamic-cordis` 是本服务的持久 owner。`registry.json` 是源码、稳定 identity counter、不可变 Package ID 与最后成功激活 Package 指针的原子 commit point。编译后的 JavaScript 先写入 content-addressed 的 `artifacts/<sha256>.js`，随后才 rename manifest。启动时会拒绝软链接形式的 owner／artifact 目录，并在恢复前验证每个被引用 artifact 都是普通文件且 SHA-256 匹配。因此编译或发布失败不会替换最后一次可用 manifest；未被引用的 artifact 只是无害 orphan。
 
 重启会恢复定义与 current Package 指针，但明确不会恢复 Fiber、handler、pending approval、按 Package 的 grant 或 `run` 状态。每个 Plugin 都以 stopped／restorable 状态出现，仍须通过原有的显式 run／approval 路径激活。生产态不会对留存的 TypeScript／TSX 求值：所有运行方法只消费校验过的 JavaScript artifact。
 
-每次成功 define 还会维护稳定工作副本 `$DSH_HOME/dynamic-cordis/sources/<pluginId>/host.ts` 和／或 `client.tsx`。当 `developmentHmr: true` 时，一个串行 poller 比较这些文件的真实字节。成功编辑会编译两边现存源码、追加不可变 Package、原子提交，并且只在 Plugin 当前正在运行且用户已允许其后续 Client 版本时请求更新。既有 Client runner 会先移除并排空旧 Fiber，再装载新 artifact。错误编辑会原样留在可编辑文件中，不改变 active Package 或 manifest，并在 `inventory` 与 Cordis 面板中以符号化 `$DSH_HOME` 路径和编译消息展示。Watcher dispose 后会停止新轮询，也不会让刚完成的构建在 teardown 后触发 HMR。
+每次成功 define 还会维护稳定工作副本 `$VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/host.ts` 和／或 `client.tsx`。当 `developmentHmr: true` 时，一个串行 poller 比较这些文件的真实字节。成功编辑会编译两边现存源码、追加不可变 Package、原子提交，并且只在 Plugin 当前正在运行且用户已允许其后续 Client 版本时请求更新。既有 Client runner 会先移除并排空旧 Fiber，再装载新 artifact。错误编辑会原样留在可编辑文件中，不改变 active Package 或 manifest，并在 `inventory` 与 Cordis 面板中以符号化 `$VOYASEEK_HOME` 路径和编译消息展示。Watcher dispose 后会停止新轮询，也不会让刚完成的构建在 teardown 后触发 HMR。
 
 ## 信任立场
 
@@ -40,7 +40,7 @@ vm 沙箱隔离全局变量，但不是安全边界：Node 全局变量不存在
 | 字段 | 默认值 | 含义 |
 |---|---|---|
 | `vmTimeoutMs` | `5000` | host 半在 vm 中同步执行的那部分被中止求值前可运行的毫秒数 |
-| `dshHome` | `$DSH_HOME` 或 `~/.dsh` | 拥有持久 registry、artifact 与可编辑源码的 Harness home |
+| `dshHome` | `$VOYASEEK_HOME` 或 `~/.voyaseek` | 拥有持久 registry、artifact 与可编辑源码的 Harness home |
 | `developmentHmr` | `false` | 启用工作副本 watcher 与已授权的 Client 热替换 |
 | `developmentHmrPollMs` | `500` | 开发源码串行轮询间隔（毫秒） |
 
@@ -74,4 +74,4 @@ vm 沙箱隔离全局变量，但不是安全边界：Node 全局变量不存在
 - `runHostHalf` 不携带 request id，因此「这个 host 半是哪次请求求值的」由 host 侧归因到该定义最近一次挂起的请求；若同一个定义出现多个并发 run 请求，这条规则需要重新审议。
 - 命名了已被取代版本的成功结论会被拒绝（`accepted: false`）并让该请求继续挂起，因此模型这次调用只能靠一次有效作答或自身被取消才结束。要把它结算掉，需要对着存活版本重新走一遍编排，而当前没有任何页面会这么做——[浏览器半](../cordis-client-runner/README.md)不读这个 ack——所以这类请求实际上由别的页面作答、或由调用方取消来收尾。
 - 浏览器半声明的 `inject` 是从它在页面里返回的插件上读出的，因此播报完全不携带服务声明字段。
-- **`zod` 是生成的 TypeRT 契约面的运行时依赖，不是 `src` 的依赖。** `./typert` 与 `./remote` 解析到 `lib/typert.*.js`，`tsc` 以不打包的形式产出它们，其中带有裸的 `import { z } from 'zod'`，所以本包必须声明它（沿用 `@deepseek-ai/dsh-goal` 的先例），而 `knip.json` 必须在这个 workspace 里忽略它：knip 读的是源码，而这些契约面是构建产物。`src` 里没有任何代码 import zod。
+- **`zod` 是生成的 TypeRT 契约面的运行时依赖，不是 `src` 的依赖。** `./typert` 与 `./remote` 解析到 `lib/typert.*.js`，`tsc` 以不打包的形式产出它们，其中带有裸的 `import { z } from 'zod'`，所以本包必须声明它（沿用 `@voyaseek-ai/dsh-goal` 的先例），而 `knip.json` 必须在这个 workspace 里忽略它：knip 读的是源码，而这些契约面是构建产物。`src` 里没有任何代码 import zod。

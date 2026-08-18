@@ -8,10 +8,10 @@
  * failing on wire shapes the endpoint refuses.
  */
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { ToolSchema } from '@deepseek-ai/dsh-llm'
-import * as LlmPiAi from '@deepseek-ai/dsh-llm-pi-ai'
+import { Context } from '@voyaseek-ai/cordis'
+import LlmRuntime, { createUserMessage } from '@voyaseek-ai/dsh-llm'
+import type { ToolSchema } from '@voyaseek-ai/dsh-llm'
+import * as LlmPiAi from '@voyaseek-ai/dsh-llm-pi-ai'
 import { assemble } from './assemble.ts'
 
 const apiKey = process.env.DASHSCOPE_API_KEY

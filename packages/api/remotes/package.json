@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-api-remotes",
+  "name": "@voyaseek-ai/dsh-api-remotes",
   "description": "Remote BFF assembly and Host Agent/Session lookup policy",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/api/remotes"
   },
   "type": "module",
@@ -36,7 +36,7 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-gateway"
+        "@voyaseek-ai/dsh-api-gateway"
       ],
       "platform": "web",
       "immediately": true
@@ -55,48 +55,48 @@
     "lib/types/**/*.d.ts"
   ],
   "dependencies": {
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^"
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience-remote": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-local-capability-remote": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-remote": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-api-gateway": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-credentials": "workspace:^",
-    "@deepseek-ai/dsh-goal": "workspace:^",
-    "@deepseek-ai/dsh-cordis-host-runner": "workspace:^",
-    "@deepseek-ai/dsh-host-plugin-inventory": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-agent-presets": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-message-feedback": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-typert-registry": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience-remote": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-local-capability-remote": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-remote": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-api-gateway": "workspace:^",
+    "@voyaseek-ai/dsh-commands": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
+    "@voyaseek-ai/dsh-goal": "workspace:^",
+    "@voyaseek-ai/dsh-cordis-host-runner": "workspace:^",
+    "@voyaseek-ai/dsh-host-plugin-inventory": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-agent-presets": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-message-feedback": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-aistaff-employee-experience-remote": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-local-capability-remote": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-remote": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-api-gateway": "workspace:^",
-    "@deepseek-ai/dsh-commands": "workspace:^",
-    "@deepseek-ai/dsh-credentials": "workspace:^",
-    "@deepseek-ai/dsh-goal": "workspace:^",
-    "@deepseek-ai/dsh-cordis-host-runner": "workspace:^",
-    "@deepseek-ai/dsh-host-plugin-inventory": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-agent-presets": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-message-feedback": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-session-persistence": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-typert-registry": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-aistaff-employee-experience-remote": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-local-capability-remote": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-remote": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-api-gateway": "workspace:^",
+    "@voyaseek-ai/dsh-commands": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
+    "@voyaseek-ai/dsh-goal": "workspace:^",
+    "@voyaseek-ai/dsh-cordis-host-runner": "workspace:^",
+    "@voyaseek-ai/dsh-host-plugin-inventory": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-agent-presets": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-message-feedback": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

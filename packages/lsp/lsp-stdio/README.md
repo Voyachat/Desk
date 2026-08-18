@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-lsp-stdio
+# @voyaseek-ai/dsh-lsp-stdio
 
 English | [中文](README.zh.md)
 

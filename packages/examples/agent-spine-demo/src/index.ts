@@ -5,37 +5,37 @@
  * deployments still choose the LLM adapter, bash executor, and presentation.
  * The plugin intentionally exposes named exports only because Loader default
  * unwrapping would discard its `Config` schema (see docs/postmortem/0001).
- * @module @deepseek-ai/dsh-agent-spine-demo
+ * @module @voyaseek-ai/dsh-agent-spine-demo
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import Timer from '@deepseek-ai/cordis-plugin-timer'
-import z from '@deepseek-ai/schemastery'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
-import SessionStore from '@deepseek-ai/dsh-session'
-import SessionTitleService, { type Config as SessionTitleConfig } from '@deepseek-ai/dsh-session-title'
-import SystemPrompt, { type Config as SystemPromptConfig } from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { type Config as ToolsConfig } from '@deepseek-ai/dsh-tools'
-import SkillRegistry, { type Config as SkillRegistryConfig } from '@deepseek-ai/dsh-skill'
-import * as SkillFileSystem from '@deepseek-ai/dsh-skill-filesystem'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import GoalService, { type Config as GoalDomainConfig } from '@deepseek-ai/dsh-goal'
-import * as goalSession from '@deepseek-ai/dsh-goal-round-driver'
-import * as toolGoal from '@deepseek-ai/dsh-tool-goal'
-import LocalJobRegistry, { type Config as JobsConfig } from '@deepseek-ai/dsh-jobs-local'
-import InvariantRegistry, { type Config as InvariantConfig } from '@deepseek-ai/dsh-invariants'
-import * as sessionInvariant from '@deepseek-ai/dsh-session/invariant'
-import * as agentInvariant from '@deepseek-ai/dsh-agent/invariant'
-import * as scopeInvariant from '@deepseek-ai/dsh-scope/invariant'
-import * as agentLoopInvariant from '@deepseek-ai/dsh-agent-loop/invariant'
-import * as toolBash from '@deepseek-ai/dsh-tool-bash'
-import * as bashEnv from '@deepseek-ai/dsh-shell-env'
-import * as workspaceContext from '@deepseek-ai/dsh-agent-instructions'
-import * as toolSkill from '@deepseek-ai/dsh-tool-skill'
-import * as toolJobs from '@deepseek-ai/dsh-tool-jobs'
-import AgentLoop, { type Config as AgentLoopConfig } from '@deepseek-ai/dsh-agent-loop'
-import * as llmRetry from '@deepseek-ai/dsh-llm-retry'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import type { Context } from '@voyaseek-ai/cordis'
+import Timer from '@voyaseek-ai/cordis-plugin-timer'
+import z from '@voyaseek-ai/schemastery'
+import LlmRuntime from '@voyaseek-ai/dsh-llm'
+import SessionStore from '@voyaseek-ai/dsh-session'
+import SessionTitleService, { type Config as SessionTitleConfig } from '@voyaseek-ai/dsh-session-title'
+import SystemPrompt, { type Config as SystemPromptConfig } from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime, { type Config as ToolsConfig } from '@voyaseek-ai/dsh-tools'
+import SkillRegistry, { type Config as SkillRegistryConfig } from '@voyaseek-ai/dsh-skill'
+import * as SkillFileSystem from '@voyaseek-ai/dsh-skill-filesystem'
+import AgentRegistry from '@voyaseek-ai/dsh-agent'
+import GoalService, { type Config as GoalDomainConfig } from '@voyaseek-ai/dsh-goal'
+import * as goalSession from '@voyaseek-ai/dsh-goal-round-driver'
+import * as toolGoal from '@voyaseek-ai/dsh-tool-goal'
+import LocalJobRegistry, { type Config as JobsConfig } from '@voyaseek-ai/dsh-jobs-local'
+import InvariantRegistry, { type Config as InvariantConfig } from '@voyaseek-ai/dsh-invariants'
+import * as sessionInvariant from '@voyaseek-ai/dsh-session/invariant'
+import * as agentInvariant from '@voyaseek-ai/dsh-agent/invariant'
+import * as scopeInvariant from '@voyaseek-ai/dsh-scope/invariant'
+import * as agentLoopInvariant from '@voyaseek-ai/dsh-agent-loop/invariant'
+import * as toolBash from '@voyaseek-ai/dsh-tool-bash'
+import * as bashEnv from '@voyaseek-ai/dsh-shell-env'
+import * as workspaceContext from '@voyaseek-ai/dsh-agent-instructions'
+import * as toolSkill from '@voyaseek-ai/dsh-tool-skill'
+import * as toolJobs from '@voyaseek-ai/dsh-tool-jobs'
+import AgentLoop, { type Config as AgentLoopConfig } from '@voyaseek-ai/dsh-agent-loop'
+import * as llmRetry from '@voyaseek-ai/dsh-llm-retry'
+import { resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
 
 export const name = 'agent-spine-demo'
 
@@ -104,7 +104,7 @@ export interface Config {
   toolOrder?: SystemPromptConfig['toolOrder']
   /** The tool registry's config — its presentation `mode` (see dsh-tools' `Config`). */
   tools?: ToolsConfig
-  /** DeepSeek Harness home directory shared by shell context and local skill discovery. */
+  /** Voyaseek Harness home directory shared by shell context and local skill discovery. */
   dshHome?: string
   /** Deterministic fallback and accepted-title limits; omission uses the bundle's example policy. */
   sessionTitle?: SessionTitleConfig

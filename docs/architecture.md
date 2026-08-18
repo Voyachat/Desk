@@ -1,4 +1,4 @@
-# DeepSeek Harness Architecture
+# Voyaseek Harness Architecture
 
 English | [中文](architecture.zh.md)
 

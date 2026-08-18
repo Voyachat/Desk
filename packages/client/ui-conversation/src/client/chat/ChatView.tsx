@@ -16,14 +16,20 @@
 // lifecycle updates replace only their own row without remounting it.
 // Grouping derives from order plus structural closing facts; the only
 // content-level input is a boolean "the streaming partial already shows
-// prose", which flips at most twice per step.
+// prose", which flips at most twice per step. Past VIRTUALIZATION_THRESHOLD_ROWS
+// the flow mounts through @tanstack/react-virtual (the ui-trajectory ledger
+// pattern): off-window rows unmount, dynamic heights are measured on mount,
+// prepend anchoring and estimate correction ride the library's end anchor,
+// and bottom-follow stays with this view's ResizeObserver chain.
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
-import type { ConversationTimelineSnapshot } from '@deepseek-ai/dsh-client-runtime/client'
-import { IconChevronDownOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import type { ConversationTimelineSnapshot } from '@voyaseek-ai/dsh-client-runtime/client'
+import { IconChevronDownOutline14 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
-import { collectFoldFacts, groupChatFlow, partialHasVisibleProse } from './activity-fold.ts'
+import { collectFoldFacts, groupChatFlow, partialHasReasoning, partialHasVisibleProse } from './activity-fold.ts'
+import type { ChatFlowRow } from './activity-fold.ts'
 import { ActivityFold } from './ActivityFold.tsx'
 import { PendingSteeringBubble } from './MessageItem.tsx'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
@@ -31,6 +37,30 @@ import { formatRunDuration } from './message-chrome.ts'
 import css from './ChatView.module.css'
 
 const FOLLOW_THRESHOLD = 24
+
+/** Scrolling into this top zone auto-requests one older page per visit while
+ *  the flow is virtualized (long sessions, where repeated manual paging is
+ *  the norm); leaving the zone rearms. The prepend's anchor shift pushes the
+ *  reader back out of the zone, so pages chain only while the reader keeps
+ *  scrolling up. Shorter flows keep the header button as the only path. */
+const OLDER_AUTOLOAD_THRESHOLD_PX = 320
+
+/** Rows beyond this mount through the virtualizer; shorter flows render in
+ *  plain flex so unit tests and short sessions keep the simple path. Matches
+ *  the ui-trajectory ledger threshold. */
+const VIRTUALIZATION_THRESHOLD_ROWS = 100
+/** Extra rows mounted on each side of the viewport; covers the header-gap
+ *  slack and fast-wheel overshoot without ballooning the DOM. */
+const VIRTUAL_OVERSCAN_ROWS = 8
+/** Pre-measure row estimates; measureElement replaces them on mount. */
+const VIRTUAL_ROW_ESTIMATE_PX = 160
+const VIRTUAL_FOLD_ESTIMATE_PX = 32
+const VIRTUAL_INITIAL_VIEWPORT_HEIGHT_PX = 600
+/** Mirrors the .column flex gap so virtualized item spacing matches the
+ *  non-virtual flow exactly. */
+const COLUMN_GAP_PX = 16
+/** Bounded scrollToIndex retries while an off-window restore anchor mounts. */
+const MAX_RESTORE_ATTEMPTS = 4
 
 /** Active column host when present; otherwise the view-local scroller. */
 function scrollerOf(from: HTMLElement): HTMLElement {
@@ -154,7 +184,7 @@ function TurnStatus({ startTime, t }: {
  */
 export function ChatView({
   useSession, useSessions, useStore, renderSlot, sessionId, openFile, loadOlder, loadImage, inspectCall, chatScroll, forkAt,
-  fileMentions, t,
+  fileMentions, useShowReasoning, t,
 }: ChatViewSlotProps) {
   const order = useSession(s => s.chat.order)
   const nodeStore = useSession(s => s.chat.nodes)
@@ -162,6 +192,10 @@ export function ChatView({
   // The only content-level grouping input: flips when the streaming step
   // starts/stops producing user-facing prose, never per chunk otherwise.
   const partialProse = useSession(s => partialHasVisibleProse(s.chat.legacy.partial))
+  // Same flip discipline for the inline-reasoning preference: the streaming
+  // step leaves the fold once its partial carries reasoning, never per chunk.
+  const partialReasoning = useSession(s => partialHasReasoning(s.chat.legacy.partial))
+  const showReasoning = useShowReasoning(value => value)
   const inbox = useSession(s => s.queue)
   // Workspace root off the session list row: path summaries display relative to it.
   const cwd = useSessions(s => s.byId[sessionId]?.cwd)
@@ -187,6 +221,11 @@ export function ChatView({
   /** Paging anchor: semantic row/position at click, updated by reader scrolls
    * while the request is pending and restored after the prepend lands. */
   const anchorRef = useRef<PagingAnchor | null>(null)
+  /** One automatic older-page request per top-zone visit (see onScroll). */
+  const olderArmedRef = useRef(true)
+  /** Virtualized open-restore: the saved position waiting for its anchor row
+   *  to mount into the window so the raw offset can be refined exactly. */
+  const pendingRestoreRef = useRef<(ChatScrollPosition & { attempts: number }) | null>(null)
   const firstSeqRef = useRef<number | null>(null)
   const openedRef = useRef(false)
   const lastKeyRef = useRef<string | null>(null)
@@ -207,11 +246,72 @@ export function ChatView({
   // which consecutive Nodes collapse into one disclosure row. Recomputed on
   // flow-shape changes only; member content updates never regroup.
   const foldFacts = useMemo(() => collectFoldFacts(order, nodeStore), [order, nodeStore])
+  const reasoningDisplay = useMemo(
+    () => ({ showReasoning, partialReasoning }),
+    [showReasoning, partialReasoning],
+  )
   const rows = useMemo(
-    () => groupChatFlow(order, nodeStore, foldFacts, partialProse),
-    [order, nodeStore, foldFacts, partialProse],
+    () => groupChatFlow(order, nodeStore, foldFacts, partialProse, reasoningDisplay),
+    [order, nodeStore, foldFacts, partialProse, reasoningDisplay],
   )
   const hasRunningFold = rows.some(row => row.kind === 'fold' && row.running)
+
+  // ---- Windowed mounting over the settled flow -------------------------------
+  // Long sessions otherwise accumulate every loaded row (markdown, KaTeX,
+  // code blocks) in the DOM, which is the documented long-session crash
+  // vector. The virtualizer mounts only the visible window plus overscan;
+  // prepend anchoring and estimate correction ride the library's end anchor
+  // while the manual anchorRef path below owns the plain-flex flow only.
+  const virtualizationEnabled = rows.length > VIRTUALIZATION_THRESHOLD_ROWS
+
+  // Item coordinates are list-local while scrollTop is scrollport-local; the
+  // header block's height (plus its column gap) is the offset between them.
+  const headerRef = useRef<HTMLDivElement | null>(null)
+  const [scrollMargin, setScrollMargin] = useState(0)
+  useEffect(() => {
+    const header = headerRef.current
+    /* v8 ignore next -- ref-null guard: React attaches the ref before effects run. */
+    if (header === null) return
+    const measure = (): void => {
+      const height = header.offsetHeight
+      setScrollMargin(height === 0 ? 0 : height + COLUMN_GAP_PX)
+    }
+    measure()
+    /* v8 ignore next -- jsdom has no ResizeObserver; the initial read stands. */
+    if (typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(measure)
+    observer.observe(header)
+    return () => { observer.disconnect() }
+  }, [])
+
+  const getScrollElement = useCallback((): HTMLElement | null => {
+    const local = listRef.current
+    return local === null ? null : scrollerOf(local)
+  }, [])
+  const estimateRowSize = useCallback(
+    (index: number): number => rows[index]?.kind === 'fold'
+      ? VIRTUAL_FOLD_ESTIMATE_PX
+      : VIRTUAL_ROW_ESTIMATE_PX,
+    [rows],
+  )
+  const getRowKey = useCallback(
+    (index: number): string | number => rows[index]?.key ?? index,
+    [rows],
+  )
+  const rowVirtualizer = useVirtualizer<HTMLElement, HTMLDivElement>({
+    count: virtualizationEnabled ? rows.length : 0,
+    enabled: virtualizationEnabled,
+    estimateSize: estimateRowSize,
+    getItemKey: getRowKey,
+    getScrollElement,
+    initialRect: { width: 0, height: VIRTUAL_INITIAL_VIEWPORT_HEIGHT_PX },
+    anchorTo: 'end',
+    overscan: VIRTUAL_OVERSCAN_ROWS,
+    scrollMargin,
+    gap: COLUMN_GAP_PX,
+    scrollEndThreshold: FOLLOW_THRESHOLD + 1,
+  })
+  const virtualItems = virtualizationEnabled ? rowVirtualizer.getVirtualItems() : []
 
   const renderMember = (nodeKey: string): ReactNode => (
     <ChatNodeSeat
@@ -229,6 +329,20 @@ export function ChatView({
       t={t}
     />
   )
+
+  const renderRow = (row: ChatFlowRow): ReactNode => row.kind === 'node'
+    ? renderMember(row.key)
+    : (
+      <ActivityFold
+        members={row.members}
+        running={row.running}
+        toolCalls={row.toolCalls}
+        startTime={row.startTime}
+        endTime={row.endTime}
+        renderMember={renderMember}
+        t={t}
+      />
+    )
 
   const toBottom = (el: HTMLElement): void => {
     anchorRef.current = null
@@ -252,6 +366,16 @@ export function ChatView({
       const saved = chatScroll.read()
       if (saved === null) {
         toBottom(el)
+      } else if (virtualizationEnabled) {
+        // The saved anchor row usually sits outside the initial window.
+        // Restore the raw offset as the floor, then let the restore effect
+        // pin the exact row once the window lands on it.
+        pendingRestoreRef.current = { ...saved, attempts: 0 }
+        el.scrollTop = saved.scrollTop
+        observedTopRef.current = el.scrollTop
+        const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_THRESHOLD + 1
+        atBottomRef.current = isAtBottom
+        setAtBottom(isAtBottom)
       } else {
         el.scrollTop = saved.scrollTop
         const row = anchorElement(local, saved.anchorKey)
@@ -272,8 +396,10 @@ export function ChatView({
     }
     // Prepend (head seq decreased): preserve the same settled row at the
     // position established by the reader's latest scroll. This excludes
-    // unrelated tail/composer growth while the request was in flight.
-    if (anchorRef.current !== null && firstSeq !== null && firstSeqRef.current !== null && firstSeq < firstSeqRef.current) {
+    // unrelated tail/composer growth while the request was in flight. The
+    // virtualized flow gets the same guarantee from the library's end anchor.
+    if (!virtualizationEnabled
+      && anchorRef.current !== null && firstSeq !== null && firstSeqRef.current !== null && firstSeq < firstSeqRef.current) {
       const anchor = anchorRef.current
       anchorRef.current = null
       const row = anchorElement(local, anchor.key)
@@ -298,6 +424,42 @@ export function ChatView({
     // Follow new flow content while pinned; do NOT re-pin on every render
     // merely because atBottomRef is true (scroll threshold → setState → snap).
     if (appendedUser || appendedSteering || (tipMoved && atBottomRef.current)) toBottom(el)
+  })
+
+  // Virtualized open-restore, phase two: the raw offset lands the window near
+  // the saved anchor; once that row mounts, pin it to its saved flow position
+  // exactly. A collapsed fold never mounts member seats, so a fold-member
+  // anchor degrades to the raw offset like the plain-flex path does.
+  useLayoutEffect(() => {
+    const pending = pendingRestoreRef.current
+    if (pending === null) return
+    const local = listRef.current
+    /* v8 ignore next -- ref-null guard: React attaches the ref before layout effects run. */
+    if (local === null) return
+    const el = scrollerOf(local)
+    const finish = (): void => {
+      pendingRestoreRef.current = null
+      observedTopRef.current = el.scrollTop
+      const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_THRESHOLD + 1
+      atBottomRef.current = isAtBottom
+      setAtBottom(isAtBottom)
+      const position = isAtBottom ? null : scrollPosition(local, el)
+      if (isAtBottom) chatScroll.save(null)
+      else if (position !== null) chatScroll.save(position)
+    }
+    const row = anchorElement(local, pending.anchorKey)
+    if (row !== null) {
+      el.scrollTop += flowTop(row, el) - pending.anchorTop
+      finish()
+      return
+    }
+    const index = rows.findIndex(r => r.kind === 'node' && r.key === pending.anchorKey)
+    if (index >= 0 && pending.attempts < MAX_RESTORE_ATTEMPTS) {
+      pendingRestoreRef.current = { ...pending, attempts: pending.attempts + 1 }
+      rowVirtualizer.scrollToIndex(index, { align: 'start' })
+      return
+    }
+    finish()
   })
 
   const onScrollRef = useRef(() => {})
@@ -335,6 +497,17 @@ export function ChatView({
     if (isAtBottom) chatScroll.save(null)
     else if (position !== null) chatScroll.save(position)
     observedTopRef.current = el.scrollTop
+    // Infinite paging for virtualized flows: one older page per top-zone
+    // visit, armed again once the reader leaves the zone. The prepend's own
+    // anchor shift pushes the position out of the zone, so a settled page
+    // never refires in place; a failed/empty page stays disarmed until the
+    // reader scrolls away.
+    if (el.scrollTop > OLDER_AUTOLOAD_THRESHOLD_PX) {
+      olderArmedRef.current = true
+    } else if (virtualizationEnabled && hasMore && !loadingOlder && olderArmedRef.current) {
+      olderArmedRef.current = false
+      loadOlderAnchored()
+    }
   }
 
   // Bind the scroll listener on the resolved scrollport once per mount;
@@ -388,7 +561,7 @@ export function ChatView({
   const loadOlderAnchored = (): void => {
     const local = listRef.current
     /* v8 ignore next -- ref-null guard: the paging button renders inside the list tree. */
-    if (local !== null) {
+    if (local !== null && !virtualizationEnabled) {
       const el = scrollerOf(local)
       const row = pagingAnchor(local, el)
       if (row !== null && row.dataset.chatAnchorKey !== undefined) {
@@ -405,33 +578,47 @@ export function ChatView({
     <div className={css.root}>
       <div ref={listRef} className={css.scroll}>
         <div ref={columnRef} className={css.column} data-chat-flow="">
-          {openState === 'loading' && <div className={css.hint}>{t('chat.loadingHistory')}</div>}
-          {openState === 'error' && openError !== null && (
-            <div className={css.openError}>
-              {t('chat.loadError', { message: openError.message, code: openError.code })}
+          <div ref={headerRef} className={css.header}>
+            {openState === 'loading' && <div className={css.hint}>{t('chat.loadingHistory')}</div>}
+            {openState === 'error' && openError !== null && (
+              <div className={css.openError}>
+                {t('chat.loadError', { message: openError.message, code: openError.code })}
+              </div>
+            )}
+            {hasMore && (
+              <div className={css.older}>
+                <button type="button" disabled={loadingOlder} onClick={loadOlderAnchored}>
+                  {loadingOlder ? t('loading') : t('chat.loadOlder')}
+                </button>
+              </div>
+            )}
+          </div>
+          {virtualizationEnabled ? (
+            <div
+              className={css.virtualBody}
+              data-chat-virtual-body=""
+              style={{ height: rowVirtualizer.getTotalSize() }}
+            >
+              {virtualItems.map((item) => {
+                const row = rows[item.index]
+                /* v8 ignore next -- the virtualizer's count mirrors rows.length. */
+                if (row === undefined) return null
+                return (
+                  <div
+                    key={item.key}
+                    data-index={item.index}
+                    ref={rowVirtualizer.measureElement}
+                    className={css.virtualRow}
+                    style={{ transform: `translateY(${item.start - scrollMargin}px)` }}
+                  >
+                    {renderRow(row)}
+                  </div>
+                )
+              })}
             </div>
+          ) : (
+            rows.map(row => <Fragment key={row.key}>{renderRow(row)}</Fragment>)
           )}
-          {hasMore && (
-            <div className={css.older}>
-              <button type="button" disabled={loadingOlder} onClick={loadOlderAnchored}>
-                {loadingOlder ? t('loading') : t('chat.loadOlder')}
-              </button>
-            </div>
-          )}
-          {rows.map(row => row.kind === 'node'
-            ? renderMember(row.key)
-            : (
-              <ActivityFold
-                key={row.key}
-                members={row.members}
-                running={row.running}
-                toolCalls={row.toolCalls}
-                startTime={row.startTime}
-                endTime={row.endTime}
-                renderMember={renderMember}
-                t={t}
-              />
-            ))}
           {/* No pending placeholders: questions (ui-user-questions) and approvals
               (ApprovalPanel) both take over the composer, so a flow card would
               double-render the same wait. */}

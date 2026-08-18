@@ -45,7 +45,7 @@ export function stageRuntime() {
     deployEnvironment.PNPM_CONFIG_OFFLINE = 'true'
     run(pnpm, [
       '--offline',
-      '--filter', '@deepseek-ai/dsh-aistaff-desktop-runtime',
+      '--filter', '@voyaseek-ai/dsh-aistaff-desktop-runtime',
       'deploy', '--legacy', '--prod',
       '--config.node-linker=hoisted',
       '--config.auto-install-peers=false',
@@ -216,7 +216,7 @@ function addProductBundleAnchor(manifestPath) {
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
   manifest.dependencies = {
     ...manifest.dependencies,
-    '@deepseek-ai/dsh-aistaff-product-bundle': '0.1.0-rc.5',
+    '@voyaseek-ai/dsh-aistaff-product-bundle': '0.1.0-rc.5',
   }
   writeFileSync(manifestPath, `${JSON.stringify(manifest, undefined, 2)}\n`)
 }
@@ -308,11 +308,11 @@ export function verifyRuntime(runtimeRoot) {
   const required = [
     'apps/cli/lib/bin.js',
     supervisorRuntimePath,
-    'node_modules/@deepseek-ai/dsh-web-frontend/dist/index.html',
-    'node_modules/@deepseek-ai/dsh-aistaff-client-product/lib/client.js',
-    'node_modules/@deepseek-ai/dsh-aistaff-product-bundle/cordis.patch.yml',
-    'node_modules/@deepseek-ai/dsh-code-runtime-worker-thread/lib/worker.cjs',
-    'node_modules/@deepseek-ai/dsh-workflow-worker-thread/lib/worker.cjs',
+    'node_modules/@voyaseek-ai/dsh-web-frontend/dist/index.html',
+    'node_modules/@voyaseek-ai/dsh-aistaff-client-product/lib/client.js',
+    'node_modules/@voyaseek-ai/dsh-aistaff-product-bundle/cordis.patch.yml',
+    'node_modules/@voyaseek-ai/dsh-code-runtime-worker-thread/lib/worker.cjs',
+    'node_modules/@voyaseek-ai/dsh-workflow-worker-thread/lib/worker.cjs',
   ]
   for (const artifact of required) {
     const path = join(runtimeRoot, ...artifact.split('/'))
@@ -323,11 +323,11 @@ export function verifyRuntime(runtimeRoot) {
   const spawnHelper = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}prebuilds${sep}darwin-x64${sep}spawn-helper`))
   if (spawnHelper === undefined) throw new Error('runtime is missing the macOS x86_64 node-pty spawn-helper')
   const languagePolicyChunk = findPath(runtimeRoot, (path) => {
-    const directory = `${sep}@deepseek-ai${sep}dsh-aistaff-language-policy${sep}lib${sep}`
+    const directory = `${sep}@voyaseek-ai${sep}dsh-aistaff-language-policy${sep}lib${sep}`
     return path.includes(directory) && /rules-[A-Za-z0-9_-]+\.js$/.test(path)
   })
   if (languagePolicyChunk === undefined) throw new Error('runtime is missing the Aistaff language-policy rule chunk')
-  verifyEsmImport(runtimeRoot, 'node_modules/@deepseek-ai/dsh-aistaff-language-policy/lib/index.js')
+  verifyEsmImport(runtimeRoot, 'node_modules/@voyaseek-ai/dsh-aistaff-language-policy/lib/index.js')
   verifySupervisorSidecar(join(runtimeRoot, supervisorRuntimePath))
   rejectRuntimeDevelopmentPaths(runtimeRoot)
   process.stdout.write(`Verified AI Staff runtime closure at ${runtimeRoot}\n`)

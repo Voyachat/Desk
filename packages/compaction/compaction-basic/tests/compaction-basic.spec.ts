@@ -1,18 +1,18 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { AttachmentId } from '@deepseek-ai/dsh-attachment'
-import BasicCompactionEngine from '@deepseek-ai/dsh-compaction-basic'
-import type { BasicCompactionConfig } from '@deepseek-ai/dsh-compaction-basic'
-import { selectCompactableRange } from '@deepseek-ai/dsh-compaction-basic/src/region.ts'
-import type { SummarizationInput, SummaryResult } from '@deepseek-ai/dsh-compaction-basic/src/summarizer.ts'
-import { CompactionId, toolPairingBalancedAfter, toolPairingBalancedBefore } from '@deepseek-ai/dsh-compaction'
+import { Context } from '@voyaseek-ai/cordis'
+import { AttachmentId } from '@voyaseek-ai/dsh-attachment'
+import BasicCompactionEngine from '@voyaseek-ai/dsh-compaction-basic'
+import type { BasicCompactionConfig } from '@voyaseek-ai/dsh-compaction-basic'
+import { selectCompactableRange } from '@voyaseek-ai/dsh-compaction-basic/src/region.ts'
+import type { SummarizationInput, SummaryResult } from '@voyaseek-ai/dsh-compaction-basic/src/summarizer.ts'
+import { CompactionId, toolPairingBalancedAfter, toolPairingBalancedBefore } from '@voyaseek-ai/dsh-compaction'
 import {
   resolveCompactSpec,
   resolveConfig,
   resolveTargetPolicy,
-} from '@deepseek-ai/dsh-compaction-basic/src/config.ts'
-import type { CompactionResult } from '@deepseek-ai/dsh-compaction'
-import LlmRuntime, { createUserMessage, CallId, CONTEXT_WINDOW_EXCEEDED_CODE, createToolResultMessage, LlmAdapter , createMessage } from '@deepseek-ai/dsh-llm'
+} from '@voyaseek-ai/dsh-compaction-basic/src/config.ts'
+import type { CompactionResult } from '@voyaseek-ai/dsh-compaction'
+import LlmRuntime, { createUserMessage, CallId, CONTEXT_WINDOW_EXCEEDED_CODE, createToolResultMessage, LlmAdapter , createMessage } from '@voyaseek-ai/dsh-llm'
 import type {
   ContentBlock,
   GenerateOptions,
@@ -21,11 +21,11 @@ import type {
   Message,
   StreamChunk,
   TokenUsage,
-} from '@deepseek-ai/dsh-llm'
-import SessionStore, { Session, SessionId } from '@deepseek-ai/dsh-session'
-import TokenMeter from '@deepseek-ai/dsh-token-meter'
-import { agentEvents, type Agent, type RequestErrorAction } from '@deepseek-ai/dsh-agent'
-import ToolResultPruner from '@deepseek-ai/dsh-compaction-tool-result-pruner'
+} from '@voyaseek-ai/dsh-llm'
+import SessionStore, { Session, SessionId } from '@voyaseek-ai/dsh-session'
+import TokenMeter from '@voyaseek-ai/dsh-token-meter'
+import { agentEvents, type Agent, type RequestErrorAction } from '@voyaseek-ai/dsh-agent'
+import ToolResultPruner from '@voyaseek-ai/dsh-compaction-tool-result-pruner'
 
 const SIGNAL = new AbortController().signal
 const MODEL = 'test-model'

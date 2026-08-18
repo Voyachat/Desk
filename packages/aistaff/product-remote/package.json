@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-product-remote",
+  "name": "@voyaseek-ai/dsh-aistaff-product-remote",
   "description": "Strict Typert Remote bridge between the Aistaff Host projection and Client port",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -33,7 +33,7 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-remotes"
+        "@voyaseek-ai/dsh-api-remotes"
       ],
       "platform": "web"
     }
@@ -57,19 +57,19 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-contracts": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-projection": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-contracts": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-projection": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-contracts": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-projection": "workspace:^",
-    "@deepseek-ai/dsh-api-gateway": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-typert-protocol": "workspace:^",
-    "@deepseek-ai/dsh-typert-registry": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-contracts": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-projection": "workspace:^",
+    "@voyaseek-ai/dsh-api-gateway": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^"
   }
 }

@@ -5,9 +5,9 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { PassThrough, Writable } from 'node:stream'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import * as agentCore from '@deepseek-ai/dsh-agent-spine-demo'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+import { Context } from '@voyaseek-ai/cordis'
+import * as agentCore from '@voyaseek-ai/dsh-agent-spine-demo'
+import JsonlSessionPersistence from '@voyaseek-ai/dsh-session-persistence-jsonl'
 import * as jsonrpc from '../src/index.ts'
 
 /**
@@ -161,7 +161,7 @@ describe('dsh-sdk-jsonrpc-server plugin apply', () => {
       expect(response).toEqual({
         jsonrpc: '2.0',
         id: 'init-1',
-        result: { serverInfo: { name: 'deepseek-harness-sdk-runtime', version: '0.0.1' } },
+        result: { serverInfo: { name: 'voyaseek-harness-sdk-runtime', version: '0.0.1' } },
       })
       expect(harness.exits()).toEqual([])
     } finally {
@@ -286,7 +286,7 @@ describe('dsh-sdk-jsonrpc-server plugin apply', () => {
       const error = await harness.waitForFrame(frame => frame.id === 'probe-1', 'error response for unknown method')
       expect(error.error).toMatchObject({
         code: -32603,
-        message: 'unknown DeepSeek Harness SDK runtime method: nope/unknown',
+        message: 'unknown Voyaseek Harness SDK runtime method: nope/unknown',
       })
 
       await harness.fiber.dispose()

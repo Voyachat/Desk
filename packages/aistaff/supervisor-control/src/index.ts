@@ -1,6 +1,6 @@
-/** Host-only AiDesktop Supervisor control Service Definition. @module @deepseek-ai/dsh-aistaff-supervisor-control */
+/** Host-only AiDesktop Supervisor control Service Definition. @module @voyaseek-ai/dsh-aistaff-supervisor-control */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import type {
   CapabilityContextHandle as CapabilityContextHandleType,
   ReadCapabilityRequest,
@@ -32,7 +32,7 @@ export type * from './types.ts'
 /** Cordis service key for the Host-only Supervisor control port. */
 export const SUPERVISOR_CONTROL_SERVICE_KEY = 'aistaffSupervisorControl' as const
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Host-only local capability, Grant, and Receipt control port. */
     aistaffSupervisorControl: SupervisorControlPort

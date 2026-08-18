@@ -1,11 +1,11 @@
 /**
  * Owner-scoped persistent PTY registry. Backends own terminal mechanics while
  * this service owns ids, publication, authorization, and awaited cleanup.
- * @module @deepseek-ai/dsh-terminal
+ * @module @voyaseek-ai/dsh-terminal
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
+import { Context, Service } from '@voyaseek-ai/cordis'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
 import { TerminalBackendCleanupError } from './types.ts'
 import type {
   TerminalBackend,
@@ -45,7 +45,7 @@ export { TerminalBackendCleanupError } from './types.ts'
 /** Opaque identity minted by {@link TerminalSessionService} for one live PTY session. */
 export type TerminalSessionId = TerminalSessionIdValue
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     terminals: TerminalSessionService
   }

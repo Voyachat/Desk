@@ -1,16 +1,16 @@
 /**
  * Shared boot glue for the app bins (`dsh`, `dsh-acp-demo`): load the gitignored
  * `.env`, install the fail-loud Loader guards, resolve the config path (snapshot-aware), load the
- * optional user patch layers from the Harness home (`~/.dsh`), expose its path resolver to
+ * optional user patch layers from the Harness home (`~/.voyaseek`), expose its path resolver to
  * config expressions, and drive the Cordis Loader against a leaf `cordis.yml` until the tree settles.
- * @module @deepseek-ai/dsh-app-boot
+ * @module @voyaseek-ai/dsh-app-boot
  */
-import { Context } from '@deepseek-ai/cordis';
-import { type Entry } from '@deepseek-ai/cordis-plugin-loader';
-import { type PatchOptions } from '@deepseek-ai/cordis-plugin-include';
-import { dshHomePath } from '@deepseek-ai/dsh-home-paths';
-import { type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment';
-declare module '@deepseek-ai/cordis' {
+import { Context } from '@voyaseek-ai/cordis';
+import { type Entry } from '@voyaseek-ai/cordis-plugin-loader';
+import { type PatchOptions } from '@voyaseek-ai/cordis-plugin-include';
+import { dshHomePath } from '@voyaseek-ai/dsh-home-paths';
+import { type LaunchEnvironmentSnapshot } from '@voyaseek-ai/dsh-launch-environment';
+declare module '@voyaseek-ai/cordis' {
     interface Context {
         /** Harness-home path resolver available to Loader `!!js` config expressions. */
         dshHomePath?: typeof dshHomePath;
@@ -72,7 +72,7 @@ export interface UserPatchWatchOptions {
 export declare function watchUserPatches(ctx: Context, options: UserPatchWatchOptions): Promise<() => Promise<void>>;
 /**
  * Load an optional patch-list file: a top-level YAML array of loader patch
- * entries (`@deepseek-ai/cordis-plugin-include`'s `PatchOptions`): id-targeted config
+ * entries (`@voyaseek-ai/cordis-plugin-include`'s `PatchOptions`): id-targeted config
  * overrides and `insert` lists, with `!!js` expressions allowed. A missing
  * file means "no layer"; an unreadable, unparsable, or non-array file throws —
  * a present patch file that cannot apply is a misconfiguration and must fail

@@ -4,9 +4,9 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import type { Session } from '@deepseek-ai/dsh-session'
+import { Context } from '@voyaseek-ai/cordis'
+import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
+import type { Session } from '@voyaseek-ai/dsh-session'
 import type { SDKMessage } from '@anthropic-ai/claude-agent-sdk'
 import { SdkEventRecorder, resultText } from '../src/mapping.ts'
 import type {} from '../src/types.ts'

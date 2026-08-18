@@ -19,8 +19,8 @@ describe('release families', () => {
   it('names one tag for the whole dsh family and one per vendored package', () => {
     const dsh = releaseFamily('dsh')
     const vendor = releaseFamily('vendor')
-    const cli = member('apps/cli', '@deepseek-ai/dsh')
-    const cordis = { ...member('vendor/cordis', '@deepseek-ai/cordis'), version: '4.0.1' }
+    const cli = member('apps/cli', '@voyaseek-ai/dsh')
+    const cordis = { ...member('vendor/cordis', '@voyaseek-ai/cordis'), version: '4.0.1' }
 
     expect(dsh.tagFor(cli)).toBe('dsh-v0.0.1')
     expect(vendor.tagFor(cordis)).toBe('vendor-cordis-v4.0.1')
@@ -32,7 +32,7 @@ describe('release families', () => {
 
   it('rejects a family whose members disagree on the shared version', () => {
     const dsh = releaseFamily('dsh')
-    const members = [member('apps/cli', '@deepseek-ai/dsh'), { ...member('apps/web', '@deepseek-ai/dsh-web-frontend'), version: '0.0.2' }]
+    const members = [member('apps/cli', '@voyaseek-ai/dsh'), { ...member('apps/web', '@voyaseek-ai/dsh-web-frontend'), version: '0.0.2' }]
 
     expect(() => { dsh.verifyVersions(members) }).toThrow(/must share one version/)
     expect(() => { dsh.verifyVersions([members[0]!]) }).not.toThrow()
@@ -41,8 +41,8 @@ describe('release families', () => {
   it('accepts independent vendored versions and rejects an unpublishable one', () => {
     const vendor = releaseFamily('vendor')
     const members = [
-      { ...member('vendor/cordis', '@deepseek-ai/cordis'), version: '4.0.1' },
-      { ...member('vendor/cosmokit', '@deepseek-ai/cosmokit'), version: '1.8.2' },
+      { ...member('vendor/cordis', '@voyaseek-ai/cordis'), version: '4.0.1' },
+      { ...member('vendor/cosmokit', '@voyaseek-ai/cosmokit'), version: '1.8.2' },
     ]
 
     expect(() => { vendor.verifyVersions(members) }).not.toThrow()
@@ -52,23 +52,23 @@ describe('release families', () => {
   it('publishes a dependency before its consumer, and orders ties by name', () => {
     const dsh = releaseFamily('dsh')
     const members = [
-      member('packages/a/consumer', '@deepseek-ai/dsh-consumer', { dependencies: { '@deepseek-ai/dsh-library': 'workspace:^' } }),
-      member('packages/a/library', '@deepseek-ai/dsh-library'),
-      member('packages/a/zebra', '@deepseek-ai/dsh-zebra'),
+      member('packages/a/consumer', '@voyaseek-ai/dsh-consumer', { dependencies: { '@voyaseek-ai/dsh-library': 'workspace:^' } }),
+      member('packages/a/library', '@voyaseek-ai/dsh-library'),
+      member('packages/a/zebra', '@voyaseek-ai/dsh-zebra'),
     ]
 
     expect(dsh.publishOrder(members).map(entry => entry.name)).toEqual([
-      '@deepseek-ai/dsh-library',
-      '@deepseek-ai/dsh-consumer',
-      '@deepseek-ai/dsh-zebra',
+      '@voyaseek-ai/dsh-library',
+      '@voyaseek-ai/dsh-consumer',
+      '@voyaseek-ai/dsh-zebra',
     ])
   })
 
   it('reports a runtime dependency cycle instead of emitting an arbitrary order', () => {
     const dsh = releaseFamily('dsh')
     const members = [
-      member('packages/a/left', '@deepseek-ai/dsh-left', { dependencies: { '@deepseek-ai/dsh-right': 'workspace:^' } }),
-      member('packages/a/right', '@deepseek-ai/dsh-right', { dependencies: { '@deepseek-ai/dsh-left': 'workspace:^' } }),
+      member('packages/a/left', '@voyaseek-ai/dsh-left', { dependencies: { '@voyaseek-ai/dsh-right': 'workspace:^' } }),
+      member('packages/a/right', '@voyaseek-ai/dsh-right', { dependencies: { '@voyaseek-ai/dsh-left': 'workspace:^' } }),
     ]
 
     expect(() => { dsh.publishOrder(members) }).toThrow(/dependency cycle/)
@@ -77,8 +77,8 @@ describe('release families', () => {
   it('applies the harness payload policy to dsh and keeps upstream payloads for vendored packages', () => {
     const dsh = releaseFamily('dsh')
     const vendor = releaseFamily('vendor')
-    const harness = member('packages/a/library', '@deepseek-ai/dsh-library')
-    const vendored = member('vendor/cordis', '@deepseek-ai/cordis')
+    const harness = member('packages/a/library', '@voyaseek-ai/dsh-library')
+    const vendored = member('vendor/cordis', '@voyaseek-ai/cordis')
 
     expect(() => { dsh.validatePayload(harness, ['package/lib/index.js', 'package/src/index.ts']) })
       .toThrow(/publishes source file/)
@@ -87,7 +87,7 @@ describe('release families', () => {
   })
 
   it('drives the installed entry only for the family that publishes one', () => {
-    expect(releaseFamily('dsh').installedEntry).toEqual({ packageName: '@deepseek-ai/dsh', binPath: 'lib/bin.js' })
+    expect(releaseFamily('dsh').installedEntry).toEqual({ packageName: '@voyaseek-ai/dsh', binPath: 'lib/bin.js' })
     expect(releaseFamily('vendor').installedEntry).toBeUndefined()
   })
 
@@ -142,10 +142,10 @@ describe('version precedence', () => {
 })
 
 describe('payload change judgement', () => {
-  const sourceShipping = member('vendor/cosmokit', '@deepseek-ai/cosmokit', {
+  const sourceShipping = member('vendor/cosmokit', '@voyaseek-ai/cosmokit', {
     files: ['lib/index.js', 'lib/types/**/*.d.ts', 'src'],
   })
-  const buildOutputOnly = member('vendor/cordis', '@deepseek-ai/cordis', {
+  const buildOutputOnly = member('vendor/cordis', '@voyaseek-ai/cordis', {
     files: ['lib/index.js', 'lib/types/**/*.d.ts', 'bin.js'],
   })
 
@@ -170,7 +170,7 @@ describe('payload change judgement', () => {
     // unnecessary patch bump, while under-reporting fails the next publish on a
     // version whose bytes moved.
     expect(reachesPayload(sourceShipping, 'vendor/cosmokit/README.i18n.yaml')).toBe(true)
-    expect(reachesPayload(member('packages/a/library', '@deepseek-ai/dsh-library', { files: ['lib/index.js'] }),
+    expect(reachesPayload(member('packages/a/library', '@voyaseek-ai/dsh-library', { files: ['lib/index.js'] }),
       'packages/a/library/tests/library.spec.ts')).toBe(false)
   })
 })

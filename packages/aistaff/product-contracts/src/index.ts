@@ -1,6 +1,6 @@
 /**
  * Renderer-safe Aistaff product DTOs, branded ids, and Host port types.
- * @module @deepseek-ai/dsh-aistaff-product-contracts
+ * @module @voyaseek-ai/dsh-aistaff-product-contracts
  */
 
 import type { ApprovalId, EmployeeId, ReceiptId, TaskId } from './types.ts'

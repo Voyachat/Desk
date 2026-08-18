@@ -1,8 +1,8 @@
-# @deepseek-ai/dsh-client-locale
+# @voyaseek-ai/dsh-client-locale
 
 [English](README.md) | 中文
 
-产品语言插件：`zh`／`en` 偏好以 `locale.preference` 存储在 `$DSH_HOME/settings.yaml` 中，并同时驱动浏览器文案和模型可见语言指引。若没有 Host 值，全新浏览器会暂时选择 `navigator` 请求的第一个受支持主语言，均不支持时回退到 `zh`；可写的本地回环 settings scope 会持久化该解析结果，使 Host 与浏览器消费者收敛。Host 读取保持非阻塞；接受的显式值会实时替换浏览器暂定值。settings API 仅限回环请求，因此远程浏览器的选择只保留在进程内。`locale/change` 仅在切换语言时触发。
+产品语言插件：`zh`／`en` 偏好以 `locale.preference` 存储在 `$VOYASEEK_HOME/settings.yaml` 中，并同时驱动浏览器文案和模型可见语言指引。若没有 Host 值，全新浏览器会暂时选择 `navigator` 请求的第一个受支持主语言，均不支持时回退到 `zh`；可写的本地回环 settings scope 会持久化该解析结果，使 Host 与浏览器消费者收敛。Host 读取保持非阻塞；接受的显式值会实时替换浏览器暂定值。settings API 仅限回环请求，因此远程浏览器的选择只保留在进程内。`locale/change` 仅在切换语言时触发。
 
 `LocaleRuntime` 拥有 ns×locale 字典注册表（类型化 `register(ns, {zh, en})` 按 `LocaleNamespaceMap` 校验，`bind(ns)`→`TranslateNS<ns>`；查找链 ns → common → zh → key），实现 slot 系统的 `LocaleFace`，并经 `ctx.slots.installLocale` 自行安装，支撑框架注入的 `t` 标准席位（`Translate`／`TranslateNS` 是 ui-slots 的类型；请从那里导入——本包的再导出仅为字典所有者提供便利）。[产品语言 Agent Note](../../../.agents/notes/implemented/architecture/2026-08-15-product-locale-model-context.md)说明模型请求传播方式；[Host settings 支撑的偏好决策](../../../.agents/notes/implemented/bug-fix/2026-08-06-host-backed-web-preferences.md)说明持久化范围。
 

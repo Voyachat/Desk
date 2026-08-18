@@ -14,7 +14,7 @@ interface CssPlugin {
 
 function cssPlugin(): CssPlugin {
   const configs = clientBundle(
-    '@deepseek-ai/dsh-client-test',
+    '@voyaseek-ai/dsh-client-test',
     ['lib/types/index.js', 'lib/types/invariant.js'],
   )({ env: { DSH_BUILD_FACE: 'client' } })
   const client = configs.find(config => config.platform === 'browser')

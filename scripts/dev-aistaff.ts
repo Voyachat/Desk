@@ -10,15 +10,15 @@ import {
   readProfileManifest,
   resolveProfileDir,
   writeProfileManifest,
-} from '@deepseek-ai/dsh-app-boot'
+} from '@voyaseek-ai/dsh-app-boot'
 
 const repoRoot = resolve(import.meta.dirname, '..')
-const home = process.env.DSH_HOME?.trim() || join(repoRoot, '.aidesktop-dev')
+const home = process.env.VOYASEEK_HOME?.trim() || join(repoRoot, '.aidesktop-dev')
 const profileName = 'aistaff'
 const bundles = [
-  '@deepseek-ai/dsh-base',
-  '@deepseek-ai/dsh-web-app',
-  '@deepseek-ai/dsh-aistaff-product-bundle',
+  '@voyaseek-ai/dsh-base',
+  '@voyaseek-ai/dsh-web-app',
+  '@voyaseek-ai/dsh-aistaff-product-bundle',
 ]
 const profileDir = resolveProfileDir(profileName, home)
 const developmentHmrPatch = join(profileDir, 'development-hmr.cordis.patch.yml')
@@ -66,7 +66,7 @@ const child = spawn(process.execPath, [
   ...args,
 ], {
   cwd: repoRoot,
-  env: { ...process.env, DSH_HOME: home },
+  env: { ...process.env, VOYASEEK_HOME: home },
   stdio: 'inherit',
 })
 

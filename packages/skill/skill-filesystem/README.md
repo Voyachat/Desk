@@ -1,10 +1,10 @@
-# @deepseek-ai/dsh-skill-filesystem
+# @voyaseek-ai/dsh-skill-filesystem
 
 English | [中文](README.zh.md)
 
 Local filesystem provider for the `ctx.skills` registry.
 
-This package implements one skill source. It scans local project, custom, and user skill roots, parses `SKILL.md` or flat Markdown skill files, and registers the provider on `ctx.skills`. The registry remains in `@deepseek-ai/dsh-skill`; the durable session catalogs and model-facing loader tool remain in `@deepseek-ai/dsh-tool-skill`.
+This package implements one skill source. It scans local project, custom, and user skill roots, parses `SKILL.md` or flat Markdown skill files, and registers the provider on `ctx.skills`. The registry remains in `@voyaseek-ai/dsh-skill`; the durable session catalogs and model-facing loader tool remain in `@voyaseek-ai/dsh-tool-skill`.
 
 ## Plugin
 
@@ -16,7 +16,7 @@ Requires `ctx.skills` (`inject: ['skills']`).
 |---|---|---|
 | `providerName` | `filesystem` | Unique name used to register this provider on `ctx.skills`. |
 | `includeDefaultRoots` | `true` | Include project and user roots around `customSkillDirs`; set false for an isolated custom-root provider. |
-| `dshHome` | `$DSH_HOME` or `~/.dsh` | DeepSeek Harness config root resolved by [`@deepseek-ai/dsh-home-paths`](../../util/home-paths/README.md); scans `skills` under this directory. |
+| `dshHome` | `$VOYASEEK_HOME` or `~/.voyaseek` | Voyaseek Harness config root resolved by [`@voyaseek-ai/dsh-home-paths`](../../util/home-paths/README.md); scans `skills` under this directory. |
 | `agentsHome` | `$DSH_AGENTS_HOME` or `~/.agents` | Shared agent config root scanned for compatible skills. |
 | `customSkillDirs` | `[]` | Additional local skill roots scanned after project roots and before user roots. |
 | `watch` | `true` | Watch host-local roots and invalidate the local provider when catalog membership or frontmatter may have changed. |
@@ -32,7 +32,7 @@ Default roots are resolved in this provider's rank order:
 
 | Rank | Source | Path |
 |---|---|---|
-| 100 | `project-dsh` | `<projectRoot>/.dsh/skills` |
+| 100 | `project-dsh` | `<projectRoot>/.voyaseek/skills` |
 | 200 | `project-agents` | `<projectRoot>/.agents/skills` |
 | 300 | `custom` | `Config.customSkillDirs` |
 | 400 | `user-dsh` | `<dshHome>/skills` |

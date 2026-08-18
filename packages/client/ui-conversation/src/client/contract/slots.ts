@@ -1,18 +1,18 @@
 /** Conversation slot declarations and their composed component props. */
 import type { ReactNode, RefObject } from 'react'
-import type { ImageAttachmentRef } from '@deepseek-ai/dsh-attachment'
+import type { ImageAttachmentRef } from '@voyaseek-ai/dsh-attachment'
 import type {
   InjectFace, MaybeSnapshotSelectorHook, PropsLocale, PropsRenderSlots, PropsRuntime, PropsStore,
   SlotHookFactory, SnapshotSelectorHook,
-} from '@deepseek-ai/dsh-client-ui-slots'
+} from '@voyaseek-ai/dsh-client-ui-slots'
 import type {
   CommandNode, CompactionSummaryNode, ConversationSnapshot, ConversationTurnDataMap,
-  ObservableSnapshot, PendingInteraction, PendingWait, SessionId, ToolCallBlock,
+  ObservableSnapshot, PendingInteraction, PendingWait, SessionId, SnapshotStore, ToolCallBlock,
   TurnLocation, WorkspaceId,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import type { MarkdownFileMentions } from '@deepseek-ai/dsh-client-ui-primitives'
-import type { MessageId } from '@deepseek-ai/dsh-client-connection/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
+import type { MarkdownFileMentions } from '@voyaseek-ai/dsh-client-ui-primitives'
+import type { MessageId } from '@voyaseek-ai/dsh-client-connection/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-layout/client'
 import type { ComposerBlock } from '../input/blocks.ts'
 import type {
   ComposerKeyboard, DraftAttachmentId, EditSelection, InputActions, InputNotice, InputState,
@@ -30,7 +30,7 @@ export interface ComposerAttachment {
   previewUrl: string
 }
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@voyaseek-ai/dsh-client-ui-slots' {
   interface SlotMap {
     /**
      * The entire body of one session: taking this seat means rendering that
@@ -306,7 +306,7 @@ export interface ChatFileMentions {
   forClosing(owner: TurnTailOwnerProps): MarkdownFileMentions | undefined
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Prose file-mention provider (ui-deliverables); reach via ctx.get — optional. */
     chatFileMentions: ChatFileMentions
@@ -673,6 +673,14 @@ export interface ChatScrollPosition {
  * outside the view (layout orchestration; the session object layer).
  */
 export interface ChatViewInjected {
+  hooks: {
+    /**
+     * Live inline-reasoning reader preference: when true, reasoning-bearing
+     * Assistant steps render as their own Think rows instead of folding into
+     * the activity disclosure.
+     */
+    showReasoning: SnapshotStore<boolean>
+  }
   /** Selection write + details panel opening in one gesture (store action + layout orchestration). */
   openDetails: (target: SelectionTarget) => void
   /**
@@ -710,7 +718,7 @@ export interface ChatViewInjected {
 /** Full chat-view component props: runtime & its Tool/command/tail render shares & store & injected & locale seat. */
 export type ChatViewSlotProps =
   PropsRuntime<'conversation.view'> & PropsRenderSlots<'conversation.chat.node'>
-  & PropsStore<ChatStore> & ChatViewInjected & PropsLocale<'conversation'>
+  & PropsStore<ChatStore> & InjectFace<ChatViewInjected> & PropsLocale<'conversation'>
 
 /**
  * Injected share of the details slot: the panel is otherwise a pure reader of

@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-cloud-local-client-product",
+  "name": "@voyaseek-ai/dsh-aistaff-cloud-local-client-product",
   "description": "Strict production Cloud and Local Capability AI employee client entry for DSH",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -25,12 +25,12 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-api-remotes",
-        "@deepseek-ai/dsh-aistaff-employee-experience-remote",
-        "@deepseek-ai/dsh-aistaff-local-capability-remote",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-layout",
-        "@deepseek-ai/dsh-client-ui-sidebar"
+        "@voyaseek-ai/dsh-api-remotes",
+        "@voyaseek-ai/dsh-aistaff-employee-experience-remote",
+        "@voyaseek-ai/dsh-aistaff-local-capability-remote",
+        "@voyaseek-ai/dsh-client-runtime",
+        "@voyaseek-ai/dsh-client-ui-layout",
+        "@voyaseek-ai/dsh-client-ui-sidebar"
       ],
       "platform": "web"
     }
@@ -47,13 +47,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-client-product": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-client-product": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-client-product": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-client-product": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   }
 }

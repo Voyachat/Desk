@@ -4,19 +4,19 @@
  * producers. It also delivers unreported completions to the owning agent:
  * injected into a busy owner's next step, or opening a turn on an idle one
  * under the default `wakeup` delivery, bounded per owner.
- * @module @deepseek-ai/dsh-tool-jobs
+ * @module @voyaseek-ai/dsh-tool-jobs
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { boundContextSummary, createUserMessage, type ContentBlock } from '@deepseek-ai/dsh-llm'
-import { TextRetainer } from '@deepseek-ai/dsh-output-retention'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { GenericCallView, ToolDefinition, ToolExecution } from '@deepseek-ai/dsh-tools'
-import { JobId } from '@deepseek-ai/dsh-jobs'
-import type { JobSnapshot } from '@deepseek-ai/dsh-jobs'
-import type {} from '@deepseek-ai/dsh-system-prompt'
-import type { Agent } from '@deepseek-ai/dsh-agent'
+import type { Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import { boundContextSummary, createUserMessage, type ContentBlock } from '@voyaseek-ai/dsh-llm'
+import { TextRetainer } from '@voyaseek-ai/dsh-output-retention'
+import { defineTool } from '@voyaseek-ai/dsh-tools'
+import type { GenericCallView, ToolDefinition, ToolExecution } from '@voyaseek-ai/dsh-tools'
+import { JobId } from '@voyaseek-ai/dsh-jobs'
+import type { JobSnapshot } from '@voyaseek-ai/dsh-jobs'
+import type {} from '@voyaseek-ai/dsh-system-prompt'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
 
 export const name = 'tool-jobs'
 export const inject = ['tools', 'jobs', 'systemPrompt']

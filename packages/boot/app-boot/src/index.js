@@ -1,21 +1,21 @@
 /**
  * Shared boot glue for the app bins (`dsh`, `dsh-acp-demo`): load the gitignored
  * `.env`, install the fail-loud Loader guards, resolve the config path (snapshot-aware), load the
- * optional user patch layers from the Harness home (`~/.dsh`), expose its path resolver to
+ * optional user patch layers from the Harness home (`~/.voyaseek`), expose its path resolver to
  * config expressions, and drive the Cordis Loader against a leaf `cordis.yml` until the tree settles.
- * @module @deepseek-ai/dsh-app-boot
+ * @module @voyaseek-ai/dsh-app-boot
  */
 import { pathToFileURL } from 'node:url';
 import { readFileSync } from 'node:fs';
 import { parseEnv } from 'node:util';
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
 import * as yaml from 'js-yaml';
-import { Context } from '@deepseek-ai/cordis';
-import Loader from '@deepseek-ai/cordis-plugin-loader';
-import Include, { applyEntryPatches, entryListSchema } from '@deepseek-ai/cordis-plugin-include';
-import Group from '@deepseek-ai/cordis-plugin-group';
-import { dshHomePath, resolveDshHome } from '@deepseek-ai/dsh-home-paths';
-import { createLaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment';
+import { Context } from '@voyaseek-ai/cordis';
+import Loader from '@voyaseek-ai/cordis-plugin-loader';
+import Include, { applyEntryPatches, entryListSchema } from '@voyaseek-ai/cordis-plugin-include';
+import Group from '@voyaseek-ai/cordis-plugin-group';
+import { dshHomePath, resolveDshHome } from '@voyaseek-ai/dsh-home-paths';
+import { createLaunchEnvironmentSnapshot } from '@voyaseek-ai/dsh-launch-environment';
 export { composeEntries, DEFAULT_PROFILE_BUNDLES, healProfilesModuleFallback, initProfile, loadProfile, PROFILE_PATCH_FILENAME, PROFILE_TEMPLATES, PROFILES_DIR, readProfileManifest, resolveBundleDir, resolveProfileDir, writeProfileManifest, } from "./profile.js";
 /**
  * Resolve the config to boot. Replay swaps a `cordis.yml` basename for
@@ -203,7 +203,7 @@ export async function watchUserPatches(ctx, options) {
 }
 /**
  * Load an optional patch-list file: a top-level YAML array of loader patch
- * entries (`@deepseek-ai/cordis-plugin-include`'s `PatchOptions`): id-targeted config
+ * entries (`@voyaseek-ai/cordis-plugin-include`'s `PatchOptions`): id-targeted config
  * overrides and `insert` lists, with `!!js` expressions allowed. A missing
  * file means "no layer"; an unreadable, unparsable, or non-array file throws —
  * a present patch file that cannot apply is a misconfiguration and must fail
@@ -245,7 +245,7 @@ export function loadOverlayPatches(binName, file) {
 }
 /**
  * Parse one loader patch list: a top-level YAML array of
- * `@deepseek-ai/cordis-plugin-include` `PatchOptions` (id-targeted config overrides and
+ * `@voyaseek-ai/cordis-plugin-include` `PatchOptions` (id-targeted config overrides and
  * `insert` lists, `!!js` expressions allowed). Every invalid field or value throws,
  * because a patch file that cannot be applied at all is a misconfiguration; a
  * single patch whose target row is absent stays a per-entry Loader warning, so
@@ -427,7 +427,7 @@ export async function mountRootInclude(ctx, absoluteConfigPath, patches = [], ba
         };
     // `cordis:group` alongside it: a group row is how a composition gives one
     // `isolate` realm to a provider and its consumers together, and an agent
-    // preset living outside this workspace cannot resolve `@deepseek-ai/cordis-plugin-group`
+    // preset living outside this workspace cannot resolve `@voyaseek-ai/cordis-plugin-group`
     // by name. Both builtins load through the ambient module pipeline, so neither
     // depends on the included tree's own specifier resolution.
     ctx.loader.builtins.group = Group;
@@ -724,7 +724,7 @@ export function addHarnessSourceSection(ctx, sourceRoot) {
     return systemPrompt.section({
         name: HARNESS_SOURCE_SECTION,
         order: -99,
-        text: `The DeepSeek Harness implementation checkout is at ${sourceRoot}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.`,
+        text: `The Voyaseek Harness implementation checkout is at ${sourceRoot}. The checkout location and current working directory are separate values and may differ; never infer the working directory from this path. Use pwd to determine the current working directory. Use this checkout only to inspect or extend DSH itself.`,
     });
 }
 //# sourceMappingURL=index.js.map

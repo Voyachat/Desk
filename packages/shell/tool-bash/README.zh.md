@@ -1,10 +1,10 @@
-# @deepseek-ai/dsh-tool-bash
+# @voyaseek-ai/dsh-tool-bash
 
 [English](README.md) | 中文
 
-模型侧 `bash` 工具，注册在 `ctx.shell` 执行器 seam 上。前台执行始终位于该 seam 之后；后台进程句柄会注册到通用 `ctx.jobs` 运行时，并通过 `job_output`、`job_list` 和 `job_kill` 控制；这些工具由 `@deepseek-ai/dsh-tool-jobs` 提供。
+模型侧 `bash` 工具，注册在 `ctx.shell` 执行器 seam 上。前台执行始终位于该 seam 之后；后台进程句柄会注册到通用 `ctx.jobs` 运行时，并通过 `job_output`、`job_list` 和 `job_kill` 控制；这些工具由 `@voyaseek-ai/dsh-tool-jobs` 提供。
 
-需要加载执行器 Service Provider（例如 `@deepseek-ai/dsh-bash-local`）与 [`@deepseek-ai/dsh-shell-env`](../shell-env/README.md) 注册表；在每个注入服务就绪之前，插件会保持等待状态（`inject: ['tools', 'bash', 'systemPrompt', 'bashEnv']`）。工具约定是 bash 方言——请挂载能解析 bash 的执行器。
+需要加载执行器 Service Provider（例如 `@voyaseek-ai/dsh-bash-local`）与 [`@voyaseek-ai/dsh-shell-env`](../shell-env/README.md) 注册表；在每个注入服务就绪之前，插件会保持等待状态（`inject: ['tools', 'bash', 'systemPrompt', 'bashEnv']`）。工具约定是 bash 方言——请挂载能解析 bash 的执行器。
 
 包根只公开 Cordis 插件约定（`name`、`inject`、`Config`、`apply`）；结果渲染和后台进程适配仍保留在包内部。
 
@@ -28,7 +28,7 @@
 
 ### 托管 shell 环境
 
-每次模型发起的前台或后台 bash 调用都会通过共享的 [`dsh-shell-env`](../shell-env/README.md) 注册表收到新收集的一组可信 `DSH_*` 环境变量：`DSH_HOME`（Harness home 绝对路径）、`DSH_SHELL=1`、agent 的 `DSH_SESSION_ID`，以及当活跃持久化后端能定位时的 `DSH_SESSION_JSONL`。注册表约定——贡献方注册、重复键／未声明键的显式报错机制、内置项保留与贡献方示例——载于该包的 README。快照通过专用的 `ShellExecRequest.dshEnv` 通道传递；本地执行器会先删除继承的所有 `DSH_*` 再合并，因此嵌套 harness 和并发的父／子 agent 不会泄漏陈旧身份，且绝不修改 `process.env`。工具说明只教授通用 `$DSH_*` 约定，不会点名持久化专用变量，也不会添加永久的系统提示词段落。
+每次模型发起的前台或后台 bash 调用都会通过共享的 [`dsh-shell-env`](../shell-env/README.md) 注册表收到新收集的一组可信 `DSH_*` 环境变量：`VOYASEEK_HOME`（Harness home 绝对路径）、`DSH_SHELL=1`、agent 的 `DSH_SESSION_ID`，以及当活跃持久化后端能定位时的 `DSH_SESSION_JSONL`。注册表约定——贡献方注册、重复键／未声明键的显式报错机制、内置项保留与贡献方示例——载于该包的 README。快照通过专用的 `ShellExecRequest.dshEnv` 通道传递；本地执行器会先删除继承的所有 `DSH_*` 再合并，因此嵌套 harness 和并发的父／子 agent 不会泄漏陈旧身份，且绝不修改 `process.env`。工具说明只教授通用 `$DSH_*` 约定，不会点名持久化专用变量，也不会添加永久的系统提示词段落。
 
 结果文本依次包含 stdout、可选的 `[stderr]` 段落和适用的沙箱拒绝、超时、信号、退出代码及截断标记。超时与最终退出状态分别报告；非零退出仍是由模型解释的结果，不会成为 `isError`。截断结果会链接安全的完整 spill 文件，或报告文件不可用。只有 spawn 错误和中止等基础设施故障才会产生 `isError`。
 
@@ -122,7 +122,7 @@ renderer 先输出依数据而定的 stdout 尾部，再输出可选的 `[stderr
 
 #### 模型看到的内容
 
-验证和策略失败统一为 `Error: <message>`。此包的稳定消息包括 `invalid command: expected a non-empty string`、`invalid description: expected a non-empty string`、`invalid timeoutMs: expected a positive number, got <value>`、`invalid escalation: sandbox_permissions requires a justification`、`invalid escalation: justification is only valid together with sandbox_permissions`、`invalid justification: expected a non-empty sentence`、`background execution is disabled for this bash tool`、`background jobs unavailable: load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs`、`sandbox_permissions is not available in this composition (no sandboxing executor to escalate)`、`sandbox escalation to "<mode>" is not strictly wider than this call's current "<mode>" mode`、审批不可用／拒绝／取消变体，以及 `tool call aborted`。
+验证和策略失败统一为 `Error: <message>`。此包的稳定消息包括 `invalid command: expected a non-empty string`、`invalid description: expected a non-empty string`、`invalid timeoutMs: expected a positive number, got <value>`、`invalid escalation: sandbox_permissions requires a justification`、`invalid escalation: justification is only valid together with sandbox_permissions`、`invalid justification: expected a non-empty sentence`、`background execution is disabled for this bash tool`、`background jobs unavailable: load @voyaseek-ai/dsh-jobs and @voyaseek-ai/dsh-tool-jobs`、`sandbox_permissions is not available in this composition (no sandboxing executor to escalate)`、`sandbox escalation to "<mode>" is not strictly wider than this call's current "<mode>" mode`、审批不可用／拒绝／取消变体，以及 `tool call aborted`。
 
 #### Token 影响
 

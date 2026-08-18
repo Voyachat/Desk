@@ -2,12 +2,12 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { createUserMessage, CallId, ReasoningEffortId , createMessage } from '@deepseek-ai/dsh-llm'
-import type { Message, ToolSchema } from '@deepseek-ai/dsh-llm'
-import { LocalCredentialProvider } from '@deepseek-ai/dsh-credentials-local'
-import * as LlmDeepSeek from '@deepseek-ai/dsh-llm-deepseek'
-import type { Config } from '@deepseek-ai/dsh-llm-deepseek'
+import { Context } from '@voyaseek-ai/cordis'
+import LlmRuntime, { createUserMessage, CallId, ReasoningEffortId , createMessage } from '@voyaseek-ai/dsh-llm'
+import type { Message, ToolSchema } from '@voyaseek-ai/dsh-llm'
+import { LocalCredentialProvider } from '@voyaseek-ai/dsh-credentials-local'
+import * as LlmDeepSeek from '@voyaseek-ai/dsh-llm-deepseek'
+import type { Config } from '@voyaseek-ai/dsh-llm-deepseek'
 import { assemble, type AssembledResult } from './assemble.ts'
 
 /**
@@ -23,7 +23,7 @@ let identityHome: string
 
 beforeEach(async () => {
   identityHome = await mkdtemp(join(tmpdir(), 'dsh-e2e-user-id-'))
-  vi.stubEnv('DSH_HOME', identityHome)
+  vi.stubEnv('VOYASEEK_HOME', identityHome)
 })
 
 async function harness(_model: string, config: Partial<Config> = {}) {

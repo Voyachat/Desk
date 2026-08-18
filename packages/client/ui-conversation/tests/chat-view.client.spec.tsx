@@ -10,17 +10,17 @@ import type {
   AssistantMessageNode, CommandNode, CompactionSummaryNode, ConversationNode, ConversationSnapshot,
   ModelRetryNode, RunningToolCall, SessionId, SessionListState, ToolCallBlock, ToolResultNode, TurnErrorNode,
   TurnMaxTokensNode, UserMessageNode, WorkspaceListState,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
+} from '@voyaseek-ai/dsh-client-runtime/client'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
 import {
   createSnapshotStore, EMPTY_CONVERSATION_VIEWS, PendingWait,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { RpcId } from '@deepseek-ai/dsh-client-connection/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
+import { RpcId } from '@voyaseek-ai/dsh-client-connection/client'
 import type {
   ChatNode, ChatNodeOwnerProps, ChatNodeViewProps, ChatViewSlotProps, SelectionTarget, UseChatNodeTurnData,
-} from '@deepseek-ai/dsh-client-ui-conversation/client'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+} from '@voyaseek-ai/dsh-client-ui-conversation/client'
+import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
+import { zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { createChatStore } from '../src/client/stores.ts'
 import { ChatView } from '../src/client/chat/ChatView.tsx'
 import { zh } from '../src/client/locales.ts'
@@ -285,6 +285,7 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
     actions: chat.actions,
     renderSlot,
     SessionProvider: SessionProviderStub,
+    useShowReasoning: bindSnapshotSelector(createSnapshotStore(false)),
     openDetails,
     openFile,
     loadOlder,
@@ -1003,7 +1004,10 @@ describe('ChatView', () => {
     expandActivityFolds(view)
     const think = view.container.querySelector('[data-variant="think"][data-state="running"]')
     expect(think).toBeTruthy()
-    expect(think!.querySelector('[data-follow-end]')).toBeTruthy()
+    // The streaming think row starts expanded: the live body replaces the
+    // collapsed summary until the stream settles.
+    expect(think!.querySelector('[data-follow-end]')).toBeNull()
+    expect(view.getByText('hmm')).toBeTruthy()
   })
 
   it('hands running calls to a live Tool group and lets the fold carry the working signal', () => {
@@ -1234,7 +1238,10 @@ describe('ChatView', () => {
     Object.defineProperty(scroller, 'scrollHeight', { value: 1_400, writable: true })
     act(() => { notify?.() })
     expect(scroller.scrollTop).toBe(200)
-    expect(observe).toHaveBeenCalledTimes(1)
+    // The follow observer watches the column (the header's scroll-margin
+    // measurement owns a separate, inert observer instance).
+    const column = view.container.querySelector('[class*="column"]') as HTMLElement
+    expect(observe).toHaveBeenCalledWith(column)
   })
 
   it('entering the at-bottom threshold does not snap the remaining scroll distance', () => {
@@ -1495,5 +1502,143 @@ describe('ChatView', () => {
     const failedView = render(<failed.ChatView {...failed.props} />)
     expect(failedView.getByText('Compaction cancelled.')).toBeTruthy()
     expect(failedView.container.querySelector('[data-state="error"]')).not.toBeNull()
+  })
+
+  it('mounts only the visible window once the flow crosses the virtualization threshold', () => {
+    // Rows report exactly the virtualizer's estimate so no measurement
+    // compensation fires; the scroller reports the viewport height.
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.hasAttribute('data-index') ? 160 : 600
+    })
+    // jsdom has no scrollTo; the library's programmatic writes go through it.
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value(this: HTMLElement, options?: { top?: number }) {
+        if (typeof options === 'object' && typeof options.top === 'number') this.scrollTop = options.top
+      },
+    })
+    const nodes = Array.from({ length: 120 }, (_, i) => {
+      const seq = i + 1
+      return seq % 2 === 1 ? user(seq, `q-${seq}`) : assistant(seq, `a-${seq}`)
+    })
+    const h = makeHarness({ nodes })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    installScrollMetrics(scroller, 120 * 176, 600)
+    // Deliver the open follow's floor write the way a browser scroll event
+    // would; the virtualizer reads positions off scroll delivery.
+    scroller.scrollTop = 120 * 176 - 600
+    fireEvent.scroll(scroller)
+    expect(view.container.querySelector('[data-chat-virtual-body]')).toBeTruthy()
+    const mounted = view.container.querySelectorAll('[data-index]')
+    expect(mounted.length).toBeGreaterThan(0)
+    expect(mounted.length).toBeLessThan(40)
+    // Pinned at the floor: the tail row mounts, the head row does not.
+    expect(view.container.querySelector('[data-chat-flow-key="fixture:user:1"]')).toBeNull()
+    expect(view.container.querySelector('[data-chat-flow-key="fixture:assistant:120"]')).toBeTruthy()
+
+    readerScroll(scroller, 10_000)
+    expect(view.container.querySelector('[data-chat-flow-key="fixture:assistant:120"]')).toBeNull()
+    expect(view.container.querySelector('[data-chat-flow-key="fixture:user:49"]')).toBeTruthy()
+  })
+
+  it('auto-requests one older page per top-zone visit and rearms after leaving', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.hasAttribute('data-index') ? 160 : 600
+    })
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value(this: HTMLElement, options?: { top?: number }) {
+        if (typeof options === 'object' && typeof options.top === 'number') this.scrollTop = options.top
+      },
+    })
+    const nodes = Array.from({ length: 120 }, (_, i) => {
+      const seq = i + 1
+      return seq % 2 === 1 ? user(seq, `q-${seq}`) : assistant(seq, `a-${seq}`)
+    })
+    const h = makeHarness({ nodes, hasMore: true })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    installScrollMetrics(scroller, 120 * 176, 600)
+    readerScroll(scroller, 200)
+    expect(h.loadOlder).toHaveBeenCalledTimes(1)
+    // Still inside the zone: a settled page never refires in place.
+    readerScroll(scroller, 100)
+    expect(h.loadOlder).toHaveBeenCalledTimes(1)
+    // Leaving the zone rearms; the next visit requests the next page.
+    readerScroll(scroller, 500)
+    readerScroll(scroller, 200)
+    expect(h.loadOlder).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps the header button as the only paging path below the virtualization threshold', () => {
+    const h = makeHarness({ nodes: [user(1, 'q'), assistant(2, 'a')], hasMore: true })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    installScrollMetrics(scroller, 2_000, 300)
+    readerScroll(scroller, 200)
+    readerScroll(scroller, 100)
+    expect(h.loadOlder).not.toHaveBeenCalled()
+  })
+
+  it('keeps the reader parked while an auto-loaded page prepends into a virtualized flow', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.hasAttribute('data-index') ? 160 : 600
+    })
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value(this: HTMLElement, options?: { top?: number }) {
+        if (typeof options === 'object' && typeof options.top === 'number') this.scrollTop = options.top
+      },
+    })
+    const nodes = Array.from({ length: 120 }, (_, i) => {
+      const seq = i + 1
+      return seq % 2 === 1 ? user(seq, `q-${seq}`) : assistant(seq, `a-${seq}`)
+    })
+    const h = makeHarness({ nodes, hasMore: true })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    installScrollMetrics(scroller, 170 * 176, 600)
+    readerScroll(scroller, 10_000)
+    readerScroll(scroller, 200)
+    expect(h.loadOlder).toHaveBeenCalledTimes(1)
+    const parked = scroller.scrollTop
+    const older = Array.from({ length: 50 }, (_, i) => {
+      const seq = 201 + i
+      return seq % 2 === 1 ? user(seq, `older-${seq}`) : assistant(seq, `older-a-${seq}`)
+    })
+    act(() => { h.set({ nodes: [...older, ...nodes], hasMore: false }) })
+    // The library's end anchor shifts the position past the prepended page:
+    // the reader stays on the same row without any manual anchor bookkeeping.
+    expect(scroller.scrollTop).toBeGreaterThan(parked + 8_000)
+    expect(view.container.querySelector('[data-chat-flow-key="fixture:user:1"]')).toBeTruthy()
+  })
+
+  it('restores a saved mid-flow position by mounting its anchor row', () => {
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.hasAttribute('data-index') ? 160 : 600
+    })
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      configurable: true,
+      value(this: HTMLElement, options?: { top?: number }) {
+        if (typeof options === 'object' && typeof options.top === 'number') this.scrollTop = options.top
+      },
+    })
+    const nodes = Array.from({ length: 120 }, (_, i) => {
+      const seq = i + 1
+      return seq % 2 === 1 ? user(seq, `q-${seq}`) : assistant(seq, `a-${seq}`)
+    })
+    const h = makeHarness({ nodes })
+    h.chatScroll.save({ anchorKey: 'fixture:user:49', anchorTop: 30, scrollTop: 30_000 })
+    const view = render(<h.ChatView {...h.props} />)
+    const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
+    installScrollMetrics(scroller, 120 * 176, 600)
+    // The anchor row starts outside the window: the restore effect jumps the
+    // window onto it, then refines once the row mounts.
+    fireEvent.scroll(scroller)
+    fireEvent.scroll(scroller)
+    expect(view.container.querySelector('[data-chat-flow-key="fixture:user:49"]')).toBeTruthy()
+    // Restore finalizes into a normalized save like the plain-flex path.
+    expect(h.chatScroll.read()).not.toBeNull()
   })
 })

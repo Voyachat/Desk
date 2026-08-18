@@ -4,7 +4,7 @@
  * progress without losing the last failure line.
  */
 import { describe, expect, it } from 'vitest'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
 import { RuntimeSelectorController } from '../src/client/runtime-store.ts'
 
 const sid = (id: string): SessionId => id as SessionId

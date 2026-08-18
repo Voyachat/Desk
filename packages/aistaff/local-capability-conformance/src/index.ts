@@ -1,20 +1,20 @@
 /** Test-only complete local capability conformance composition. */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import {
   ActivityRef,
   EngagementRef,
   InteractionRef,
   MaterialRef,
   OwnerRevision,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   InteractionRef as InteractionRefType,
   LocalOperationRequestView,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
 import {
   LocalCapabilityCoordinator,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import type {
   AuthoritativeLocalOperation,
   HostDirectorySelection,
@@ -24,7 +24,7 @@ import type {
   LocalCapabilityResultPublication,
   LocalCapabilityResultSink,
   LocalOperationInteractionResolver,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import {
   SupervisorActivityRef,
   SupervisorDeviceSessionId,
@@ -32,14 +32,14 @@ import {
   SupervisorRunId,
   SupervisorStepId,
   SupervisorTenantId,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control'
 import type {
   ReadCapabilityPayload,
   SupervisorSubjectBinding,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control/types'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control/types'
 import {
   InMemorySupervisorControl,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control/testing'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control/testing'
 
 /** Immutable marker preventing accidental use as a production provider. */
 export const LOCAL_CAPABILITY_CONFORMANCE_PROVENANCE = Object.freeze({
@@ -51,7 +51,7 @@ export const LOCAL_CAPABILITY_CONFORMANCE_PROVENANCE = Object.freeze({
 /** Stable test-control service key. */
 export const LOCAL_CAPABILITY_CONFORMANCE_SERVICE_KEY = 'aistaffLocalCapabilityConformance' as const
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Test-only deterministic local capability controls. */
     aistaffLocalCapabilityConformance: LocalCapabilityConformanceControl

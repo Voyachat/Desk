@@ -1,16 +1,16 @@
 /**
  * Browser adapter from generated local capability methods to the observable object layer.
- * @module @deepseek-ai/dsh-aistaff-local-capability-remote/client
+ * @module @voyaseek-ai/dsh-aistaff-local-capability-remote/client
  */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import type {
   OperationId,
   OperationStatusView,
   ProductError,
   ProductResult,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
-import { LocalCapabilityObjectLayer } from '@deepseek-ai/dsh-aistaff-local-capability/object-layer'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
+import { LocalCapabilityObjectLayer } from '@voyaseek-ai/dsh-aistaff-local-capability/object-layer'
 import type {
   AuthorizeLocalOperationInput,
   LocalCapabilityReceiptView,
@@ -18,8 +18,8 @@ import type {
   RevokeResourceInput,
   SelectDirectoryInput,
   SelectDirectoryResult,
-} from '@deepseek-ai/dsh-aistaff-local-capability/types'
-import type { RemoteFailure, RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
+} from '@voyaseek-ai/dsh-aistaff-local-capability/types'
+import type { RemoteFailure, RemoteResult } from '@voyaseek-ai/dsh-typert-protocol'
 import { assertLocalCapabilityWireValue } from '../wire.ts'
 
 /** Generated Remote calls consumed by the Client object-layer provider. */

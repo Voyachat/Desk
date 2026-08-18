@@ -3,11 +3,11 @@
 import type {
   EmployeeExperiencePort,
   ProductResult,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
-import type { LocalCapabilityPort } from '@deepseek-ai/dsh-aistaff-local-capability'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
+import type { LocalCapabilityPort } from '@voyaseek-ai/dsh-aistaff-local-capability'
+import type { ClientContext } from '@voyaseek-ai/dsh-client-runtime/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-layout/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-sidebar/client'
 import { CloudAistaffFooterAction } from './CloudAistaffFooterAction.tsx'
 import { CloudAistaffWorkbench } from './CloudAistaffWorkbench.tsx'
 import { createCloudWorkbenchInjected, createLocalCapabilityWorkbenchInjected } from './adapter.ts'

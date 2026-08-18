@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-claude-runtime-ui",
+  "name": "@voyaseek-ai/dsh-claude-runtime-ui",
   "description": "Composer runtime selector: pick the agent driver (DSH loop or Claude Agent SDK) a session runs under",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/claude/ui-runtime"
   },
   "type": "module",
@@ -32,9 +32,9 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-locale",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-conversation"
+        "@voyaseek-ai/dsh-client-locale",
+        "@voyaseek-ai/dsh-client-runtime",
+        "@voyaseek-ai/dsh-client-ui-conversation"
       ],
       "platform": "web"
     }
@@ -45,24 +45,24 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
     "react": "^18.2.0"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-client-locale": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-test-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@types/react": "~18.3.1",
     "react": "^18.2.0"
   },

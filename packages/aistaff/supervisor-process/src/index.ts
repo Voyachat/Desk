@@ -1,7 +1,7 @@
-/** Host-only authenticated process provider for the Rust Supervisor sidecar. @module @deepseek-ai/dsh-aistaff-supervisor-process */
+/** Host-only authenticated process provider for the Rust Supervisor sidecar. @module @voyaseek-ai/dsh-aistaff-supervisor-process */
 
-import { Context, Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Context, Service } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
 import { SupervisorProcessController } from './process.ts'
 import type {
   RustSupervisorHealth,
@@ -34,7 +34,7 @@ export const name = 'aistaff-supervisor-process'
 /** This Host process provider has no service prerequisites. */
 export const inject: readonly string[] = []
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Authenticated Host-only Rust sidecar process. */
     aistaffSupervisorProcess: SupervisorProcessService

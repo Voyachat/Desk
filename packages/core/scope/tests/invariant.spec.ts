@@ -1,11 +1,11 @@
-import { freezeMessage, MessageId } from '@deepseek-ai/dsh-llm'
+import { freezeMessage, MessageId } from '@voyaseek-ai/dsh-llm'
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import type { Events } from '@deepseek-ai/cordis'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { scopeTarget } from '@deepseek-ai/dsh-scope'
-import * as ScopeInvariant from '@deepseek-ai/dsh-scope/invariant'
-import InvariantRegistry from '@deepseek-ai/dsh-invariants'
+import { Context } from '@voyaseek-ai/cordis'
+import type { Events } from '@voyaseek-ai/cordis'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import { scopeTarget } from '@voyaseek-ai/dsh-scope'
+import * as ScopeInvariant from '@voyaseek-ai/dsh-scope/invariant'
+import InvariantRegistry from '@voyaseek-ai/dsh-invariants'
 
 async function setup(): Promise<Context> {
   const ctx = new Context()

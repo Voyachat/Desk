@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-tool-lsp",
-  "description": "Model-facing lsp tool over the DeepSeek Harness LSP capability seam (ctx.lsp) — one read-only tool with goToDefinition/findReferences/goToImplementation/hover operations, one-based UTF-16 cursor coordinates, bounded location rendering, and hover normalization",
+  "name": "@voyaseek-ai/dsh-tool-lsp",
+  "description": "Model-facing lsp tool over the Voyaseek Harness LSP capability seam (ctx.lsp) — one read-only tool with goToDefinition/findReferences/goToImplementation/hover operations, one-based UTF-16 cursor coordinates, bounded location rendering, and hover normalization",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/lsp/tool-lsp"
   },
   "type": "module",
@@ -32,30 +32,30 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-lsp": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-lsp": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/dsh-timeout": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-fs-local": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-lsp": "workspace:^",
-    "@deepseek-ai/dsh-lsp-stdio": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
-    "@deepseek-ai/dsh-tool-call-timeout-policy": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-fs-local": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-lsp": "workspace:^",
+    "@voyaseek-ai/dsh-lsp-stdio": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-subprocess-local": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/dsh-timeout": "workspace:^",
+    "@voyaseek-ai/dsh-tool-call-timeout-policy": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

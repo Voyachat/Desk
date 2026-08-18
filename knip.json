@@ -71,7 +71,7 @@
         "**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "@voyaseek-ai/.+"
       ]
     },
     "packages/util/home": {
@@ -94,8 +94,8 @@
     },
     "packages/host/directory-picker-auto": {
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-client-ui-directory-picker-browse",
-        "@deepseek-ai/dsh-client-ui-directory-picker-native"
+        "@voyaseek-ai/dsh-client-ui-directory-picker-browse",
+        "@voyaseek-ai/dsh-client-ui-directory-picker-native"
       ]
     },
     "packages/extensions/cordis-host-runner": {
@@ -147,7 +147,7 @@
         "tests/**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-api-gateway"
+        "@voyaseek-ai/dsh-api-gateway"
       ]
     },
     "packages/client/ui-primitives": {
@@ -702,7 +702,7 @@
         "tests/**/*.tsx"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-client-ui-theme"
+        "@voyaseek-ai/dsh-client-ui-theme"
       ]
     },
     "packages/client/ui-settings": {
@@ -727,9 +727,9 @@
         "tests/**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-client-ui-primitives",
-        "@deepseek-ai/dsh-client-ui-slots",
-        "@deepseek-ai/dsh-client-web-react",
+        "@voyaseek-ai/dsh-client-ui-primitives",
+        "@voyaseek-ai/dsh-client-ui-slots",
+        "@voyaseek-ai/dsh-client-web-react",
         "@types/react",
         "@types/react-dom",
         "react",
@@ -747,7 +747,7 @@
         "tests/**/*.ts"
       ],
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "@voyaseek-ai/.+"
       ]
     },
     "packages/client/modules": {
@@ -780,17 +780,17 @@
     },
     "packages/bundle/base": {
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "@voyaseek-ai/.+"
       ]
     },
     "packages/bundle/headless": {
       "ignoreDependencies": [
-        "@deepseek-ai/dsh-code-runtime-worker-thread"
+        "@voyaseek-ai/dsh-code-runtime-worker-thread"
       ]
     },
     "packages/bundle/web-app": {
       "ignoreDependencies": [
-        "@deepseek-ai/.+"
+        "@voyaseek-ai/.+"
       ]
     }
   }

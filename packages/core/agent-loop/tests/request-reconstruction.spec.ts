@@ -6,15 +6,15 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import LlmRuntime, { createUserMessage, LlmError, ReasoningEffortId  } from '@deepseek-ai/dsh-llm'
-import type { GenerateOptions, LlmModelReasoningInfo, LlmResolvedModelInfo, StreamChunk } from '@deepseek-ai/dsh-llm'
-import SessionStore, { Session, SessionId, foldRequestHeader } from '@deepseek-ai/dsh-session'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { defineContentToolFixture } from '@deepseek-ai/dsh-tools'
-import AgentRegistry, { type Agent } from '@deepseek-ai/dsh-agent'
+import { Context } from '@voyaseek-ai/cordis'
+import LlmRuntime, { createUserMessage, LlmError, ReasoningEffortId  } from '@voyaseek-ai/dsh-llm'
+import type { GenerateOptions, LlmModelReasoningInfo, LlmResolvedModelInfo, StreamChunk } from '@voyaseek-ai/dsh-llm'
+import SessionStore, { Session, SessionId, foldRequestHeader } from '@voyaseek-ai/dsh-session'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime, { defineContentToolFixture } from '@voyaseek-ai/dsh-tools'
+import AgentRegistry, { type Agent } from '@voyaseek-ai/dsh-agent'
 
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
+import AgentLoop from '@voyaseek-ai/dsh-agent-loop'
 import { MockAdapter, textResponse, toolCallResponse } from './mock-adapter.ts'
 
 async function harness(adapter: MockAdapter, persona = 'stable base') {

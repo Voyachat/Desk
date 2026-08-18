@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-repeat-tool-reminder",
+  "name": "@voyaseek-ai/dsh-repeat-tool-reminder",
   "description": "Repeat-tool-call guard plugin: advisory reminders when an agent loops on identical tool calls",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/guard/repeat-tool-reminder"
   },
   "type": "module",
@@ -32,22 +32,22 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop-testkit": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

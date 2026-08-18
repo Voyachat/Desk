@@ -4,10 +4,10 @@ import type {
   Employee,
   RespondApprovalInput,
   Task,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
 import { useEffect, type FormEvent } from 'react'
-import type { PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type { PropsRuntime, PropsStore } from '@voyaseek-ai/dsh-client-ui-slots'
+import type {} from '@voyaseek-ai/dsh-client-ui-layout/client'
 import type { createAistaffProductStore } from './store.ts'
 import css from './AistaffProduct.module.css'
 

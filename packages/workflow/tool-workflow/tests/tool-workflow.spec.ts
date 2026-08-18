@@ -1,22 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { TOOL_ABORTED_BEFORE_DISPATCH } from '@deepseek-ai/dsh-tools'
-import type { ToolExecutionResult, ToolExecutionToken } from '@deepseek-ai/dsh-tools'
-import { agentEvents } from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import CommandRuntime from '@deepseek-ai/dsh-commands'
-import { WorkflowRunId, WorkflowEngine } from '@deepseek-ai/dsh-workflow'
+import { Context } from '@voyaseek-ai/cordis'
+import Loader from '@voyaseek-ai/cordis-plugin-loader'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime, { TOOL_ABORTED_BEFORE_DISPATCH } from '@voyaseek-ai/dsh-tools'
+import type { ToolExecutionResult, ToolExecutionToken } from '@voyaseek-ai/dsh-tools'
+import { agentEvents } from '@voyaseek-ai/dsh-agent'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import CommandRuntime from '@voyaseek-ai/dsh-commands'
+import { WorkflowRunId, WorkflowEngine } from '@voyaseek-ai/dsh-workflow'
 import type {
   WorkflowAgentEndInfo, WorkflowAgentInfo, WorkflowResult, WorkflowRun,
   WorkflowRunId as WorkflowRunIdType, WorkflowStartRequest,
-} from '@deepseek-ai/dsh-workflow'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import WorkerThreadWorkflowEngine from '@deepseek-ai/dsh-workflow-worker-thread'
+} from '@voyaseek-ai/dsh-workflow'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import SubagentRuntime from '@voyaseek-ai/dsh-subagent'
+import WorkerThreadWorkflowEngine from '@voyaseek-ai/dsh-workflow-worker-thread'
 import * as toolWorkflow from '../src/index.ts'
-import { Session, SessionId } from '@deepseek-ai/dsh-session'
+import { Session, SessionId } from '@voyaseek-ai/dsh-session'
 
 const testToolSignal = new AbortController().signal
 

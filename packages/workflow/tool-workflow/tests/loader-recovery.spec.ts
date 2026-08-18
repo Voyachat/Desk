@@ -3,18 +3,18 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include from '@deepseek-ai/cordis-plugin-include'
-import { agentEvents, type Agent } from '@deepseek-ai/dsh-agent'
-import CommandRuntime from '@deepseek-ai/dsh-commands'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import { Session, SessionId } from '@deepseek-ai/dsh-session'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
-import type { SubagentResult } from '@deepseek-ai/dsh-subagent'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import WorkerThreadWorkflowEngine from '@deepseek-ai/dsh-workflow-worker-thread'
+import { Context } from '@voyaseek-ai/cordis'
+import Loader from '@voyaseek-ai/cordis-plugin-loader'
+import Include from '@voyaseek-ai/cordis-plugin-include'
+import { agentEvents, type Agent } from '@voyaseek-ai/dsh-agent'
+import CommandRuntime from '@voyaseek-ai/dsh-commands'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import { Session, SessionId } from '@voyaseek-ai/dsh-session'
+import SubagentRuntime from '@voyaseek-ai/dsh-subagent'
+import type { SubagentResult } from '@voyaseek-ai/dsh-subagent'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime from '@voyaseek-ai/dsh-tools'
+import WorkerThreadWorkflowEngine from '@voyaseek-ai/dsh-workflow-worker-thread'
 import * as ToolWorkflow from '../src/index.ts'
 
 const contexts: Context[] = []
@@ -31,15 +31,15 @@ async function bootLoader(): Promise<Context> {
   if (fixtureRoot === undefined) {
     fixtureRoot = await mkdtemp(join(tmpdir(), 'dsh-workflow-recovery-loader-'))
     await writeFile(join(fixtureRoot, 'cordis.yml'), [
-      "- name: '@deepseek-ai/dsh-system-prompt'",
-      "- name: '@deepseek-ai/dsh-tools'",
-      "- name: '@deepseek-ai/dsh-subagent'",
-      "- name: '@deepseek-ai/dsh-commands'",
-      "- name: '@deepseek-ai/dsh-workflow-worker-thread'",
+      "- name: '@voyaseek-ai/dsh-system-prompt'",
+      "- name: '@voyaseek-ai/dsh-tools'",
+      "- name: '@voyaseek-ai/dsh-subagent'",
+      "- name: '@voyaseek-ai/dsh-commands'",
+      "- name: '@voyaseek-ai/dsh-workflow-worker-thread'",
       '  config:',
       '    provider: spawn',
       '    disposeGraceMs: 30',
-      "- name: '@deepseek-ai/dsh-tool-workflow'",
+      "- name: '@voyaseek-ai/dsh-tool-workflow'",
       '',
     ].join('\n'))
   }
@@ -50,12 +50,12 @@ async function bootLoader(): Promise<Context> {
   await ctx.plugin(Loader)
   ctx.loader.builtins.include = Include
   const modules = new Map<string, unknown>([
-    ['@deepseek-ai/dsh-system-prompt', SystemPrompt],
-    ['@deepseek-ai/dsh-tools', ToolRuntime],
-    ['@deepseek-ai/dsh-subagent', SubagentRuntime],
-    ['@deepseek-ai/dsh-commands', CommandRuntime],
-    ['@deepseek-ai/dsh-workflow-worker-thread', WorkerThreadWorkflowEngine],
-    ['@deepseek-ai/dsh-tool-workflow', ToolWorkflow],
+    ['@voyaseek-ai/dsh-system-prompt', SystemPrompt],
+    ['@voyaseek-ai/dsh-tools', ToolRuntime],
+    ['@voyaseek-ai/dsh-subagent', SubagentRuntime],
+    ['@voyaseek-ai/dsh-commands', CommandRuntime],
+    ['@voyaseek-ai/dsh-workflow-worker-thread', WorkerThreadWorkflowEngine],
+    ['@voyaseek-ai/dsh-tool-workflow', ToolWorkflow],
   ])
   ctx.loader.internal = {
     version: 'v2',

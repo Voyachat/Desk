@@ -97,7 +97,7 @@ function fixtureRoot(eventsBlock: string): string {
   const root = mkdtempSync(join(tmpdir(), 'cordis-catalog-'))
   writeProject(
     root,
-    `declare module '@deepseek-ai/cordis' {\n  interface Events {\n${eventsBlock}\n  }\n}\n`,
+    `declare module '@voyaseek-ai/cordis' {\n  interface Events {\n${eventsBlock}\n  }\n}\n`,
   )
   return root
 }
@@ -109,7 +109,7 @@ function serviceFixtureRoot(classSource: string): string {
   const root = mkdtempSync(join(tmpdir(), 'cordis-catalog-'))
   writeProject(
     root,
-    `declare module '@deepseek-ai/cordis' {\n  interface Context {\n    fix: FixService\n  }\n}\n\n${classSource}\n`,
+    `declare module '@voyaseek-ai/cordis' {\n  interface Context {\n    fix: FixService\n  }\n}\n\n${classSource}\n`,
   )
   return root
 }
@@ -362,7 +362,7 @@ describe('gen-cordis-catalog package exclusions', { timeout: 60_000 }, () => {
     }))
     writePackage(root, 'included', '@fixture/included', `
 export interface SharedPayload { included: true }
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     included: IncludedService
   }
@@ -378,7 +378,7 @@ export class IncludedService {
 `)
     writePackage(root, 'excluded', '@fixture/excluded', `
 export interface SharedPayload { excluded: true }
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     excluded: ExcludedService
   }

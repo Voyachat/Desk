@@ -14,12 +14,12 @@
  * are identical. Every live header is checked against the composed pin, so
  * session-dependent composition must declare a separate class instead of
  * escaping coverage.
- * @module @deepseek-ai/dsh-acp-snapshot/suite
+ * @module @voyaseek-ai/dsh-acp-snapshot/suite
  */
 import { readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { isSurfaceEligibleType } from '@deepseek-ai/dsh-session/surface';
+import { isSurfaceEligibleType } from '@voyaseek-ai/dsh-session/surface';
 import { describe, expect, it } from 'vitest';
 import { runScenario } from "./harness.js";
 import { extractSnapshotSpillPaths, normalizeSessionLog, normalizeStdout, scrubRequestHeaders, scrubSystemPrompts, scrubToolSchemas, tokenizeSessionFixtureCwd, } from "./normalize.js";

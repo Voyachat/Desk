@@ -1,4 +1,4 @@
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   ActivityRef,
   ContentRef,
@@ -22,7 +22,7 @@ import {
   type OpenEngagementInput,
   type OperationStatusView,
   type SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import { describe, expect, it } from 'vitest'
 import CloudClientGatewayAdapter, { ClientGatewayTransportError } from '../src/index.ts'
 import type {

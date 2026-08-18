@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-client-locale",
+  "name": "@voyaseek-ai/dsh-client-locale",
   "description": "Product locale: Host-backed zh/en preference, browser UI dictionaries, and durable model guidance for replies and deliverables",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/client/locale"
   },
   "type": "module",
@@ -32,10 +32,10 @@
   "dsh": {
     "client": {
       "inject": [
-        "@deepseek-ai/dsh-client-connection",
-        "@deepseek-ai/dsh-client-runtime",
-        "@deepseek-ai/dsh-client-ui-settings",
-        "@deepseek-ai/dsh-api-remotes"
+        "@voyaseek-ai/dsh-client-connection",
+        "@voyaseek-ai/dsh-client-runtime",
+        "@voyaseek-ai/dsh-client-ui-settings",
+        "@voyaseek-ai/dsh-api-remotes"
       ],
       "platform": "web",
       "immediately": true
@@ -43,32 +43,32 @@
   },
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-connection": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-settings": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-api-remotes": "workspace:^",
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "react": "^18.2.0"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-api-remotes": "workspace:^",
-    "@deepseek-ai/dsh-client-runtime": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-settings": "workspace:^",
-    "@deepseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-api-remotes": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@types/react": "~18.3.1",
     "react": "^18.2.0"
   },
   "dependencies": {
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "files": [
     "lib/index.js",

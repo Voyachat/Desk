@@ -29,25 +29,25 @@ import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import type { Page } from 'playwright'
 import { expect } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include, { type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import Group from '@deepseek-ai/cordis-plugin-group'
-import { scrubRequestHeaders, stabilizeFixtureMessageIds } from '@deepseek-ai/dsh-acp-snapshot'
+import { Context } from '@voyaseek-ai/cordis'
+import Loader from '@voyaseek-ai/cordis-plugin-loader'
+import Include, { type PatchOptions } from '@voyaseek-ai/cordis-plugin-include'
+import Group from '@voyaseek-ai/cordis-plugin-group'
+import { scrubRequestHeaders, stabilizeFixtureMessageIds } from '@voyaseek-ai/dsh-acp-snapshot'
 import {
   assertEntriesLoaded,
   composeEntries,
   healProfilesModuleFallback,
   loadOverlayPatches,
-} from '@deepseek-ai/dsh-app-boot'
-import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { LlmAdapter } from '@deepseek-ai/dsh-llm'
+} from '@voyaseek-ai/dsh-app-boot'
+import { dshHomePath } from '@voyaseek-ai/dsh-home-paths'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
+import { LlmAdapter } from '@voyaseek-ai/dsh-llm'
 import type {
   LlmModelInfo, LlmProviderInfo, LlmResolvedModelInfo, StreamChunk,
-} from '@deepseek-ai/dsh-llm'
-import type { ReplayHandle } from '@deepseek-ai/dsh-llm-replay'
-import { installLlmReplay, parseSessionLog } from '@deepseek-ai/dsh-llm-replay'
+} from '@voyaseek-ai/dsh-llm'
+import type { ReplayHandle } from '@voyaseek-ai/dsh-llm-replay'
+import { installLlmReplay, parseSessionLog } from '@voyaseek-ai/dsh-llm-replay'
 import SessionStore, {
   packChunkRuns,
   SESSION_FORMAT_VERSION,
@@ -55,12 +55,12 @@ import SessionStore, {
   type Session,
   type SessionEvent,
   type SessionHeader,
-} from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
+} from '@voyaseek-ai/dsh-session'
+import JsonlSessionPersistence from '@voyaseek-ai/dsh-session-persistence-jsonl'
 // Empty type imports carry the webServer/agents/sessionPersistence Context merges.
-import type {} from '@deepseek-ai/dsh-host-webserver'
-import type {} from '@deepseek-ai/dsh-agent'
-import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
+import type {} from '@voyaseek-ai/dsh-host-webserver'
+import type {} from '@voyaseek-ai/dsh-agent'
+import { provideCmdline } from '@voyaseek-ai/dsh-cmdline'
 import { REPO_ROOT, requireDist } from './support.ts'
 
 // Host-side web e2e cannot import a browser package: doing so would pull that
@@ -70,7 +70,7 @@ import { REPO_ROOT, requireDist } from './support.ts'
 // import {
 //   WELCOME_NOTICE_ACK_FIELD, WELCOME_NOTICE_SETTINGS_NAMESPACE,
 //   WELCOME_NOTICE_VERSION, WELCOME_NOTICE_COPY,
-// } from '@deepseek-ai/dsh-client-ui-settings-models'
+// } from '@voyaseek-ai/dsh-client-ui-settings-models'
 export const WELCOME_NOTICE_SETTINGS_NAMESPACE = 'ui-onboarding'
 export const WELCOME_NOTICE_ACK_FIELD = 'welcomeNoticeVersion'
 export const WELCOME_NOTICE_VERSION = '2026-08-16.1'
@@ -175,7 +175,7 @@ export interface WebScaffold {
   workspaceCwd: string
   /** Temp persistence root (seeded sessions land here through the real API). */
   persistenceRoot: string
-  /** Isolated harness home the settings/credentials rows write ($DSH_HOME double). */
+  /** Isolated harness home the settings/credentials rows write ($VOYASEEK_HOME double). */
   harnessHome: string
   /** Await a settled turn end: in-process turn/end, then the agent's idle flip (which follows the persistence flush). */
   whenTurnSettled(timeoutMs?: number): Promise<SessionId>
@@ -324,22 +324,22 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     }
   }
   const workspaceCwd = await realpath(await mkdtemp(join(tmpdir(), 'dsh-web-e2e-ws-')))
-  // Isolated harness home: the settings/credentials rows resolve $DSH_HOME
+  // Isolated harness home: the settings/credentials rows resolve $VOYASEEK_HOME
   // paths at load, and an in-process boot must NEVER touch the developer's
-  // real ~/.dsh document or credential file.
+  // real ~/.voyaseek document or credential file.
   const harnessHome = options.harnessHome ?? join(workspaceCwd, '.dsh-home')
   // Skill discovery is model-visible input, and its roots now resolve inside a
   // PRESET — a subtree this lane's include patches cannot reach, because the
   // roster mounts it directly per session rather than as a row of the booted
   // tree. The row's documented fallback is the environment, so pin that: the
   // whole scaffold lifetime, not just the boot, since presets mount when a
-  // session is created. Without this a developer's real ~/.dsh/skills silently
-  // enters replay requests and goldens while CI sees none. `DSH_HOME` follows
+  // session is created. Without this a developer's real ~/.voyaseek/skills silently
+  // enters replay requests and goldens while CI sees none. `VOYASEEK_HOME` follows
   // the resolved harness home so a scaffold sharing another's home — the
   // cross-port persistence scenario — pins the same roots the settings and
   // credentials rows were configured with.
   const skillRootEnvironment = {
-    DSH_HOME: harnessHome,
+    VOYASEEK_HOME: harnessHome,
     DSH_AGENTS_HOME: join(workspaceCwd, '.agents-home'),
     DSH_BUNDLED_SKILL_DIR: join(workspaceCwd, '.bundled-skills'),
   }
@@ -392,7 +392,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     // chooses it. This lane boots the shipped tree WITHOUT AppCLIEntry, so it
     // has to supply the same fact or the roster resolves nothing and every
     // session composes an agent with no tools, no persona, and no token meter.
-    // Only the shipped root: a developer's own `~/.dsh/.agent-presets` must not be
+    // Only the shipped root: a developer's own `~/.voyaseek/.agent-presets` must not be
     // able to change a golden.
     {
       id: 'agent-presets',
@@ -408,12 +408,12 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     // the seeded-session scenarios navigate by content search, and these e2e
     // runs are the assembled coverage for the opt-in search path.
     { id: 'session-query-sqlite', config: { path: ':memory:', openAt: 'first-search' } },
-    // storage-json's yml root is anchored to the real $DSH_HOME; pin the row
+    // storage-json's yml root is anchored to the real $VOYASEEK_HOME; pin the row
     // to an absolute temp root (removed with the workspace at close) so tests
     // never write the user's harness home.
     { id: 'storage-json', config: { root: join(workspaceCwd, '.dsh-storages') } },
     // Skill discovery is model-visible input. Pin every host-level root inside
-    // the owned temp world so ~/.dsh, ~/.agents, and a bundled-root env setting
+    // the owned temp world so ~/.voyaseek, ~/.agents, and a bundled-root env setting
     // cannot change replay requests or conversation goldens. Project roots stay
     // enabled against the same empty temp workspace, preserving the real seam.
     {
@@ -449,7 +449,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
       config: { host: '127.0.0.1', port: 0 },
     },
     // The bundle's web-runtime row resolves the same built dist under test
-    // (apps/web IS @deepseek-ai/dsh-web-frontend); only the URL line is silenced.
+    // (apps/web IS @voyaseek-ai/dsh-web-frontend); only the URL line is silenced.
     // Preserve the composed surface-context choice because a patch replaces
     // the row's complete config.
     { id: 'web-runtime', config: { printUrl: false, surfaceContext } },
@@ -466,8 +466,8 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     // disable+insert pair.
     { id: 'directory-picker', disabled: true },
     { insert: [
-      { id: 'directory-picker-browse', name: '@deepseek-ai/dsh-host-directory-picker-browse' },
-      { id: 'ui-directory-picker-browse', name: '@deepseek-ai/dsh-client-ui-directory-picker-browse' },
+      { id: 'directory-picker-browse', name: '@voyaseek-ai/dsh-host-directory-picker-browse' },
+      { id: 'ui-directory-picker-browse', name: '@voyaseek-ai/dsh-client-ui-directory-picker-browse' },
     ] },
     ...options.agentPresets === undefined
       ? []
@@ -479,7 +479,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     // scenario adds only the model-facing tools that exercise those services.
     ...options.cordisTools === true
       ? [{ insert: [
-        { id: 'tool-cordis', name: '@deepseek-ai/dsh-tool-cordis' },
+        { id: 'tool-cordis', name: '@voyaseek-ai/dsh-tool-cordis' },
       ] }]
       : [],
     ...options.deepSeekSearch === undefined
@@ -533,7 +533,7 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
     // `cordis:group` beside it, exactly as `boot()` registers it: a group row is
     // how a preset gives one `isolate` realm to a provider and its consumers,
     // and a preset resolving package names from its own directory cannot reach
-    // `@deepseek-ai/cordis-plugin-group` by name.
+    // `@voyaseek-ai/cordis-plugin-group` by name.
     ctx.loader.builtins.group = Group
     await ctx.loader.create({
       name: 'cordis:include',

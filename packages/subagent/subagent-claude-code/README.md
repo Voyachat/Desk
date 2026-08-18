@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-subagent-claude-code
+# @voyaseek-ai/dsh-subagent-claude-code
 
 English | [中文](README.zh.md)
 
@@ -35,13 +35,13 @@ Shipped profiles load this provider once on the host and start no Claude process
 
 ```yaml
 - id: subagent-claude-code
-  name: '@deepseek-ai/dsh-subagent-claude-code'
+  name: '@voyaseek-ai/dsh-subagent-claude-code'
   config:
     env:
       ANTHROPIC_API_KEY: !!js process.env.ANTHROPIC_API_KEY
 
 - id: tool-subagent-claude-code
-  name: '@deepseek-ai/dsh-tool-subagent'
+  name: '@voyaseek-ai/dsh-tool-subagent'
   disabled: true
   config:
     provider: claude-code

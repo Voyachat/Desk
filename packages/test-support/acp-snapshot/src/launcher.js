@@ -4,13 +4,13 @@
  * stdout tee, SDK client, update collection, permission fallback, and process
  * shutdown so e2e and snapshot suites do not each reconstruct that boundary.
  *
- * @module @deepseek-ai/dsh-acp-snapshot/launcher
+ * @module @voyaseek-ai/dsh-acp-snapshot/launcher
  */
 import { spawn } from 'node:child_process';
 import { join } from 'node:path';
 import { Readable, Writable } from 'node:stream';
 import { ClientSideConnection, ndJsonStream, } from '@agentclientprotocol/sdk';
-import { resolveExampleLaunch } from '@deepseek-ai/dsh-loader-smoke';
+import { resolveExampleLaunch } from '@voyaseek-ai/dsh-loader-smoke';
 const EXIT_MARKER_GRACE_MS = 250;
 /**
  * Boot an ACP agent subprocess and connect an SDK client to its stdio.
@@ -27,7 +27,7 @@ export function launchAcpTestAgent(options) {
         tsconfigPath: agent.tsconfigPath,
         env: {
             ...options.env,
-            DSH_HOME: join(cwd, '.dsh'),
+            VOYASEEK_HOME: join(cwd, '.voyaseek'),
             DSH_AGENTS_HOME: join(cwd, '.agents'),
         },
     });

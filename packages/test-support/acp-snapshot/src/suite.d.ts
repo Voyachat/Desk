@@ -14,7 +14,7 @@
  * are identical. Every live header is checked against the composed pin, so
  * session-dependent composition must declare a separate class instead of
  * escaping coverage.
- * @module @deepseek-ai/dsh-acp-snapshot/suite
+ * @module @voyaseek-ai/dsh-acp-snapshot/suite
  */
 import { type AgentUnderTest, type HarvestedLog } from './harness.ts';
 import { type CwdPathMode, type NormalizeContext } from './normalize.ts';

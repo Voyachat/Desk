@@ -5,10 +5,10 @@
  * Browser-safe: web clients consume this subpath export, so it must stay free
  * of `node:` imports (they break the vite bundle).
  *
- * @module @deepseek-ai/dsh-session/surface
+ * @module @voyaseek-ai/dsh-session/surface
  */
 
-import type { Message } from '@deepseek-ai/dsh-llm'
+import type { Message } from '@voyaseek-ai/dsh-llm'
 import type { SessionEvent, SurfaceEvent, SurfaceEventType, SurfaceOp } from './types.ts'
 
 /** Runtime counterpart of the message-producing event union. */

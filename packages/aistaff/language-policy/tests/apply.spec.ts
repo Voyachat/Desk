@@ -6,12 +6,12 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@deepseek-ai/dsh-settings'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime from '@deepseek-ai/dsh-tools'
-import * as LanguagePolicy from '@deepseek-ai/dsh-aistaff-language-policy'
+import { Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@voyaseek-ai/dsh-settings'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime from '@voyaseek-ai/dsh-tools'
+import * as LanguagePolicy from '@voyaseek-ai/dsh-aistaff-language-policy'
 import { LANGUAGE_POLICY_SETTINGS_NAMESPACE } from '../src/rules.ts'
 
 const POLICY_NS = settingsNamespace(LANGUAGE_POLICY_SETTINGS_NAMESPACE)

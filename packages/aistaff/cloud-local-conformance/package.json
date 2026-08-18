@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-cloud-local-conformance",
+  "name": "@voyaseek-ai/dsh-aistaff-cloud-local-conformance",
   "description": "Test-only Cloud local-read Host composition over the canonical conformance projection",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -25,20 +25,20 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-cloud-conformance": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-local-capability": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-cloud-conformance": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-local-capability": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-cloud-conformance": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-cloud-provider": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-local-capability": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-cloud-conformance": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-cloud-provider": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-local-capability": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   }
 }

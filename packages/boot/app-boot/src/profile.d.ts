@@ -2,7 +2,7 @@
  * Profile discovery, initialization, and patch-layer composition for the
  * `dsh --profile` launcher family.
  *
- * A profile is a directory under `$DSH_HOME/profiles/<name>` holding a
+ * A profile is a directory under `$VOYASEEK_HOME/profiles/<name>` holding a
  * `package.json` (out-of-tree plugin dependencies plus the profile manifest
  * `dsh.profile` with its ordered `bundles` list) and a `cordis.patch.yml`
  * (the user's own patch layer, applied after every bundle layer). Bundles are
@@ -16,13 +16,13 @@
  * first from the dsh installation (the launcher's own package), then from the
  * profile directory. The Loader's `baseUrl` is the profile directory, whose
  * `node_modules` pnpm manages for out-of-tree plugins, while the maintained
- * flat fallback directory `$DSH_HOME/profiles/node_modules` (one symlink per
+ * flat fallback directory `$VOYASEEK_HOME/profiles/node_modules` (one symlink per
  * package the installation's app and bundles depend on) makes every in-box
  * plugin Node-resolvable from any profile through the ordinary parent-walk.
- * @module @deepseek-ai/dsh-app-boot/profile
+ * @module @voyaseek-ai/dsh-app-boot/profile
  */
-import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader';
-import { type PatchOptions } from '@deepseek-ai/cordis-plugin-include';
+import type { EntryOptions } from '@voyaseek-ai/cordis-plugin-loader';
+import { type PatchOptions } from '@voyaseek-ai/cordis-plugin-include';
 /** Directory under the Harness home holding every profile. */
 export declare const PROFILES_DIR = "profiles";
 /** The user patch layer inside a profile directory (hot-reloaded on long-lived surfaces). */
@@ -98,7 +98,7 @@ export declare const DEFAULT_PROFILE_BUNDLES: readonly string[];
  */
 export declare function initProfile(dir: string, bundles: readonly string[]): void;
 /**
- * Maintain the flat module fallback `$DSH_HOME/profiles/node_modules`: one
+ * Maintain the flat module fallback `$VOYASEEK_HOME/profiles/node_modules`: one
  * symlink per package in the dsh app's resolvable dependency CLOSURE (BFS
  * over `dependencies` from the app manifest), each resolved from its own
  * real location. Node's parent-directory walk from any profile finds this
@@ -133,7 +133,7 @@ export declare function writeProfileManifest(dir: string, manifest: ProfileManif
 /**
  * Resolve one bundle package's directory: installation anchor first, then the
  * profile directory. The installation-first order is the contract that
- * `@deepseek-ai/dsh-base` (and every other in-box bundle) always comes from
+ * `@voyaseek-ai/dsh-base` (and every other in-box bundle) always comes from
  * the same installation as the running dsh, never from a profile-local copy.
  * Resolution does not require the package to export `./package.json`.
  * @param binName - the diagnostic prefix on the thrown error.

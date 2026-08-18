@@ -1,22 +1,22 @@
-# @deepseek-ai/dsh-tool-cordis
+# @voyaseek-ai/dsh-tool-cordis
 
 [English](README.md) | 中文
 
-自引用 Cordis 工具集：五个面向模型的工具，操作当前 DSH 进程中的实时运行时。编译、持久 registry、vm 沙箱与浏览器 run 请求属于 [`@deepseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md)（`ctx.dynamicCordisRunner`），本工具集注入它——只装这些工具而不装 runner 的组合永远不会激活它们。沙箱语义、动态包生命周期与组合及既定决策详见[工具集 Agent Note](../../../.agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md)。
+自引用 Cordis 工具集：五个面向模型的工具，操作当前 DSH 进程中的实时运行时。编译、持久 registry、vm 沙箱与浏览器 run 请求属于 [`@voyaseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md)（`ctx.dynamicCordisRunner`），本工具集注入它——只装这些工具而不装 runner 的组合永远不会激活它们。沙箱语义、动态包生命周期与组合及既定决策详见[工具集 Agent Note](../../../.agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md)。
 
 ## 功能
 
 两组配对动词，外加只读报告。
 
 - `cordis_inspect`：当前进程运行时的只读报告，包括服务、全部存活插件 fiber、已注册工具、本会话的动态包、反射支持的 `api`／`events` 参考，以及浏览器半可以向其贡献 UI 的编译期 `client` 槽面。精确的 `name` 配合 `what: "api"`、`what: "events"` 或 `what: "client"` 可缩窄报告，并附上完整约定。
-- `cordis_define`：编译并持久登记一个不可变 Package（`name`、`purpose`，以及 Host JavaScript／TypeScript 和／或 Client JavaScript／TypeScript／TSX）。它通常不运行任何东西；开发态 HMR 的结果会给出 `$DSH_HOME/dynamic-cordis/sources/<pluginId>/` 下的稳定可编辑工作文件，生产态因 watcher 未启用而省略编辑提示。用户会在会话里看到它的卡片和启动控件。铸出的 Plugin／Package ID 同时进入结果 value 与持久呈现元数据。
+- `cordis_define`：编译并持久登记一个不可变 Package（`name`、`purpose`，以及 Host JavaScript／TypeScript 和／或 Client JavaScript／TypeScript／TSX）。它通常不运行任何东西；开发态 HMR 的结果会给出 `$VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/` 下的稳定可编辑工作文件，生产态因 watcher 未启用而省略编辑提示。用户会在会话里看到它的卡片和启动控件。铸出的 Plugin／Package ID 同时进入结果 value 与持久呈现元数据。
 - `cordis_run`：在沙箱中求值 Host artifact，并让作答的 Web 页面装载 Client artifact。对已在运行的 Package 再次运行不会失败，而是重新投递当前 activation——这正是被刷新过的页面把包取回来的方式。
 - `cordis_stop`：把 host 半 dispose 到完全停稳，并从各页面撤回浏览器半；定义存续，可以再次运行。
 - `cordis_undefine`：必要时先停止该包，再忘掉定义；它的卡片作为一条已卸载记录留在会话里。
 
 面向模型的确切 schema 见[生成的工具目录](../../../docs/tool-catalog.md)。
 
-动态定义与编译 artifact 持久保存在 `$DSH_HOME/dynamic-cordis`；它不会创建仓库 Plugin、安装任何包，也不会修改 `cordis.yml` 或项目配置。DSH 重启会恢复 identity、不可变 Package 历史和最后的 current 指针，但不会恢复 Fiber、handler、pending approval、grant 或运行态：Plugin 保持 stopped，直到再次显式 run／approval。`cordis_undefine` 会移除持久定义。每个动词仍以会话为界：一个 Plugin 只在定义它的那个会话里可见、可控。
+动态定义与编译 artifact 持久保存在 `$VOYASEEK_HOME/dynamic-cordis`；它不会创建仓库 Plugin、安装任何包，也不会修改 `cordis.yml` 或项目配置。DSH 重启会恢复 identity、不可变 Package 历史和最后的 current 指针，但不会恢复 Fiber、handler、pending approval、grant 或运行态：Plugin 保持 stopped，直到再次显式 run／approval。`cordis_undefine` 会移除持久定义。每个动词仍以会话为界：一个 Plugin 只在定义它的那个会话里可见、可控。
 
 ## 信任立场
 
@@ -24,7 +24,7 @@
 
 ## 配置
 
-无。持久 home、vm 与开发 watcher 设置属于拥有编译、存储与生命周期的 runner 服务——见 [`@deepseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md#config)。
+无。持久 home、vm 与开发 watcher 设置属于拥有编译、存储与生命周期的 runner 服务——见 [`@voyaseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md#config)。
 
 ## 生成的 client 槽目录
 
@@ -47,7 +47,7 @@
 
 ## 渲染
 
-每个工具都渲染 `generic` 卡片（`read`／`execute`／`delete`）；`cordis_define` 以 `rawInput` 携带提交的两个半，并用标签与用途作为卡片标题。presenter 是 args 的纯函数，结果保留默认文本渲染。Web 客户端注册自己的 keyed `cordis_define` 行（`@deepseek-ai/dsh-client-ui-cordis`），从调用参数与结果元数据里取标签、用途和铸出的标识；没有该注册的界面则退回到这张 generic 卡片。
+每个工具都渲染 `generic` 卡片（`read`／`execute`／`delete`）；`cordis_define` 以 `rawInput` 携带提交的两个半，并用标签与用途作为卡片标题。presenter 是 args 的纯函数，结果保留默认文本渲染。Web 客户端注册自己的 keyed `cordis_define` 行（`@voyaseek-ai/dsh-client-ui-cordis`），从调用参数与结果元数据里取标签、用途和铸出的标识；没有该注册的界面则退回到这张 generic 卡片。
 
 ## 导出形式
 

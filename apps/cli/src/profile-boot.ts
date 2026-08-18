@@ -8,15 +8,15 @@
  * App flags are not the launcher's business: the invocation's inner arguments
  * are provided to the tree through `ctx.cmdlineArgs`, where any injected app
  * plugin may read the same immutable snapshot.
- * @module @deepseek-ai/dsh/profile-boot
+ * @module @voyaseek-ai/dsh/profile-boot
  */
 
 import { writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { FiberState, type Context } from '@deepseek-ai/cordis'
-import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
-import type { EntryOptions } from '@deepseek-ai/cordis-plugin-loader'
+import { FiberState, type Context } from '@voyaseek-ai/cordis'
+import type { PatchOptions } from '@voyaseek-ai/cordis-plugin-include'
+import type { EntryOptions } from '@voyaseek-ai/cordis-plugin-loader'
 import {
   boot,
   composeEntries,
@@ -28,22 +28,22 @@ import {
   PROFILE_PATCH_FILENAME,
   watchUserPatches,
   type Profile,
-} from '@deepseek-ai/dsh-app-boot'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+} from '@voyaseek-ai/dsh-app-boot'
+import { resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
 
 /** Shipped agent-preset root: beside this app's own config, in both source and built layouts. */
 const SHIPPED_PRESET_ROOT = fileURLToPath(new URL('../config/agent-presets/', import.meta.url))
 
-import { DSH_LAUNCH_ENVIRONMENT_KEY, type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
-import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
+import { DSH_LAUNCH_ENVIRONMENT_KEY, type LaunchEnvironmentSnapshot } from '@voyaseek-ai/dsh-launch-environment'
+import { provideCmdline } from '@voyaseek-ai/dsh-cmdline'
 import { createProcessShutdown, type ProcessShutdown } from './process-shutdown.ts'
 
 const NAME = 'dsh'
 
 /**
- * The home-level user patch layer (`$DSH_HOME/cordis.patch.yml`), applied
+ * The home-level user patch layer (`$VOYASEEK_HOME/cordis.patch.yml`), applied
  * over every profile's own layer. Resolved per call, not at module load:
- * `$DSH_HOME` may be set by the test or launcher after import.
+ * `$VOYASEEK_HOME` may be set by the test or launcher after import.
  * @returns the absolute patch-file path.
  */
 export function homePatchPath(): string {
@@ -107,7 +107,7 @@ interface ComposedProfile {
   profile: Profile
   /** Bundle layers concatenated — the part below the user layers on a live reload. */
   bundlePatches: PatchOptions[]
-  /** The home-level user layer (`$DSH_HOME/cordis.patch.yml`), applied after the profile's own. */
+  /** The home-level user layer (`$VOYASEEK_HOME/cordis.patch.yml`), applied after the profile's own. */
   homePatches: PatchOptions[]
   /** Layers above the user layers on a live reload: `--patch` overlays and the telemetry switch. */
   overlays: PatchOptions[]
@@ -132,7 +132,7 @@ function allPatches(composed: ComposedProfile): PatchOptions[] {
  * Load `name` and compose its effective patch stack: bundle layers in
  * `dsh.profile.bundles` order (the base bundle gates the shell stacks by
  * platform on its own rows), the profile's user layer, the home-level user
- * layer (`$DSH_HOME/cordis.patch.yml` — machine-local preferences that apply
+ * layer (`$VOYASEEK_HOME/cordis.patch.yml` — machine-local preferences that apply
  * to every profile, so it outranks the per-profile layer), `--patch` overlays,
  * then the telemetry switch.
  * @param name - the profile name.
@@ -278,9 +278,9 @@ export async function runProfile(options: RunProfileOptions): Promise<{ ctx: Con
       // bare custom profile may not mount either.
       if (ctx.get('hmr') === undefined) {
         if (ctx.get('timer') === undefined) {
-          await ctx.loader.create({ name: '@deepseek-ai/cordis-plugin-timer' })
+          await ctx.loader.create({ name: '@voyaseek-ai/cordis-plugin-timer' })
         }
-        await ctx.loader.create({ name: '@deepseek-ai/cordis-plugin-hmr', config: { root: [] } })
+        await ctx.loader.create({ name: '@voyaseek-ai/cordis-plugin-hmr', config: { root: [] } })
       }
       await watchUserPatches(ctx, {
         binName: NAME,

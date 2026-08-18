@@ -1,7 +1,7 @@
 import type { UserConfig } from 'tsdown'
 
 const config: UserConfig = {
-  name: '@deepseek-ai/dsh-aistaff-local-capability',
+  name: '@voyaseek-ai/dsh-aistaff-local-capability',
   entry: ['lib/types/index.js', 'lib/types/invariant.js', 'lib/types/object-layer.js'],
   outDir: 'lib',
   format: ['esm'],

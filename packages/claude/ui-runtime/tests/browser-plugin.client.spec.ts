@@ -5,11 +5,11 @@
  * switches by connecting the owning workspace under the chosen runtime and
  * opening the session that lands; teardown empties the seat (HMR safety).
  */
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
+import { SlotRegistry } from '@voyaseek-ai/dsh-client-runtime/client'
+import type { SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
+import { LocaleRuntime } from '@voyaseek-ai/dsh-client-locale/client'
 import { RuntimeSelector } from '../src/client/RuntimeSelector.tsx'
 import type { RuntimeSelectorInjected } from '../src/client/index.ts'
 import { apply, inject } from '../src/client/index.ts'

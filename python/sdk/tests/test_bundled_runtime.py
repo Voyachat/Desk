@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from deepseek_harness import DeepSeekHarness, HarnessClient, HarnessConfig
-from deepseek_harness.errors import TransportClosedError
-from deepseek_harness_runtime import resolve_bundled_launch_args
+from voyaseek_harness import VoyaseekHarness, HarnessClient, HarnessConfig
+from voyaseek_harness.errors import TransportClosedError
+from voyaseek_harness_runtime import resolve_bundled_launch_args
 
 _MODES = ("exe", "node")
 _REPO_ROOT = Path(__file__).parents[3]
@@ -21,25 +21,25 @@ _MINIMAL_CONFIG = _REPO_ROOT / "examples" / "jsonrpc-agent" / "minimal.cordis.ym
 # The config must include the JSON-RPC serving plugin.
 _CORDIS_YML = """\
 - id: sdk-jsonrpc-server
-  name: '@deepseek-ai/dsh-sdk-jsonrpc-server'
+  name: '@voyaseek-ai/dsh-sdk-jsonrpc-server'
 - id: agent-core
-  name: '@deepseek-ai/dsh-agent-spine-demo'
+  name: '@voyaseek-ai/dsh-agent-spine-demo'
   config:
     workspaceContext: false
 - id: sessions
-  name: '@deepseek-ai/dsh-session-persistence-jsonl'
+  name: '@voyaseek-ai/dsh-session-persistence-jsonl'
   config:
     root: './sessions'
 - id: session-checkpoints
-  name: '@deepseek-ai/dsh-session-checkpoint-policy'
+  name: '@voyaseek-ai/dsh-session-checkpoint-policy'
 - id: subprocess
-  name: '@deepseek-ai/dsh-subprocess-local'
+  name: '@voyaseek-ai/dsh-subprocess-local'
 - id: bash
-  name: '@deepseek-ai/dsh-bash-local'
+  name: '@voyaseek-ai/dsh-bash-local'
   config:
     cwd: '.'
 - id: todo
-  name: '@deepseek-ai/dsh-tool-todo'
+  name: '@voyaseek-ai/dsh-tool-todo'
   config:
     allowParallelInProgress: true
 """
@@ -79,14 +79,14 @@ def test_bundled_runtime_boots_a_cordis_config(tmp_path: Path, mode: str) -> Non
         init = client.initialize(provider="deepseek-official", cwd=str(tmp_path), model="deepseek-v4-pro")
 
     assert init.serverInfo is not None
-    assert init.serverInfo.name == "deepseek-harness-sdk-runtime"
+    assert init.serverInfo.name == "voyaseek-harness-sdk-runtime"
 
 
 @pytest.mark.parametrize("mode", _MODES)
 def test_python_sdk_boots_minimal_jsonrpc_config(tmp_path: Path, mode: str) -> None:
     launch_args = _launch_args(mode)
     model = "minimal-environment-model"
-    harness = DeepSeekHarness(
+    harness = VoyaseekHarness(
         model=model,
         cwd=str(tmp_path),
         session_root=str(tmp_path / "sessions"),
@@ -110,7 +110,7 @@ def test_python_sdk_boots_minimal_jsonrpc_config(tmp_path: Path, mode: str) -> N
 def test_bundled_runtime_surfaces_unbundled_plugin_failure(tmp_path: Path, mode: str) -> None:
     launch_args = _launch_args(mode)
     (tmp_path / "cordis.yml").write_text(
-        "- id: missing\n  name: '@deepseek-ai/dsh-does-not-exist'\n"
+        "- id: missing\n  name: '@voyaseek-ai/dsh-does-not-exist'\n"
     )
 
     client = _client(tmp_path, launch_args)
@@ -121,7 +121,7 @@ def test_bundled_runtime_surfaces_unbundled_plugin_failure(tmp_path: Path, mode:
     finally:
         client.close()
 
-    assert "@deepseek-ai/dsh-does-not-exist" in str(excinfo.value)
+    assert "@voyaseek-ai/dsh-does-not-exist" in str(excinfo.value)
 
 
 @pytest.mark.parametrize("mode", _MODES)
@@ -136,7 +136,7 @@ def test_zero_config_run_injects_bundled_default_cordis_config(
     else:
         monkeypatch.setenv("DSH_CORDIS_CONFIG", ambient_config)
 
-    harness = DeepSeekHarness(
+    harness = VoyaseekHarness(
         model="deepseek-v4-pro",
         cwd=str(tmp_path),
         session_root=str(tmp_path / "sessions"),

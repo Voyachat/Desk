@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-host-directory-picker",
-  "description": "Abstract workspace-directory picking seam (ctx.directoryPicker) for the DeepSeek Harness web GUI host",
+  "name": "@voyaseek-ai/dsh-host-directory-picker",
+  "description": "Abstract workspace-directory picking seam (ctx.directoryPicker) for the Voyaseek Harness web GUI host",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/host/directory-picker"
   },
   "type": "module",
@@ -32,11 +32,11 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

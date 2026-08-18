@@ -3,8 +3,8 @@ import type {
   CreateTaskInput,
   ProductError,
   RespondApprovalInput,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
-import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
+import type { BoundActions } from '@voyaseek-ai/dsh-client-ui-slots'
 import type { AistaffWorkbenchInjected } from './AistaffWorkbench.tsx'
 import type { createAistaffProductStore } from './store.ts'
 

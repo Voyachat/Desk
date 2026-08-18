@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-These three **default-off reference configurations** connect one memory system to DSH through [`@deepseek-ai/dsh-mcp-client`](../../packages/mcp/mcp-client/README.md). Pick one, or copy the same generic MCP row for another server.
+These three **default-off reference configurations** connect one memory system to DSH through [`@voyaseek-ai/dsh-mcp-client`](../../packages/mcp/mcp-client/README.md). Pick one, or copy the same generic MCP row for another server.
 
 These third-party configurations are provided as interoperability examples only. Their inclusion does not imply endorsement, recommendation, partnership, or ongoing support by DeepSeek.
 
@@ -30,7 +30,7 @@ dsh web --patch "$PWD/examples/mcp-memory/memorix.cordis.yml"
 
 Replace the filename with `mcp-reference-memory.cordis.yml` or `engram.cordis.yml`. The path may point to a copied file anywhere on disk. No memory server is present in the shipped composition, so omitting `--patch` keeps all three disabled.
 
-To keep the selection across runs, merge the chosen file's single `insert` patch into a user patch layer — `$DSH_HOME/profiles/<name>/cordis.patch.yml` for one profile, or `$DSH_HOME/cordis.patch.yml` for every profile on the machine. Do not copy over an existing file: it may already contain unrelated user patches.
+To keep the selection across runs, merge the chosen file's single `insert` patch into a user patch layer — `$VOYASEEK_HOME/profiles/<name>/cordis.patch.yml` for one profile, or `$VOYASEEK_HOME/cordis.patch.yml` for every profile on the machine. Do not copy over an existing file: it may already contain unrelated user patches.
 
 ## Provider setup
 
@@ -88,7 +88,7 @@ Copy the same entry fields and use a unique `id` and `serverName`:
 ```yaml
 - insert:
     - id: memory-my-server
-      name: '@deepseek-ai/dsh-mcp-client'
+      name: '@voyaseek-ai/dsh-mcp-client'
       config:
         serverName: my-memory
         transport: stdio

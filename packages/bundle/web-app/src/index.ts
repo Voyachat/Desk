@@ -1,5 +1,5 @@
 /**
- * @deepseek-ai/dsh-web-app — the browser-surface bundle's runtime glue plugin
+ * @voyaseek-ai/dsh-web-app — the browser-surface bundle's runtime glue plugin
  * plus the bundle patch (`cordis.patch.yml`, declared by the `dsh.bundle.patch`
  * manifest field). The plugin owns the browser-surface glue: it resolves
  * the built frontend dist (workspace knowledge of this bundle, never user
@@ -7,20 +7,20 @@
  * harness-source and web-surface prompt sections, the bash-visible web runtime
  * variable, and the URL line. App command-line values arrive through the
  * `webStartup` service expressions in the bundle patch.
- * @module @deepseek-ai/dsh-web-app
+ * @module @voyaseek-ai/dsh-web-app
  */
 
 import { createRequire } from 'node:module'
 import { networkInterfaces } from 'node:os'
 import { fileURLToPath } from 'node:url'
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { addHarnessSourceSection } from '@deepseek-ai/dsh-app-boot'
-import * as FrontendStatic from '@deepseek-ai/dsh-host-frontend-static'
-import type {} from '@deepseek-ai/cordis-plugin-loader'
-import type {} from '@deepseek-ai/dsh-host-webserver'
-import type {} from '@deepseek-ai/dsh-system-prompt'
-import type {} from '@deepseek-ai/dsh-shell-env'
+import type { Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import { addHarnessSourceSection } from '@voyaseek-ai/dsh-app-boot'
+import * as FrontendStatic from '@voyaseek-ai/dsh-host-frontend-static'
+import type {} from '@voyaseek-ai/cordis-plugin-loader'
+import type {} from '@voyaseek-ai/dsh-host-webserver'
+import type {} from '@voyaseek-ai/dsh-system-prompt'
+import type {} from '@voyaseek-ai/dsh-shell-env'
 
 /** Stable Cordis plugin name. */
 export const name = 'web-app'
@@ -96,7 +96,7 @@ function webSurfacePrompt(webUrl: string): string {
   const updateContract = 'The client-plugin HMR receiver is active, but client-plugin changes reload without a refresh only while '
     + '`pnpm run dev:web` is also running from this same checkout to rebuild their bundles; verify that watcher before promising automatic updates. '
     + 'Every other change — the apps/web shell and plain packages — requires rebuilding the affected Web artifacts and verifying this existing URL after a page refresh. '
-  return `You are interacting with the user through the DeepSeek Harness Web GUI at ${webUrl}. `
+  return `You are interacting with the user through the Voyaseek Harness Web GUI at ${webUrl}. `
     + 'When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. '
     + 'The browser provides no implicit DOM, route, or screenshot context. '
     + updateContract
@@ -116,7 +116,7 @@ function localWebUrl(ctx: Context): string {
 function resolveDistIndex(): string {
   const require = createRequire(import.meta.url)
   try {
-    return require.resolve('@deepseek-ai/dsh-web-frontend/dist/index.html')
+    return require.resolve('@voyaseek-ai/dsh-web-frontend/dist/index.html')
   } catch {
     /* v8 ignore next 2 -- reachable only on a checkout without a built dist; the test tree builds it */
     throw new Error('web-app: frontend dist not built; run pnpm run build from the repository root first')
@@ -150,7 +150,7 @@ export function apply(ctx: Context, config: Config): void {
       runtimeCtx.shellEnv.register({
         name: 'web-runtime',
         variables: {
-          [DSH_WEB_URL]: { description: 'Canonical local URL of the DeepSeek Harness Web GUI serving this session.' },
+          [DSH_WEB_URL]: { description: 'Canonical local URL of the Voyaseek Harness Web GUI serving this session.' },
         },
         resolve: () => ({ [DSH_WEB_URL]: localWebUrl(runtimeCtx) }),
       })

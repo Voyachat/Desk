@@ -1,15 +1,15 @@
 /** Registers the conversation components, shared store, and service callbacks. */
-import type { Context } from '@deepseek-ai/cordis'
-import { resolveSlotLabel, type BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
+import type { Context } from '@voyaseek-ai/cordis'
+import { resolveSlotLabel, type BoundActions } from '@voyaseek-ai/dsh-client-ui-slots'
 import {
   resolveWorkspacePath, type ISessions, type SessionId,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
 // Type-only: the ctx.settingsScope Context merge. Cross-plugin collaboration
 // goes through the service, never a value import (client bundle purity gate).
-import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-settings/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-layout/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@voyaseek-ai/dsh-client-locale/client'
 import type { ViewTab } from './contract/views.ts'
 import type {
   ApprovalWait, ChatNodeTurnDataInjected, ChatScrollPosition, ChatViewInjected, ComposerBarInjected,
@@ -27,7 +27,10 @@ import { ComposerSubmissionPolicy } from './input/submission-policy.ts'
 import { InputBar } from './skeleton/InputBar.tsx'
 import { EnterBehaviorRow } from './settings/EnterBehaviorRow.tsx'
 import type { EnterBehaviorRowInjected } from './settings/EnterBehaviorRow.tsx'
+import { ReasoningDisplayRow } from './settings/ReasoningDisplayRow.tsx'
+import type { ReasoningDisplayRowInjected } from './settings/ReasoningDisplayRow.tsx'
 import { ChatView } from './chat/ChatView.tsx'
+import { ConversationDisplayPolicy } from './chat/display-policy.ts'
 import { StatsLine } from './chat/StatsLine.tsx'
 import { ApprovalPanel } from './skeleton/ApprovalPanel.tsx'
 import { todoDockEntry } from './skeleton/TodoPanel.tsx'
@@ -40,7 +43,7 @@ import { registerConversationNodes } from './conversation-nodes/register.ts'
 import { registerChatNodeRenderers } from './chat/register-node-renderers.ts'
 import { CONVERSATION_SETTINGS_NAMESPACE, type ConversationSettings } from '../submission-settings.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@voyaseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The conversation skeleton, chat flow, commands, details, and docks copy. */
     conversation: ConversationKey
@@ -130,9 +133,11 @@ export function apply(ctx: Context): void {
 
   // Apply-time construction keeps store identity bound to this fiber.
   const chatStore = createChatStore()
-  const submissionPolicy = new ComposerSubmissionPolicy(
-    ctx.settingsScope.bind<ConversationSettings>({ namespace: CONVERSATION_SETTINGS_NAMESPACE }),
-  )
+  const conversationSettings = ctx.settingsScope.bind<ConversationSettings>({
+    namespace: CONVERSATION_SETTINGS_NAMESPACE,
+  })
+  const submissionPolicy = new ComposerSubmissionPolicy(conversationSettings)
+  const displayPolicy = new ConversationDisplayPolicy(conversationSettings)
 
   ctx.slots.inject('settings.general.item', () => ctx.slots.register({
     name: 'settings.general.item',
@@ -144,6 +149,17 @@ export function apply(ctx: Context): void {
       setBusyEnter: (behavior) => { submissionPolicy.setBusyEnter(behavior) },
     }),
   }, EnterBehaviorRow))
+
+  ctx.slots.inject('settings.general.item', () => ctx.slots.register({
+    name: 'settings.general.item',
+    id: 'reasoning-display',
+    order: 30,
+    locale: NS,
+    inject: (): ReasoningDisplayRowInjected => ({
+      hooks: { showReasoning: displayPolicy.showReasoning },
+      setShowReasoning: (show) => { displayPolicy.setShowReasoning(show) },
+    }),
+  }, ReasoningDisplayRow))
 
   // Chat semantic reader positions by session, surviving view switches and
   // width reflow when the tab ring remounts the view. Deliberately not
@@ -387,6 +403,7 @@ export function apply(ctx: Context): void {
       const conversation = concreteConversation(ctx)
       const scoped = scopedConversation(sessions, sessionId)
       return {
+        hooks: { showReasoning: displayPolicy.showReasoning },
         openDetails: (target) => {
           actions.select(target)
           layout.openDetails()

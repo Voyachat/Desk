@@ -1,9 +1,9 @@
 /**
  * Browser adapter from the generated Aistaff Remote namespace to `AistaffClientPort`.
- * @module @deepseek-ai/dsh-aistaff-product-remote/client
+ * @module @voyaseek-ai/dsh-aistaff-product-remote/client
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import type {
   AistaffClientPort,
   CreateTaskInput,
@@ -13,8 +13,8 @@ import type {
   Receipt,
   RespondApprovalInput,
   Task,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
-import type { RemoteFailure, RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
+import type { RemoteFailure, RemoteResult } from '@voyaseek-ai/dsh-typert-protocol'
 
 /** Generated Remote calls consumed by the Client port adapter. */
 export interface AistaffProductRemoteNamespace {
@@ -51,7 +51,7 @@ function unwrap<T>(result: RemoteResult<ProductResult<T>>): ProductResult<T> {
   return result.value
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Renderer-facing Aistaff product port backed by Host Remote calls. */
     aistaffProductPort: AistaffRemoteClientPort

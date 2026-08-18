@@ -1,10 +1,10 @@
-/** Package-owned prompt-assembly invariants. @module @deepseek-ai/dsh-system-prompt/invariant */
+/** Package-owned prompt-assembly invariants. @module @voyaseek-ai/dsh-system-prompt/invariant */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantFailure, InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 import type { PromptAssembly } from './index.ts'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-system-prompt'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-system-prompt'
 const VARIABLE_NAME = /^[a-z][a-z0-9_]*$/
 
 /** Cordis companion plugin name. */

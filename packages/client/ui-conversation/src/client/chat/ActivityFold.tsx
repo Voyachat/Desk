@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
-import { DisclosureRow, IconThinkOutline14 } from '@deepseek-ai/dsh-client-ui-primitives'
+import { DisclosureRow, IconThinkOutline14 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { formatRunDuration } from './message-chrome.ts'
 import a11yCss from './accessibility.module.css'

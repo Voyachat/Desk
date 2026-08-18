@@ -4,10 +4,10 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import type { Session } from '@deepseek-ai/dsh-session'
+import { Context } from '@voyaseek-ai/cordis'
+import { createUserMessage } from '@voyaseek-ai/dsh-llm'
+import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
+import type { Session } from '@voyaseek-ai/dsh-session'
 import type { Options, Query, SDKMessage } from '@anthropic-ai/claude-agent-sdk'
 import { ClaudeSdkAgent } from '../src/driver.ts'
 import { SdkQueryEngine } from '../src/engine.ts'

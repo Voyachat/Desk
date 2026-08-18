@@ -61,7 +61,7 @@ describe('managed DSH runtime', () => {
       cwd: '/tmp/aistaff-workspace',
       env: {
         ELECTRON_RUN_AS_NODE: '1',
-        DSH_HOME: '/tmp/aistaff-home',
+        VOYASEEK_HOME: '/tmp/aistaff-home',
         DSH_CWD: '/tmp/aistaff-workspace',
         GEMINI_API_KEY: 'test-gemini-credential',
         DASHSCOPE_API_KEY: 'test-dashscope-credential',

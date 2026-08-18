@@ -8,22 +8,22 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { z } from 'zod'
-import AgentRegistry, { Inbox } from '@deepseek-ai/dsh-agent'
-import { AttachmentStore } from '@deepseek-ai/dsh-attachment'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import type { Session } from '@deepseek-ai/dsh-session'
-import SessionProjectionRegistry from '@deepseek-ai/dsh-session-projection'
-import type { ProjectionDefinition } from '@deepseek-ai/dsh-session-projection'
-import UserQuestionService from '@deepseek-ai/dsh-user-questions'
-import type { MuxFrame, RpcRequest } from '@deepseek-ai/dsh-host-apiproxy/api'
-import { RpcId } from '@deepseek-ai/dsh-host-apiproxy/api/rpc'
-import { createApiProxy } from '@deepseek-ai/dsh-host-apiproxy'
+import AgentRegistry, { Inbox } from '@voyaseek-ai/dsh-agent'
+import { AttachmentStore } from '@voyaseek-ai/dsh-attachment'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import { createUserMessage } from '@voyaseek-ai/dsh-llm'
+import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
+import type { Session } from '@voyaseek-ai/dsh-session'
+import SessionProjectionRegistry from '@voyaseek-ai/dsh-session-projection'
+import type { ProjectionDefinition } from '@voyaseek-ai/dsh-session-projection'
+import UserQuestionService from '@voyaseek-ai/dsh-user-questions'
+import type { MuxFrame, RpcRequest } from '@voyaseek-ai/dsh-host-apiproxy/api'
+import { RpcId } from '@voyaseek-ai/dsh-host-apiproxy/api/rpc'
+import { createApiProxy } from '@voyaseek-ai/dsh-host-apiproxy'
 
-declare module '@deepseek-ai/dsh-session-projection/types' {
+declare module '@voyaseek-ai/dsh-session-projection/types' {
   interface SessionProjectionMap {
     'test/last-user': { text: string } | null
   }

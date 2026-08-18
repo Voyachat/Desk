@@ -11,26 +11,26 @@
  */
 
 import { describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { mkdtempSync, realpathSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve as resolvePath } from 'node:path'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import SystemPrompt, { renderPrompt } from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH } from '@deepseek-ai/dsh-tools'
-import LocalJobRegistry from '@deepseek-ai/dsh-jobs-local'
-import * as ToolTasks from '@deepseek-ai/dsh-tool-jobs'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import ApprovalService from '@deepseek-ai/dsh-user-approval'
-import type { ApprovalOutcome } from '@deepseek-ai/dsh-user-approval'
-import { ShellExecutor } from '@deepseek-ai/dsh-shell'
-import type { ShellExecRequest, ShellExecSpec, ShellProcess, ShellRunResult } from '@deepseek-ai/dsh-shell'
-import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
-import * as ToolPwsh from '@deepseek-ai/dsh-tool-pwsh'
-import * as BashEnvPlugin from '@deepseek-ai/dsh-shell-env'
-import type { ShellProcessRead } from '@deepseek-ai/dsh-shell'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import SystemPrompt, { renderPrompt } from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime, { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH } from '@voyaseek-ai/dsh-tools'
+import LocalJobRegistry from '@voyaseek-ai/dsh-jobs-local'
+import * as ToolTasks from '@voyaseek-ai/dsh-tool-jobs'
+import AgentRegistry from '@voyaseek-ai/dsh-agent'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import { SessionId } from '@voyaseek-ai/dsh-session'
+import ApprovalService from '@voyaseek-ai/dsh-user-approval'
+import type { ApprovalOutcome } from '@voyaseek-ai/dsh-user-approval'
+import { ShellExecutor } from '@voyaseek-ai/dsh-shell'
+import type { ShellExecRequest, ShellExecSpec, ShellProcess, ShellRunResult } from '@voyaseek-ai/dsh-shell'
+import SandboxPolicyService from '@voyaseek-ai/dsh-sandbox-policy'
+import * as ToolPwsh from '@voyaseek-ai/dsh-tool-pwsh'
+import * as BashEnvPlugin from '@voyaseek-ai/dsh-shell-env'
+import type { ShellProcessRead } from '@voyaseek-ai/dsh-shell'
 import { processOutcome } from '../src/background.ts'
 import { renderPwshProcessRead, renderPwshResult } from '../src/render.ts'
 
@@ -367,7 +367,7 @@ describe('execution through the bash seam', () => {
     expect(request?.workdir).toBe('/sessions/s1')
     expect(request?.timeoutMs).toBe(1234)
     expect(request?.dshEnv).toEqual({
-      DSH_HOME: dshHome,
+      VOYASEEK_HOME: dshHome,
       DSH_SHELL: '1',
       DSH_SESSION_ID: 'session-1',
     })
@@ -393,7 +393,7 @@ describe('execution through the bash seam', () => {
     const dshEnv = bash.requests[0]?.dshEnv
     expect(dshEnv).toBeDefined()
     expect(dshEnv?.['DSH_SHELL']).toBe('1')
-    expect(dshEnv?.['DSH_HOME']).toEqual(expect.any(String))
+    expect(dshEnv?.['VOYASEEK_HOME']).toEqual(expect.any(String))
     expect(dshEnv).not.toHaveProperty('DSH_SESSION_ID')
   })
 
@@ -744,7 +744,7 @@ describe('background execution through the job runtime', () => {
     const { ctx } = await setup() // no LocalJobRegistry / ToolTasks
     const result = await call(ctx, 'pwsh', { command: 'Start-Sleep -Seconds 60', description: 'test command', run_in_background: true })
     expect(result.isError).toBe(true)
-    expect(text(result)).toContain('background jobs unavailable: load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs')
+    expect(text(result)).toContain('background jobs unavailable: load @voyaseek-ai/dsh-jobs and @voyaseek-ai/dsh-tool-jobs')
   })
 
   it('a pre-aborted call is skipped before the process starts', async () => {

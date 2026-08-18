@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-storage-json",
-  "description": "JSON file KV storage backend for the DeepSeek Harness storage hub",
+  "name": "@voyaseek-ai/dsh-storage-json",
+  "description": "JSON file KV storage backend for the Voyaseek Harness storage hub",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/storage/storage-json"
   },
   "type": "module",
@@ -32,16 +32,16 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-storage": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-storage": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-storage": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

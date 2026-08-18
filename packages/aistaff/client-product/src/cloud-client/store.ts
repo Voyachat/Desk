@@ -1,7 +1,7 @@
-import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-runtime/client'
+import { defineStore, type EngineStoreHandle } from '@voyaseek-ai/dsh-client-runtime/client'
 
-type EmployeeRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').EmployeeRef>
-type EngagementRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').EngagementRef>
+type EmployeeRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').EmployeeRef>
+type EngagementRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').EngagementRef>
 
 /** Renderer-only state for the production Cloud workbench. */
 export interface CloudProductState {

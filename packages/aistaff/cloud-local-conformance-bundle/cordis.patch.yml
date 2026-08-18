@@ -1,12 +1,12 @@
 # test_only deterministic Cloud local-read chain. Never include this bundle in production.
 - insert:
     - id: aistaff-cloud-conformance
-      name: '@deepseek-ai/dsh-aistaff-cloud-conformance'
+      name: '@voyaseek-ai/dsh-aistaff-cloud-conformance'
       config:
         scenario: 'local_read'
 
     - id: aistaff-cloud-provider
-      name: '@deepseek-ai/dsh-aistaff-cloud-provider'
+      name: '@voyaseek-ai/dsh-aistaff-cloud-provider'
       inject: [aistaffClientGatewayInputs]
       config:
         protocolOffer: '1.0-1.7'
@@ -16,14 +16,14 @@
         reconnectDelayMs: 10
 
     - id: aistaff-cloud-local-conformance
-      name: '@deepseek-ai/dsh-aistaff-cloud-local-conformance'
+      name: '@voyaseek-ai/dsh-aistaff-cloud-local-conformance'
       inject: [aistaffCloudConformance]
 
     - id: aistaff-employee-experience-remote
-      name: '@deepseek-ai/dsh-aistaff-employee-experience-remote'
+      name: '@voyaseek-ai/dsh-aistaff-employee-experience-remote'
 
     - id: aistaff-local-capability-remote
-      name: '@deepseek-ai/dsh-aistaff-local-capability-remote'
+      name: '@voyaseek-ai/dsh-aistaff-local-capability-remote'
 
     - id: aistaff-cloud-local-client-product
-      name: '@deepseek-ai/dsh-aistaff-cloud-local-client-product'
+      name: '@voyaseek-ai/dsh-aistaff-cloud-local-client-product'

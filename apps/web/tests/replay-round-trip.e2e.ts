@@ -14,8 +14,8 @@ import { fileURLToPath } from 'node:url'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import type { SessionEvent, SessionId } from '@deepseek-ai/dsh-session'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import type { SessionEvent, SessionId } from '@voyaseek-ai/dsh-session'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden, fixtureUserPrompts,
   launchWebScaffold, recordFixture, watchConsole, webSnapshotMode, type WebScaffold,
@@ -98,7 +98,7 @@ describe('web e2e: fresh round trip through the real assembly', () => {
     if (agent === undefined) throw new Error(`the settled Web agent ${settledSessionId} is no longer live`)
     const snapshot = agent.session.events.find(event => event.type === 'user/message'
       && event.data.source.kind === 'plugin'
-      && event.data.source.plugin === '@deepseek-ai/dsh-system-prompt'
+      && event.data.source.plugin === '@voyaseek-ai/dsh-system-prompt'
       && event.data.source.form === 'snapshot'
       && event.data.source.sections.some(section => section.name === 'user:locale'))
     if (snapshot?.type !== 'user/message' || snapshot.data.source.kind !== 'plugin'

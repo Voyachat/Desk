@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-pwsh-local",
-  "description": "Local PowerShell implementation of the DeepSeek Harness bash executor seam",
+  "name": "@voyaseek-ai/dsh-pwsh-local",
+  "description": "Local PowerShell implementation of the Voyaseek Harness bash executor seam",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/shell/pwsh-local"
   },
   "type": "module",
@@ -32,23 +32,23 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-subprocess": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^"
+    "@voyaseek-ai/dsh-shell": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-subprocess": "workspace:^",
+    "@voyaseek-ai/dsh-timeout": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^"
   },
   "dependencies": {
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-shell": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-subprocess": "workspace:^",
-    "@deepseek-ai/dsh-subprocess-local": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^"
+    "@voyaseek-ai/dsh-shell": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-subprocess": "workspace:^",
+    "@voyaseek-ai/dsh-subprocess-local": "workspace:^",
+    "@voyaseek-ai/dsh-timeout": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^"
   }
 }

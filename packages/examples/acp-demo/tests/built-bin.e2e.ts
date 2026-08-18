@@ -78,7 +78,7 @@ async function makeConsumer(): Promise<string> {
     await link(dirname(resolved), dep, nm)
   }
   await writeFile(join(dir, 'mock-llm.mjs'), [
-    "import { LlmAdapter } from '@deepseek-ai/dsh-llm'",
+    "import { LlmAdapter } from '@voyaseek-ai/dsh-llm'",
     'class Mock extends LlmAdapter {',
     '  async * stream() {',
     "    yield { type: 'block-start', index: 0, blockType: 'text' }",
@@ -96,11 +96,11 @@ async function makeConsumer(): Promise<string> {
     '- id: mock-llm',
     '  name: \'./mock-llm.mjs\'',
     '- id: subprocess',
-    '  name: \'@deepseek-ai/dsh-subprocess-local\'',
+    '  name: \'@voyaseek-ai/dsh-subprocess-local\'',
     '- id: bash',
-    '  name: \'@deepseek-ai/dsh-bash-local\'',
+    '  name: \'@voyaseek-ai/dsh-bash-local\'',
     '- id: acp-agent',
-    '  name: \'@deepseek-ai/dsh-acp-demo\'',
+    '  name: \'@voyaseek-ai/dsh-acp-demo\'',
     '  config:',
     '    provider: built-acp-mock',
     '    model: built-acp-mock',
@@ -138,7 +138,7 @@ describe.skipIf(!existsSync(acpBin))('dsh-acp-demo BUILT bin (node lib/bin.js, n
       cwd: consumer,
       env: {
         ...process.env,
-        DSH_HOME: join(consumer, '.dsh'),
+        VOYASEEK_HOME: join(consumer, '.voyaseek'),
         DSH_AGENTS_HOME: join(consumer, '.agents'),
       },
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -218,7 +218,7 @@ async function runBinExpectingExit(configArg: string, cwd: string = tmpdir()): P
   const result = await execa(process.execPath, [acpBin, '--config', configArg], {
     cwd,
     env: {
-      DSH_HOME: join(cwd, '.dsh'),
+      VOYASEEK_HOME: join(cwd, '.voyaseek'),
       DSH_AGENTS_HOME: join(cwd, '.agents'),
     },
     input: '',

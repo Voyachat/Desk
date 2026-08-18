@@ -3,11 +3,11 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import type { Fiber } from '@deepseek-ai/cordis'
-import type { Loader } from '@deepseek-ai/cordis-plugin-loader'
-import type { ClientModuleSystem } from '@deepseek-ai/dsh-client-modules/client'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
+import { Context } from '@voyaseek-ai/cordis'
+import type { Fiber } from '@voyaseek-ai/cordis'
+import type { Loader } from '@voyaseek-ai/cordis-plugin-loader'
+import type { ClientModuleSystem } from '@voyaseek-ai/dsh-client-modules/client'
+import { SlotRegistry } from '@voyaseek-ai/dsh-client-runtime/client'
 import { DynamicCordisPackageRunner } from '../../cordis-client-runner/src/client/runtime.ts'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DYNAMIC_CORDIS_STORE_DIRECTORY } from '../src/persistence.ts'
@@ -112,7 +112,7 @@ describe('dynamic Cordis development working-copy HMR', () => {
     expect(firstInventory).toMatchObject({
       currentPackageId: defined.packageId,
       developmentSources: {
-        client: '$DSH_HOME/dynamic-cordis/sources/tsx-1/client.tsx',
+        client: '$VOYASEEK_HOME/dynamic-cordis/sources/tsx-1/client.tsx',
       },
     })
     expect(firstActivation?.packageId).toBe(defined.packageId)
@@ -157,7 +157,7 @@ describe('dynamic Cordis development working-copy HMR', () => {
 
     await vi.waitFor(() => {
       expect(harness.runner.inventory()[0]?.developmentBuildError).toMatchObject({
-        sourcePath: '$DSH_HOME/dynamic-cordis/sources/tsx-1/client.tsx',
+        sourcePath: '$VOYASEEK_HOME/dynamic-cordis/sources/tsx-1/client.tsx',
         message: expect.stringContaining('code.client TypeScript compile failed') as string,
       })
     })

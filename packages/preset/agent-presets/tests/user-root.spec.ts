@@ -5,7 +5,7 @@
  * `<dshHome>/skills`. `includeUserRoot: false` is how a deployment — or a test
  * pinning an exact roster — opts out.
  *
- * `$DSH_HOME` is repointed per test because the derived root is resolved in the
+ * `$VOYASEEK_HOME` is repointed per test because the derived root is resolved in the
  * constructor: the plugin must be mounted while the environment names the
  * temporary home, or it would reach the developer's real one.
  */
@@ -15,11 +15,11 @@ import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import Include from '@deepseek-ai/cordis-plugin-include'
+import { Context } from '@voyaseek-ai/cordis'
+import Loader from '@voyaseek-ai/cordis-plugin-loader'
+import Include from '@voyaseek-ai/cordis-plugin-include'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import AgentPresets, { COMPOSITION_FILE, type Config } from '@deepseek-ai/dsh-agent-presets'
+import AgentPresets, { COMPOSITION_FILE, type Config } from '@voyaseek-ai/dsh-agent-presets'
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), 'fixtures')
 const SYSTEM_ROOT = join(FIXTURES, 'system')
@@ -32,13 +32,13 @@ let previousHome: string | undefined
 
 beforeEach(async () => {
   home = await mkdtemp(join(tmpdir(), 'dsh-preset-home-'))
-  previousHome = process.env.DSH_HOME
-  process.env.DSH_HOME = home
+  previousHome = process.env.VOYASEEK_HOME
+  process.env.VOYASEEK_HOME = home
 })
 
 afterEach(() => {
-  if (previousHome === undefined) delete process.env.DSH_HOME
-  else process.env.DSH_HOME = previousHome
+  if (previousHome === undefined) delete process.env.VOYASEEK_HOME
+  else process.env.VOYASEEK_HOME = previousHome
 })
 
 /** Boot a roster over the fixture system root, with the derived root left to the plugin. */

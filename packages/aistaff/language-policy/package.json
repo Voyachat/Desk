@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-language-policy",
+  "name": "@voyaseek-ai/dsh-aistaff-language-policy",
   "description": "Aistaff product language policy: default output language, per-conversation input-language adaptation, and persisted explicit language rules",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -26,19 +26,19 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^"
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   }
 }

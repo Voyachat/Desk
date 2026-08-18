@@ -11,11 +11,11 @@ import {
   JsonTree,
   MarkdownText,
   Tooltip,
-} from '@deepseek-ai/dsh-client-ui-primitives'
+} from '@voyaseek-ai/dsh-client-ui-primitives'
 import { structuredPatch } from 'diff'
 import type {
   AssistantRequestConfig, ConversationPromptSnapshot,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
 import type {
   AssistantMetricDetail, TrajectoryCellKind, TrajectoryCellProps, TrajectorySourceBlock,
 } from './trajectory-record.ts'

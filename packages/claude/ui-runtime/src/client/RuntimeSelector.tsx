@@ -7,11 +7,11 @@
  */
 
 import { useState } from 'react'
-import type { InjectFace, PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
-import { IconChevronDownOutline14, IconCodeOutline16, IconSparkle16, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import type { InjectFace, PropsLocale, PropsRuntime } from '@voyaseek-ai/dsh-client-ui-slots'
+import { IconChevronDownOutline14, IconCodeOutline16, IconSparkle16, Menu } from '@voyaseek-ai/dsh-client-ui-primitives'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.left seat and
 // its InputZone owner share).
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-conversation/client'
 import type { RuntimeSelectorInjected } from './index.ts'
 import css from './RuntimeSelector.module.css'
 

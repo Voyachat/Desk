@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-workflow
+# @voyaseek-ai/dsh-tool-workflow
 
 [English](README.md) | 中文
 
@@ -18,7 +18,7 @@ Agent 恢复持久 Session 时，插件会折叠 Session 日志，为上一个�
 
 可选的 Commands 服务存在时，`/workflow-retry <runId>` 提供 Web 使用的显式恢复动作。该命令只接受持久化终态为失败或中断的运行，通过已记录的 `callId` 定位确切来源 `tool/call`，校验日志参数，并用这些参数启动一个新的持久运行。该动作从脚本开头执行；它不会恢复 JavaScript 指令位置、复用进程内闭包，也不会自动重放可能产生副作用的操作。
 
-浏览器安全的 `@deepseek-ai/dsh-tool-workflow/types` 子路径拥有这四类 log-only 事件 payload 及其 `SessionEventMap` 声明。包 invariant 会在冷加载和实时追加时拒绝重复 start、未配对成员、仍有开放成员的终点和 run-end 后更新，同时允许缺失终态后缀的连续前缀。
+浏览器安全的 `@voyaseek-ai/dsh-tool-workflow/types` 子路径拥有这四类 log-only 事件 payload 及其 `SessionEventMap` 声明。包 invariant 会在冷加载和实时追加时拒绝重复 start、未配对成员、仍有开放成员的终点和 run-end 后更新，同时允许缺失终态后缀的连续前缀。
 
 ## 渲染意图
 

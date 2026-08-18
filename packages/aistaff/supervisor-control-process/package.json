@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-supervisor-control-process",
+  "name": "@voyaseek-ai/dsh-aistaff-supervisor-control-process",
   "description": "Host SupervisorControl provider over the authenticated AiDesktop Rust sidecar process",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -25,15 +25,15 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-process": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-process": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-supervisor-process": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-control": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-supervisor-process": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   }
 }

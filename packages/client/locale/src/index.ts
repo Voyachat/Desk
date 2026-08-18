@@ -1,8 +1,8 @@
 /** Host registration for the product locale preference and model context. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import type {} from '@deepseek-ai/dsh-system-prompt'
+import type { Context } from '@voyaseek-ai/cordis'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
+import type {} from '@voyaseek-ai/dsh-system-prompt'
 import {
   FALLBACK_LOCALE, LOCALE_SETTINGS_NAMESPACE, type LocaleId, LocaleSettingsSchema,
 } from './locale-settings.ts'

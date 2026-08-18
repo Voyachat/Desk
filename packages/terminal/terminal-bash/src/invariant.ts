@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-terminal-bash`.
- * @module @deepseek-ai/dsh-terminal-bash/invariant
+ * Package-owned invariant companion for `@voyaseek-ai/dsh-terminal-bash`.
+ * @module @voyaseek-ai/dsh-terminal-bash/invariant
  */
 
 /* jscpd:ignore-start */
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-terminal-bash'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-terminal-bash'
 
 /** Cordis companion plugin name. */
 export const name = 'terminal-bash-invariant'

@@ -4,11 +4,11 @@
  * compaction calls, then binds fresh live sessions to parent/child scripts by
  * first-call order. Throw and hang cases require an explicit override because
  * a session log cannot reconstruct them alone.
- * @module @deepseek-ai/dsh-llm-replay
+ * @module @voyaseek-ai/dsh-llm-replay
  */
-import type { Context } from '@deepseek-ai/cordis';
-import type { SessionEvent } from '@deepseek-ai/dsh-session';
-import type { GenerateOptions, ModelModality, RetryPolicyConfig, StreamChunk } from '@deepseek-ai/dsh-llm';
+import type { Context } from '@voyaseek-ai/cordis';
+import type { SessionEvent } from '@voyaseek-ai/dsh-session';
+import type { GenerateOptions, ModelModality, RetryPolicyConfig, StreamChunk } from '@voyaseek-ai/dsh-llm';
 /**
  * One recorded model call. `throw` may replay prefix chunks before failing;
  * `hang` models cancellation. Derived chunk entries come from ordinary model

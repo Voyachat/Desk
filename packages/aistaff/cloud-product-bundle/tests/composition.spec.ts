@@ -4,15 +4,15 @@ import { describe, expect, it } from 'vitest'
 
 const root = resolve(import.meta.dirname, '..')
 const expected = [
-  '@deepseek-ai/dsh-aistaff-cloud-provider',
-  '@deepseek-ai/dsh-aistaff-employee-experience-remote',
-  '@deepseek-ai/dsh-aistaff-cloud-client-product',
+  '@voyaseek-ai/dsh-aistaff-cloud-provider',
+  '@voyaseek-ai/dsh-aistaff-employee-experience-remote',
+  '@voyaseek-ai/dsh-aistaff-cloud-client-product',
 ]
 const forbidden = [
-  '@deepseek-ai/dsh-aistaff-cloud-conformance',
-  '@deepseek-ai/dsh-aistaff-product-projection',
-  '@deepseek-ai/dsh-aistaff-product-remote',
-  '@deepseek-ai/dsh-aistaff-client-product',
+  '@voyaseek-ai/dsh-aistaff-cloud-conformance',
+  '@voyaseek-ai/dsh-aistaff-product-projection',
+  '@voyaseek-ai/dsh-aistaff-product-remote',
+  '@voyaseek-ai/dsh-aistaff-client-product',
 ]
 
 describe('production Cloud product composition', () => {

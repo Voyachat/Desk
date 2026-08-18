@@ -2,13 +2,13 @@
  * Translation of official SDK stream messages into the durable session
  * events the DSH surface renders. The SDK process remains the execution
  * authority; this recorder only projects its transcript into the log.
- * @module @deepseek-ai/dsh-claude-agent/mapping
+ * @module @voyaseek-ai/dsh-claude-agent/mapping
  */
 
 import type { SDKMessage } from '@anthropic-ai/claude-agent-sdk'
-import { CallId, createAssistantMessage, createToolResultMessage } from '@deepseek-ai/dsh-llm'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { Session } from '@deepseek-ai/dsh-session'
+import { CallId, createAssistantMessage, createToolResultMessage } from '@voyaseek-ai/dsh-llm'
+import type { ContentBlock } from '@voyaseek-ai/dsh-llm'
+import type { Session } from '@voyaseek-ai/dsh-session'
 import { CLAUDE_PROVIDER } from './constants.ts'
 import type {} from './types.ts'
 

@@ -5,14 +5,14 @@
  * patch overlays to apply, and the config dumps — and hands **everything after
  * its own flags** to the booted tree verbatim, where injected app plugins parse
  * their own flag families and print their own `--help` (see
- * `@deepseek-ai/dsh-cmdline`). Launcher flags therefore come first: the first
+ * `@voyaseek-ai/dsh-cmdline`). Launcher flags therefore come first: the first
  * token this parser does not recognize starts the inner arguments, so
  * `dsh --profile tui --resume abc` boots the tui profile with `--resume abc`,
  * and `dsh --profile web -h` prints the web app's help, not this one's.
  *
  * `web` is a hardcoded alias for `--profile web`; `plugin` manages a profile's
  * plugin dependencies by forwarding to pnpm.
- * @module @deepseek-ai/dsh/args
+ * @module @voyaseek-ai/dsh/args
  */
 
 import { Command, CommanderError } from 'commander'
@@ -128,7 +128,7 @@ export function parseDshArgs(argv: readonly string[], version: string): DshInvoc
     .passThroughOptions()
     .enablePositionalOptions()
     .argument('[args...]', 'arguments for the booted profile\'s app (see: dsh --profile <name> --help)')
-    .option('--profile <name>', 'the profile under $DSH_HOME/profiles to boot')
+    .option('--profile <name>', 'the profile under $VOYASEEK_HOME/profiles to boot')
     .option('--patch <path>', 'extra patch-list overlay applied after the profile layer (repeatable)', collect)
     .option('--dump-config', 'print the composed profile tree and exit')
     .option('--dump-default-config', 'print the profile tree without its user layer or --patch overlays and exit')

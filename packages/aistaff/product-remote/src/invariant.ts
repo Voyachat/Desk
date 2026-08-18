@@ -1,9 +1,9 @@
 /** Package-owned invariant companion for the Aistaff product Remote bridge. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-aistaff-product-remote'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-aistaff-product-remote'
 
 /** Cordis companion plugin name. */
 export const name = 'aistaff-product-remote-invariant'

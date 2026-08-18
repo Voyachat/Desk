@@ -2,25 +2,25 @@ import { mkdtempSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import { ShellExecutor } from '@deepseek-ai/dsh-shell'
-import type { ShellExecRequest, ShellExecSpec, ShellProcess, ShellProcessRead, ShellRunResult } from '@deepseek-ai/dsh-shell'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH } from '@deepseek-ai/dsh-tools'
-import AgentRegistry from '@deepseek-ai/dsh-agent'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import LocalJobRegistry from '@deepseek-ai/dsh-jobs-local'
-import * as ToolTasks from '@deepseek-ai/dsh-tool-jobs'
-import ApprovalService from '@deepseek-ai/dsh-user-approval'
-import type { ApprovalOutcome } from '@deepseek-ai/dsh-user-approval'
-import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import SandboxPolicyService from '@deepseek-ai/dsh-sandbox-policy'
-import * as ToolBash from '@deepseek-ai/dsh-tool-bash'
-import * as BashEnvPlugin from '@deepseek-ai/dsh-shell-env'
+import { Context } from '@voyaseek-ai/cordis'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import { ShellExecutor } from '@voyaseek-ai/dsh-shell'
+import type { ShellExecRequest, ShellExecSpec, ShellProcess, ShellProcessRead, ShellRunResult } from '@voyaseek-ai/dsh-shell'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime, { TOOL_ABORTED, TOOL_ABORTED_BEFORE_DISPATCH } from '@voyaseek-ai/dsh-tools'
+import AgentRegistry from '@voyaseek-ai/dsh-agent'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
+import JsonlSessionPersistence from '@voyaseek-ai/dsh-session-persistence-jsonl'
+import LocalJobRegistry from '@voyaseek-ai/dsh-jobs-local'
+import * as ToolTasks from '@voyaseek-ai/dsh-tool-jobs'
+import ApprovalService from '@voyaseek-ai/dsh-user-approval'
+import type { ApprovalOutcome } from '@voyaseek-ai/dsh-user-approval'
+import { LocalBashExecutor } from '@voyaseek-ai/dsh-bash-local'
+import LocalSubprocessRuntime from '@voyaseek-ai/dsh-subprocess-local'
+import SandboxPolicyService from '@voyaseek-ai/dsh-sandbox-policy'
+import * as ToolBash from '@voyaseek-ai/dsh-tool-bash'
+import * as BashEnvPlugin from '@voyaseek-ai/dsh-shell-env'
 import { processOutcome } from '../src/background.ts'
 import { renderProcessRead, renderResult } from '../src/render.ts'
 
@@ -492,7 +492,7 @@ describe('background execution through the job runtime', () => {
     const ctx = await setup() // no LocalJobRegistry / ToolTasks
     const result = await call(ctx, 'bash', { command: 'sleep 60', description: 'test command', run_in_background: true })
     expect(result.isError).toBe(true)
-    expect(text(result)).toContain('background jobs unavailable: load @deepseek-ai/dsh-jobs and @deepseek-ai/dsh-tool-jobs')
+    expect(text(result)).toContain('background jobs unavailable: load @voyaseek-ai/dsh-jobs and @voyaseek-ai/dsh-tool-jobs')
   })
 
   it('a pre-aborted call is skipped before the process starts', async () => {
@@ -1138,7 +1138,7 @@ describe('the model-facing bash tool builds its request from named args only (no
     })
 
     expect(bash.requests[0]?.dshEnv).toEqual({
-      DSH_HOME: recordingDshHome,
+      VOYASEEK_HOME: recordingDshHome,
       DSH_SESSION_ID: 'request-fg',
       DSH_SESSION_JSONL: path,
       DSH_SHELL: '1',
@@ -1165,7 +1165,7 @@ describe('the model-facing bash tool builds its request from named args only (no
 
     expect(bash.requests[0]?.env).toBeUndefined()
     expect(bash.requests[0]?.dshEnv).toEqual({
-      DSH_HOME: recordingDshHome,
+      VOYASEEK_HOME: recordingDshHome,
       DSH_SESSION_ID: 'request-bg',
       DSH_SESSION_JSONL: path,
       DSH_SHELL: '1',
@@ -1186,7 +1186,7 @@ describe('the model-facing bash tool builds its request from named args only (no
     })
 
     expect(bash.requests[0]?.dshEnv).toEqual({
-      DSH_HOME: recordingDshHome,
+      VOYASEEK_HOME: recordingDshHome,
       DSH_SESSION_ID: 'request-id-only',
       DSH_SHELL: '1',
     })
@@ -1210,13 +1210,13 @@ describe('the model-facing bash tool builds its request from named args only (no
 
     expect(bash.requests.map(request => request.dshEnv)).toEqual([
       {
-        DSH_HOME: recordingDshHome,
+        VOYASEEK_HOME: recordingDshHome,
         DSH_SESSION_ID: 'request-parent',
         DSH_SESSION_JSONL: ctx.sessionPersistence.locate(parent.session.header)?.path,
         DSH_SHELL: '1',
       },
       {
-        DSH_HOME: recordingDshHome,
+        VOYASEEK_HOME: recordingDshHome,
         DSH_SESSION_ID: 'request-child',
         DSH_SESSION_JSONL: ctx.sessionPersistence.locate(child.session.header)?.path,
         DSH_SHELL: '1',

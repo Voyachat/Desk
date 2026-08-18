@@ -1,4 +1,4 @@
-/** Host-only Rust Supervisor process transport types. @module @deepseek-ai/dsh-aistaff-supervisor-process/types */
+/** Host-only Rust Supervisor process transport types. @module @voyaseek-ai/dsh-aistaff-supervisor-process/types */
 
 /** JSON value accepted by the authenticated Supervisor wire protocol. */
 export type SupervisorJsonValue =

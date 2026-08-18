@@ -107,7 +107,7 @@ function installApplicationMenu(): void {
         },
         {
           label: '开源软件许可',
-          click: () => { void openLegalDocument('third-party', 'deepseek-harness', 'LICENSE') },
+          click: () => { void openLegalDocument('third-party', 'voyaseek-harness', 'LICENSE') },
         },
       ],
     },

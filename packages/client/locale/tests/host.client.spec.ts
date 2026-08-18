@@ -1,10 +1,10 @@
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
-import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@deepseek-ai/dsh-settings'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
+import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@voyaseek-ai/dsh-settings'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
 import {
   LOCALE_SETTINGS_NAMESPACE, apply,
-} from '@deepseek-ai/dsh-client-locale'
+} from '@voyaseek-ai/dsh-client-locale'
 
 class MemorySettings extends SettingsProvider {
   readonly writable = true

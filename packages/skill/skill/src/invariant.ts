@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-skill`.
- * @module @deepseek-ai/dsh-skill/invariant
+ * Package-owned invariant companion for `@voyaseek-ai/dsh-skill`.
+ * @module @voyaseek-ai/dsh-skill/invariant
  */
 
 /* jscpd:ignore-start */
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-skill'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-skill'
 
 /** Cordis companion plugin name. */
 export const name = 'skill-invariant'

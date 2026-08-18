@@ -4,23 +4,23 @@
  * SDK's transcript into the durable session events the DSH surface renders.
  * The SDK child owns tool execution; the driver owns DSH turn/step structure,
  * cancellation, and inbox semantics.
- * @module @deepseek-ai/dsh-claude-agent/driver
+ * @module @voyaseek-ai/dsh-claude-agent/driver
  */
 
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@voyaseek-ai/cordis'
 import type {
   AgentCancelCause,
   AgentOptions,
   AgentStatus,
   CancelOptions,
   InboxTarget,
-} from '@deepseek-ai/dsh-agent'
-import { Inbox, agentEvents, type AgentEventDispatch } from '@deepseek-ai/dsh-agent'
-import type { AgentDriver } from '@deepseek-ai/dsh-agent-loop'
-import { errorChain } from '@deepseek-ai/dsh-llm'
-import type { LlmFailure, UserMessage } from '@deepseek-ai/dsh-llm'
-import { createScope, type Scope } from '@deepseek-ai/dsh-scope'
-import type { Session, SessionId, TurnEndReason } from '@deepseek-ai/dsh-session'
+} from '@voyaseek-ai/dsh-agent'
+import { Inbox, agentEvents, type AgentEventDispatch } from '@voyaseek-ai/dsh-agent'
+import type { AgentDriver } from '@voyaseek-ai/dsh-agent-loop'
+import { errorChain } from '@voyaseek-ai/dsh-llm'
+import type { LlmFailure, UserMessage } from '@voyaseek-ai/dsh-llm'
+import { createScope, type Scope } from '@voyaseek-ai/dsh-scope'
+import type { Session, SessionId, TurnEndReason } from '@voyaseek-ai/dsh-session'
 import type { SdkQueryEngine } from './engine.ts'
 import { SdkEventRecorder } from './mapping.ts'
 import type {} from './types.ts'

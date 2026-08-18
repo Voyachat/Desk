@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-product-projection",
+  "name": "@voyaseek-ai/dsh-aistaff-product-projection",
   "description": "Deterministic in-memory Host projection for the Aistaff UI acceptance fixture",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -25,16 +25,16 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-aistaff-product-contracts": "workspace:^"
+    "@voyaseek-ai/dsh-aistaff-product-contracts": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   }
 }

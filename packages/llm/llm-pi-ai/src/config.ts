@@ -15,12 +15,12 @@
  */
 
 import type { CacheRetention, ModelThinkingLevel, Provider, ThinkingBudgets, Transport } from '@earendil-works/pi-ai'
-import z from '@deepseek-ai/schemastery'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import type { CredentialRef } from '@deepseek-ai/dsh-credentials'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { resolveRetryPolicy, RetryPolicySchema } from '@deepseek-ai/dsh-llm'
-import type { ResolvedRetryPolicy, RetryPolicyConfig } from '@deepseek-ai/dsh-llm'
+import z from '@voyaseek-ai/schemastery'
+import { credentialRef } from '@voyaseek-ai/dsh-credentials'
+import type { CredentialRef } from '@voyaseek-ai/dsh-credentials'
+import { MAX_TIMER_DELAY_MS } from '@voyaseek-ai/dsh-timeout'
+import { resolveRetryPolicy, RetryPolicySchema } from '@voyaseek-ai/dsh-llm'
+import type { ResolvedRetryPolicy, RetryPolicyConfig } from '@voyaseek-ai/dsh-llm'
 import { MODALITIES, resolveRouteModels, SUPPORTED_THINKING_FORMATS, THINKING_LEVELS } from './catalog.ts'
 import type {
   PiAiCompatProfile,

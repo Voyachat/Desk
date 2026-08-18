@@ -2,7 +2,7 @@ import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   CapabilityContextHandle,
   SupervisorActivityRef,
@@ -16,8 +16,8 @@ import {
   type ReadCapabilityRequest,
   type SupervisorGrantRegister,
   type SupervisorSubjectBinding,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control'
-import * as SupervisorProcessPlugin from '@deepseek-ai/dsh-aistaff-supervisor-process'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control'
+import * as SupervisorProcessPlugin from '@voyaseek-ai/dsh-aistaff-supervisor-process'
 import * as SupervisorControlProcessPlugin from '../src/index.ts'
 
 const roots: string[] = []

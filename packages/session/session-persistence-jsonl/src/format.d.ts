@@ -7,7 +7,7 @@
  *
  * @module dsh-session-persistence-jsonl/format
  */
-import type { SessionEvent, SessionHeader, SessionId } from '@deepseek-ai/dsh-session';
+import type { SessionEvent, SessionHeader, SessionId } from '@voyaseek-ai/dsh-session';
 /** Physical encoding selected for JSONL session artifacts. */
 export type JsonlCompression = 'zstd' | 'none';
 /**

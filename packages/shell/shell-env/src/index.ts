@@ -5,18 +5,18 @@
  * the registry itself while plugins can register additional, enumerable facts
  * with effect-scoped disposal.
  *
- * @module @deepseek-ai/dsh-shell-env
+ * @module @voyaseek-ai/dsh-shell-env
  */
 
-import { Service, type Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { DSH_ENV_PREFIX } from '@deepseek-ai/dsh-shell'
-import type { DshEnvironment, DshEnvironmentKey } from '@deepseek-ai/dsh-shell'
-import { DSH_HOME_ENV, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import type { ToolExecution } from '@deepseek-ai/dsh-tools'
-import type {} from '@deepseek-ai/dsh-session-persistence'
+import { Service, type Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import { DSH_ENV_PREFIX } from '@voyaseek-ai/dsh-shell'
+import type { DshEnvironment, DshEnvironmentKey } from '@voyaseek-ai/dsh-shell'
+import { VOYASEEK_HOME_ENV, resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
+import type { ToolExecution } from '@voyaseek-ai/dsh-tools'
+import type {} from '@voyaseek-ai/dsh-session-persistence'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     shellEnv: ShellEnvRegistry
   }
@@ -27,7 +27,7 @@ export const inject: string[] = []
 
 /** Plugin config (all optional — the built-in facts resolve without defaults). */
 export interface Config {
-  /** DeepSeek Harness home directory exposed as `DSH_HOME`; defaults to `$DSH_HOME` or `~/.dsh`. */
+  /** Voyaseek Harness home directory exposed as `VOYASEEK_HOME`; defaults to `$VOYASEEK_HOME` or `~/.voyaseek`. */
   dshHome?: string
 }
 
@@ -72,7 +72,7 @@ const DSH_SHELL_KEY = `${DSH_ENV_PREFIX}SHELL` as const
 const DSH_SESSION_ID_KEY = `${DSH_ENV_PREFIX}SESSION_ID` as const
 const DSH_SESSION_JSONL_KEY = `${DSH_ENV_PREFIX}SESSION_JSONL` as const
 const RESERVED_BASH_ENV_KEYS = new Set<DshEnvironmentKey>([
-  DSH_HOME_ENV,
+  VOYASEEK_HOME_ENV,
   DSH_SHELL_KEY,
   DSH_SESSION_ID_KEY,
 ])
@@ -151,7 +151,7 @@ export class ShellEnvRegistry extends Service {
    */
   collect(execution: ToolExecution): DshEnvironment {
     const values: Record<DshEnvironmentKey, string> = {
-      [DSH_HOME_ENV]: this.dshHome,
+      [VOYASEEK_HOME_ENV]: this.dshHome,
       [DSH_SHELL_KEY]: '1',
     }
     if (execution.agent !== undefined) {

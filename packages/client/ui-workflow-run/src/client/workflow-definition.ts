@@ -1,12 +1,12 @@
 import type {
   ChatConversationViewNode, ConversationLocation, ConversationNodeContext,
   ConversationNodeDefinition,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
+} from '@voyaseek-ai/dsh-client-runtime/client'
+import type { SessionId } from '@voyaseek-ai/dsh-session/types'
 import type {
   ToolWorkflowAgentEndData, ToolWorkflowAgentOutcome, ToolWorkflowAgentStartData,
   ToolWorkflowRunStartData, ToolWorkflowRunStopReason,
-} from '@deepseek-ai/dsh-tool-workflow/types'
+} from '@voyaseek-ai/dsh-tool-workflow/types'
 
 /** Status shown for a workflow, phase, or member. */
 export type WorkflowRunStatus = 'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted'
@@ -38,7 +38,7 @@ export interface WorkflowRunChatData {
   readonly phases: readonly WorkflowRunPhaseData[]
 }
 
-declare module '@deepseek-ai/dsh-client-ui-conversation/client' {
+declare module '@voyaseek-ai/dsh-client-ui-conversation/client' {
   interface ChatNodeDataMap {
     /** Durable top-level workflow run and all members that actually started. */
     'workflow-run': WorkflowRunChatData

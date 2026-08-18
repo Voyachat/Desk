@@ -8,23 +8,23 @@ import type {
   OperationStatusView,
   ProductError,
   ProductResult,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   LocalCapabilityPort,
   LocalResourceView,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
-import type { BoundActions } from '@deepseek-ai/dsh-client-ui-slots'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
+import type { BoundActions } from '@voyaseek-ai/dsh-client-ui-slots'
 import type { CloudWorkbenchInjected, LocalCapabilityWorkbenchInjected } from './CloudAistaffWorkbench.tsx'
 import type { EmployeeExperienceExternalStore, LocalCapabilityExternalStore } from './external-store.ts'
 import { useEmployeeExperience, useLocalCapability } from './external-store.ts'
 import type { createCloudProductStore } from './store.ts'
 
-type EmployeeRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').EmployeeRef>
-type EngagementRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').EngagementRef>
-type InteractionRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').InteractionRef>
-type MaterialRef = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').MaterialRef>
-type OperationId = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').OperationId>
-type OwnerRevision = ReturnType<typeof import('@deepseek-ai/dsh-aistaff-employee-experience').OwnerRevision>
+type EmployeeRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').EmployeeRef>
+type EngagementRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').EngagementRef>
+type InteractionRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').InteractionRef>
+type MaterialRef = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').MaterialRef>
+type OperationId = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').OperationId>
+type OwnerRevision = ReturnType<typeof import('@voyaseek-ai/dsh-aistaff-employee-experience').OwnerRevision>
 
 type CloudActions = BoundActions<ReturnType<typeof createCloudProductStore>>
 type Reconciliation = 'settled_success' | 'settled_failure' | 'pending' | 'not_found'

@@ -1,6 +1,6 @@
-import type { ProductProjectionSnapshot } from '@deepseek-ai/dsh-aistaff-product-contracts'
-import type { EmployeeId } from '@deepseek-ai/dsh-aistaff-product-contracts/types'
-import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ProductProjectionSnapshot } from '@voyaseek-ai/dsh-aistaff-product-contracts'
+import type { EmployeeId } from '@voyaseek-ai/dsh-aistaff-product-contracts/types'
+import { defineStore, type EngineStoreHandle } from '@voyaseek-ai/dsh-client-runtime/client'
 
 /** Shared interaction and projection state for both product entries. */
 export interface AistaffProductState {

@@ -44,6 +44,35 @@
   gap: 16px;
 }
 
+/* Paging/status header above the flow rows. Kept as one flex item so the
+   virtualizer can measure it as the list's scroll margin. */
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* An empty header must not consume the column gap. */
+.header:empty {
+  display: none;
+}
+
+/* Virtualized flow: absolute rows over a total-size spacer body; item
+   spacing rides the virtualizer's gap (COLUMN_GAP_PX), matching .column. */
+.virtualBody {
+  position: relative;
+  flex: none;
+  min-width: 0;
+}
+
+.virtualRow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  min-width: 0;
+}
+
 /* Settled-flow identity boundary. It is neutral today and becomes the natural
    measurement/mount unit for a virtualizer without changing the column gap. */
 .flowItem {

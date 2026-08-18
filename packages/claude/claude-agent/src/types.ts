@@ -1,11 +1,11 @@
 /**
  * Durable vocabulary contributed by the Claude driver. Types only.
- * @module @deepseek-ai/dsh-claude-agent/types
+ * @module @voyaseek-ai/dsh-claude-agent/types
  */
 
-import type {} from '@deepseek-ai/dsh-session/types'
+import type {} from '@voyaseek-ai/dsh-session/types'
 
-declare module '@deepseek-ai/dsh-session/types' {
+declare module '@voyaseek-ai/dsh-session/types' {
   interface SessionEventMap {
     /**
      * The Claude-side conversation identity that drives this session. The

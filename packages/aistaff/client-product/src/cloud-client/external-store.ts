@@ -1,11 +1,11 @@
 import type {
   EmployeeExperiencePort,
   EmployeeExperienceSnapshot,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   LocalCapabilityPort,
   LocalCapabilitySnapshot,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import { useSyncExternalStore } from 'react'
 
 /** React-compatible view over the snapshot reference owned by the object layer. */

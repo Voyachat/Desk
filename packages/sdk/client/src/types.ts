@@ -2,11 +2,11 @@
  * Types for the TypeScript SDK client: launch options, notification shapes,
  * and owned activity results.
  *
- * @module @deepseek-ai/dsh-sdk-client/types
+ * @module @voyaseek-ai/dsh-sdk-client/types
  */
 
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { ContentBlock } from '@voyaseek-ai/dsh-llm'
+import type { SessionEvent } from '@voyaseek-ai/dsh-session'
 
 /** One server-to-client notification as received off the wire. */
 export interface HarnessNotification {
@@ -30,7 +30,7 @@ export interface HarnessClientOptions {
   /**
    * The complete child environment. `undefined` inherits the parent env
    * verbatim; passing an object replaces it entirely, so callers own
-   * credential policy (see `scrubbedParentEnv` in `@deepseek-ai/dsh-subprocess`
+   * credential policy (see `scrubbedParentEnv` in `@voyaseek-ai/dsh-subprocess`
    * for the shared scrub-then-merge base).
    */
   env?: NodeJS.ProcessEnv
@@ -44,8 +44,8 @@ export interface HarnessClientOptions {
   disposeGraceMs?: number
 }
 
-/** Options for the high-level {@link DeepSeekHarness} wrapper. */
-export interface DeepSeekHarnessOptions {
+/** Options for the high-level {@link VoyaseekHarness} wrapper. */
+export interface VoyaseekHarnessOptions {
   /** Launch spec for the runtime subprocess (command, args, cwd, env, timeouts). */
   launch: HarnessClientOptions
   /** Workspace cwd recorded on every SDK-created session (default: the launch cwd, else `process.cwd()`). */

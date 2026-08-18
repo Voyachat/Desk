@@ -13,7 +13,7 @@
  * as a draftRev advance (begin-command / insert-ref / consume-token /
  * paste-upgrade all answer their bail events this way).
  */
-import type { CommandClaim, ReferenceInsert, TokenSpan } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
+import type { CommandClaim, ReferenceInsert, TokenSpan } from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
 import type { InputSubmitMode } from '../contract/composer-submission.ts'
 import type {
   ConsumeTokenGuard, EditRange, EditSelection, InputEffect, InputEvent, InputMachineOptions,
@@ -25,6 +25,7 @@ export const PLACEHOLDER = '￼'
 
 /** The machine never writes the queue; the wiring layer overlays the queue store's projection. */
 const EMPTY_QUEUE: InputState['queue'] = []
+const EMPTY_PENDING: InputState['pendingSends'] = []
 
 /** Undo ring depth (bounded self-managed transaction log). */
 const LOG_LIMIT = 100
@@ -128,7 +129,7 @@ export class InputMachine {
     this.now = options.now ?? (() => 0)
   }
 
-  /** Read-only snapshot of the machine state (queue always empty at this tier). */
+  /** Read-only snapshot of the machine state (queue and pending sends always empty at this tier). */
   get state(): InputState {
     const c = this.claim
     return {
@@ -140,6 +141,7 @@ export class InputMachine {
       occurrences: this.occurrences,
       ...(this.paste !== undefined ? { paste: this.paste } : {}),
       queue: EMPTY_QUEUE,
+      pendingSends: EMPTY_PENDING,
     }
   }
 

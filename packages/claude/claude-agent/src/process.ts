@@ -4,7 +4,7 @@
  * one-shot subagent package's boundary instead of importing it: the Claude
  * driver package must stay installable without the subagent package.
  *
- * @module @deepseek-ai/dsh-claude-agent/process
+ * @module @voyaseek-ai/dsh-claude-agent/process
  */
 
 import { EventEmitter } from 'node:events'
@@ -17,7 +17,7 @@ import {
   scrubbedParentEnv,
   type SubprocessHandle,
   type SubprocessSpawnSpec,
-} from '@deepseek-ai/dsh-subprocess'
+} from '@voyaseek-ai/dsh-subprocess'
 
 const WINDOWS_BATCH_EXECUTABLE_ENV = 'DSH_CLAUDE_CODE_EXECUTABLE'
 

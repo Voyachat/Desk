@@ -1,10 +1,10 @@
 /** Package-owned invariants for the AI employee experience seam. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantFailure, InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 import type { EmployeeExperienceSnapshot } from './types.ts'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-aistaff-employee-experience'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-aistaff-employee-experience'
 
 /** Cordis companion plugin name. */
 export const name = 'aistaff-employee-experience-invariant'

@@ -7,8 +7,8 @@ export {
   createEmployeeExperienceExternalStore,
   inject,
   useEmployeeExperience,
-} from '@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
+} from '@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
 
 export type {
   CloudWorkbenchInjected,
-} from '@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
+} from '@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'

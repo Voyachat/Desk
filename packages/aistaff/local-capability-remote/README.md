@@ -1,6 +1,6 @@
 # Aistaff Local Capability Remote
 
-This package exposes the authoritative Host `ctx.localCapability` service through generated Typert codecs under the `localCapability` namespace. `getSnapshot()` performs one atomic observe/read and disposes the temporary observation immediately. Every exposed input and result uses the public `@deepseek-ai/dsh-aistaff-local-capability/types` DTOs; a second wire guard rejects binary data, filesystem locations, transport fields, token fields, and `FsTarget`-derived values.
+This package exposes the authoritative Host `ctx.localCapability` service through generated Typert codecs under the `localCapability` namespace. `getSnapshot()` performs one atomic observe/read and disposes the temporary observation immediately. Every exposed input and result uses the public `@voyaseek-ai/dsh-aistaff-local-capability/types` DTOs; a second wire guard rejects binary data, filesystem locations, transport fields, token fields, and `FsTarget`-derived values.
 
 The Client entry fetches a complete Host baseline before registering `ctx.localCapability`. Successful selections, authorizations, revocations, and operation reconciliation retain the original `operation_id` and pull one complete replacement. Replacements cannot regress generation or reuse a generation with different content.
 

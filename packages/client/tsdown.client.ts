@@ -30,21 +30,21 @@ const CSS_VIRTUAL_SUFFIX = '.mjs'
  * The Aistaff Employee Experience entry adds a Service base used only by its
  * owning Remote provider; consumers collaborate through the registered service
  * and never compare that class identity across bundles.
- * Everything else under @deepseek-ai/* is either a module-table entry
+ * Everything else under @voyaseek-ai/* is either a module-table entry
  * (external) or a leak the purity gate rejects.
  */
-export const INLINE_SAFE = /^(?:@deepseek-ai\/dsh-(?:aistaff-employee-experience|host-apiproxy|session|llm|tools|brand)(?:\/|$)|@deepseek-ai\/dsh-aistaff-local-capability\/object-layer$)/
+export const INLINE_SAFE = /^(?:@voyaseek-ai\/dsh-(?:aistaff-employee-experience|host-apiproxy|session|llm|tools|brand)(?:\/|$)|@voyaseek-ai\/dsh-aistaff-local-capability\/object-layer$)/
 
 /**
- * Vendored framework libraries: rescoped into @deepseek-ai, so the gate below
+ * Vendored framework libraries: rescoped into @voyaseek-ai, so the gate below
  * would read them as plugin packages. They carry no cross-plugin runtime
  * identity to share — the framework itself is a platform module (external),
  * while these are ordinary libraries a browser bundle inlines.
  */
-const VENDORED_LIBRARY = /^@deepseek-ai\/(cosmokit|schemastery)(\/|$)/
+const VENDORED_LIBRARY = /^@voyaseek-ai\/(cosmokit|schemastery)(\/|$)/
 
 /** Generated descriptor/codec contribution with no shared runtime identity. */
-const GENERATED_REMOTE = /^@deepseek-ai\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/
+const GENERATED_REMOTE = /^@voyaseek-ai\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*\/remote$/
 
 /**
  * Workspace mode replaces an empty config array with the root defaults. A
@@ -62,7 +62,7 @@ const SKIP_WORKSPACE_BUILD: UserConfig = { entry: '' }
  * dependent bundle materializes. TODO(webload/store-rehome): remove with the
  * store-engine relocation follow-up.
  */
-const RUNTIME_STORE_EXEMPTION = '@deepseek-ai/dsh-client-runtime/client'
+const RUNTIME_STORE_EXEMPTION = '@voyaseek-ai/dsh-client-runtime/client'
 
 /** Externals resolved from the loader module table: the platform seed entries plus the documented runtime exemption. */
 export const CLIENT_EXTERNALS: readonly string[] = [...PLATFORM_MODULES, RUNTIME_STORE_EXEMPTION]
@@ -212,13 +212,13 @@ function clientConfig(id: string, entry: string): UserConfig {
     plugins: [{
       // Bundle purity gate (build-time mirror of the module-edge rules):
       // platform seed entries stay external, inline-safe wire layers inline,
-      // and every other @deepseek-ai value import is a build error — a
+      // and every other @voyaseek-ai value import is a build error — a
       // cross-plugin value import either inlines a duplicate runtime instance
       // or requires a specifier the frozen module table cannot answer.
       // Cross-plugin collaboration goes through cordis services instead.
       name: 'dsh-client-bundle-purity',
       resolveId(source: string) {
-        if (!source.startsWith('@deepseek-ai/')) return null
+        if (!source.startsWith('@voyaseek-ai/')) return null
         if (CLIENT_EXTERNALS.includes(source)) return null // platform module: external wins
         if (VENDORED_LIBRARY.test(source)) return null // vendored library: inline, no shared identity
         if (INLINE_SAFE.test(source) || GENERATED_REMOTE.test(source)) return null // wire contribution: inline is the point

@@ -1,9 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { PROTOCOL_VERSION } from '@agentclientprotocol/sdk'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import ApprovalService, { type ApprovalRequest } from '@deepseek-ai/dsh-user-approval'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import { SessionId } from '@voyaseek-ai/dsh-session'
+import ApprovalService, { type ApprovalRequest } from '@voyaseek-ai/dsh-user-approval'
 import { makeBridgeHarness, type BridgeHarness } from './harness.ts'
 
 describe('ACP machine permission policy', () => {

@@ -3,7 +3,7 @@
  * supplied each value. Harness consumers resolve through it instead of a flattened
  * `process.env`; launchers may still materialize accepted values for config
  * expressions and third-party libraries.
- * @module @deepseek-ai/dsh-launch-environment
+ * @module @voyaseek-ai/dsh-launch-environment
  */
 /** Layer order, most trusted first. */
 const SOURCE_ORDER = ['process', 'project-env', 'user-env'];

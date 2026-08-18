@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { createLaunchEnvironmentSnapshot, DSH_LAUNCH_ENVIRONMENT_KEY } from '@deepseek-ai/dsh-launch-environment'
-import type { CredentialRef } from '@deepseek-ai/dsh-credentials'
+import { credentialRef } from '@voyaseek-ai/dsh-credentials'
+import { createLaunchEnvironmentSnapshot, DSH_LAUNCH_ENVIRONMENT_KEY } from '@voyaseek-ai/dsh-launch-environment'
+import type { CredentialRef } from '@voyaseek-ai/dsh-credentials'
 import { LocalCredentialProvider, resolveSpec } from '../src/index.ts'
 
 /** Credential documents are seeded owner-only, exactly as the provider creates them. */
@@ -107,7 +107,7 @@ describe('layering and reads', () => {
 })
 
 describe('layer ladder', () => {
-  // inherited process env > .credentials.yaml > $DSH_HOME/.env, and the
+  // inherited process env > .credentials.yaml > $VOYASEEK_HOME/.env, and the
   // invoking directory's .env supplies no credential at all.
   async function bootLayered(
     path: string,
@@ -127,7 +127,7 @@ describe('layer ladder', () => {
     await writeCredentials(path, 'DSH_CRED_TEST: stored\n')
     const ctx = await bootLayered(path, [
       { source: 'process', values: {} },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'older-user-env' } },
+      { source: 'user-env', path: '/home/.voyaseek/.env', values: { DSH_CRED_TEST: 'older-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'stored', source: 'file' })
     // A key sitting in the user's .env does not make the stored one
@@ -141,7 +141,7 @@ describe('layer ladder', () => {
     const dir = await tempDir()
     const ctx = await bootLayered(join(dir, '.credentials.yaml'), [
       { source: 'process', values: {} },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
+      { source: 'user-env', path: '/home/.voyaseek/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'from-user-env', source: 'user-env' })
     // Writable: storing a key replaces it as the effective one.
@@ -157,7 +157,7 @@ describe('layer ladder', () => {
     const layers = [
       { source: 'process' as const, values: {} },
       { source: 'project-env' as const, path: '/work/.env', values: { DSH_CRED_TEST: 'from-project' } },
-      { source: 'user-env' as const, path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'from-user' } },
+      { source: 'user-env' as const, path: '/home/.voyaseek/.env', values: { DSH_CRED_TEST: 'from-user' } },
     ]
     const bare = await bootLayered(path, layers)
     expect(await bare.credentials.resolve(KEY)).toEqual({ value: 'from-project', source: 'project-env' })
@@ -215,7 +215,7 @@ describe('layer ladder', () => {
     await writeCredentials(path, 'DSH_CRED_TEST: stored\n')
     const ctx = await bootLayered(path, [
       { source: 'process', values: { DSH_CRED_TEST: 'from-shell' } },
-      { source: 'user-env', path: '/home/.dsh/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
+      { source: 'user-env', path: '/home/.voyaseek/.env', values: { DSH_CRED_TEST: 'from-user-env' } },
     ])
     expect(await ctx.credentials.resolve(KEY)).toEqual({ value: 'from-shell', source: 'env' })
     expect(await ctx.credentials.describe(KEY)).toEqual({ configured: true, source: 'env', writable: false })

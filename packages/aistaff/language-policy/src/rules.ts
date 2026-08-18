@@ -4,12 +4,12 @@
  * document under the `aistaff-language` namespace and outrank both the
  * configured default and the detected conversation language for the scope
  * they name.
- * @module @deepseek-ai/dsh-aistaff-language-policy/rules
+ * @module @voyaseek-ai/dsh-aistaff-language-policy/rules
  */
 
 import { sep } from 'node:path'
-import z from '@deepseek-ai/schemastery'
-import type { Session } from '@deepseek-ai/dsh-session'
+import z from '@voyaseek-ai/schemastery'
+import type { Session } from '@voyaseek-ai/dsh-session'
 import { languageName } from './detect.ts'
 
 /** Settings namespace owned by the language policy plugin. */

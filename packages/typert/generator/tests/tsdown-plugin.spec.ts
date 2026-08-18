@@ -10,7 +10,7 @@ const generated = vi.hoisted(() => vi.fn((
   faces?: readonly WorkspaceEmitResult['face'][],
 ): WorkspaceEmitResult[] => [
   {
-    package: '@deepseek-ai/dsh-tools',
+    package: '@voyaseek-ai/dsh-tools',
     packageRoot: 'packages/core/tools',
     face: 'host' as const,
     exports: [],
@@ -23,7 +23,7 @@ const generated = vi.hoisted(() => vi.fn((
     },
   },
   {
-    package: '@deepseek-ai/dsh-tools',
+    package: '@voyaseek-ai/dsh-tools',
     packageRoot: 'packages/core/tools',
     face: 'client' as const,
     exports: [],
@@ -47,7 +47,7 @@ const generated = vi.hoisted(() => vi.fn((
   && (faces === undefined || faces.includes(artifact.face)))))
 
 const discovered = vi.hoisted(() => vi.fn(() => [
-  { package: '@deepseek-ai/dsh-tools', root: 'packages/core/tools', faces: ['host'] },
+  { package: '@voyaseek-ai/dsh-tools', root: 'packages/core/tools', faces: ['host'] },
   { package: '@fixture/ignored', root: 'packages/ignored', faces: ['host'] },
   { package: '@fixture/remote-only', root: 'packages/remote-only', faces: ['host'] },
 ]))
@@ -99,11 +99,11 @@ describe('typertPlugin', () => {
   it('writes every generated face beside a nested package bundle', async () => {
     const root = await workspace()
     const output = await packageOutput(root, 'tools', {
-      name: '@deepseek-ai/dsh-tools',
+      name: '@voyaseek-ai/dsh-tools',
       exports: { './typert': './lib/typert.host.js' },
     }, 'lib/dev')
     const clientOutput = await packageOutput(root, 'client-tools', {
-      name: '@deepseek-ai/dsh-tools',
+      name: '@voyaseek-ai/dsh-tools',
       exports: { './client/typert': './lib/typert.client.js' },
     })
 
@@ -112,8 +112,8 @@ describe('typertPlugin', () => {
     plugin.writeBundle({ dir: clientOutput })
 
     expect(generated).toHaveBeenCalledTimes(2)
-    expect(generated).toHaveBeenNthCalledWith(1, ['@deepseek-ai/dsh-tools'])
-    expect(generated).toHaveBeenNthCalledWith(2, ['@deepseek-ai/dsh-tools'])
+    expect(generated).toHaveBeenNthCalledWith(1, ['@voyaseek-ai/dsh-tools'])
+    expect(generated).toHaveBeenNthCalledWith(2, ['@voyaseek-ai/dsh-tools'])
     const packageLib = join(root, 'packages', 'tools', 'lib')
     expect(readFileSync(join(packageLib, 'typert.host.js'), 'utf8')).toBe('export const host = true\n')
     expect(readFileSync(join(packageLib, 'typert.host.d.ts'), 'utf8')).toBe('export declare const host: true\n')
@@ -150,7 +150,7 @@ describe('typertPlugin', () => {
   it('limits package mode generation to the bundled package', async () => {
     const root = await workspace()
     const output = await packageOutput(root, 'tools', {
-      name: '@deepseek-ai/dsh-tools',
+      name: '@voyaseek-ai/dsh-tools',
       exports: { './typert': './lib/typert.host.js' },
     })
     await packageOutput(root, 'remote-only', {
@@ -162,14 +162,14 @@ describe('typertPlugin', () => {
 
     expect(discovered).not.toHaveBeenCalled()
     expect(generated).toHaveBeenCalledOnce()
-    expect(generated).toHaveBeenCalledWith(['@deepseek-ai/dsh-tools'], ['host'])
+    expect(generated).toHaveBeenCalledWith(['@voyaseek-ai/dsh-tools'], ['host'])
     expect(existsSync(join(root, 'packages/remote-only/lib/typert.remote-client.js'))).toBe(false)
   })
 
   it('removes stale Remote artifacts from a Host package without Remote output', async () => {
     const root = await workspace()
     const output = await packageOutput(root, 'tools', {
-      name: '@deepseek-ai/dsh-tools',
+      name: '@voyaseek-ai/dsh-tools',
       exports: { './typert': './lib/typert.host.js' },
     })
     const packageLib = join(root, 'packages', 'tools', 'lib')
@@ -179,7 +179,7 @@ describe('typertPlugin', () => {
       'typert.remote-client.d.ts.map',
     ]) writeFileSync(join(packageLib, file), 'stale\n')
     generated.mockReturnValueOnce([{
-      package: '@deepseek-ai/dsh-tools',
+      package: '@voyaseek-ai/dsh-tools',
       packageRoot: 'packages/core/tools',
       face: 'host',
       exports: [],
@@ -198,9 +198,9 @@ describe('typertPlugin', () => {
 
   it('emits every explicit workspace contributor once from a host-only prepass', async () => {
     const root = await workspace()
-    const trigger = await packageOutput(root, 'generator', { name: '@deepseek-ai/dsh-typert-generator' })
+    const trigger = await packageOutput(root, 'generator', { name: '@voyaseek-ai/dsh-typert-generator' })
     await packageOutput(root, 'core/tools', {
-      name: '@deepseek-ai/dsh-tools',
+      name: '@voyaseek-ai/dsh-tools',
       exports: { './typert': './lib/typert.host.js' },
     })
     await packageOutput(root, 'ignored', { name: '@fixture/ignored' })
@@ -217,7 +217,7 @@ describe('typertPlugin', () => {
     expect(discovered).toHaveBeenCalledWith(['host'])
     expect(generated).toHaveBeenCalledOnce()
     expect(generated).toHaveBeenCalledWith(
-      ['@deepseek-ai/dsh-tools', '@fixture/remote-only'],
+      ['@voyaseek-ai/dsh-tools', '@fixture/remote-only'],
       ['host'],
     )
     expect(readFileSync(join(root, 'packages/core/tools/lib/typert.host.js'), 'utf8'))

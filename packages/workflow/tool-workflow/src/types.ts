@@ -2,14 +2,14 @@
  * Browser-safe durable workflow-record events written by the model-facing
  * workflow tool into its calling parent Session.
  *
- * @module @deepseek-ai/dsh-tool-workflow/types
+ * @module @voyaseek-ai/dsh-tool-workflow/types
  */
 
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { CallId } from '@deepseek-ai/dsh-llm'
+import type { SessionId } from '@voyaseek-ai/dsh-session/types'
+import type { CallId } from '@voyaseek-ai/dsh-llm'
 import type {
   WorkflowAgentOutcome, WorkflowRunId, WorkflowStopReason,
-} from '@deepseek-ai/dsh-workflow/types'
+} from '@voyaseek-ai/dsh-workflow/types'
 
 /** Durable member outcome, including process-loss recovery. */
 export type ToolWorkflowAgentOutcome = WorkflowAgentOutcome | 'interrupted'
@@ -47,7 +47,7 @@ export interface ToolWorkflowRunEndData {
   readonly stopReason: ToolWorkflowRunStopReason
 }
 
-declare module '@deepseek-ai/dsh-session/types' {
+declare module '@voyaseek-ai/dsh-session/types' {
   interface SessionEventMap {
     /**
      * Opens one top-level workflow record.

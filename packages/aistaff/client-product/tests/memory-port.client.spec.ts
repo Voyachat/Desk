@@ -1,9 +1,9 @@
-import { ApprovalId, EmployeeId } from '@deepseek-ai/dsh-aistaff-product-contracts'
+import { ApprovalId, EmployeeId } from '@voyaseek-ai/dsh-aistaff-product-contracts'
 import type {
   AistaffClientPort,
   ProductProjectionSnapshot,
   Receipt,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
 import { describe, expect, it, vi } from 'vitest'
 import { createWorkbenchInjected } from '../src/client/adapter.ts'
 import { createMemoryAistaffClientPort, createMemoryProjection } from '../src/client/memory-port.ts'

@@ -32,26 +32,26 @@ const repoTsconfig = fileURLToPath(new URL('../../../../tsconfig.json', import.m
 // session-query consumer/policies, inlined so the package test owns its fixture.
 const CORDIS_YML = `
 - id: llm-deepseek
-  name: '@deepseek-ai/dsh-llm-deepseek'
+  name: '@voyaseek-ai/dsh-llm-deepseek'
 - id: subprocess
-  name: '@deepseek-ai/dsh-subprocess-local'
+  name: '@voyaseek-ai/dsh-subprocess-local'
 - id: bash
-  name: '@deepseek-ai/dsh-bash-local'
+  name: '@voyaseek-ai/dsh-bash-local'
 - id: acp-agent
-  name: '@deepseek-ai/dsh-acp-demo'
+  name: '@voyaseek-ai/dsh-acp-demo'
   config:
     provider: deepseek-official
     model: deepseek-v4-flash
     persona: 'You are a test agent.'
     workspaceContext: false
 - id: tool-session-query
-  name: '@deepseek-ai/dsh-tool-session-query'
+  name: '@voyaseek-ai/dsh-tool-session-query'
 - id: timeout-policy
-  name: '@deepseek-ai/dsh-tool-call-timeout-policy'
+  name: '@voyaseek-ai/dsh-tool-call-timeout-policy'
 - id: spill-local
-  name: '@deepseek-ai/dsh-spill-local'
+  name: '@voyaseek-ai/dsh-spill-local'
 - id: spill-policy
-  name: '@deepseek-ai/dsh-spill-policy'
+  name: '@voyaseek-ai/dsh-spill-policy'
   config:
     maxInlineBytes: 50000
 `
@@ -89,7 +89,7 @@ async function boot(): Promise<Spawned & { cwd: string }> {
         TSX_TSCONFIG_PATH: repoTsconfig,
         // Key-present check only; no prompt is sent, so the model is never called.
         DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY ?? 'keyless-acp-agent-smoke',
-        DSH_HOME: join(cwd, '.dsh'),
+        VOYASEEK_HOME: join(cwd, '.voyaseek'),
         DSH_AGENTS_HOME: join(cwd, '.agents'),
       },
       stdio: ['pipe', 'pipe', 'pipe'],

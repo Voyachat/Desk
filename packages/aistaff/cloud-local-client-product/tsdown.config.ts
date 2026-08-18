@@ -5,8 +5,8 @@ import { transform } from 'lightningcss'
 import type { UserConfig } from 'tsdown'
 import { CLIENT_EXTERNALS, clientOnly } from '../../client/tsdown.client.ts'
 
-const PACKAGE_ID = '@deepseek-ai/dsh-aistaff-cloud-local-client-product'
-const CLOUD_SOURCE = '@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
+const PACKAGE_ID = '@voyaseek-ai/dsh-aistaff-cloud-local-client-product'
+const CLOUD_SOURCE = '@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts'
 const CSS_PREFIX = '\0aistaff-cloud-local-wrapper-css:'
 const CSS_SUFFIX = '.mjs'
 const cssFiles = new Map<string, string>()
@@ -54,7 +54,7 @@ const client: UserConfig = {
   plugins: [{
     name: 'aistaff-cloud-local-wrapper-import-policy',
     resolveId(source: string) {
-      if (!source.startsWith('@deepseek-ai/')) return null
+      if (!source.startsWith('@voyaseek-ai/')) return null
       if (source === CLOUD_SOURCE || CLIENT_EXTERNALS.includes(source)) return null
       throw new Error(`cloud local client wrapper cannot import runtime module "${source}"`)
     },

@@ -1,10 +1,10 @@
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   EmployeeRef,
   OwnerRevision,
   type EmployeeExperienceSnapshot,
   type EmployeeWorkforceView,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import { describe, expect, it } from 'vitest'
 import * as provider from '../src/index.ts'
 import type {
@@ -18,7 +18,7 @@ import type {
   ProjectionBaseline,
   ProjectionSnapshotLease,
   SelectedGatewayResult,
-} from '@deepseek-ai/dsh-aistaff-cloud-client'
+} from '@voyaseek-ai/dsh-aistaff-cloud-client'
 
 const protocol = '1.7'
 const selectionRef = 'selection-1'

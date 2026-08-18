@@ -1,7 +1,7 @@
 /** Test-only Client Gateway conformance artifact, transport, and input provider. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import { AistaffClientGatewayInputs } from '@deepseek-ai/dsh-aistaff-cloud-provider'
+import type { Context } from '@voyaseek-ai/cordis'
+import { AistaffClientGatewayInputs } from '@voyaseek-ai/dsh-aistaff-cloud-provider'
 import {
   CONFORMANCE_CLIENT_GATEWAY_ARTIFACT,
 } from './artifact.ts'

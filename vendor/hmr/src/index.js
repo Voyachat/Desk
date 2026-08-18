@@ -1,4 +1,4 @@
-import { Service } from '@deepseek-ai/cordis';
+import { Service } from '@voyaseek-ai/cordis';
 import { watch } from 'chokidar';
 import { dirname, relative, resolve } from 'node:path';
 import { realpath, stat } from 'node:fs/promises';
@@ -6,7 +6,7 @@ import { handleError } from "./error.js";
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import picomatch from 'picomatch';
-import z from '@deepseek-ai/schemastery';
+import z from '@voyaseek-ai/schemastery';
 /**
  * Recursively collect all module dependencies from a ModuleJob.
  * Skips node: builtins and node_modules to focus on user code.
@@ -517,7 +517,7 @@ class Hmr extends Service {
         ]),
         debounce: z.natural().role('ms').default(100),
     });
-    // [deepseek-harness] vendored modification: removed `.i18n({ 'en-US': enUS, 'zh-CN': zhCN })`
+    // [voyaseek-harness] vendored modification: removed `.i18n({ 'en-US': enUS, 'zh-CN': zhCN })`
     // and the corresponding `./locales/*.yml` imports, to avoid a runtime YAML import hook
     // (@cordisjs/unyaml) that we don't vendor. See vendor/README.md.
 })(Hmr || (Hmr = {}));

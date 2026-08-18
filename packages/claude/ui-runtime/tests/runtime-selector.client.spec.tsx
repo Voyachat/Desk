@@ -6,10 +6,10 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
-import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-web-react'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { createSnapshotStore } from '@voyaseek-ai/dsh-client-runtime/client'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
+import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
+import { zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { RuntimeSelector, type RuntimeSelectorProps } from '../src/client/RuntimeSelector.tsx'
 import type { RuntimeSelectorState } from '../src/client/runtime-store.ts'
 import { zh } from '../src/client/locales.ts'
@@ -53,7 +53,7 @@ describe('RuntimeSelector', () => {
     expect(select).toHaveBeenCalledWith('claude')
     // The native row is the current pick: choosing it again selects nothing.
     fireEvent.click(chip())
-    const nativeItem = screen.getByText('由 DeepSeek Harness 本机调度')
+    const nativeItem = screen.getByText('由 Voyaseek Harness 本机调度')
     fireEvent.click(nativeItem)
     expect(select).toHaveBeenCalledTimes(1)
   })

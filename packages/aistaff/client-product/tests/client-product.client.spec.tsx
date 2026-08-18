@@ -1,10 +1,10 @@
 // @vitest-environment jsdom
 import { useSyncExternalStore } from 'react'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
+import { SlotRegistry } from '@voyaseek-ai/dsh-client-runtime/client'
+import type { SnapshotSelectorHook } from '@voyaseek-ai/dsh-client-ui-slots'
 import { AistaffFooterAction, type AistaffFooterActionProps } from '../src/client/AistaffFooterAction.tsx'
 import { AistaffWorkbench, type AistaffWorkbenchInjected, type AistaffWorkbenchProps } from '../src/client/AistaffWorkbench.tsx'
 import { apply, inject } from '../src/client/index.ts'

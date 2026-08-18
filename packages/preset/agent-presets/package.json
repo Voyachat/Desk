@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-agent-presets",
-  "description": "Per-session agent composition from preset cordis.yml files for the DeepSeek Harness",
+  "name": "@voyaseek-ai/dsh-agent-presets",
+  "description": "Per-session agent composition from preset cordis.yml files for the Voyaseek Harness",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/preset/agent-presets"
   },
   "type": "module",
@@ -37,37 +37,37 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis-plugin-include": "workspace:^",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-atomic-write": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-home-paths": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/cordis-plugin-include": "workspace:^",
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-atomic-write": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-home-paths": "workspace:^",
+    "@voyaseek-ai/dsh-scope": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
     "js-yaml": "^4.1.0",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-include": "workspace:^",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-atomic-write": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-home-paths": "workspace:^",
-    "@deepseek-ai/dsh-scope": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-settings-file": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/cordis-plugin-include": "workspace:^",
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop": "workspace:^",
+    "@voyaseek-ai/dsh-atomic-write": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-home-paths": "workspace:^",
+    "@voyaseek-ai/dsh-scope": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-settings-file": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

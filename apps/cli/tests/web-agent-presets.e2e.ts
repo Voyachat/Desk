@@ -3,23 +3,23 @@ import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import { boot, healProfilesModuleFallback, loadOverlayPatches } from '@deepseek-ai/dsh-app-boot'
-import { provideCmdline } from '@deepseek-ai/dsh-cmdline'
-import { SessionId } from '@deepseek-ai/dsh-session'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { PatchOptions } from '@deepseek-ai/cordis-plugin-include'
+import { Context } from '@voyaseek-ai/cordis'
+import { boot, healProfilesModuleFallback, loadOverlayPatches } from '@voyaseek-ai/dsh-app-boot'
+import { provideCmdline } from '@voyaseek-ai/dsh-cmdline'
+import { SessionId } from '@voyaseek-ai/dsh-session'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import type { PatchOptions } from '@voyaseek-ai/cordis-plugin-include'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { resolveSessionPreset, SETTINGS_NAMESPACE } from '@deepseek-ai/dsh-agent-presets'
-import { applyChildComposition, childSessionMeta } from '@deepseek-ai/dsh-subagent'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import type {} from '@deepseek-ai/dsh-compaction-basic'
-import type {} from '@deepseek-ai/dsh-skill'
-import type {} from '@deepseek-ai/dsh-tools'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
+import { resolveSessionPreset, SETTINGS_NAMESPACE } from '@voyaseek-ai/dsh-agent-presets'
+import { applyChildComposition, childSessionMeta } from '@voyaseek-ai/dsh-subagent'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import type {} from '@voyaseek-ai/dsh-compaction-basic'
+import type {} from '@voyaseek-ai/dsh-skill'
+import type {} from '@voyaseek-ai/dsh-tools'
 // Type-only: resolves `ctx.get('sessionProjections')` and `ctx.get('tokenMeter')`.
-import type {} from '@deepseek-ai/dsh-session-projection'
-import type {} from '@deepseek-ai/dsh-token-meter'
+import type {} from '@voyaseek-ai/dsh-session-projection'
+import type {} from '@voyaseek-ai/dsh-token-meter'
 
 const CONFIG_DIR = fileURLToPath(new URL('../config/', import.meta.url))
 const REPO_ROOT = fileURLToPath(new URL('../../..', import.meta.url))
@@ -53,14 +53,14 @@ async function bootWeb(
   const patches: PatchOptions[] = [
     ...loadOverlayPatches('dsh-test', BASE_PATCH),
     ...loadOverlayPatches('dsh-test', WEB_PATCH),
-    // The settings row defaults to `$DSH_HOME/settings.yaml`. Left alone it
+    // The settings row defaults to `$VOYASEEK_HOME/settings.yaml`. Left alone it
     // reads the developer's own document — and since the default preset is a
     // setting, a stored `agent-presets.default` would decide this file's
     // outcome. Point it at a temp file for the same reason the roster below
     // names only the shipped root.
     { id: 'settings', config: { path: settingsFile, watch: false } },
-    // storage-json's root is anchored to the real $DSH_HOME. Unpinned, this
-    // file writes the developer's own `~/.dsh/storages/` — and then reads it
+    // storage-json's root is anchored to the real $VOYASEEK_HOME. Unpinned, this
+    // file writes the developer's own `~/.voyaseek/storages/` — and then reads it
     // back on the next run, so a stored document from any other build decides
     // this test's boot. Same reason the settings row above is pinned.
     { id: 'storage-json', config: { root: storageRoot } },
@@ -92,11 +92,11 @@ async function bootWeb(
     // supplies `directoryPicker` without one.
     { id: 'directory-picker', disabled: true },
     { insert: [
-      { id: 'directory-picker-browse', name: '@deepseek-ai/dsh-host-directory-picker-browse' },
-      { id: 'ui-directory-picker-browse', name: '@deepseek-ai/dsh-client-ui-directory-picker-browse' },
+      { id: 'directory-picker-browse', name: '@voyaseek-ai/dsh-host-directory-picker-browse' },
+      { id: 'ui-directory-picker-browse', name: '@voyaseek-ai/dsh-client-ui-directory-picker-browse' },
     ] },
     // The roster AppCLIEntry would patch in; only the shipped root, so a
-    // developer's own `~/.dsh/.preset` cannot change this test's outcome.
+    // developer's own `~/.voyaseek/.preset` cannot change this test's outcome.
     // `default` here is the COMPOSITION default — the base layer the settings
     // document overrides.
     {
@@ -341,8 +341,8 @@ describe('the shipped Web composition', () => {
 
   it('merges the global skill layer into a preset agent\'s catalog, keeping local discovery preset-side', async () => {
     const proj = await mkdtemp(join(tmpdir(), 'dsh-preset-skill-proj-'))
-    await mkdir(join(proj, '.dsh', 'skills', 'project-proof'), { recursive: true })
-    await writeFile(join(proj, '.dsh', 'skills', 'project-proof', 'SKILL.md'), [
+    await mkdir(join(proj, '.voyaseek', 'skills', 'project-proof'), { recursive: true })
+    await writeFile(join(proj, '.voyaseek', 'skills', 'project-proof', 'SKILL.md'), [
       '---',
       'name: project-proof',
       'description: Proves the preset layer discovers project skills beside global ones.',
@@ -448,8 +448,8 @@ describe('product subagent rows in user presets', () => {
     }
     productCtx = await bootWeb(settingsFile, [
       { insert: [
-        { id: 'subagent-codex', name: '@deepseek-ai/dsh-subagent-codex' },
-        { id: 'subagent-claude-code', name: '@deepseek-ai/dsh-subagent-claude-code' },
+        { id: 'subagent-codex', name: '@voyaseek-ai/dsh-subagent-codex' },
+        { id: 'subagent-claude-code', name: '@voyaseek-ai/dsh-subagent-claude-code' },
       ] },
       {
         id: 'agent-presets',
@@ -647,7 +647,7 @@ describe('a launcher that configures no writable root', () => {
   // The claim this default exists for, asserted through the real shipped
   // bundles rather than a hand-built context: `apps/cli` patches in only the
   // system root, and a person's own presets are found anyway because the
-  // roster derives `<dshHome>/.agent-presets` itself. `$DSH_HOME` is pointed
+  // roster derives `<dshHome>/.agent-presets` itself. `$VOYASEEK_HOME` is pointed
   // at a temp home BEFORE boot — the derived root is resolved when the plugin
   // is constructed, and an unpinned run would read the developer's own.
   let derivedCtx: Context
@@ -655,12 +655,12 @@ describe('a launcher that configures no writable root', () => {
 
   beforeAll(async () => {
     const home = await mkdtemp(join(tmpdir(), 'dsh-preset-derived-'))
-    previousHome = process.env.DSH_HOME
-    process.env.DSH_HOME = home
+    previousHome = process.env.VOYASEEK_HOME
+    process.env.VOYASEEK_HOME = home
     await mkdir(join(home, '.agent-presets', 'derived-mine'), { recursive: true })
     await writeFile(
       join(home, '.agent-presets', 'derived-mine', 'agent.cordis.yml'),
-      '- id: tool-todo\n  name: \'@deepseek-ai/dsh-tool-todo\'\n  config:\n    allowParallelInProgress: true\n',
+      '- id: tool-todo\n  name: \'@voyaseek-ai/dsh-tool-todo\'\n  config:\n    allowParallelInProgress: true\n',
     )
     const settingsFile = join(await mkdtemp(join(tmpdir(), 'dsh-preset-derived-settings-')), 'settings.yaml')
     await writeFile(settingsFile, '{}\n')
@@ -677,8 +677,8 @@ describe('a launcher that configures no writable root', () => {
   }, 120_000)
 
   afterAll(async () => {
-    if (previousHome === undefined) delete process.env.DSH_HOME
-    else process.env.DSH_HOME = previousHome
+    if (previousHome === undefined) delete process.env.VOYASEEK_HOME
+    else process.env.VOYASEEK_HOME = previousHome
     await derivedCtx.fiber.dispose()
   })
 

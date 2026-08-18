@@ -1,4 +1,4 @@
-# `@deepseek-ai/dsh-app-boot`
+# `@voyaseek-ai/dsh-app-boot`
 
 [English](README.md) | 中文
 
@@ -29,13 +29,13 @@ Loader 并发挂载各个条目，因此当其他环节失败时，某个界面�
 
 `cordis:group` 与 `cordis:include` 一并注册，使一份组装能把一个提供方与它的消费方放进同一个 `isolate` realm。两者都通过宿主的模块管线加载，而非被包含树自身的说明符解析，这正是让本工作区之外的组装——放在 harness home 下的 agent preset——能够使用 group 行的原因。
 
-配置中的裸插件 specifier（`@deepseek-ai/dsh-*`、npm 包）通过 Cordis Loader 的内部模块 loader 解析。默认情况下，它们从配置目录解析；封闭运行时会向 `boot` 或 `mountRootInclude` 传入 `bareModuleBaseUrl`，使已安装包树保持权威，即使配置位于另一个 Node 项目中也不受遮蔽。相对 specifier 始终以配置目录为基准解析。仓库 bin 会安装 Loader 的可选对等依赖（peer dependency） `node-addon-require-builtin`；外部调用方必须提供该组件，或者把插件安装到普通 Node import 解析可以找到的位置。构建后的 `dsh-app-boot` 产物内嵌静态挂载的 Include 实现，但仍将 Loader 保持为外部依赖，因此 include 树与宿主会绑定到同一个 Loader peer。`pnpm dsh` 源码路径还会将 manifest（元数据清单）声明的 workspace 包映射到其 TypeScript 源码；其配置门禁要求每个随附的原始／Web 裸插件都出现在解析所用 manifest 的 `dependencies` 中。
+配置中的裸插件 specifier（`@voyaseek-ai/dsh-*`、npm 包）通过 Cordis Loader 的内部模块 loader 解析。默认情况下，它们从配置目录解析；封闭运行时会向 `boot` 或 `mountRootInclude` 传入 `bareModuleBaseUrl`，使已安装包树保持权威，即使配置位于另一个 Node 项目中也不受遮蔽。相对 specifier 始终以配置目录为基准解析。仓库 bin 会安装 Loader 的可选对等依赖（peer dependency） `node-addon-require-builtin`；外部调用方必须提供该组件，或者把插件安装到普通 Node import 解析可以找到的位置。构建后的 `dsh-app-boot` 产物内嵌静态挂载的 Include 实现，但仍将 Loader 保持为外部依赖，因此 include 树与宿主会绑定到同一个 Loader peer。`pnpm dsh` 源码路径还会将 manifest（元数据清单）声明的 workspace 包映射到其 TypeScript 源码；其配置门禁要求每个随附的原始／Web 裸插件都出现在解析所用 manifest 的 `dependencies` 中。
 
 此包不包含 loader 钩子，也不提供开发模式接口。[`dsh` 应用](../../../apps/cli/README.md) 持有自己的 Node 源码启动钩子，并在启动序列中使用这些 helper；构建后的消费方仍使用普通 Node 包解析。
 
 ## Profiles
 
-profile 是位于 `$DSH_HOME/profiles/<name>` 下的目录（harness home 由 [`resolveDshHome`](../../util/home-paths/README.md) 解析：先取 `$DSH_HOME`，否则取 `~/.dsh`），其中包含一个 `package.json`（树外插件 `dependencies`，加上 profile manifest `dsh.profile` 及其有序的 `bundles` 层列表）和用户自己的 `cordis.patch.yml`。组合包是在 manifest 中声明 `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }` 的 npm 包；`loadProfile` 以双锚点解析每个 `dsh.profile.bundles` 名称（先从 dsh 安装目录，再从 profile 目录），列出的包若没有组合包声明则明确报错。`composeEntries` 通过 include 自己的 `applyEntryPatches` 在空条目列表之上应用各 patch 层，因此组合、标志推导和配置 dump 绝不会与实际启动内容发生偏离。`healProfilesModuleFallback` 维护扁平的 `$DSH_HOME/profiles/node_modules` 目录（安装目录的应用与各组合包依赖的每个包对应一个符号链接），使任意 profile 中的裸插件名都能经 Node 常规的逐级向上查找解析，而无需由 pnpm 管理随安装内置的包。`PROFILE_TEMPLATES`（`web`、`headless`）在首次使用时自动初始化；其他名称在 `initProfile` 创建之前都会明确报错（即 `dsh plugin` 路径）。`loadProfile` 会将与安装自有组合包元组完全一致的列表规范化为随发行版交付的模板，同时保留 manifest 中其他所有字段；一旦条目有任何额外、缺失或重排，该列表就归用户所有并保持不变。
+profile 是位于 `$VOYASEEK_HOME/profiles/<name>` 下的目录（harness home 由 [`resolveDshHome`](../../util/home-paths/README.md) 解析：先取 `$VOYASEEK_HOME`，否则取 `~/.voyaseek`），其中包含一个 `package.json`（树外插件 `dependencies`，加上 profile manifest `dsh.profile` 及其有序的 `bundles` 层列表）和用户自己的 `cordis.patch.yml`。组合包是在 manifest 中声明 `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }` 的 npm 包；`loadProfile` 以双锚点解析每个 `dsh.profile.bundles` 名称（先从 dsh 安装目录，再从 profile 目录），列出的包若没有组合包声明则明确报错。`composeEntries` 通过 include 自己的 `applyEntryPatches` 在空条目列表之上应用各 patch 层，因此组合、标志推导和配置 dump 绝不会与实际启动内容发生偏离。`healProfilesModuleFallback` 维护扁平的 `$VOYASEEK_HOME/profiles/node_modules` 目录（安装目录的应用与各组合包依赖的每个包对应一个符号链接），使任意 profile 中的裸插件名都能经 Node 常规的逐级向上查找解析，而无需由 pnpm 管理随安装内置的包。`PROFILE_TEMPLATES`（`web`、`headless`）在首次使用时自动初始化；其他名称在 `initProfile` 创建之前都会明确报错（即 `dsh plugin` 路径）。`loadProfile` 会将与安装自有组合包元组完全一致的列表规范化为随发行版交付的模板，同时保留 manifest 中其他所有字段；一旦条目有任何额外、缺失或重排，该列表就归用户所有并保持不变。
 
 用户级的机器本地偏好同样位于 harness home 中：
 

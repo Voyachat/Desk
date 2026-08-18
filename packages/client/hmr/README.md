@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-hmr
+# @voyaseek-ai/dsh-client-hmr
 
 English | [中文](README.zh.md)
 
@@ -6,7 +6,7 @@ Hot reload for script-loaded client plugins. The web bundle mounts the row uncon
 
 The browser half subscribes to the system SSE channel (`GET /plugins/events`) and reloads one plugin per `rebuilt` frame through a serialized queue. The sequence per frame — `invalidate`, `prefetch` (load and register the new bundle while the old fiber still serves), `registry.delete` (before the fiber: a bare fiber dispose trips the vendored Loader's self-dispose branch, which would mark the entry disabled), drain the old fiber, delete `entry.fiber`, remove owned `<style data-plugin>` tags, `entry.refresh()` re-imports and remounts, `fiber.await()` rethrows startup failures loud. Dependents reload through cordis itself: a fiber's activation epoch strings its service providers' uids, so replacing a provider's fiber cascades every dependent with zero client-side graph analysis. The node half detects rebuilds with one interval that stat-polls each graph bundle from a synchronous baseline, immediately re-hashes after adding a row, retains missing rows as dirty, and broadcasts only real rev changes; any tsdown watch process producing the bundle therefore triggers HMR with no builder→host channel.
 
-Dynamic Cordis Packages use the same disposal rule but are not static client-module graph rows. Their development entry is `$DSH_HOME/dynamic-cordis/sources/<pluginId>/client.tsx`; the host runner compiles and atomically publishes a new immutable artifact, then the existing dynamic Client runner serially removes and drains its old Loader entry before mounting the new activation. This package does not watch or execute those source files, and production leaves that watcher disabled.
+Dynamic Cordis Packages use the same disposal rule but are not static client-module graph rows. Their development entry is `$VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/client.tsx`; the host runner compiles and atomically publishes a new immutable artifact, then the existing dynamic Client runner serially removes and drains its old Loader entry before mounting the new activation. This package does not watch or execute those source files, and production leaves that watcher disabled.
 
 ## Model Experience
 

@@ -1,8 +1,8 @@
-import { createUserMessage, createMessage, createToolResultMessage, CallId } from '@deepseek-ai/dsh-llm'
+import { createUserMessage, createMessage, createToolResultMessage, CallId } from '@voyaseek-ai/dsh-llm'
 // Minimal SessionEvent builders for orchestration tests (shape mirrors what the
 // host emits; only the fields the object layer reads).
-import type { ContentBlock } from '@deepseek-ai/dsh-llm/types'
-import type { SessionEvent } from '@deepseek-ai/dsh-session/types'
+import type { ContentBlock } from '@voyaseek-ai/dsh-llm/types'
+import type { SessionEvent } from '@voyaseek-ai/dsh-session/types'
 
 /** One text content block (local helper). */
 const text = (t: string): ContentBlock[] => [{ type: 'text', text: t }]

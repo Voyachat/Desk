@@ -1,20 +1,20 @@
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   InteractionRef,
   OperationId,
   OwnerRevision,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   LocalCapabilityPort,
   LocalCapabilitySnapshot,
   SelectDirectoryResult,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import {
   LocalCapabilityCoordinator,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import {
   SupervisorControlPort,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control'
 import type {
   ReadCapabilityRequest,
   ReadCapabilityResult,
@@ -26,8 +26,8 @@ import type {
   SupervisorOperationStatus,
   SupervisorReceipt,
   SupervisorReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control/types'
-import { InMemorySupervisorControl } from '@deepseek-ai/dsh-aistaff-supervisor-control/testing'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control/types'
+import { InMemorySupervisorControl } from '@voyaseek-ai/dsh-aistaff-supervisor-control/testing'
 import { describe, expect, it } from 'vitest'
 import * as conformance from '../src/index.ts'
 

@@ -1,13 +1,13 @@
 /** Test-only Host composition for Cloud-owned local-read interactions. */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   AISTAFF_CLOUD_CONFORMANCE_CONTROL_KEY,
   type AistaffCloudConformanceControl,
   type ConformanceLocalResultPayload,
-} from '@deepseek-ai/dsh-aistaff-cloud-conformance'
-import type { InteractionRef } from '@deepseek-ai/dsh-aistaff-employee-experience/types'
-import { LocalCapabilityCoordinator } from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-cloud-conformance'
+import type { InteractionRef } from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
+import { LocalCapabilityCoordinator } from '@voyaseek-ai/dsh-aistaff-local-capability'
 import type {
   AuthoritativeLocalOperation,
   HostDirectorySelection,
@@ -17,19 +17,19 @@ import type {
   LocalCapabilityResultPublication,
   LocalCapabilityResultSink,
   LocalOperationInteractionResolver,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import {
   SupervisorDeviceSessionId,
   SupervisorDshSessionId,
   SupervisorRunId,
   SupervisorStepId,
   SupervisorTenantId,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control'
 import type {
   ReadCapabilityPayload,
   SupervisorSubjectBinding,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control/types'
-import { InMemorySupervisorControl } from '@deepseek-ai/dsh-aistaff-supervisor-control/testing'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control/types'
+import { InMemorySupervisorControl } from '@voyaseek-ai/dsh-aistaff-supervisor-control/testing'
 
 /** Immutable marker preventing accidental production composition. */
 export const CLOUD_LOCAL_CONFORMANCE_PROVENANCE = Object.freeze({

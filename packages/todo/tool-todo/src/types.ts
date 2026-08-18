@@ -5,12 +5,12 @@
  * for host consumers, `./client/types` (the browser half-entry's re-export)
  * for client aggregates — with zero content duplication.
  *
- * @module @deepseek-ai/dsh-tool-todo/types
+ * @module @voyaseek-ai/dsh-tool-todo/types
  */
 
-import type { TodoItem } from '@deepseek-ai/dsh-session/types'
+import type { TodoItem } from '@voyaseek-ai/dsh-session/types'
 
-export type { TodoItem } from '@deepseek-ai/dsh-session/types'
+export type { TodoItem } from '@voyaseek-ai/dsh-session/types'
 
 /** UI projection status: model-authored lifecycle plus terminal turn failure. */
 export type TodoProjectionStatus = TodoItem['status'] | 'failed' | 'blocked'
@@ -23,7 +23,7 @@ export interface TodoProjectionItem {
   readonly status: TodoProjectionStatus
 }
 
-declare module '@deepseek-ai/dsh-session-projection/types' {
+declare module '@voyaseek-ai/dsh-session-projection/types' {
   interface SessionProjectionMap {
     /**
      * The agent's current whole todo list (the latest `todo/write` snapshot),

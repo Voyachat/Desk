@@ -3,7 +3,7 @@
  * default output language; the context carries the per-conversation delta
  * (detected input language and persisted explicit rules). Both are pinned by
  * tests because they are the product's language contract with the model.
- * @module @deepseek-ai/dsh-aistaff-language-policy/prompt-text
+ * @module @voyaseek-ai/dsh-aistaff-language-policy/prompt-text
  */
 
 import { languageName } from './detect.ts'

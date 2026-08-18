@@ -1,8 +1,8 @@
-# @deepseek-ai/dsh-cordis-host-runner
+# @voyaseek-ai/dsh-cordis-host-runner
 
 English | [中文](README.zh.md)
 
-The host half of model-mounted dynamic packages: the definition registry, the `node:vm` sandbox and fiber lifecycle for host halves, the invoke handler table, and the run round trip a browser page carries out. Provided as `ctx.dynamicCordisRunner`. The model-facing tools live in [`@deepseek-ai/dsh-tool-cordis`](../tool-cordis/README.md); the browser half is loaded by [`@deepseek-ai/dsh-cordis-client-runner`](../cordis-client-runner/README.md).
+The host half of model-mounted dynamic packages: the definition registry, the `node:vm` sandbox and fiber lifecycle for host halves, the invoke handler table, and the run round trip a browser page carries out. Provided as `ctx.dynamicCordisRunner`. The model-facing tools live in [`@voyaseek-ai/dsh-tool-cordis`](../tool-cordis/README.md); the browser half is loaded by [`@voyaseek-ai/dsh-cordis-client-runner`](../cordis-client-runner/README.md).
 
 ## What it does
 
@@ -21,15 +21,15 @@ A refusal from `run` or `stop` names one of `definition-missing`, `host-half-fai
 
 A definition another session defined reads as absent rather than forbidden, so nothing leaks across sessions. `invoke` and `resolveRequestRun` carry no session at all: a component's call and a page's answer are page-global facts, not one session's.
 
-Four forwarded events belong to this feature, declared by this package on its client-safe [`./types`](src/types.ts) subpath and allowlisted for delivery by [`@deepseek-ai/dsh-api-remotes`](../../api/remotes/README.md), which is what lets a browser reach them through `ctx.remote.$on`: `cordis/request-run` (`{requestId, agentId, id, name, purpose}` — metadata, never code), `cordis/request-run-resolved` (`{requestId, outcome}`), `dynamicCordisRunner/package` (`{id, name, rev}`), and `dynamicCordisRunner/retract` (`{id, rev}`). The last two are a symmetric pair announcing run state — every fresh start and every stop, whether or not the package has a browser half.
+Four forwarded events belong to this feature, declared by this package on its client-safe [`./types`](src/types.ts) subpath and allowlisted for delivery by [`@voyaseek-ai/dsh-api-remotes`](../../api/remotes/README.md), which is what lets a browser reach them through `ctx.remote.$on`: `cordis/request-run` (`{requestId, agentId, id, name, purpose}` — metadata, never code), `cordis/request-run-resolved` (`{requestId, outcome}`), `dynamicCordisRunner/package` (`{id, name, rev}`), and `dynamicCordisRunner/retract` (`{id, rev}`). The last two are a symmetric pair announcing run state — every fresh start and every stop, whether or not the package has a browser half.
 
 ## Storage and development HMR
 
-`$DSH_HOME/dynamic-cordis` is this service's durable owner. `registry.json` is the atomic commit point for source, stable identity counters, immutable Package IDs, and the last successfully activated Package pointer. Built JavaScript lives in content-addressed `artifacts/<sha256>.js` files written before the manifest rename. Startup rejects symlinked owner/artifact directories and verifies every referenced artifact's regular-file kind and SHA-256 before restoring it. A failed compile or publication therefore cannot replace the last usable manifest; unreferenced artifacts are harmless orphans.
+`$VOYASEEK_HOME/dynamic-cordis` is this service's durable owner. `registry.json` is the atomic commit point for source, stable identity counters, immutable Package IDs, and the last successfully activated Package pointer. Built JavaScript lives in content-addressed `artifacts/<sha256>.js` files written before the manifest rename. Startup rejects symlinked owner/artifact directories and verifies every referenced artifact's regular-file kind and SHA-256 before restoring it. A failed compile or publication therefore cannot replace the last usable manifest; unreferenced artifacts are harmless orphans.
 
 Restart restores definitions and the current Package pointer, but deliberately restores no Fiber, handlers, pending approval, per-Package grant, or `run` state. Every Plugin is stopped and restorable until an existing explicit run/approval path activates it. Production never evaluates retained TypeScript or TSX: runtime methods consume only the verified JavaScript artifact.
 
-Every successful define also maintains stable working copies at `$DSH_HOME/dynamic-cordis/sources/<pluginId>/host.ts` and/or `client.tsx`. With `developmentHmr: true`, one serialized poller watches their exact bytes. A successful edit compiles both present halves, appends a new immutable Package, atomically commits it, and requests an update only when the Plugin is currently live and the user already approved future Client versions. The existing Client runner removes and drains the old Fiber before loading the new artifact. A broken edit remains editable, leaves the active Package and manifest untouched, and appears as a symbolic `$DSH_HOME` path plus compiler message in `inventory` and the Cordis panel. Watcher disposal stops new polling and prevents a completed build from starting HMR after teardown.
+Every successful define also maintains stable working copies at `$VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/host.ts` and/or `client.tsx`. With `developmentHmr: true`, one serialized poller watches their exact bytes. A successful edit compiles both present halves, appends a new immutable Package, atomically commits it, and requests an update only when the Plugin is currently live and the user already approved future Client versions. The existing Client runner removes and drains the old Fiber before loading the new artifact. A broken edit remains editable, leaves the active Package and manifest untouched, and appears as a symbolic `$VOYASEEK_HOME` path plus compiler message in `inventory` and the Cordis panel. Watcher disposal stops new polling and prevents a completed build from starting HMR after teardown.
 
 ## Trust stance
 
@@ -40,7 +40,7 @@ The vm sandbox isolates globals but is not a security boundary: Node globals are
 | Field | Default | Meaning |
 |---|---|---|
 | `vmTimeoutMs` | `5000` | Milliseconds the synchronous portion of a host half may run in the vm before evaluation is aborted |
-| `dshHome` | `$DSH_HOME` or `~/.dsh` | Harness home that owns the durable registry, artifacts, and editable sources |
+| `dshHome` | `$VOYASEEK_HOME` or `~/.voyaseek` | Harness home that owns the durable registry, artifacts, and editable sources |
 | `developmentHmr` | `false` | Enable the editable-source watcher and authorized live Client replacement |
 | `developmentHmrPollMs` | `500` | Serialized development source polling interval in milliseconds |
 
@@ -74,4 +74,4 @@ A host half that registers tools changes the next request's tool view, which inv
 - `runHostHalf` carries no request id, so "which request evaluated this host half" is attributed host-side to the most recently armed request for that definition; several concurrent run requests for one definition would need that rule revisited.
 - A success answer naming a superseded revision is refused (`accepted: false`) and leaves the request suspended, so the model's call ends only through a valid answer or its own cancellation. Settling it would take a fresh orchestration against the live revision, and no page does that today — the [browser half](../cordis-client-runner/README.md) does not read the ack — so in practice such a request is closed by another page's answer or by the caller's cancellation.
 - A browser half's declared `inject` is read from the plugin it returns in the page, so the announcement carries no service-declaration field at all.
-- **`zod` is a runtime dependency of the generated TypeRT faces, not of `src`.** `./typert` and `./remote` resolve to `lib/typert.*.js`, which `tsc` emits unbundled with a bare `import { z } from 'zod'`, so the package must declare it (the `@deepseek-ai/dsh-goal` precedent) and `knip.json` must ignore it for this workspace — knip reads source, and these faces are build products. Nothing in `src` imports zod.
+- **`zod` is a runtime dependency of the generated TypeRT faces, not of `src`.** `./typert` and `./remote` resolve to `lib/typert.*.js`, which `tsc` emits unbundled with a bare `import { z } from 'zod'`, so the package must declare it (the `@voyaseek-ai/dsh-goal` precedent) and `knip.json` must ignore it for this workspace — knip reads source, and these faces are build products. Nothing in `src` imports zod.

@@ -5,11 +5,11 @@
 import { describe, expect, it } from 'vitest'
 import type {
   AssistantBlock, ChatConversationViewNode, PartialAssistant,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
 import {
-  collectFoldFacts, groupChatFlow, hasVisibleProse, isFoldable, partialHasVisibleProse,
+  collectFoldFacts, groupChatFlow, hasVisibleProse, isFoldable, partialHasReasoning, partialHasVisibleProse,
 } from '../src/client/chat/activity-fold.ts'
-import type { FoldFacts } from '../src/client/chat/activity-fold.ts'
+import type { FoldFacts, ReasoningDisplay } from '../src/client/chat/activity-fold.ts'
 
 const text = (value: string): AssistantBlock => ({ kind: 'text', text: value })
 const reasoning = (value: string): AssistantBlock => ({ kind: 'reasoning', text: value })
@@ -163,6 +163,19 @@ describe('partialHasVisibleProse', () => {
   })
 })
 
+describe('partialHasReasoning', () => {
+  const partialOf = (blocks: readonly AssistantBlock[]): PartialAssistant => ({ turn: 1, step: 1, blocks })
+
+  it('is false without a streaming partial or without reasoning blocks', () => {
+    expect(partialHasReasoning(null)).toBe(false)
+    expect(partialHasReasoning(partialOf([text('visible')]))).toBe(false)
+  })
+
+  it('is true once the streaming partial carries reasoning', () => {
+    expect(partialHasReasoning(partialOf([reasoning('hm')]))).toBe(true)
+  })
+})
+
 describe('collectFoldFacts', () => {
   it('collects closing seqs and turn numbers from turn tails with a closing', () => {
     const store = storeOf([
@@ -224,6 +237,26 @@ describe('isFoldable', () => {
     expect(isFoldable(thinkOnly, EMPTY_FACTS, false)).toBe(true)
   })
 
+  it('keeps reasoning-bearing steps inline when the reader preference says so', () => {
+    const inline: ReasoningDisplay = { showReasoning: true, partialReasoning: false }
+    const folded: ReasoningDisplay = { showReasoning: false, partialReasoning: false }
+    const thinkOnly = assistantStep('a1', { blocks: [reasoning('hm')] })
+    expect(isFoldable(thinkOnly, EMPTY_FACTS, false, inline)).toBe(false)
+    expect(isFoldable(thinkOnly, EMPTY_FACTS, false, folded)).toBe(true)
+    const narration = assistantStep('a2', { turn: 1, finalSeq: 10, blocks: [reasoning('hm'), text('on it')] })
+    const closed = collectFoldFacts(['t1'], storeOf([turnTail('t1', 1, 42)]))
+    expect(isFoldable(narration, closed, false, inline)).toBe(false)
+    expect(isFoldable(narration, closed, false, folded)).toBe(true)
+  })
+
+  it('keeps the streaming step inline once its partial carries reasoning', () => {
+    const runningStep = assistantStep('a1', { status: 'running', blocks: [] })
+    const inline: ReasoningDisplay = { showReasoning: true, partialReasoning: true }
+    const waiting: ReasoningDisplay = { showReasoning: true, partialReasoning: false }
+    expect(isFoldable(runningStep, EMPTY_FACTS, false, inline)).toBe(false)
+    expect(isFoldable(runningStep, EMPTY_FACTS, false, waiting)).toBe(true)
+  })
+
   it('rejects unresolvable and non-activity nodes', () => {
     expect(isFoldable(undefined, EMPTY_FACTS, false)).toBe(false)
     expect(isFoldable(barrier('u1'), EMPTY_FACTS, false)).toBe(false)
@@ -272,6 +305,19 @@ describe('groupChatFlow', () => {
     const rows = groupChatFlow(nodes.map(node => node.key), store, EMPTY_FACTS, false)
     expect(rows.map(row => row.kind === 'fold' ? `fold:${row.members.join(',')}` : row.key))
       .toEqual(['fold:c1', 'u1', 'fold:c2'])
+  })
+
+  it('lifts reasoning steps out of the fold when the reader preference says so', () => {
+    const inline: ReasoningDisplay = { showReasoning: true, partialReasoning: false }
+    const nodes = [
+      assistantStep('a1', { blocks: [reasoning('hm')] }),
+      tool('c1'),
+      assistantStep('a2', { blocks: [reasoning('more')] }),
+    ]
+    const store = storeOf(nodes)
+    const rows = groupChatFlow(nodes.map(node => node.key), store, EMPTY_FACTS, false, inline)
+    expect(rows.map(row => row.kind === 'fold' ? `fold:${row.members.join(',')}` : row.key))
+      .toEqual(['a1', 'fold:c1', 'a2'])
   })
 
   it('marks a fold running while any member runs and drops its end time', () => {

@@ -1,11 +1,11 @@
 /**
  * Browser adapter from generated Employee Experience Remote methods to the
  * observable Renderer object layer.
- * @module @deepseek-ai/dsh-aistaff-employee-experience-remote/client
+ * @module @voyaseek-ai/dsh-aistaff-employee-experience-remote/client
  */
 
-import { Context } from '@deepseek-ai/cordis'
-import { EmployeeExperienceObjectLayer } from '@deepseek-ai/dsh-aistaff-employee-experience'
+import { Context } from '@voyaseek-ai/cordis'
+import { EmployeeExperienceObjectLayer } from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   ActivityView,
   EffectReceiptView,
@@ -24,8 +24,8 @@ import type {
   ProductError,
   ProductResult,
   SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
-import type { RemoteFailure, RemoteResult } from '@deepseek-ai/dsh-typert-protocol'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
+import type { RemoteFailure, RemoteResult } from '@voyaseek-ai/dsh-typert-protocol'
 
 /** Generated Remote calls consumed by the Client object-layer provider. */
 export interface EmployeeExperienceRemoteNamespace {

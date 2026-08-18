@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-supervisor-process",
+  "name": "@voyaseek-ai/dsh-aistaff-supervisor-process",
   "description": "Host-only authenticated process transport for the AiDesktop Rust Supervisor sidecar",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -30,13 +30,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
   }
 }

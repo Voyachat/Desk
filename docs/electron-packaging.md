@@ -2,7 +2,7 @@
 
 English | [中文](electron-packaging.zh.md)
 
-This reference defines how DeepSeek Harness is packaged as a desktop application. The desktop distribution reuses the existing Cordis composition, Web client plugins, session persistence, tools, workers, and native helpers; Electron owns application lifecycle, the desktop window, packaged-resource discovery, and the eventual local IPC carrier.
+This reference defines how Voyaseek Harness is packaged as a desktop application. The desktop distribution reuses the existing Cordis composition, Web client plugins, session persistence, tools, workers, and native helpers; Electron owns application lifecycle, the desktop window, packaged-resource discovery, and the eventual local IPC carrier.
 
 ## Fixed toolchain decisions
 
@@ -17,14 +17,14 @@ Every AI Staff macOS package uses [`apps/aistaff-desktop/assets/app-icon.jpg`](.
 
 ## Current runtime topology
 
-The Web frontend is a Host-assembled plugin application, not a standalone static SPA. `apps/web` builds the shell, while [`@deepseek-ai/dsh-client-modules`](../packages/client/modules/README.md) discovers each `dsh.client` declaration, serves its `lib/client.js`, and injects `window.__DSH_BOOT__`. [`@deepseek-ai/dsh-client-connection`](../packages/client/connection/README.md) carries unary requests over HTTP and the mux and host event streams over WebSocket.
+The Web frontend is a Host-assembled plugin application, not a standalone static SPA. `apps/web` builds the shell, while [`@voyaseek-ai/dsh-client-modules`](../packages/client/modules/README.md) discovers each `dsh.client` declaration, serves its `lib/client.js`, and injects `window.__DSH_BOOT__`. [`@voyaseek-ai/dsh-client-connection`](../packages/client/connection/README.md) carries unary requests over HTTP and the mux and host event streams over WebSocket.
 
-The existing Web profile already composes the complete Host runtime. [`prepareProfile()`](../packages/boot/app-boot/src/profile.ts) resolves `web` to the base and Web application bundles, the Web server may bind port `0`, and [`@deepseek-ai/dsh-web-app`](../packages/bundle/web-app/README.md) prints `dsh web: http://127.0.0.1:<port>` only after the loader has settled. The first desktop delivery uses that readiness line rather than duplicating Host assembly in Electron.
+The existing Web profile already composes the complete Host runtime. [`prepareProfile()`](../packages/boot/app-boot/src/profile.ts) resolves `web` to the base and Web application bundles, the Web server may bind port `0`, and [`@voyaseek-ai/dsh-web-app`](../packages/bundle/web-app/README.md) prints `dsh web: http://127.0.0.1:<port>` only after the loader has settled. The first desktop delivery uses that readiness line rather than duplicating Host assembly in Electron.
 
 ```text
 Electron main
   -> Electron executable in Node mode
-  -> @deepseek-ai/dsh/lib/bin.js --profile web --port 0
+  -> @voyaseek-ai/dsh/lib/bin.js --profile web --port 0
   -> Cordis Host, HTTP/WebSocket API, client bundles, and Web dist
   -> dsh web: http://127.0.0.1:<port>
   -> BrowserWindow.loadURL(exactReadyUrl)
@@ -62,7 +62,7 @@ Native modules are rebuilt or validated against Electron 42.7.0 for every target
 
 ## Writable state and external tools
 
-Installation resources are immutable. Sessions, settings, credentials metadata, attachments, profile overrides, storage, skills, and other runtime state remain under `DSH_HOME`. The desktop application preserves the existing `~/.dsh` default unless the product explicitly chooses an isolated Electron data directory and supplies migration and concurrent-access rules.
+Installation resources are immutable. Sessions, settings, credentials metadata, attachments, profile overrides, storage, skills, and other runtime state remain under `VOYASEEK_HOME`. The desktop application preserves the existing `~/.voyaseek` default unless the product explicitly chooses an isolated Electron data directory and supplies migration and concurrent-access rules.
 
 The packaged JavaScript runtime does not imply an offline operating-system toolchain. Shell tools may call `bash`, `pwsh`, `git`, `python`, compilers, or other commands from the host `PATH`; bundling those programs is a separate distribution and licensing decision. Installing third-party profile plugins also requires pnpm, network policy, and install-script governance, so the first desktop delivery does not promise plugin installation.
 
@@ -101,4 +101,4 @@ The first delivery needs the first three locations and root commands. `packages/
 
 ## Distribution boundaries
 
-The first supported targets and architectures, signing identities, installer formats, update policy, `DSH_HOME` isolation policy, bundled external tools, third-party plugin installation, and self-modification behavior are release inputs rather than implicit consequences of Electron packaging. Each target has its own native runtime and signing verification; a package built for one platform is not evidence for another.
+The first supported targets and architectures, signing identities, installer formats, update policy, `VOYASEEK_HOME` isolation policy, bundled external tools, third-party plugin installation, and self-modification behavior are release inputs rather than implicit consequences of Electron packaging. Each target has its own native runtime and signing verification; a package built for one platform is not evidence for another.

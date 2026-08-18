@@ -2,7 +2,7 @@ import { clientBundle } from '../../client/tsdown.client.ts'
 import { typertPlugin } from '../../typert/generator/lib/types/tsdown-plugin.js'
 
 export default clientBundle(
-  '@deepseek-ai/dsh-aistaff-employee-experience-remote',
+  '@voyaseek-ai/dsh-aistaff-employee-experience-remote',
   ['lib/types/index.js', 'lib/types/invariant.js'],
   {
     hostPhase: true,

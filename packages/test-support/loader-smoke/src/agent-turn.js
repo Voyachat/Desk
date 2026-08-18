@@ -1,8 +1,8 @@
 /**
  * Test-only direct-agent turn driver shared by assembled Loader fixtures.
- * @module @deepseek-ai/dsh-loader-smoke/agent-turn
+ * @module @voyaseek-ai/dsh-loader-smoke/agent-turn
  */
-import { createUserMessage } from '@deepseek-ai/dsh-llm';
+import { createUserMessage } from '@voyaseek-ai/dsh-llm';
 function addUsage(total, step) {
     const next = {
         inputTokens: (total?.inputTokens ?? 0) + step.inputTokens,

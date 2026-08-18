@@ -1,6 +1,6 @@
 # AiDesktop 前端主流程 Demo
 
-这是用户可见的 React 前端纵向切片，用于冻结 AiDesktop 在 DeepSeek Harness Client 上的产品扩展方式。它可以独立运行，但不实现 Agent、云任务、权限裁决或本地文件副作用。
+这是用户可见的 React 前端纵向切片，用于冻结 AiDesktop 在 Voyaseek Harness Client 上的产品扩展方式。它可以独立运行，但不实现 Agent、云任务、权限裁决或本地文件副作用。
 
 ## 运行
 

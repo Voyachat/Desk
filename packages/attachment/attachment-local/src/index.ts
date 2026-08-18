@@ -1,11 +1,11 @@
-/** Local durable attachment backend rooted below `DSH_HOME`. @module @deepseek-ai/dsh-attachment-local */
+/** Local durable attachment backend rooted below `VOYASEEK_HOME`. @module @voyaseek-ai/dsh-attachment-local */
 
 import { join, resolve } from 'node:path'
-import { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { AttachmentStore } from '@deepseek-ai/dsh-attachment'
-import type { ImageAttachmentLimits, ImageAttachmentRef, SaveImageAttachment, StoredImageAttachment } from '@deepseek-ai/dsh-attachment'
-import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import { Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import { AttachmentStore } from '@voyaseek-ai/dsh-attachment'
+import type { ImageAttachmentLimits, ImageAttachmentRef, SaveImageAttachment, StoredImageAttachment } from '@voyaseek-ai/dsh-attachment'
+import { resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
 import { readImageFile, saveImageFile, validateImageFile } from './store.ts'
 
 export { detectImage } from './image.ts'
@@ -22,7 +22,7 @@ export const DEFAULT_MAX_IMAGE_PIXELS = 40_000_000
 
 /** Local attachment backend configuration. */
 export interface Config {
-  /** Explicit harness home; omitted follows `DSH_HOME`, then `~/.dsh`. */
+  /** Explicit harness home; omitted follows `VOYASEEK_HOME`, then `~/.voyaseek`. */
   dshHome?: string
   /** Maximum encoded bytes accepted for one image. */
   maxImageBytes?: number

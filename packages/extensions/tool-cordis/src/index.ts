@@ -1,20 +1,20 @@
 /**
  * Model-facing Cordis runtime/package inspection, define, run, stop, and remove tools.
- * @module @deepseek-ai/dsh-tool-cordis
+ * @module @voyaseek-ai/dsh-tool-cordis
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { Agent, PreStepDecision } from '@deepseek-ai/dsh-agent'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { Agent, PreStepDecision } from '@voyaseek-ai/dsh-agent'
 import {
   CordisDynamicPackageId, CordisDynamicPluginId,
-} from '@deepseek-ai/dsh-cordis-host-runner'
-import type { DynamicCordisReference } from '@deepseek-ai/dsh-cordis-host-runner'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { JsonValue } from '@deepseek-ai/dsh-session'
-import type { UserMessage } from '@deepseek-ai/dsh-session'
-import { defineTool } from '@deepseek-ai/dsh-tools'
-import type { ToolExecution } from '@deepseek-ai/dsh-tools'
-import type {} from '@deepseek-ai/dsh-system-prompt'
+} from '@voyaseek-ai/dsh-cordis-host-runner'
+import type { DynamicCordisReference } from '@voyaseek-ai/dsh-cordis-host-runner'
+import { createUserMessage } from '@voyaseek-ai/dsh-llm'
+import type { JsonValue } from '@voyaseek-ai/dsh-session'
+import type { UserMessage } from '@voyaseek-ai/dsh-session'
+import { defineTool } from '@voyaseek-ai/dsh-tools'
+import type { ToolExecution } from '@voyaseek-ai/dsh-tools'
+import type {} from '@voyaseek-ai/dsh-system-prompt'
 import { missingServices, providedServices } from './inspect.ts'
 import {
   presentDefineCall, presentInspectListCall, presentInspectQueryCall, presentInspectSelfCall, presentRunCall,
@@ -155,7 +155,7 @@ export function apply(ctx: Context): void {
       + 'JavaScript, TypeScript, or TSX. Both are function bodies with no import/export resolver; Client JSX uses the '
       + 'provided React binding. Define builds and durably publishes plain JavaScript before returning. It does not '
       + 'normally execute apply or change currentPackageId. In development HMR mode the result names stable editable '
-      + 'Host/Client working files under $DSH_HOME/dynamic-cordis/sources/<pluginId>/, and a successful edit appends an '
+      + 'Host/Client working files under $VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/, and a successful edit appends an '
       + 'immutable Package and hot-updates a running Plugin only when the user already approved future Client versions; '
       + 'developmentHmr reports whether this define immediately started that update. Otherwise call cordis_run with the returned IDs.',
     parameters: {

@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-subagent
+# @voyaseek-ai/dsh-client-ui-subagent
 
 English | [中文](README.zh.md)
 

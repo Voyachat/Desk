@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render } from '@testing-library/react'
-import { makeTranslate } from '@deepseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@deepseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
+import { zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/zh.ts'
 import { AssistantMarkdown } from '../src/client/chat/AssistantMarkdown.tsx'
 import { zh } from '../src/client/locales.ts'
 
@@ -39,6 +39,50 @@ afterEach(() => {
 const t = makeTranslate(zh, commonZh)
 
 describe('ReasoningRow', () => {
+  it('expands by default while streaming and folds back to the summary when the stream settles', () => {
+    const view = render(
+      <AssistantMarkdown
+        t={t}
+        blocks={[{ kind: 'reasoning', text: 'Inspect the session\nNewest reasoning tokens' }]}
+        streaming
+      />,
+    )
+    const row = view.getByRole('button')
+    expect(row.getAttribute('aria-expanded')).toBe('true')
+    expect(view.container.querySelector('[class*="thinkBody"]')).not.toBeNull()
+
+    view.rerender(
+      <AssistantMarkdown
+        t={t}
+        blocks={[{ kind: 'reasoning', text: 'Inspect the session\nNewest reasoning tokens\n' }]}
+        streaming={false}
+      />,
+    )
+    expect(view.getByRole('button').getAttribute('aria-expanded')).toBe('false')
+    expect(view.getByText('Inspect the session')).toBeTruthy()
+  })
+
+  it('keeps a manual expansion after the stream settles', () => {
+    const view = render(
+      <AssistantMarkdown
+        t={t}
+        blocks={[{ kind: 'reasoning', text: 'Inspect the session\nCheck persistence' }]}
+        streaming={false}
+      />,
+    )
+    fireEvent.click(view.getByText('Think'))
+    expect(view.getByRole('button').getAttribute('aria-expanded')).toBe('true')
+
+    view.rerender(
+      <AssistantMarkdown
+        t={t}
+        blocks={[{ kind: 'reasoning', text: 'Inspect the session\nCheck persistence\n' }]}
+        streaming={false}
+      />,
+    )
+    expect(view.getByRole('button').getAttribute('aria-expanded')).toBe('true')
+  })
+
   it('follows the latest streaming line, scrolls to its end, then restores the settled first line', () => {
     const view = render(
       <AssistantMarkdown
@@ -48,6 +92,8 @@ describe('ReasoningRow', () => {
       />,
     )
     expect(view.getByText('运行中')).toBeTruthy()
+    // The streaming row starts expanded; collapse it to reach the summary.
+    fireEvent.click(view.getByRole('button'))
     const summary = view.getByText('Newest reasoning tokens')
     Object.defineProperties(summary, {
       scrollWidth: { configurable: true, value: 300 },

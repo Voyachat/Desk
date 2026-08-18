@@ -1,15 +1,15 @@
 /** Package-owned invariants for the Aistaff language policy rule store. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantFailure, InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
 // Type-only: the `settings/updated` event merge this companion listens to.
-import type {} from '@deepseek-ai/dsh-settings'
+import type {} from '@voyaseek-ai/dsh-settings'
 import {
   LANGUAGE_POLICY_SETTINGS_NAMESPACE, type LanguagePolicySettings, type LanguageRule,
 } from './rules.ts'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-aistaff-language-policy'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-aistaff-language-policy'
 
 /** Cordis companion plugin name. */
 export const name = 'aistaff-language-policy-invariant'

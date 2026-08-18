@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import type {
   ChatConversationViewNode, ConversationSnapshot,
-} from '@deepseek-ai/dsh-client-runtime/client'
-import { shallowEqual } from '@deepseek-ai/dsh-client-runtime/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
+import { shallowEqual } from '@voyaseek-ai/dsh-client-runtime/client'
 import {
   IconChevronDownOutline14, StateDot,
-} from '@deepseek-ai/dsh-client-ui-primitives'
-import type { PropsLocale, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+} from '@voyaseek-ai/dsh-client-ui-primitives'
+import type { PropsLocale, PropsRuntime } from '@voyaseek-ai/dsh-client-ui-slots'
 import {
   WORKFLOW_STATUS_KEYS, workflowDotState, type WorkflowRunInjected,
 } from './WorkflowRunPanel.tsx'

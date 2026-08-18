@@ -16,7 +16,7 @@ import type {
   RecoveredOperation,
   SelectedGatewayResult,
   SnapshotBound,
-} from '@deepseek-ai/dsh-aistaff-cloud-client'
+} from '@voyaseek-ai/dsh-aistaff-cloud-client'
 import type {
   ActivityView,
   EffectReceiptView,
@@ -30,7 +30,7 @@ import type {
   OpenEngagementInput,
   OperationStatusView,
   SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   ConformanceArtifactProvenance,
   FixtureEnvelope,

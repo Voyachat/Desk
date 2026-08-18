@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-cloud-conformance-bundle",
+  "name": "@voyaseek-ai/dsh-aistaff-cloud-conformance-bundle",
   "description": "Test-only deterministic Aistaff Cloud Employee Experience composition",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -32,17 +32,17 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-aistaff-cloud-client-product": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-cloud-conformance": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-cloud-provider": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-employee-experience-remote": "workspace:^"
+    "@voyaseek-ai/dsh-aistaff-cloud-client-product": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-cloud-conformance": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-cloud-provider": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-employee-experience-remote": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   }
 }

@@ -66,7 +66,7 @@ const PRE_IMAGE_FALLBACK_PROFILE_PATCH = `# AI Staff desktop defaults. Elevated 
     provider: google
     model: gemini-3.6-flash
 `
-const EXPECTED_PROFILE_PATCH = `# Voyaseek desktop defaults. Elevated operations always require interactive approval.\n- id: approval
+const PRE_FULL_ACCESS_NEVER_PROFILE_PATCH = `# Voyaseek desktop defaults. Elevated operations always require interactive approval.\n- id: approval
   config:
     policy: ask
 
@@ -116,6 +116,56 @@ const EXPECTED_PROFILE_PATCH = `# Voyaseek desktop defaults. Elevated operations
     provider: google
     model: gemini-3.6-flash
 `
+const EXPECTED_PROFILE_PATCH = `# Voyaseek desktop defaults. Read-only and workspace-write require interactive approval; danger-full-access skips approval prompts.\n- id: approval
+  config:
+    policy: ask
+
+- id: permission
+  config:
+    defaultPreset: workspace-write
+    presets:
+      read-only:
+        sandbox: read-only
+        approval: ask
+      workspace-write:
+        sandbox: workspace-write
+        approval: ask
+      danger-full-access:
+        sandbox: danger-full-access
+        approval: never
+
+# API keys are resolved from the named environment variables.\n- id: llm-pi-ai
+  config:
+    providers:
+      google:
+        apiKeyEnv: GEMINI_API_KEY
+        models:
+          - id: gemini-3.6-flash
+            input: [text, image]
+      dashscope:
+        displayName: DashScope
+        apiKeyEnv: DASHSCOPE_API_KEY
+        api: openai-completions
+        baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
+        models:
+          - id: qwen-plus
+            name: Qwen Plus
+          - id: qwen3.7-flash
+            name: Qwen 3.7 Flash
+            input: [text, image]
+
+- id: api-gateway
+  config:
+    imageFallback:
+      provider: dashscope
+      model: qwen3.7-flash
+      maxTokens: 4096
+
+- id: agent-default-model
+  config:
+    provider: google
+    model: gemini-3.6-flash
+`
 
 afterEach(() => {
   for (const directory of temporaryDirectories.splice(0)) rmSync(directory, { recursive: true, force: true })
@@ -130,9 +180,9 @@ describe('Voyaseek profile initialization', () => {
       dsh: { profile: { bundles: string[] } }
     }
     expect(manifest.dsh.profile.bundles).toEqual([
-      '@deepseek-ai/dsh-base',
-      '@deepseek-ai/dsh-web-app',
-      '@deepseek-ai/dsh-aistaff-product-bundle',
+      '@voyaseek-ai/dsh-base',
+      '@voyaseek-ai/dsh-web-app',
+      '@voyaseek-ai/dsh-aistaff-product-bundle',
     ])
     expect(readFileSync(join(profile, 'cordis.patch.yml'), 'utf8')).toBe(EXPECTED_PROFILE_PATCH)
   })
@@ -141,6 +191,7 @@ describe('Voyaseek profile initialization', () => {
     ['empty legacy patch', EMPTY_LEGACY_PROFILE_PATCH],
     ['model-only generated patch', MODEL_ONLY_PROFILE_PATCH],
     ['pre-image-fallback generated patch', PRE_IMAGE_FALLBACK_PROFILE_PATCH],
+    ['pre-full-access-never generated patch', PRE_FULL_ACCESS_NEVER_PROFILE_PATCH],
   ])('migrates the exact %s', (_label, generatedPatch) => {
     const home = mkdtempSync(join(tmpdir(), 'aistaff-profile-'))
     temporaryDirectories.push(home)

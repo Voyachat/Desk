@@ -10,9 +10,9 @@ import { join } from 'node:path'
 import type { Browser, Page } from 'playwright'
 import { chromium } from 'playwright'
 import { afterEach, describe, expect, it, onTestFailed } from 'vitest'
-import { ProviderRequestId } from '@deepseek-ai/dsh-llm'
-import { deriveReplayScript, parseSessionLog, type ReplayEntry } from '@deepseek-ai/dsh-llm-replay'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import { ProviderRequestId } from '@voyaseek-ai/dsh-llm'
+import { deriveReplayScript, parseSessionLog, type ReplayEntry } from '@voyaseek-ai/dsh-llm-replay'
+import type { SessionEvent } from '@voyaseek-ai/dsh-session'
 import {
   assertFixtureInventory, captureStableAria, compareOrRefreshGolden,
   launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold,

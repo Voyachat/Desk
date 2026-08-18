@@ -1,15 +1,15 @@
 /**
  * Renderer-safe local capability Service Definition and observable object layer.
- * @module @deepseek-ai/dsh-aistaff-local-capability
+ * @module @voyaseek-ai/dsh-aistaff-local-capability
  */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   LocalConsentRef,
   LocalResourceHandleRef,
   OwnerRevision,
   ReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   LocalOperationRequestView,
   OperationId as OperationIdType,
@@ -18,18 +18,18 @@ import type {
   ProductResult,
   ReceiptRef as ReceiptRefType,
   OwnerRevision as OwnerRevisionType,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
 import {
   SupervisorControlError,
   type SupervisorControlPort,
   SupervisorOperationId,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control'
 import type {
   ReadCapabilityRequest,
   SupervisorGrant,
   SupervisorReceipt,
   SupervisorSubjectBinding,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control/types'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control/types'
 import type {
   AuthoritativeLocalOperation,
   AuthorizeLocalOperationInput,
@@ -694,7 +694,7 @@ function failure<T>(
 
 function isJsonRecord(
   value: LocalOperationRequestView['arguments'],
-): value is { readonly [key: string]: import('@deepseek-ai/dsh-aistaff-employee-experience/types').JsonValue } {
+): value is { readonly [key: string]: import('@voyaseek-ai/dsh-aistaff-employee-experience/types').JsonValue } {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
 

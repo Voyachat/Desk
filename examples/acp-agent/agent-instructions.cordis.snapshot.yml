@@ -2,15 +2,15 @@
 # compose across includes, so this applies the scenario config and model swap
 # directly to the live tree.
 - id: base
-  name: '@deepseek-ai/cordis-plugin-include'
+  name: '@voyaseek-ai/cordis-plugin-include'
   config:
     path: ./cordis.yml
     patches:
       - id: llm-deepseek
-        name: '@deepseek-ai/dsh-llm-deepseek'
+        name: '@voyaseek-ai/dsh-llm-deepseek'
         disabled: true
       - id: acp-agent
-        name: '@deepseek-ai/dsh-acp-demo'
+        name: '@voyaseek-ai/dsh-acp-demo'
         config:
           provider: deepseek-official
           model: deepseek-v4-flash
@@ -18,7 +18,7 @@
           persistenceCompression: 'none'
           workspaceContext:
             maxBytes: 65536
-            dshHome: !!js process.cwd() + '/.dsh'
+            dshHome: !!js process.cwd() + '/.voyaseek'
             projectRootMarkers:
               - .dsh-project
           persona: |
@@ -27,6 +27,6 @@
             Verify your work by running the code or tests. Keep answers brief and factual.
       - insert:
           - id: llm-replay
-            name: '@deepseek-ai/dsh-llm-replay'
+            name: '@voyaseek-ai/dsh-llm-replay'
           - id: workspace-context-compaction
             name: './tests/fixtures/workspace-context-compaction.ts'

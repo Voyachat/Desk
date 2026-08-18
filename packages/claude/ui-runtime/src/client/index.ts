@@ -11,11 +11,11 @@
  * one — and opens the result.
  */
 
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.left seat).
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-conversation/client'
 // Type-only: pulls the locale plugin's Context merge (ctx.locale).
-import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@voyaseek-ai/dsh-client-locale/client'
 import { RuntimeSelector } from './RuntimeSelector.tsx'
 import { RuntimeSelectorController } from './runtime-store.ts'
 import { en, zh, type ClaudeRuntimeKey } from './locales.ts'
@@ -23,7 +23,7 @@ import { en, zh, type ClaudeRuntimeKey } from './locales.ts'
 export type { ClaudeRuntimeKey } from './locales.ts'
 export type { RuntimeSelectorState } from './runtime-store.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@voyaseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** The composer runtime selector's copy. */
     claudeRuntime: ClaudeRuntimeKey

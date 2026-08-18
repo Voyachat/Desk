@@ -8,18 +8,18 @@
  * anything, while an in-flight stream keeps the facts it started with. The
  * one registration-captured fact — the retry policy — re-registers the route
  * in place when it changes.
- * @module @deepseek-ai/dsh-llm-deepseek
+ * @module @voyaseek-ai/dsh-llm-deepseek
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { assertUsableApiKey, LlmError, resolveRetryPolicy, RetryPolicySchema } from '@deepseek-ai/dsh-llm'
-import type { RetryPolicyConfig } from '@deepseek-ai/dsh-llm'
-import { credentialRef } from '@deepseek-ai/dsh-credentials'
-import { launchEnvironmentOf, type LaunchEnvironmentSnapshot } from '@deepseek-ai/dsh-launch-environment'
-import { deepEqualJson, installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
-import { getOrCreateAnonymousUserId, type AnonymousUserId } from '@deepseek-ai/dsh-anonymous-user-id'
+import type { Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import { assertUsableApiKey, LlmError, resolveRetryPolicy, RetryPolicySchema } from '@voyaseek-ai/dsh-llm'
+import type { RetryPolicyConfig } from '@voyaseek-ai/dsh-llm'
+import { credentialRef } from '@voyaseek-ai/dsh-credentials'
+import { launchEnvironmentOf, type LaunchEnvironmentSnapshot } from '@voyaseek-ai/dsh-launch-environment'
+import { deepEqualJson, installSettingsSection, settingsNamespace } from '@voyaseek-ai/dsh-settings'
+import { MAX_TIMER_DELAY_MS } from '@voyaseek-ai/dsh-timeout'
+import { getOrCreateAnonymousUserId, type AnonymousUserId } from '@voyaseek-ai/dsh-anonymous-user-id'
 import {
   DEFAULT_CONTEXT_WINDOW,
   DEFAULT_MAX_TOKENS,

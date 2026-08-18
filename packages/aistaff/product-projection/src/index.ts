@@ -1,16 +1,16 @@
 /**
  * Deterministic in-memory Host projection for the Aistaff UI acceptance fixture.
- * @module @deepseek-ai/dsh-aistaff-product-projection
+ * @module @voyaseek-ai/dsh-aistaff-product-projection
  */
 
 import { randomUUID } from 'node:crypto'
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import {
   ApprovalId,
   EmployeeId,
   ReceiptId,
   TaskId,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
 import type {
   AistaffClientPort,
   Approval,
@@ -25,8 +25,8 @@ import type {
   Receipt,
   RespondApprovalInput,
   Task,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
-import z from '@deepseek-ai/schemastery'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
+import z from '@voyaseek-ai/schemastery'
 
 /** Explicit local employee catalog required by the in-memory provider. */
 export interface Config {
@@ -159,7 +159,7 @@ function failure(
   return { ok: false, error: { code, message, retryable } }
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Local Aistaff Host projection and fixture product operations. */
     aistaffProduct: ProductProjectionService

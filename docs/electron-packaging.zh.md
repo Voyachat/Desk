@@ -2,7 +2,7 @@
 
 [English](electron-packaging.md) | 中文
 
-本参考文档定义如何将 DeepSeek Harness 打包为桌面应用。桌面发行版复用现有 Cordis 组合、Web 客户端插件、会话持久化、工具、worker 和原生辅助程序；Electron 负责应用生命周期、桌面窗口、打包资源发现以及最终的本地 IPC 载体。
+本参考文档定义如何将 Voyaseek Harness 打包为桌面应用。桌面发行版复用现有 Cordis 组合、Web 客户端插件、会话持久化、工具、worker 和原生辅助程序；Electron 负责应用生命周期、桌面窗口、打包资源发现以及最终的本地 IPC 载体。
 
 ## 固定工具链决策
 
@@ -17,14 +17,14 @@
 
 ## 当前运行时拓扑
 
-Web 前端是由 Host 组装的插件应用，不是独立静态 SPA。`apps/web` 构建外壳，[`@deepseek-ai/dsh-client-modules`](../packages/client/modules/README.md) 发现每个 `dsh.client` 声明、提供其 `lib/client.js` 并注入 `window.__DSH_BOOT__`。[`@deepseek-ai/dsh-client-connection`](../packages/client/connection/README.md) 通过 HTTP 承载一元请求，并通过 WebSocket 承载 mux 和 host 事件流。
+Web 前端是由 Host 组装的插件应用，不是独立静态 SPA。`apps/web` 构建外壳，[`@voyaseek-ai/dsh-client-modules`](../packages/client/modules/README.md) 发现每个 `dsh.client` 声明、提供其 `lib/client.js` 并注入 `window.__DSH_BOOT__`。[`@voyaseek-ai/dsh-client-connection`](../packages/client/connection/README.md) 通过 HTTP 承载一元请求，并通过 WebSocket 承载 mux 和 host 事件流。
 
-现有 Web profile 已经组合完整的 Host 运行时。[`prepareProfile()`](../packages/boot/app-boot/src/profile.ts) 将 `web` 解析为 base 与 Web 应用组合包，Web 服务器可以绑定端口 `0`，[`@deepseek-ai/dsh-web-app`](../packages/bundle/web-app/README.md) 只在 loader 完全停稳后输出 `dsh web: http://127.0.0.1:<port>`。第一版桌面交付使用这条就绪输出，不在 Electron 中重复组装 Host。
+现有 Web profile 已经组合完整的 Host 运行时。[`prepareProfile()`](../packages/boot/app-boot/src/profile.ts) 将 `web` 解析为 base 与 Web 应用组合包，Web 服务器可以绑定端口 `0`，[`@voyaseek-ai/dsh-web-app`](../packages/bundle/web-app/README.md) 只在 loader 完全停稳后输出 `dsh web: http://127.0.0.1:<port>`。第一版桌面交付使用这条就绪输出，不在 Electron 中重复组装 Host。
 
 ```text
 Electron main
   -> Electron executable in Node mode
-  -> @deepseek-ai/dsh/lib/bin.js --profile web --port 0
+  -> @voyaseek-ai/dsh/lib/bin.js --profile web --port 0
   -> Cordis Host, HTTP/WebSocket API, client bundles, and Web dist
   -> dsh web: http://127.0.0.1:<port>
   -> BrowserWindow.loadURL(exactReadyUrl)
@@ -62,7 +62,7 @@ Forge 通过 `extraResources` 将结果复制到 `process.resourcesPath/runtime`
 
 ## 可写状态与外部工具
 
-安装资源不可写。会话、设置、凭据元数据、附件、profile override、storage、skill 和其他运行时状态继续位于 `DSH_HOME`。除非产品明确选择隔离的 Electron 数据目录，并提供迁移与并发访问规则，否则桌面应用保留现有的 `~/.dsh` 默认值。
+安装资源不可写。会话、设置、凭据元数据、附件、profile override、storage、skill 和其他运行时状态继续位于 `VOYASEEK_HOME`。除非产品明确选择隔离的 Electron 数据目录，并提供迁移与并发访问规则，否则桌面应用保留现有的 `~/.voyaseek` 默认值。
 
 打包 JavaScript 运行时并不意味着同时提供离线操作系统工具链。Shell 工具可能从宿主 `PATH` 调用 `bash`、`pwsh`、`git`、`python`、编译器或其他命令；打包这些程序是独立的发行与许可证决策。安装第三方 profile 插件还需要 pnpm、网络策略和安装脚本治理，因此第一版桌面交付不承诺插件安装能力。
 
@@ -101,4 +101,4 @@ Forge 通过 `extraResources` 将结果复制到 `process.resourcesPath/runtime`
 
 ## 发行边界
 
-首批支持的目标与架构、签名身份、安装程序格式、更新策略、`DSH_HOME` 隔离策略、内置外部工具、第三方插件安装和自修改行为都是发布输入，不是 Electron 打包的隐含结果。每个目标都需要独立验证原生运行时与签名；一个平台的打包结果不能证明另一个平台可用。
+首批支持的目标与架构、签名身份、安装程序格式、更新策略、`VOYASEEK_HOME` 隔离策略、内置外部工具、第三方插件安装和自修改行为都是发布输入，不是 Electron 打包的隐含结果。每个目标都需要独立验证原生运行时与签名；一个平台的打包结果不能证明另一个平台可用。

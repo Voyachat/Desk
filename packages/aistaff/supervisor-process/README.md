@@ -6,7 +6,7 @@ The transport admits only `hello`, `health`, `shutdown`, the `control.hello`, `c
 
 `apply()` authenticates `hello` before publishing `ctx.aistaffSupervisorProcess`. Its Cordis effect disposer sends authenticated `shutdown`, forces termination after the configured bound, and joins the child. Errors contain only stable Host and Rust reason codes, never payloads, paths, child stderr, or environment values.
 
-This package is the process transport below `@deepseek-ai/dsh-aistaff-supervisor-control-process`; it does not implement the `SupervisorControlPort` Service Definition or choose between the control and retained legacy commands. The process-backed provider uses only the `control.*` operations and never adapts a legacy result into a Receipt or execution identity.
+This package is the process transport below `@voyaseek-ai/dsh-aistaff-supervisor-control-process`; it does not implement the `SupervisorControlPort` Service Definition or choose between the control and retained legacy commands. The process-backed provider uses only the `control.*` operations and never adapts a legacy result into a Receipt or execution identity.
 
 ## Model Experience
 
@@ -26,4 +26,4 @@ None. Starting or invoking the Host sidecar does not alter model requests.
 
 ## Known Limitations and Deferred Work
 
-- **No control semantics in this transport** — `@deepseek-ai/dsh-aistaff-supervisor-control-process` owns the strict public request and response mapping, capability-only restriction, and reconciliation error behavior.
+- **No control semantics in this transport** — `@voyaseek-ai/dsh-aistaff-supervisor-control-process` owns the strict public request and response mapping, capability-only restriction, and reconciliation error behavior.

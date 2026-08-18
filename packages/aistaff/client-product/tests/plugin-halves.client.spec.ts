@@ -16,7 +16,7 @@ describe('client product package halves', () => {
     const result = await applyInvariant({ invariants: { register } } as never)
     expect(result).toBe(dispose)
     expect(register).toHaveBeenCalledWith(
-      '@deepseek-ai/dsh-aistaff-client-product',
+      '@voyaseek-ai/dsh-aistaff-client-product',
       expect.any(Function),
     )
     const install = register.mock.calls[0]![1]

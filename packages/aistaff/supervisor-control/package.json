@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-supervisor-control",
+  "name": "@voyaseek-ai/dsh-aistaff-supervisor-control",
   "description": "Host-only AiDesktop Supervisor control service definition for local grants, bounded reads, and receipts",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -34,13 +34,13 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-brand": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis": "workspace:^",
-    "@deepseek-ai/dsh-brand": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-brand": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   }
 }

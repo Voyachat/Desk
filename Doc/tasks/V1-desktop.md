@@ -38,7 +38,7 @@ Web V1 通过后的原生 macOS 安装产物：固定 Electron `42.7.0`，内置
 ## 最小范围
 
 - Electron Main 使用 `process.execPath` 与 `ELECTRON_RUN_AS_NODE=1` 启动 `process.resourcesPath/runtime` 中的 Locked Web profile，端口固定为 `0`，只接受精确 loopback readiness URL。
-- Runtime、Client bundles、workers、native addons 和 helper 使用真实文件路径部署在 ASAR 外；安装资源只读，状态写入明确的 `DSH_HOME`。
+- Runtime、Client bundles、workers、native addons 和 helper 使用真实文件路径部署在 ASAR 外；安装资源只读，状态写入明确的 `VOYASEEK_HOME`。
 - Main 拥有 Host 子进程树和窗口生命周期；启动失败、窗口关闭、应用退出与升级前准备必须释放 Host、worker、PTY、helper 和端口。
 - 首个本机包只验收当前构建机的 macOS 架构，不处理真实客户数据；客户 IPC、跨平台、签名、公证和自动更新不在本块。
 - AI 员工 `approve` 在桌面包内仍只表示“已批准，等待执行”，不得因封装成功显示为 `succeeded`。

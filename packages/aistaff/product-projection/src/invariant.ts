@@ -1,9 +1,9 @@
 /** Package-owned invariants for the Aistaff Host product projection. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantFailure, InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-aistaff-product-projection'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-aistaff-product-projection'
 
 /** Cordis companion plugin name. */
 export const name = 'aistaff-product-projection-invariant'

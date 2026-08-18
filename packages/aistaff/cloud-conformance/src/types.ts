@@ -10,13 +10,13 @@ import type {
   MaterialAccessGrant,
   MaterialView,
   OperationStatusView,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   InteractionRef,
   MaterialRef,
   OperationId,
   OwnerRevision,
-} from '@deepseek-ai/dsh-aistaff-employee-experience/types'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
 
 /** Explicit deterministic business scenario; approval remains the default. */
 export type ConformanceScenario = 'approval' | 'local_read'

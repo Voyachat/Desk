@@ -1,4 +1,4 @@
-# `@deepseek-ai/dsh-session-reference`
+# `@voyaseek-ai/dsh-session-reference`
 
 [English](README.md) | 中文
 

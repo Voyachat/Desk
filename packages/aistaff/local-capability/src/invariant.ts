@@ -1,9 +1,9 @@
 /** Package-owned invariant companion for local capability. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-aistaff-local-capability'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-aistaff-local-capability'
 
 /** Cordis companion plugin name. */
 export const name = 'aistaff-local-capability-invariant'

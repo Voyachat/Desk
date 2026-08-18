@@ -1,8 +1,8 @@
 /** The package's node half: an empty host body and an explained empty invariant companion. */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import InvariantRegistry from '@deepseek-ai/dsh-invariants'
+import { Context } from '@voyaseek-ai/cordis'
+import InvariantRegistry from '@voyaseek-ai/dsh-invariants'
 import * as ClaudeRuntimeUiInvariant from '../src/invariant.ts'
 
 describe('invariant companion', () => {

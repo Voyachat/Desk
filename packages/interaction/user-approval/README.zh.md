@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-user-approval
+# @voyaseek-ai/dsh-user-approval
 
 [English](README.md) | 中文
 

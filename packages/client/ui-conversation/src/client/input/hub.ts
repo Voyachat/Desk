@@ -8,11 +8,15 @@
  * bail events) and owns the default-sink choreography: every session is a
  * real host entity, so the sink is one unconditional prompt path.
  */
-import type { ClientContext, ISessions, SessionBinding, SessionFace, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import type { InputTriggerController } from '@deepseek-ai/dsh-client-ui-input-trigger/client'
-import type { TranslateNS } from '@deepseek-ai/dsh-client-locale/client'
+import type {
+  ClientContext, ISessions, SessionBinding, SessionFace, SessionId,
+} from '@voyaseek-ai/dsh-client-runtime/client'
+import type { InputTriggerController } from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
+import type { TranslateNS } from '@voyaseek-ai/dsh-client-locale/client'
 import { queueReadFaceOf } from '../queue/store.ts'
-import type { ComposerKeyboard, DraftAttachmentId, SessionInputResolver, SessionInput } from './contract.ts'
+import type {
+  ComposerKeyboard, DraftAttachmentId, PendingSend, SessionInputResolver, SessionInput,
+} from './contract.ts'
 import type { InputSubmitMode } from '../contract/composer-submission.ts'
 import type { PopupDismissFace } from './facade.ts'
 import { SessionInputShell } from './facade.ts'
@@ -31,11 +35,26 @@ interface ConversationAttachmentFace {
     mode: InputSubmitMode,
   ): Promise<void>
   releaseDraftImage(id: DraftAttachmentId): void
+  /** Browser-owned draft descriptors for the optimistic echo (blob previews). */
+  draftImages(ids: readonly DraftAttachmentId[]): readonly { readonly id: DraftAttachmentId; readonly previewUrl: string }[]
+}
+
+/** Text + preview projections of one outgoing message (host queue-mirror vocabulary). */
+function pendingContentParts(text: string, imageCount: number): { preview: string; plain: string | null } {
+  const flat = (Array.from({ length: imageCount }, () => '[image]') as string[])
+    .concat(text === '' ? [] : [text])
+    .join(' ').replace(/\s+/g, ' ').trim()
+  const chars = Array.from(flat)
+  return {
+    preview: chars.length > 200 ? `${chars.slice(0, 200).join('')}…` : flat,
+    plain: imageCount === 0 ? text : null,
+  }
 }
 
 /** Session-addressed input facade registry (SessionInputResolver face + composer-layer extras). */
 export class InputHub implements SessionInputResolver {
   private readonly shells = new Map<SessionId, SessionInputShell>()
+  private sendSeq = 0
 
   /**
    * @param ctx - client root context (services resolved lazily per call — boot order stays free).
@@ -141,10 +160,14 @@ export class InputHub implements SessionInputResolver {
   }
 
   /**
-   * Default sink: optimistic clear + prompt. The session is always a real
-   * host entity (materialized when its workspace was picked), so there is
-   * exactly one path; a failed first prompt is an ordinary prompt failure
-   * (error strip via promptError, draft restored only while untouched).
+   * Default sink: optimistic projection + prompt. The committed draft enters
+   * the shell's local pending overlay BEFORE the send starts (image sends
+   * serialize and admit asynchronously, and the echo bubble must be visible
+   * that whole time); the authoritative host queue frame settles the overlay,
+   * while a rejected send retracts it and restores the draft. The session is
+   * always a real host entity (materialized when its workspace was picked),
+   * so there is exactly one path; a failed first prompt is an ordinary prompt
+   * failure (error strip via promptError, draft restored only while untouched).
    */
   private sink(
     session: SessionFace,
@@ -154,17 +177,46 @@ export class InputHub implements SessionInputResolver {
   ): void {
     if (text === '' && imageIds.length === 0) return
     const shell = this.shells.get(session.sessionId)
+    if (shell === undefined) return
+    const conversation = this.conversation()
     // Commit, not an editable clear: undo must not resurrect sent content.
-    shell?.commitSend(imageIds)
-    void this.conversation().sendSession(session, text, imageIds, mode).catch(() => {
-      if (this.shells.get(session.sessionId) === shell) {
-        shell?.restoreImages(imageIds)
-        if (shell?.snapshot.draft === '') shell.setDraft(text)
-        return
-      }
-      const conversation = this.rootCtx.get('conversation') as ConversationAttachmentFace | undefined
-      for (const id of imageIds) conversation?.releaseDraftImage(id)
+    shell.commitSend(imageIds)
+    const { preview, plain } = pendingContentParts(text, imageIds.length)
+    const imageBlocks: readonly unknown[] = conversation.draftImages(imageIds)
+      .map(image => ({ type: 'image', previewUrl: image.previewUrl }))
+    const content: readonly unknown[] = text === '' ? imageBlocks : [...imageBlocks, { type: 'text', text }]
+    const sendId = `pending-${++this.sendSeq}`
+    const send: PendingSend = { sendId, content, preview, text: plain, imageIds }
+    shell.stagePendingSend({
+      send,
+      unsubscribe: session.subscribe(() => { this.onQueueFrame(session, sendId) }),
     })
+    void conversation.sendSession(session, text, imageIds, mode).then(
+      () => { shell.settlePendingSend(sendId) },
+      () => {
+        if (this.shells.get(session.sessionId) === shell) {
+          const retracted = shell.retractPendingSend(sendId)
+          shell.restoreImages(retracted)
+          if (shell.snapshot.draft === '') shell.setDraft(text)
+          return
+        }
+        for (const id of imageIds) conversation.releaseDraftImage(id)
+      },
+    )
+  }
+
+  /**
+   * The host queue frame is the send's acceptance signal: once the preview
+   * text is listed authoritatively, the local echo hands over. Frames can be
+   * dropped or replayed, so the RPC settlement remains the fallback settle.
+   */
+  private onQueueFrame(session: SessionFace, sendId: string): void {
+    const shell = this.shells.get(session.sessionId)
+    if (shell === undefined || !shell.hasPendingSend(sendId)) return
+    const pending = shell.pendingPreviewOf(sendId)
+    if (session.getSnapshot().queue.some(item => item.preview === pending)) {
+      shell.settlePendingSend(sendId)
+    }
   }
 
   /**

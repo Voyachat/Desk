@@ -2,7 +2,7 @@
 
 import { createHash, randomUUID } from 'node:crypto'
 import { isAbsolute } from 'node:path'
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@voyaseek-ai/cordis'
 import {
   CapabilityContextHandle,
   SupervisorControlError,

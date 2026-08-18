@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-subagent-in-process-driver",
+  "name": "@voyaseek-ai/dsh-subagent-in-process-driver",
   "description": "Shared in-process subagent run driver: drives a child agent on ctx.agents (used by the spawn and fork backends)",
   "version": "0.1.0-rc.5",
   "publishConfig": {
@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/subagent/subagent-in-process-driver"
   },
   "type": "module",
@@ -32,32 +32,32 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/cordis-plugin-include": "workspace:^",
-    "@deepseek-ai/cordis-plugin-loader": "workspace:^",
-    "@deepseek-ai/dsh-agent": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop": "workspace:^",
-    "@deepseek-ai/dsh-agent-loop-testkit": "workspace:^",
-    "@deepseek-ai/dsh-agent-presets": "workspace:^",
-    "@deepseek-ai/dsh-fs-sandbox": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-sandbox-policy": "workspace:^",
-    "@deepseek-ai/dsh-session": "workspace:^",
-    "@deepseek-ai/dsh-subagent": "workspace:^",
-    "@deepseek-ai/dsh-system-prompt": "workspace:^",
-    "@deepseek-ai/dsh-tool-fs": "workspace:^",
-    "@deepseek-ai/dsh-tools": "workspace:^",
-    "@deepseek-ai/dsh-user-approval": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/cordis-plugin-include": "workspace:^",
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop-testkit": "workspace:^",
+    "@voyaseek-ai/dsh-agent-presets": "workspace:^",
+    "@voyaseek-ai/dsh-fs-sandbox": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/dsh-tool-fs": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/dsh-user-approval": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

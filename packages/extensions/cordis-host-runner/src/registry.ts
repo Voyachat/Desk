@@ -1,10 +1,10 @@
 /**
  * Process-local dynamic Plugin registry and its opaque identity mints.
- * @module @deepseek-ai/dsh-cordis-host-runner/registry
+ * @module @voyaseek-ai/dsh-cordis-host-runner/registry
  */
 
-import type { Fiber } from '@deepseek-ai/cordis'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import type { Fiber } from '@voyaseek-ai/cordis'
+import type { SessionId } from '@voyaseek-ai/dsh-session/types'
 import type {
   ApprovalRequestId, CordisDynamicPackageId, CordisDynamicPluginId, CordisDynamicPluginRunId,
   CordisDynamicRunMode, DynamicCordisRenderFailure, DynamicCordisRunAttempt,
@@ -55,7 +55,7 @@ export interface DynamicCordisDefinition {
 export interface DynamicCordisDevelopmentBuildError {
   /** Compiler or publication failure text. */
   message: string
-  /** Symbolic `$DSH_HOME` path of the edited half, when one half was identifiable. */
+  /** Symbolic `$VOYASEEK_HOME` path of the edited half, when one half was identifiable. */
   sourcePath?: string
 }
 

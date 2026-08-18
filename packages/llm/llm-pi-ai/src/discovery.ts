@@ -26,9 +26,9 @@
  * @module dsh-llm-pi-ai/discovery
  */
 
-import { INVALID_CREDENTIAL_CODE, LlmError, normalizeApiKey } from '@deepseek-ai/dsh-llm'
-import type { LlmDiscoveredModel, LlmModelDiscoveryRequest } from '@deepseek-ai/dsh-llm'
-import { attributionHeaders } from '@deepseek-ai/dsh-llm'
+import { INVALID_CREDENTIAL_CODE, LlmError, normalizeApiKey } from '@voyaseek-ai/dsh-llm'
+import type { LlmDiscoveredModel, LlmModelDiscoveryRequest } from '@voyaseek-ai/dsh-llm'
+import { attributionHeaders } from '@voyaseek-ai/dsh-llm'
 import { catalogModels } from './catalog.ts'
 import { classifyModel } from './model-families.ts'
 

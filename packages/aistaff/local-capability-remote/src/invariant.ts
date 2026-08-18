@@ -1,9 +1,9 @@
 /** Package-owned invariant companion for the local capability Remote bridge. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-aistaff-local-capability-remote'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-aistaff-local-capability-remote'
 
 /** Cordis companion plugin name. */
 export const name = 'aistaff-local-capability-remote-invariant'

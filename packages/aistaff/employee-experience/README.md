@@ -10,7 +10,7 @@ The package deliberately has no Cloud transport, checkpoint, authentication cred
 import {
   EmployeeExperienceObjectLayer,
   type EmployeeExperienceSnapshot,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 
 const observation = ctx.employeeExperience.observe((replacement) => {
   render(replacement)

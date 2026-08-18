@@ -10,7 +10,7 @@
 
 import type {
   AssistantBlock, ChatConversationViewNode, PartialAssistant,
-} from '@deepseek-ai/dsh-client-runtime/client'
+} from '@voyaseek-ai/dsh-client-runtime/client'
 import type { ChatNode } from '../contract/chat-nodes.ts'
 import { isRunningTool } from '../contract/chat-nodes.ts'
 
@@ -41,6 +41,18 @@ export type ChatFlowRow =
   }
 
 /**
+ * Reader display inputs beyond the flow itself: the inline-reasoning
+ * preference plus whether the streaming partial already carries reasoning.
+ * Absent means the folded, conversation-shaped default.
+ */
+export interface ReasoningDisplay {
+  /** Keep reasoning-bearing Assistant steps out of the activity fold. */
+  readonly showReasoning: boolean
+  /** The streaming partial already carries reasoning blocks. */
+  readonly partialReasoning: boolean
+}
+
+/**
  * Test whether one Assistant block list carries user-facing prose (anything
  * beyond reasoning and tool-call heads).
  * @param blocks - Assistant content blocks.
@@ -61,6 +73,15 @@ export function hasVisibleProse(blocks: readonly AssistantBlock[]): boolean {
  */
 export function partialHasVisibleProse(partial: PartialAssistant | null): boolean {
   return partial !== null && hasVisibleProse(partial.blocks)
+}
+
+/**
+ * Test whether the streaming partial already carries reasoning blocks.
+ * @param partial - in-progress assistant output, when one is streaming.
+ * @returns whether the partial's reasoning must stay visible outside any fold.
+ */
+export function partialHasReasoning(partial: PartialAssistant | null): boolean {
+  return partial !== null && partial.blocks.some(block => block.kind === 'reasoning')
 }
 
 /**
@@ -92,12 +113,14 @@ const ASK_USER_TOOL = 'ask_user_question'
  * @param node - flow Node, when resolvable.
  * @param facts - closing facts for the current flow.
  * @param partialProse - whether the streaming partial already shows prose.
+ * @param display - inline-reasoning reader preference; absent folds everything.
  * @returns whether the Node folds away instead of rendering in place.
  */
 export function isFoldable(
   node: ChatConversationViewNode | undefined,
   facts: FoldFacts,
   partialProse: boolean,
+  display?: ReasoningDisplay,
 ): node is ChatNode {
   if (node === undefined) return false
   if (node.kind === 'tool-call') {
@@ -110,11 +133,14 @@ export function isFoldable(
   }
   if (node.kind !== 'assistant-step') return false
   const data = (node as ChatNode<'assistant-step'>).data
+  const hasReasoning = data.blocks.some(block => block.kind === 'reasoning')
   if (data.status === 'running') {
     // The one streaming step IS the partial; once it produces prose it must
     // render in place so the answer streams visibly.
+    if (display?.showReasoning === true && (hasReasoning || display.partialReasoning)) return false
     return !partialProse
   }
+  if (display?.showReasoning === true && hasReasoning) return false
   if (hasVisibleProse(data.blocks)) {
     if (data.finalNode !== undefined && facts.closingSeqs.has(data.finalNode.seq)) return false
     // Mid-turn narration folds only when its Turn demonstrably closed with a
@@ -151,6 +177,7 @@ function memberTimes(node: ChatNode): MemberTimes {
  * @param store - chat node reader keyed by flow key.
  * @param facts - closing facts for the current flow.
  * @param partialProse - whether the streaming partial already shows prose.
+ * @param display - inline-reasoning reader preference; absent folds everything.
  * @returns ordered rows; consecutive foldable Nodes merge into one fold.
  */
 export function groupChatFlow(
@@ -158,6 +185,7 @@ export function groupChatFlow(
   store: { get(key: string): ChatConversationViewNode | undefined },
   facts: FoldFacts,
   partialProse: boolean,
+  display?: ReasoningDisplay,
 ): ChatFlowRow[] {
   const rows: ChatFlowRow[] = []
   let members: string[] | null = null
@@ -186,7 +214,7 @@ export function groupChatFlow(
   }
   for (const key of order) {
     const node = store.get(key)
-    if (!isFoldable(node, facts, partialProse)) {
+    if (!isFoldable(node, facts, partialProse, display)) {
       flush()
       rows.push({ kind: 'node', key })
       continue

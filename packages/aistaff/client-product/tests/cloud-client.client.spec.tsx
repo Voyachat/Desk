@@ -2,7 +2,7 @@
 import { readFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 import { useSyncExternalStore } from 'react'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   ActivityRef,
   EmployeeExperienceObjectLayer,
@@ -14,7 +14,7 @@ import {
   OperationId,
   OwnerRevision,
   ReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   ActivityView,
   EffectReceiptView,
@@ -31,9 +31,9 @@ import type {
   OperationStatusView,
   ProductResult,
   SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
-import { SlotRegistry } from '@deepseek-ai/dsh-client-runtime/client'
-import type { SnapshotSelectorHook } from '@deepseek-ai/dsh-client-ui-slots'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
+import { SlotRegistry } from '@voyaseek-ai/dsh-client-runtime/client'
+import type { SnapshotSelectorHook } from '@voyaseek-ai/dsh-client-ui-slots'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { CloudAistaffFooterAction } from '../src/cloud-client/CloudAistaffFooterAction.tsx'

@@ -3,7 +3,7 @@
  * commit point and references content-addressed JavaScript artifacts written
  * before it, so failed builds and interrupted publication leave the previous
  * complete registry readable.
- * @module @deepseek-ai/dsh-cordis-host-runner/persistence
+ * @module @voyaseek-ai/dsh-cordis-host-runner/persistence
  */
 
 import { createHash, randomBytes } from 'node:crypto'
@@ -11,8 +11,8 @@ import {
   lstatSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs'
 import { dirname, join } from 'node:path'
-import { dshHomeDisplay, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
-import type { SessionId } from '@deepseek-ai/dsh-session/types'
+import { dshHomeDisplay, resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
+import type { SessionId } from '@voyaseek-ai/dsh-session/types'
 import type {
   DynamicCordisDefinition, DynamicCordisPlugin, DynamicCordisRegistrySnapshot,
 } from './registry.ts'
@@ -117,7 +117,7 @@ export class DynamicCordisPersistence {
   private readonly rootDisplay: string
 
   /**
-   * Resolve and prepare `$DSH_HOME/dynamic-cordis`.
+   * Resolve and prepare `$VOYASEEK_HOME/dynamic-cordis`.
    * @param configuredHome - explicit Harness-home override, primarily from plugin config.
    */
   constructor(configuredHome?: string) {

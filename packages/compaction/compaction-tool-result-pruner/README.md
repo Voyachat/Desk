@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-compaction-tool-result-pruner
+# @voyaseek-ai/dsh-compaction-tool-result-pruner
 
 English | [中文](README.zh.md)
 
@@ -31,8 +31,8 @@ All values are integers; the threshold is positive and head/tail are non-negativ
 ## Usage
 
 ```ts
-import type { Context } from '@deepseek-ai/cordis'
-import ToolResultPruner from '@deepseek-ai/dsh-compaction-tool-result-pruner'
+import type { Context } from '@voyaseek-ai/cordis'
+import ToolResultPruner from '@voyaseek-ai/dsh-compaction-tool-result-pruner'
 
 export function apply(ctx: Context): void {
   ctx.plugin(ToolResultPruner)

@@ -8,8 +8,8 @@
  * @module dsh-session-persistence-jsonl/format
  */
 import { join } from 'node:path';
-import { decodeStorageRecord, packChunkRuns, SESSION_FORMAT_VERSION } from '@deepseek-ai/dsh-session';
-import { SessionFormatUnsupportedError, sessionFormatVersionRefusal } from '@deepseek-ai/dsh-session-persistence';
+import { decodeStorageRecord, packChunkRuns, SESSION_FORMAT_VERSION } from '@voyaseek-ai/dsh-session';
+import { SessionFormatUnsupportedError, sessionFormatVersionRefusal } from '@voyaseek-ai/dsh-session-persistence';
 /**
  * Return the artifact suffix for one physical encoding.
  * @param compression - configured JSONL artifact encoding.

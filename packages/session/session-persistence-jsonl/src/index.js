@@ -3,16 +3,16 @@
  * events in one append-only file per session, and delegates orchestration to
  * {@link PersistenceCoordinator}. Its side-effect-free locator returns the
  * absolute per-session log target before materialization.
- * @module @deepseek-ai/dsh-session-persistence-jsonl
+ * @module @voyaseek-ai/dsh-session-persistence-jsonl
  */
-import z from '@deepseek-ai/schemastery';
+import z from '@voyaseek-ai/schemastery';
 import { readdirSync } from 'node:fs';
 import { open, mkdir, readFile, readdir, realpath, link, rm, stat, truncate } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { performance } from 'node:perf_hooks';
 import { scheduler } from 'node:timers/promises';
 import { randomBytes } from 'node:crypto';
-import { DEFAULT_PREPARED_SESSION_CACHE_SIZE, DEFAULT_WRITE_BATCH_MAX_DELAY_MS, MAX_WRITE_BATCH_DELAY_MS, SessionPersistence, SessionPersistenceRevision, PersistenceCoordinator, SessionFormatUnsupportedError, } from '@deepseek-ai/dsh-session-persistence';
+import { DEFAULT_PREPARED_SESSION_CACHE_SIZE, DEFAULT_WRITE_BATCH_MAX_DELAY_MS, MAX_WRITE_BATCH_DELAY_MS, SessionPersistence, SessionPersistenceRevision, PersistenceCoordinator, SessionFormatUnsupportedError, } from '@voyaseek-ai/dsh-session-persistence';
 import { encodeSegment, eventLines, logPath, logSuffix, parseHeaderMeta, projectDir, scanLog, sessionDir, SessionLogScanner, toHeaderLine, } from "./format.js";
 import { compressZstdFrame, createZstdFrameDecoder, decompressZstdFrame, decompressZstdPrefix, scanZstdFrames, } from "./zstd.js";
 import { ensureDurableDirectoryWin32, publishNewFileWin32 } from "./win32.js";

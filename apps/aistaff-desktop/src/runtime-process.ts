@@ -66,7 +66,7 @@ export class ManagedRuntime {
         // local default, matching the shared credentials provider precedence.
         ...process.env,
         ...this.#options.networkEnvironment,
-        DSH_HOME: this.#options.dshHome,
+        VOYASEEK_HOME: this.#options.dshHome,
         DSH_CWD: this.#options.cwd,
         ELECTRON_RUN_AS_NODE: '1',
       },

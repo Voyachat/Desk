@@ -1,7 +1,7 @@
 /** Deterministic in-memory Client Gateway transport for test-only conformance. */
 
 import { createHash } from 'node:crypto'
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import type {
   ClientGatewayTransport,
   GatewayHeaders,
@@ -9,7 +9,7 @@ import type {
   GatewayTransportRequest,
   GatewayTransportResponse,
   GatewayTransportSubscription,
-} from '@deepseek-ai/dsh-aistaff-cloud-client'
+} from '@voyaseek-ai/dsh-aistaff-cloud-client'
 import {
   ActivityRef,
   ContentRef,
@@ -30,8 +30,8 @@ import {
   type MaterialAccessGrant,
   type MaterialView,
   type OperationStatusView,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
-import type { InteractionRef as InteractionRefType } from '@deepseek-ai/dsh-aistaff-employee-experience/types'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
+import type { InteractionRef as InteractionRefType } from '@voyaseek-ai/dsh-aistaff-employee-experience/types'
 import type {
   FixtureBaseline,
   FixtureBusinessState,
@@ -923,7 +923,7 @@ export class AistaffCloudConformanceControl extends Service {
   }
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Test-only in-memory Client Gateway controls. */
     aistaffCloudConformance: AistaffCloudConformanceControl

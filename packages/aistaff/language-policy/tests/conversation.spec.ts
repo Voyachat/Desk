@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { SessionEvent } from '@deepseek-ai/dsh-session'
+import type { SessionEvent } from '@voyaseek-ai/dsh-session'
 import { MAX_SCANNED_USER_MESSAGES, conversationLanguage } from '../src/conversation.ts'
 
 /** Build a minimal logged user message event for the fold. */

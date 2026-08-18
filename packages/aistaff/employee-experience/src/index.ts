@@ -1,9 +1,9 @@
 /**
  * Renderer-safe AI employee experience Service Definition and observable object layer.
- * @module @deepseek-ai/dsh-aistaff-employee-experience
+ * @module @voyaseek-ai/dsh-aistaff-employee-experience
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import type {
   ActivityView,
   EmployeeExperienceListener,
@@ -29,7 +29,7 @@ export type * from './types.ts'
 /** Stable Cordis key for the Renderer-facing product capability. */
 export const EMPLOYEE_EXPERIENCE_SERVICE_KEY = 'employeeExperience' as const
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Renderer-safe AI employee business projection and user operations. */
     employeeExperience: EmployeeExperiencePort

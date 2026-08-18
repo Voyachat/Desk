@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import InvariantRegistry, { InvariantError } from '@deepseek-ai/dsh-invariants'
-import SessionStore, { SessionId, type Session } from '@deepseek-ai/dsh-session'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import { WorkflowRunId, type WorkflowRunId as WorkflowRunIdType } from '@deepseek-ai/dsh-workflow/types'
+import { Context } from '@voyaseek-ai/cordis'
+import InvariantRegistry, { InvariantError } from '@voyaseek-ai/dsh-invariants'
+import SessionStore, { SessionId, type Session } from '@voyaseek-ai/dsh-session'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import { WorkflowRunId, type WorkflowRunId as WorkflowRunIdType } from '@voyaseek-ai/dsh-workflow/types'
 import * as ToolWorkflowInvariant from '../src/invariant.ts'
 import type {} from '../src/types.ts'
 
@@ -58,7 +58,7 @@ describe('durable workflow-record invariants', () => {
       runId, seq: 1, outcome: 'completed',
     })).toThrow(expect.objectContaining<Partial<InvariantError>>({
       code: 'INVARIANT',
-      packageName: '@deepseek-ai/dsh-tool-workflow',
+      packageName: '@voyaseek-ai/dsh-tool-workflow',
     }))
     expect(session.seq).toBe(before)
     expect(() => session.append('tool-workflow/run-end', {

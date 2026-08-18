@@ -1,6 +1,6 @@
 /**
  * Fixed identities the Claude driver writes into DSH surfaces.
- * @module @deepseek-ai/dsh-claude-agent/constants
+ * @module @voyaseek-ai/dsh-claude-agent/constants
  */
 
 /** The agent runtime id this package serves and matches against session headers. */

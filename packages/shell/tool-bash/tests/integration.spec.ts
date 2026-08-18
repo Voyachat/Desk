@@ -1,20 +1,20 @@
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
+import { createUserMessage } from '@voyaseek-ai/dsh-llm'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { SessionId, type SessionEvent } from '@deepseek-ai/dsh-session'
-import JsonlSessionPersistence from '@deepseek-ai/dsh-session-persistence-jsonl'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import AgentLoop from '@deepseek-ai/dsh-agent-loop'
-import { mountAgentLoopTestDependencies } from '@deepseek-ai/dsh-agent-loop-testkit'
-import LocalJobRegistry from '@deepseek-ai/dsh-jobs-local'
-import * as ToolTasks from '@deepseek-ai/dsh-tool-jobs'
-import { LocalBashExecutor } from '@deepseek-ai/dsh-bash-local'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import * as ToolBash from '@deepseek-ai/dsh-tool-bash'
-import * as BashEnvPlugin from '@deepseek-ai/dsh-shell-env'
+import { SessionId, type SessionEvent } from '@voyaseek-ai/dsh-session'
+import JsonlSessionPersistence from '@voyaseek-ai/dsh-session-persistence-jsonl'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import AgentLoop from '@voyaseek-ai/dsh-agent-loop'
+import { mountAgentLoopTestDependencies } from '@voyaseek-ai/dsh-agent-loop-testkit'
+import LocalJobRegistry from '@voyaseek-ai/dsh-jobs-local'
+import * as ToolTasks from '@voyaseek-ai/dsh-tool-jobs'
+import { LocalBashExecutor } from '@voyaseek-ai/dsh-bash-local'
+import LocalSubprocessRuntime from '@voyaseek-ai/dsh-subprocess-local'
+import * as ToolBash from '@voyaseek-ai/dsh-tool-bash'
+import * as BashEnvPlugin from '@voyaseek-ai/dsh-shell-env'
 import { MockAdapter, textResponse, toolCallResponse } from '../../../core/agent-loop/tests/mock-adapter.ts'
 
 /**
@@ -100,7 +100,7 @@ describe('bash tool through the agent loop', () => {
     vi.stubEnv('DSH_STALE_PARENT', 'stale')
     const adapter = new MockAdapter([
       toolCallResponse('call-1', 'bash', {
-        command: 'printf \'%s\\n%s\\n%s\\n%s\\n%s\\n\' "$DSH_HOME" "$DSH_SHELL" "$DSH_SESSION_ID" "$DSH_SESSION_JSONL" "${DSH_STALE_PARENT-unset}"; if [ -e "$DSH_SESSION_JSONL" ]; then printf \'present\\n\'; else printf \'absent\\n\'; fi',
+        command: 'printf \'%s\\n%s\\n%s\\n%s\\n%s\\n\' "$VOYASEEK_HOME" "$DSH_SHELL" "$DSH_SESSION_ID" "$DSH_SESSION_JSONL" "${DSH_STALE_PARENT-unset}"; if [ -e "$DSH_SESSION_JSONL" ]; then printf \'present\\n\'; else printf \'absent\\n\'; fi',
         description: 'inspect session environment',
       }),
       textResponse('Session environment inspected.'),

@@ -1,8 +1,8 @@
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   ApprovalId,
   EmployeeId,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
 import { describe, expect, it } from 'vitest'
 import ProductProjectionService, { projectProductEvents } from '../src/index.ts'
 

@@ -4,14 +4,14 @@
  * official SDK in the session workspace, using deployment-supplied
  * Claude-API-compatible credentials; every other session keeps the default
  * loop. The SDK dependency pins independently of the harness.
- * @module @deepseek-ai/dsh-claude-agent
+ * @module @voyaseek-ai/dsh-claude-agent
  */
 
-import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import type { Context } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
 import type { CanUseTool, PermissionMode } from '@anthropic-ai/claude-agent-sdk'
-import type { AgentDriverFactory } from '@deepseek-ai/dsh-agent-loop'
-import { scrubbedParentEnv } from '@deepseek-ai/dsh-subprocess'
+import type { AgentDriverFactory } from '@voyaseek-ai/dsh-agent-loop'
+import { scrubbedParentEnv } from '@voyaseek-ai/dsh-subprocess'
 import { CLAUDE_PROVIDER, CLAUDE_RUNTIME } from './constants.ts'
 import { ClaudeSdkAgent } from './driver.ts'
 import { SdkQueryEngine } from './engine.ts'

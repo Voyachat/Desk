@@ -4,12 +4,12 @@
  * compaction calls, then binds fresh live sessions to parent/child scripts by
  * first-call order. Throw and hang cases require an explicit override because
  * a session log cannot reconstruct them alone.
- * @module @deepseek-ai/dsh-llm-replay
+ * @module @voyaseek-ai/dsh-llm-replay
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { delimiter as pathDelimiter } from 'node:path';
-import { decodeStorageRecord } from '@deepseek-ai/dsh-session';
-import { LlmAdapter, LlmError, ReasoningEffortId, assertNever, resolveRetryPolicy } from '@deepseek-ai/dsh-llm';
+import { decodeStorageRecord } from '@voyaseek-ai/dsh-session';
+import { LlmAdapter, LlmError, ReasoningEffortId, assertNever, resolveRetryPolicy } from '@voyaseek-ai/dsh-llm';
 /**
  * Parse a session `.jsonl` buffer into its event list. Line 0 is the session
  * header (a `{type:'session',…}` record), every subsequent non-empty line is a

@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
 import {
   ActivityRef,

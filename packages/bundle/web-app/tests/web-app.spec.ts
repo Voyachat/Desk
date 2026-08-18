@@ -9,9 +9,9 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import type { WebServer } from '@deepseek-ai/dsh-host-webserver'
+import { Context } from '@voyaseek-ai/cordis'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import type { WebServer } from '@voyaseek-ai/dsh-host-webserver'
 import { apply, Config, internals } from '../src/index.ts'
 
 vi.mock('node:os', async importOriginal => ({
@@ -96,7 +96,7 @@ describe('web-app runtime glue', () => {
     })
     expect(log).toHaveBeenCalledWith('dsh web: http://127.0.0.1:4567 (LAN: http://192.168.1.5:4567)')
     const assembly = await ctx.systemPrompt.assemble()
-    expect(assembly.sections.find(entry => entry.name === 'harness:source')?.text).toContain('DeepSeek Harness implementation checkout')
+    expect(assembly.sections.find(entry => entry.name === 'harness:source')?.text).toContain('Voyaseek Harness implementation checkout')
     const section = assembly.sections.find(entry => entry.name === 'app:web-surface')
     expect(section?.text).toContain('http://127.0.0.1:4567')
     // The single update contract: the receiver is always on; no-refresh

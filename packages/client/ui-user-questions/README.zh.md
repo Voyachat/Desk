@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-user-questions
+# @voyaseek-ai/dsh-client-ui-user-questions
 
 [English](README.md) | 中文
 

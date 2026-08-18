@@ -12,7 +12,7 @@ describe('cloud client product wrapper', () => {
     expect(cloudEntry.inject).toEqual(['slots', 'employeeExperience'])
 
     const source = readFileSync(resolve(root, 'src/client/index.ts'), 'utf8')
-    expect(source).toContain('@deepseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts')
+    expect(source).toContain('@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts')
     expect(source).not.toMatch(/dsh-aistaff-client-product(?:['"]|\/client['"])/)
   })
 
@@ -22,8 +22,8 @@ describe('cloud client product wrapper', () => {
       dsh: { client: { inject: string[] } }
     }
     const build = readFileSync(resolve(root, 'tsdown.config.ts'), 'utf8')
-    expect(manifest.name).toBe('@deepseek-ai/dsh-aistaff-cloud-client-product')
-    expect(manifest.dsh.client.inject[0]).toBe('@deepseek-ai/dsh-aistaff-employee-experience-remote')
+    expect(manifest.name).toBe('@voyaseek-ai/dsh-aistaff-cloud-client-product')
+    expect(manifest.dsh.client.inject[0]).toBe('@voyaseek-ai/dsh-aistaff-employee-experience-remote')
     expect(build).toContain('banner: `window.__ModuleLoader__.load({ id: ${JSON.stringify(PACKAGE_ID)}')
     expect(build).not.toContain('`${PACKAGE_ID}/cloud-client`')
   })

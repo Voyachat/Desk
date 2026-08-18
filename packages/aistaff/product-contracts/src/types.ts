@@ -1,9 +1,9 @@
 /**
  * JSON-compatible Aistaff product values shared by the Host and Renderer.
- * @module @deepseek-ai/dsh-aistaff-product-contracts/types
+ * @module @voyaseek-ai/dsh-aistaff-product-contracts/types
  */
 
-import type { Branded } from '@deepseek-ai/dsh-brand'
+import type { Branded } from '@voyaseek-ai/dsh-brand'
 
 /** Identifies an AI employee in the product projection. */
 export type EmployeeId = Branded<'AistaffEmployeeId'>

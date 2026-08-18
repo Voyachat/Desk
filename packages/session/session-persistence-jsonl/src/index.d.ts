@@ -3,12 +3,12 @@
  * events in one append-only file per session, and delegates orchestration to
  * {@link PersistenceCoordinator}. Its side-effect-free locator returns the
  * absolute per-session log target before materialization.
- * @module @deepseek-ai/dsh-session-persistence-jsonl
+ * @module @voyaseek-ai/dsh-session-persistence-jsonl
  */
-import { Context } from '@deepseek-ai/cordis';
-import z from '@deepseek-ai/schemastery';
-import { SessionPersistence, type PersistenceBackend, type SessionLocation, type SessionPersistenceSnapshot, type SessionInspection, type SessionPersistenceRevision as PersistenceRevision, type SessionRawArtifact, type StoredPrefix } from '@deepseek-ai/dsh-session-persistence';
-import type { SessionEvent, SessionId, SessionHeader, SessionPreparation } from '@deepseek-ai/dsh-session';
+import { Context } from '@voyaseek-ai/cordis';
+import z from '@voyaseek-ai/schemastery';
+import { SessionPersistence, type PersistenceBackend, type SessionLocation, type SessionPersistenceSnapshot, type SessionInspection, type SessionPersistenceRevision as PersistenceRevision, type SessionRawArtifact, type StoredPrefix } from '@voyaseek-ai/dsh-session-persistence';
+import type { SessionEvent, SessionId, SessionHeader, SessionPreparation } from '@voyaseek-ai/dsh-session';
 import { type JsonlCompression } from './format.ts';
 export type { JsonlCompression } from './format.ts';
 /** Loader schema for the JSONL artifact's physical encoding. */

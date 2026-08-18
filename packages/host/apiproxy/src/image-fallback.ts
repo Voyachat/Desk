@@ -1,13 +1,13 @@
 /** Text-model fallback for browser image prompts. */
 
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@voyaseek-ai/cordis'
 import {
   BlockAssembler, createUserMessage,
-} from '@deepseek-ai/dsh-llm'
+} from '@voyaseek-ai/dsh-llm'
 import type {
   ContentBlock, FinishReason, TokenUsage,
-} from '@deepseek-ai/dsh-llm'
-import type { SessionId } from '@deepseek-ai/dsh-session'
+} from '@voyaseek-ai/dsh-llm'
+import type { SessionId } from '@voyaseek-ai/dsh-session'
 
 /** Explicit auxiliary route used to turn images into text for a text-only target model. */
 export interface ImageFallbackConfig {
@@ -138,7 +138,7 @@ export async function translateImagesForTextModel(
   const assembler = new BlockAssembler()
   const prompt = createUserMessage({
     content: labeledAnalysisContent(content),
-    source: { kind: 'plugin', plugin: '@deepseek-ai/dsh-host-apiproxy/image-fallback' },
+    source: { kind: 'plugin', plugin: '@voyaseek-ai/dsh-host-apiproxy/image-fallback' },
   })
   try {
     for await (const chunk of ctx.llm.stream({

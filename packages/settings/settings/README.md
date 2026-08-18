@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-settings
+# @voyaseek-ai/dsh-settings
 
 English | [中文](README.zh.md)
 

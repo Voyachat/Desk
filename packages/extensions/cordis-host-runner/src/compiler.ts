@@ -1,7 +1,7 @@
 /**
  * Build dynamic Host TypeScript and Client TSX function bodies into the plain
  * JavaScript artifacts consumed by the two existing runtime evaluators.
- * @module @deepseek-ai/dsh-cordis-host-runner/compiler
+ * @module @voyaseek-ai/dsh-cordis-host-runner/compiler
  */
 
 import ts from 'typescript'

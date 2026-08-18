@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-aistaff-client-product
+# @voyaseek-ai/dsh-aistaff-client-product
 
 This browser plugin adds an **AI 员工** action to the existing sidebar footer and an additive employee workbench to the shell overlay. It does not replace the shipped sidebar, conversation, details, or settings surfaces.
 

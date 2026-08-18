@@ -3,16 +3,16 @@ import { randomUUID } from 'node:crypto'
 import { mkdtemp } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
-import { agentEvents } from '@deepseek-ai/dsh-agent'
-import { TOOL_ORDER_REST } from '@deepseek-ai/dsh-system-prompt'
-import type { Message } from '@deepseek-ai/dsh-llm'
-import { SessionId } from '@deepseek-ai/dsh-session'
+import { Context } from '@voyaseek-ai/cordis'
+import Loader from '@voyaseek-ai/cordis-plugin-loader'
+import { agentEvents } from '@voyaseek-ai/dsh-agent'
+import { TOOL_ORDER_REST } from '@voyaseek-ai/dsh-system-prompt'
+import type { Message } from '@voyaseek-ai/dsh-llm'
+import { SessionId } from '@voyaseek-ai/dsh-session'
 import * as acpAgent from '../src/index.ts'
 
 /**
- * In-process unit coverage for the @deepseek-ai/dsh-acp-demo composition:
+ * In-process unit coverage for the @voyaseek-ai/dsh-acp-demo composition:
  * mounting it brings up the agent-spine-demo spine + JSONL persistence + the ACP
  * bridge in one `ctx.plugin`. It loads no Loader-only plugin (no hmr), so it
  * mounts in a plain Context.
@@ -39,7 +39,7 @@ async function mount(config: acpAgent.Config, withBash = false): Promise<Context
 async function isolatedSkillsConfig(catalogDescriptionMaxLength?: number): Promise<NonNullable<acpAgent.Config['skills']>> {
   const home = await mkdtemp(join(tmpdir(), 'dsh-acp-demo-skills-'))
   return {
-    filesystem: { dshHome: join(home, '.dsh'), agentsHome: join(home, '.agents') },
+    filesystem: { dshHome: join(home, '.voyaseek'), agentsHome: join(home, '.agents') },
     ...catalogDescriptionMaxLength !== undefined ? { tool: { catalogDescriptionMaxLength } } : {},
   }
 }
@@ -60,18 +60,18 @@ async function composePrefix(ctx: Context): Promise<Message[]> {
 }
 
 async function withIsolatedSkillHomes<T>(run: () => Promise<T>): Promise<T> {
-  const oldDshHome = process.env.DSH_HOME
+  const oldDshHome = process.env.VOYASEEK_HOME
   const oldAgentsHome = process.env.DSH_AGENTS_HOME
   const home = await mkdtemp(join(tmpdir(), 'dsh-acp-demo-default-skills-'))
-  process.env.DSH_HOME = join(home, '.dsh')
+  process.env.VOYASEEK_HOME = join(home, '.voyaseek')
   process.env.DSH_AGENTS_HOME = join(home, '.agents')
   try {
     return await run()
   } finally {
     if (oldDshHome === undefined) {
-      delete process.env.DSH_HOME
+      delete process.env.VOYASEEK_HOME
     } else {
-      process.env.DSH_HOME = oldDshHome
+      process.env.VOYASEEK_HOME = oldDshHome
     }
     if (oldAgentsHome === undefined) {
       delete process.env.DSH_AGENTS_HOME

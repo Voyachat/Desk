@@ -13,7 +13,7 @@
  *
  * See .agents/notes/implemented/testing/2026-06-19-acp-snapshot-tests.md.
  *
- * @module @deepseek-ai/dsh-acp-snapshot/harness
+ * @module @voyaseek-ai/dsh-acp-snapshot/harness
  */
 
 import { cp, mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
@@ -250,7 +250,7 @@ export async function runScenario(input: InputScript, opts: RunOptions): Promise
       DSH_SNAPSHOT_FILE: opts.fixtureFile,
       DSH_SNAPSHOT_SESSIONS_ROOT: sessionsRoot,
       DSH_SNAPSHOT_SPILL_ROOT: spillRoot,
-      DSH_HOME: join(cwd, '.dsh'),
+      VOYASEEK_HOME: join(cwd, '.voyaseek'),
       DSH_AGENTS_HOME: join(cwd, '.agents'),
       ...opts.overrideFile !== undefined ? { DSH_SNAPSHOT_OVERRIDE: opts.overrideFile } : {},
       ...opts.childFiles !== undefined && opts.childFiles.length > 0

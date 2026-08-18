@@ -1,13 +1,13 @@
 {
-  "name": "@deepseek-ai/dsh-llm-pi-ai",
-  "description": "pi-ai-backed DeepSeek adapter for the DeepSeek Harness LLM seam (design-verification twin of dsh-llm-deepseek)",
+  "name": "@voyaseek-ai/dsh-llm-pi-ai",
+  "description": "pi-ai-backed DeepSeek adapter for the Voyaseek Harness LLM seam (design-verification twin of dsh-llm-deepseek)",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deepseek-ai/deepseek-harness.git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
     "directory": "packages/llm/llm-pi-ai"
   },
   "type": "module",
@@ -32,28 +32,28 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@deepseek-ai/dsh-attachment": "workspace:^",
-    "@deepseek-ai/dsh-credentials": "workspace:^",
-    "@deepseek-ai/dsh-launch-environment": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-attachment": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
+    "@voyaseek-ai/dsh-launch-environment": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-timeout": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
     "@earendil-works/pi-ai": "^0.82.1",
-    "@deepseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-attachment": "workspace:^",
-    "@deepseek-ai/dsh-credentials": "workspace:^",
-    "@deepseek-ai/dsh-launch-environment": "workspace:^",
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/dsh-llm": "workspace:^",
-    "@deepseek-ai/dsh-llm-deepseek": "workspace:^",
-    "@deepseek-ai/dsh-settings": "workspace:^",
-    "@deepseek-ai/dsh-timeout": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-attachment": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
+    "@voyaseek-ai/dsh-launch-environment": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-llm-deepseek": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-timeout": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

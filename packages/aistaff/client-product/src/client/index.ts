@@ -1,10 +1,10 @@
 /** Additive AI employee browser plugin. */
 
-import type { AistaffClientPort } from '@deepseek-ai/dsh-aistaff-product-contracts'
-import type {} from '@deepseek-ai/dsh-aistaff-product-remote/client'
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
-import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type { AistaffClientPort } from '@voyaseek-ai/dsh-aistaff-product-contracts'
+import type {} from '@voyaseek-ai/dsh-aistaff-product-remote/client'
+import type { ClientContext } from '@voyaseek-ai/dsh-client-runtime/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-layout/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-sidebar/client'
 import { AistaffFooterAction } from './AistaffFooterAction.tsx'
 import { AistaffWorkbench } from './AistaffWorkbench.tsx'
 import { createWorkbenchInjected } from './adapter.ts'

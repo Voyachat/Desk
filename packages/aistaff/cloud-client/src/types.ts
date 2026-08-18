@@ -16,7 +16,7 @@ import type {
   OperationStatusView,
   ProductError,
   SubmitEmployeeInput,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 
 /** Headers accepted by the injected Host transport. */
 export type GatewayHeaders = Readonly<Record<string, string>>

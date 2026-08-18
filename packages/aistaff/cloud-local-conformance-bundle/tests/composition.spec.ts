@@ -4,18 +4,18 @@ import { describe, expect, it } from 'vitest'
 
 const root = resolve(import.meta.dirname, '..')
 const expected = [
-  '@deepseek-ai/dsh-aistaff-cloud-conformance',
-  '@deepseek-ai/dsh-aistaff-cloud-provider',
-  '@deepseek-ai/dsh-aistaff-cloud-local-conformance',
-  '@deepseek-ai/dsh-aistaff-employee-experience-remote',
-  '@deepseek-ai/dsh-aistaff-local-capability-remote',
-  '@deepseek-ai/dsh-aistaff-cloud-local-client-product',
+  '@voyaseek-ai/dsh-aistaff-cloud-conformance',
+  '@voyaseek-ai/dsh-aistaff-cloud-provider',
+  '@voyaseek-ai/dsh-aistaff-cloud-local-conformance',
+  '@voyaseek-ai/dsh-aistaff-employee-experience-remote',
+  '@voyaseek-ai/dsh-aistaff-local-capability-remote',
+  '@voyaseek-ai/dsh-aistaff-cloud-local-client-product',
 ]
 const forbidden = [
-  '@deepseek-ai/dsh-aistaff-supervisor-process',
-  '@deepseek-ai/dsh-aistaff-cloud-product-bundle',
-  '@deepseek-ai/dsh-aistaff-cloud-conformance-bundle',
-  '@deepseek-ai/dsh-aistaff-client-product',
+  '@voyaseek-ai/dsh-aistaff-supervisor-process',
+  '@voyaseek-ai/dsh-aistaff-cloud-product-bundle',
+  '@voyaseek-ai/dsh-aistaff-cloud-conformance-bundle',
+  '@voyaseek-ai/dsh-aistaff-client-product',
 ]
 
 describe('test-only Cloud local-read conformance composition', () => {

@@ -1,4 +1,4 @@
-# `@deepseek-ai/dsh-loader-smoke`
+# `@voyaseek-ai/dsh-loader-smoke`
 
 [English](README.md) | 中文
 

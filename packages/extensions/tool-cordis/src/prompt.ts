@@ -4,8 +4,8 @@ export const CORDIS_SYSTEM_PROMPT = `# Dynamic Cordis Plugins
 
 Dynamic Cordis plugins extend a running DSH process. A Plugin uses apply(ctx) to consume Services, listen to Events, provide Services, register model Tools, or register browser UI in Slots.
 
-- Plugin and immutable Package definitions persist under $DSH_HOME/dynamic-cordis. A restart restores their identities, source, compiled artifacts, and current Package pointer, but restores no running Fiber or approval state; an explicit run/approval is still required.
-- define does not modify repository source or cordis.yml. It compiles source and atomically publishes plain JavaScript artifacts plus editable development files under $DSH_HOME/dynamic-cordis/sources/<pluginId>/.
+- Plugin and immutable Package definitions persist under $VOYASEEK_HOME/dynamic-cordis. A restart restores their identities, source, compiled artifacts, and current Package pointer, but restores no running Fiber or approval state; an explicit run/approval is still required.
+- define does not modify repository source or cordis.yml. It compiles source and atomically publishes plain JavaScript artifacts plus editable development files under $VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/.
 - The restricted execution environment prevents accidental misuse; it is not a security boundary for malicious code. Services obtained by dynamic code connect to the real runtime.
 
 ## Make the user-facing plan clear first

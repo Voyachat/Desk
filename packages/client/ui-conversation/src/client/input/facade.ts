@@ -6,15 +6,15 @@
  * sink). Package-private; the hub alone constructs it and wires the scoped
  * event listeners onto it.
  */
-import type { ClientContext, ObservableSnapshot, SnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
-import { createSnapshotStore } from '@deepseek-ai/dsh-client-runtime/client'
+import type { ClientContext, ObservableSnapshot, SnapshotStore } from '@voyaseek-ai/dsh-client-runtime/client'
+import { createSnapshotStore } from '@voyaseek-ai/dsh-client-runtime/client'
 import type {
   ArbitrateKey, ArbitrateOutcome, CommandClaim, ConsumeTokenRequest, PickOutcome,
   ReferenceInsert, InputTriggerController, TokenSpan,
-} from '@deepseek-ai/dsh-client-ui-input-trigger/client'
+} from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
 import type {
   DraftAttachmentId, EditRange, EditSelection, InputActions, InputEffect, InputNotice, InputState,
-  PasteComponent, QueuedMessage, SessionInput, SubmitAttempt,
+  PasteComponent, PendingSend, QueuedMessage, SessionInput, StagedPendingSend, SubmitAttempt,
 } from './contract.ts'
 import type { InputSubmitMode } from '../contract/composer-submission.ts'
 import { InputMachine } from './machine.ts'
@@ -59,6 +59,9 @@ function guardOf(phase: InputState['phase']): 'plain' | 'claimed' | 'frozen' {
 
 const EMPTY_QUEUE: readonly QueuedMessage[] = []
 
+/** No staged sends: the shared empty projection keeps InputState reference-stable. */
+const EMPTY_PENDING: readonly PendingSend[] = []
+
 /** No-pipeline lexicon: zero text-ref decorations. */
 const EMPTY_LEXICON: ReadonlyMap<'/' | '@', readonly string[]> = new Map()
 
@@ -86,6 +89,8 @@ export class SessionInputShell implements SessionInput {
   private noticeSeq = 0
   private lastDraft = ''
   private imageIds: readonly DraftAttachmentId[] = []
+  private readonly staged = new Map<string, StagedPendingSend>()
+  private pendingCache: readonly PendingSend[] = EMPTY_PENDING
   private disposed = false
   /** Draft persistence mirror (chat store write; receives the clipboard projection, never raw placeholders). */
   private mirrorFn: ((text: string) => void) | undefined
@@ -352,7 +357,63 @@ export class SessionInputShell implements SessionInput {
   /** Teardown: abort any in-flight attempt and stop accepting async settlements. */
   dispose(): void {
     this.disposed = true
+    for (const staged of this.staged.values()) staged.unsubscribe()
+    this.staged.clear()
     this.run(this.core.dispatch({ type: 'release' }))
+  }
+
+  // ---- optimistic-send staging (hub default-sink choreography) ----
+
+  /**
+   * Stage one optimistic send: the echo publishes with the next InputState
+   * and stays until host admission (settle) or send failure (retract).
+   * @param staged - the echo row plus its authoritative-queue subscription.
+   */
+  stagePendingSend(staged: StagedPendingSend): void {
+    this.staged.set(staged.send.sendId, staged)
+    this.refreshPending()
+  }
+
+  /** Drop the echo once the host's authoritative frame carries the message. */
+  settlePendingSend(sendId: string): void {
+    this.unstage(sendId)
+  }
+
+  /**
+   * Drop the echo after a rejected send.
+   * @param sendId - staged send identity.
+   * @returns the send's consumed image ids for draft re-admission (empty when already gone).
+   */
+  retractPendingSend(sendId: string): readonly DraftAttachmentId[] {
+    const staged = this.staged.get(sendId)
+    if (staged === undefined) return []
+    this.unstage(sendId)
+    return staged.send.imageIds
+  }
+
+  /** Whether one staged send is still unsettled. */
+  hasPendingSend(sendId: string): boolean {
+    return this.staged.has(sendId)
+  }
+
+  /** The staged send's queue-mirror preview text (frame-match key). */
+  pendingPreviewOf(sendId: string): string | undefined {
+    return this.staged.get(sendId)?.send.preview
+  }
+
+  private unstage(sendId: string): void {
+    const staged = this.staged.get(sendId)
+    if (staged === undefined) return
+    staged.unsubscribe()
+    this.staged.delete(sendId)
+    this.refreshPending()
+  }
+
+  private refreshPending(): void {
+    this.pendingCache = this.staged.size === 0
+      ? EMPTY_PENDING
+      : [...this.staged.values()].map(staged => staged.send)
+    this.publish()
   }
 
   /** Read the live machine state (guard derivation reads here). */
@@ -495,7 +556,12 @@ export class SessionInputShell implements SessionInput {
 
   private compose(): InputState {
     const core = this.core.state
-    return { ...core, imageIds: this.imageIds, queue: this.deps.queue?.getSnapshot() ?? EMPTY_QUEUE }
+    return {
+      ...core,
+      imageIds: this.imageIds,
+      queue: this.deps.queue?.getSnapshot() ?? EMPTY_QUEUE,
+      pendingSends: this.pendingCache,
+    }
   }
 
   private publish(): void {

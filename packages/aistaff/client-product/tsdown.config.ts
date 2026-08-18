@@ -5,7 +5,7 @@ import { transform } from 'lightningcss'
 import type { UserConfig } from 'tsdown'
 import { CLIENT_EXTERNALS, clientBundle } from '../../client/tsdown.client.ts'
 
-const PACKAGE_ID = '@deepseek-ai/dsh-aistaff-client-product'
+const PACKAGE_ID = '@voyaseek-ai/dsh-aistaff-client-product'
 const CSS_PREFIX = '\0aistaff-cloud-css:'
 const CSS_SUFFIX = '.mjs'
 const cssFiles = new Map<string, string>()

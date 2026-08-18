@@ -1,8 +1,8 @@
-# @deepseek-ai/dsh-claude-runtime-ui
+# @voyaseek-ai/dsh-claude-runtime-ui
 
 Composer runtime selector: labels the agent driver the current session runs
 under — Native (the DSH loop) or Claude (the Claude Agent SDK driver mounted
-by `@deepseek-ai/dsh-claude-agent`) — and switches between them.
+by `@voyaseek-ai/dsh-claude-agent`) — and switches between them.
 
 The browser half occupies the `conversation.input.left` composer seat (right
 of the resident chrome, beside the plan chip). The node half is an empty

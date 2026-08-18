@@ -1,6 +1,6 @@
 /** Busy-Enter preference stored in the Host user-settings document. */
 
-import z from '@deepseek-ai/schemastery'
+import z from '@voyaseek-ai/schemastery'
 
 /** Settings namespace owned by the conversation plugin. */
 export const CONVERSATION_SETTINGS_NAMESPACE = 'ui-conversation'
@@ -17,13 +17,28 @@ export type BusyEnterBehavior = typeof BUSY_ENTER_BEHAVIORS[number]
 /** Default preserves Enter-as-Queue for running conversations. */
 export const DEFAULT_BUSY_ENTER_BEHAVIOR: BusyEnterBehavior = 'queue'
 
+/** Field carrying the "show reasoning inline" preference. */
+export const SHOW_REASONING_FIELD = 'showReasoning'
+
+/** Default keeps the folded, conversation-shaped chat view. */
+export const DEFAULT_SHOW_REASONING = false
+
 /** Durable conversation section shared by the Host schema and the browser scope. */
 export interface ConversationSettings {
   /** Delivery mode for plain Enter while the addressed agent is busy. */
   busyEnter: BusyEnterBehavior
+  /**
+   * When true, reasoning-bearing Assistant steps render inline as their own
+   * Think rows instead of folding into the activity disclosure. The reasoning
+   * row itself stays expanded while streaming so the in-progress chain of
+   * thought reads like ChatGPT's working area; once the turn settles the row
+   * keeps its default collapsed summary.
+   */
+  showReasoning: boolean
 }
 
 /** Durable conversation schema; also the wire envelope the browser scope validates against. */
 export const ConversationSettingsSchema: z<ConversationSettings> = z.object({
   [BUSY_ENTER_FIELD]: z.union([...BUSY_ENTER_BEHAVIORS]).default(DEFAULT_BUSY_ENTER_BEHAVIOR),
+  [SHOW_REASONING_FIELD]: z.boolean().default(DEFAULT_SHOW_REASONING),
 })

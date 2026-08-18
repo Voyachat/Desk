@@ -1,20 +1,20 @@
-import { Context } from '@deepseek-ai/cordis'
-import * as cloudConformance from '@deepseek-ai/dsh-aistaff-cloud-conformance'
-import * as cloudProvider from '@deepseek-ai/dsh-aistaff-cloud-provider'
+import { Context } from '@voyaseek-ai/cordis'
+import * as cloudConformance from '@voyaseek-ai/dsh-aistaff-cloud-conformance'
+import * as cloudProvider from '@voyaseek-ai/dsh-aistaff-cloud-provider'
 import {
   OperationId,
   type EmployeeExperiencePort,
   type EmployeeExperienceSnapshot,
-} from '@deepseek-ai/dsh-aistaff-employee-experience'
+} from '@voyaseek-ai/dsh-aistaff-employee-experience'
 import type {
   LocalCapabilityPort,
   LocalCapabilitySnapshot,
-} from '@deepseek-ai/dsh-aistaff-local-capability'
+} from '@voyaseek-ai/dsh-aistaff-local-capability'
 import {
   SupervisorEvidenceRef,
   SupervisorOperationId,
   SupervisorReceiptRef,
-} from '@deepseek-ai/dsh-aistaff-supervisor-control'
+} from '@voyaseek-ai/dsh-aistaff-supervisor-control'
 import { describe, expect, it } from 'vitest'
 import * as localConformance from '../src/index.ts'
 

@@ -1,9 +1,9 @@
 /**
  * Strict Typert Remote methods backed by the authoritative Aistaff Host projection.
- * @module @deepseek-ai/dsh-aistaff-product-remote
+ * @module @voyaseek-ai/dsh-aistaff-product-remote
  */
 
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import type {
   CreateTaskInput,
   ProductProjectionSnapshot,
@@ -11,11 +11,11 @@ import type {
   Receipt,
   RespondApprovalInput,
   Task,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
-import type {} from '@deepseek-ai/dsh-aistaff-product-projection'
-import { Remote, TypertRemoteService } from '@deepseek-ai/dsh-typert-protocol'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
+import type {} from '@voyaseek-ai/dsh-aistaff-product-projection'
+import { Remote, TypertRemoteService } from '@voyaseek-ai/dsh-typert-protocol'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Host Typert service exposing the Aistaff product projection. */
     aistaffProductRemote: AistaffProductRemoteService

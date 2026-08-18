@@ -4,7 +4,7 @@ import { chmod, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { afterEach, describe, expect, test } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import * as SupervisorProcessPlugin from '../src/index.ts'
 import {
   SUPERVISOR_PROCESS_SERVICE_KEY,

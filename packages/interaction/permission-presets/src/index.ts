@@ -10,21 +10,21 @@
  * @module dsh-permission-presets
  */
 
-import { Context, Service } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
+import { Context, Service } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
 import { z as zod } from 'zod'
-import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
-import type { SandboxMode } from '@deepseek-ai/dsh-sandbox'
-import { SANDBOX_MODES, effectiveSandboxMode, setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy'
+import type { Session, SessionEvent } from '@voyaseek-ai/dsh-session'
+import type { SandboxMode } from '@voyaseek-ai/dsh-sandbox'
+import { SANDBOX_MODES, effectiveSandboxMode, setSandboxMode } from '@voyaseek-ai/dsh-sandbox-policy'
 // Side-effect type import: declaration-merges `ctx.shell` (the capability fact
 // `sandboxMode` this service reads), without a value dependency on the seam.
-import type {} from '@deepseek-ai/dsh-shell'
-import type { ApprovalPolicy } from '@deepseek-ai/dsh-user-approval'
-import { APPROVAL_POLICIES, effectiveApprovalPolicy, setApprovalPolicy } from '@deepseek-ai/dsh-user-approval'
-import { installSettingsSection, settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type {} from '@voyaseek-ai/dsh-shell'
+import type { ApprovalPolicy } from '@voyaseek-ai/dsh-user-approval'
+import { APPROVAL_POLICIES, effectiveApprovalPolicy, setApprovalPolicy } from '@voyaseek-ai/dsh-user-approval'
+import { installSettingsSection, settingsNamespace } from '@voyaseek-ai/dsh-settings'
 // Type-only: resolves ctx.sessionProjections / ctx.commands for the optional children.
-import type {} from '@deepseek-ai/dsh-session-projection'
-import type {} from '@deepseek-ai/dsh-commands'
+import type {} from '@voyaseek-ai/dsh-session-projection'
+import type {} from '@voyaseek-ai/dsh-commands'
 import type { PermissionSelect, PresetOption } from './types.ts'
 
 // The `permissions` projection-key declaration lives in src/types.ts (its one
@@ -33,13 +33,13 @@ import type { PermissionSelect, PresetOption } from './types.ts'
 // consuming the declarations still receive the SessionProjectionMap merge.
 export type * from './types.ts'
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     permissionPresets: PermissionPresetService
   }
 }
 
-declare module '@deepseek-ai/dsh-session/types' {
+declare module '@voyaseek-ai/dsh-session/types' {
   interface SessionEventMap {
     /**
      * Records the selected preset as durable, log-only user intent. The knob

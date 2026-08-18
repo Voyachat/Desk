@@ -1,7 +1,7 @@
 import { resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
+import { Context } from '@voyaseek-ai/cordis'
 import {
   CapabilityContextHandle,
   SUPERVISOR_CONTROL_SERVICE_KEY,

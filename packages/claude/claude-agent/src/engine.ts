@@ -2,7 +2,7 @@
  * The SDK query boundary owned by one driver. One engine instance holds the
  * deployment-resolved query inputs; each driver turn runs exactly one query
  * through it. The engine injects its query entry point in tests.
- * @module @deepseek-ai/dsh-claude-agent/engine
+ * @module @voyaseek-ai/dsh-claude-agent/engine
  */
 
 import {
@@ -13,7 +13,7 @@ import {
   type Query,
   type SDKMessage,
 } from '@anthropic-ai/claude-agent-sdk'
-import type { SubprocessHandle, SubprocessSpawnSpec } from '@deepseek-ai/dsh-subprocess'
+import type { SubprocessHandle, SubprocessSpawnSpec } from '@voyaseek-ai/dsh-subprocess'
 import { claudeSpawnSpec, ManagedClaudeCodeProcess } from './process.ts'
 
 /** One SDK query submitted by a driver turn. */

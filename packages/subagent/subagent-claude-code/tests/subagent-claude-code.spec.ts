@@ -6,8 +6,8 @@ import type {
   SDKResultMessage,
   SpawnOptions,
 } from '@anthropic-ai/claude-agent-sdk'
-import { Context } from '@deepseek-ai/cordis'
-import Loader from '@deepseek-ai/cordis-plugin-loader'
+import { Context } from '@voyaseek-ai/cordis'
+import Loader from '@voyaseek-ai/cordis-plugin-loader'
 import {
   afterEach,
   beforeEach,
@@ -17,17 +17,17 @@ import {
   type Mock,
   vi,
 } from 'vitest'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
-import type { ContentBlock } from '@deepseek-ai/dsh-llm'
-import SubagentRuntime from '@deepseek-ai/dsh-subagent'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
+import type { ContentBlock } from '@voyaseek-ai/dsh-llm'
+import SubagentRuntime from '@voyaseek-ai/dsh-subagent'
 import type {
   SubprocessHandle,
   SubprocessOutcome,
   SubprocessSpawnSpec,
-} from '@deepseek-ai/dsh-subprocess'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
+} from '@voyaseek-ai/dsh-subprocess'
+import LocalSubprocessRuntime from '@voyaseek-ai/dsh-subprocess-local'
+import { MAX_TIMER_DELAY_MS } from '@voyaseek-ai/dsh-timeout'
 import * as claudeCode from '../src/index.ts'
 import * as invariant from '../src/invariant.ts'
 import {
@@ -403,7 +403,7 @@ describe('task admission and package contracts', () => {
     const ctx = { invariants: { register } } as unknown as Context
     await expect(invariant.apply(ctx)).resolves.toBe(dispose)
     expect(register).toHaveBeenCalledWith(
-      '@deepseek-ai/dsh-subagent-claude-code',
+      '@voyaseek-ai/dsh-subagent-claude-code',
       expect.any(Function),
     )
     const install = register.mock.calls[0]![1]

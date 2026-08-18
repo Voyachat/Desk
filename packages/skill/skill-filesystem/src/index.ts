@@ -6,20 +6,20 @@
  * user roots, parses YAML frontmatter, and loads bodies through `ctx.fs` when a
  * filesystem service is present.
  *
- * @module @deepseek-ai/dsh-skill-filesystem
+ * @module @voyaseek-ai/dsh-skill-filesystem
  */
 
 import { access, lstat, readdir, readFile, stat } from 'node:fs/promises'
 import { unwatchFile, watchFile, type Stats } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
 import { homedir } from 'node:os'
-import type { Context } from '@deepseek-ai/cordis'
+import type { Context } from '@voyaseek-ai/cordis'
 import chokidar from 'chokidar'
-import z from '@deepseek-ai/schemastery'
-import type Schema from '@deepseek-ai/schemastery'
+import z from '@voyaseek-ai/schemastery'
+import type Schema from '@voyaseek-ai/schemastery'
 import { parse as parseYaml } from 'yaml'
-import type { FileSystem, FsDirEntry, FsTarget } from '@deepseek-ai/dsh-fs'
-import { canonicalizeWatchPath, resolveDshHome } from '@deepseek-ai/dsh-home-paths'
+import type { FileSystem, FsDirEntry, FsTarget } from '@voyaseek-ai/dsh-fs'
+import { canonicalizeWatchPath, resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
 import {
   BUNDLED_SKILL_RANK,
   isSkillName,
@@ -31,7 +31,7 @@ import {
   type SkillProviderControl,
   type SkillProviderObservation,
   type SkillSource,
-} from '@deepseek-ai/dsh-skill'
+} from '@voyaseek-ai/dsh-skill'
 
 const PROJECT_DSH_RANK = 100
 const PROJECT_AGENTS_RANK = 200
@@ -51,7 +51,7 @@ export interface Config {
   providerName?: string
   /** Whether project and user roots are included around custom roots. */
   includeDefaultRoots?: boolean
-  /** DeepSeek Harness config root. Defaults to `$DSH_HOME` or `~/.dsh`. */
+  /** Voyaseek Harness config root. Defaults to `$VOYASEEK_HOME` or `~/.voyaseek`. */
   dshHome?: string
   /** Shared agent config root. Defaults to `$DSH_AGENTS_HOME` or `~/.agents`. */
   agentsHome?: string
@@ -243,7 +243,7 @@ export class FileSystemSkillProvider implements SkillProvider {
     if (this.includeDefaultRoots && cwd !== undefined) {
       const projectRoot = await findProjectRoot(resolve(cwd), optionalFileSystem(this.ctx))
       roots.push(
-        { path: join(projectRoot, '.dsh/skills'), source: 'project-dsh', rank: PROJECT_DSH_RANK, projectRoot },
+        { path: join(projectRoot, '.voyaseek/skills'), source: 'project-dsh', rank: PROJECT_DSH_RANK, projectRoot },
         { path: join(projectRoot, '.agents/skills'), source: 'project-agents', rank: PROJECT_AGENTS_RANK, projectRoot },
       )
     }

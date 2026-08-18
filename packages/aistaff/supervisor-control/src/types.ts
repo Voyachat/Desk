@@ -1,6 +1,6 @@
-/** Host-only DTOs for the AiDesktop Supervisor control plane. @module @deepseek-ai/dsh-aistaff-supervisor-control/types */
+/** Host-only DTOs for the AiDesktop Supervisor control plane. @module @voyaseek-ai/dsh-aistaff-supervisor-control/types */
 
-import type { Branded } from '@deepseek-ai/dsh-brand'
+import type { Branded } from '@voyaseek-ai/dsh-brand'
 
 /** Identifies one idempotent Supervisor mutation or read. */
 export type SupervisorOperationId = Branded<'AistaffSupervisorOperationId'>

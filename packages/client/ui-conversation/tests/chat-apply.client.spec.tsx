@@ -6,11 +6,11 @@
 // entries. Tool composition belongs to ui-tool and its machinery spec.
 
 import { describe, expect, it, vi } from 'vitest'
-import { SlotTestRuntime, usePinnedBrowserLanguages, stubSettingsScope } from '@deepseek-ai/dsh-client-test-runtime'
-import { resolveSlotLabel } from '@deepseek-ai/dsh-client-ui-slots'
-import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
-import type { SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import { apply, inject } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import { SlotTestRuntime, usePinnedBrowserLanguages, stubSettingsScope } from '@voyaseek-ai/dsh-client-test-runtime'
+import { resolveSlotLabel } from '@voyaseek-ai/dsh-client-ui-slots'
+import { LocaleRuntime } from '@voyaseek-ai/dsh-client-locale/client'
+import type { SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
+import { apply, inject } from '@voyaseek-ai/dsh-client-ui-conversation/client'
 
 // The service reads its initial locale from the browser; these specs assert
 // the shipped Chinese copy, so they state the browser they assume.
@@ -93,7 +93,8 @@ describe('apply wiring', () => {
     // screen precedes the session either would belong to.
     expect(b.slots.spec('conversation.hero.workspace')).toEqual({ kind: 'single', scope: 'root' })
     expect(b.slots.spec('conversation.hero.agentPreset')).toEqual({ kind: 'single', scope: 'root' })
-    expect(b.slots.entries('settings.general.item').map(entry => entry.options.id)).toEqual(['composer-enter'])
+    expect(b.slots.entries('settings.general.item').map(entry => entry.options.id))
+      .toEqual(['composer-enter', 'reasoning-display'])
     await b.runtime.dispose()
   })
 

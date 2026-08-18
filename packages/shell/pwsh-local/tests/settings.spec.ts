@@ -1,13 +1,13 @@
 /** The shared `bash` settings section as the pwsh executor family resolves it. */
 
 import { describe, expect, it } from 'vitest'
-import { Context } from '@deepseek-ai/cordis'
-import type { Fiber } from '@deepseek-ai/cordis'
-import { SettingsProvider } from '@deepseek-ai/dsh-settings'
-import type { SettingsNamespace } from '@deepseek-ai/dsh-settings'
-import { SHELL_SETTINGS_NAMESPACE } from '@deepseek-ai/dsh-shell'
-import LocalSubprocessRuntime from '@deepseek-ai/dsh-subprocess-local'
-import { PwshLocalExecutor } from '@deepseek-ai/dsh-pwsh-local'
+import { Context } from '@voyaseek-ai/cordis'
+import type { Fiber } from '@voyaseek-ai/cordis'
+import { SettingsProvider } from '@voyaseek-ai/dsh-settings'
+import type { SettingsNamespace } from '@voyaseek-ai/dsh-settings'
+import { SHELL_SETTINGS_NAMESPACE } from '@voyaseek-ai/dsh-shell'
+import LocalSubprocessRuntime from '@voyaseek-ai/dsh-subprocess-local'
+import { PwshLocalExecutor } from '@voyaseek-ai/dsh-pwsh-local'
 
 /** The smallest real provider: one in-memory document, always writable. */
 class MemorySettings extends SettingsProvider {

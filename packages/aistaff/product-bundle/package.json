@@ -1,5 +1,5 @@
 {
-  "name": "@deepseek-ai/dsh-aistaff-product-bundle",
+  "name": "@voyaseek-ai/dsh-aistaff-product-bundle",
   "description": "Additive Aistaff product layer for the DSH web profile",
   "version": "0.1.0-rc.5",
   "private": true,
@@ -32,17 +32,17 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "@deepseek-ai/dsh-aistaff-client-product": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-language-policy": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-projection": "workspace:^",
-    "@deepseek-ai/dsh-aistaff-product-remote": "workspace:^"
+    "@voyaseek-ai/dsh-aistaff-client-product": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-language-policy": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-projection": "workspace:^",
+    "@voyaseek-ai/dsh-aistaff-product-remote": "workspace:^"
   },
   "peerDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
-    "@deepseek-ai/dsh-invariants": "workspace:^",
-    "@deepseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
   }
 }

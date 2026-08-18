@@ -1,12 +1,13 @@
 /** Host registration for browser conversation preferences. */
 
-import type { Context } from '@deepseek-ai/cordis'
-import { settingsNamespace } from '@deepseek-ai/dsh-settings'
+import type { Context } from '@voyaseek-ai/cordis'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
 import { CONVERSATION_SETTINGS_NAMESPACE, ConversationSettingsSchema } from './submission-settings.ts'
 
 export {
   BUSY_ENTER_BEHAVIORS, BUSY_ENTER_FIELD, CONVERSATION_SETTINGS_NAMESPACE,
-  DEFAULT_BUSY_ENTER_BEHAVIOR, type BusyEnterBehavior, type ConversationSettings,
+  DEFAULT_BUSY_ENTER_BEHAVIOR, DEFAULT_SHOW_REASONING, SHOW_REASONING_FIELD,
+  type BusyEnterBehavior, type ConversationSettings,
 } from './submission-settings.ts'
 
 /**

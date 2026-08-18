@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-claude-runtime-ui`.
- * @module @deepseek-ai/dsh-claude-runtime-ui/invariant
+ * Package-owned invariant companion for `@voyaseek-ai/dsh-claude-runtime-ui`.
+ * @module @voyaseek-ai/dsh-claude-runtime-ui/invariant
  */
 
 /* jscpd:ignore-start */
-import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Context } from '@voyaseek-ai/cordis'
+import type { InvariantInstaller } from '@voyaseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-claude-runtime-ui'
+const PACKAGE_NAME = '@voyaseek-ai/dsh-claude-runtime-ui'
 
 /** Cordis companion plugin name. */
 export const name = 'claude-runtime-ui-invariant'

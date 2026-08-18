@@ -6,7 +6,7 @@ export const zh = {
   'chip.title': '运行模式 — 切换后将在同一项目下开启对应模式的新会话',
   'chip.busy': '正在切换运行模式…',
   'option.native': '本机模式',
-  'option.native.desc': '由 DeepSeek Harness 本机调度',
+  'option.native.desc': '由 Voyaseek Harness 本机调度',
   'option.claude': 'Claude 模式',
   'option.claude.desc': '由 Claude Agent SDK 调度',
 } satisfies Record<string, string>
@@ -20,7 +20,7 @@ export const en = {
   'chip.title': 'Runtime mode — switching opens a new session in the same project under the chosen mode',
   'chip.busy': 'Switching runtime mode…',
   'option.native': 'Native',
-  'option.native.desc': 'Driven by the DeepSeek Harness loop',
+  'option.native.desc': 'Driven by the Voyaseek Harness loop',
   'option.claude': 'Claude',
   'option.claude.desc': 'Driven by the Claude Agent SDK',
 } satisfies Record<ClaudeRuntimeKey, string>

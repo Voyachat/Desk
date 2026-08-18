@@ -4,7 +4,7 @@
  * function-word vocabulary distinguishes Latin-script languages. Detection
  * returns `undefined` whenever no script or vocabulary is confident, so a
  * caller keeps its current language instead of switching on noise.
- * @module @deepseek-ai/dsh-aistaff-language-policy/detect
+ * @module @voyaseek-ai/dsh-aistaff-language-policy/detect
  */
 
 /** Fewest CJK ideographs that can carry a Chinese sentence (`好的` suffices). */

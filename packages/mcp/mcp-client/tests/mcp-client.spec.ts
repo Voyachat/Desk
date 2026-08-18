@@ -1,13 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
-import { Context } from '@deepseek-ai/cordis'
-import { CallId } from '@deepseek-ai/dsh-llm'
-import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
-import ToolRuntime, { type JsonValue } from '@deepseek-ai/dsh-tools'
-import { publicToolName, syncTools, type ToolBridgeOptions } from '@deepseek-ai/dsh-mcp-client/src/tools.ts'
-import { createTransport } from '@deepseek-ai/dsh-mcp-client/src/transport.ts'
-import type { Config } from '@deepseek-ai/dsh-mcp-client'
+import { Context } from '@voyaseek-ai/cordis'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime, { type JsonValue } from '@voyaseek-ai/dsh-tools'
+import { publicToolName, syncTools, type ToolBridgeOptions } from '@voyaseek-ai/dsh-mcp-client/src/tools.ts'
+import { createTransport } from '@voyaseek-ai/dsh-mcp-client/src/transport.ts'
+import type { Config } from '@voyaseek-ai/dsh-mcp-client'
 
 const testToolSignal = new AbortController().signal
 

@@ -2,12 +2,12 @@
  * Alternative agent-driver contract served by the loop factory. A deployment
  * registers one factory per runtime id; sessions whose header records that id
  * are driven by the matching driver instead of the default loop agent.
- * @module @deepseek-ai/dsh-agent-loop/driver
+ * @module @voyaseek-ai/dsh-agent-loop/driver
  */
 
-import type { Agent, AgentOptions } from '@deepseek-ai/dsh-agent'
-import type { Scope } from '@deepseek-ai/dsh-scope'
-import type { Session, SessionId } from '@deepseek-ai/dsh-session'
+import type { Agent, AgentOptions } from '@voyaseek-ai/dsh-agent'
+import type { Scope } from '@voyaseek-ai/dsh-scope'
+import type { Session, SessionId } from '@voyaseek-ai/dsh-session'
 
 /**
  * A driver the loop factory publishes in place of the default loop agent.

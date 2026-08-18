@@ -1,16 +1,16 @@
 /**
  * Dynamic Cordis Plugin service: immutable package definitions, one active run
  * per Plugin, human-approved Client activation, and Host/Client invocation.
- * @module @deepseek-ai/dsh-cordis-host-runner
+ * @module @voyaseek-ai/dsh-cordis-host-runner
  */
 
-import { Context } from '@deepseek-ai/cordis'
-import type { Fiber } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import type { Agent } from '@deepseek-ai/dsh-agent'
-import { createUserMessage } from '@deepseek-ai/dsh-llm'
-import type { JsonValue } from '@deepseek-ai/dsh-session/types'
-import { TypertRemoteService, Remote } from '@deepseek-ai/dsh-typert-protocol'
+import { Context } from '@voyaseek-ai/cordis'
+import type { Fiber } from '@voyaseek-ai/cordis'
+import z from '@voyaseek-ai/schemastery'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
+import { createUserMessage } from '@voyaseek-ai/dsh-llm'
+import type { JsonValue } from '@voyaseek-ai/dsh-session/types'
+import { TypertRemoteService, Remote } from '@voyaseek-ai/dsh-typert-protocol'
 import { isPlugin, normalizeHandler } from './guard.ts'
 import { compileDynamicCordisSource } from './compiler.ts'
 import { CordisInspectRegistryService } from './inspect-registry.ts'
@@ -79,7 +79,7 @@ export function ApprovalRequestId(id: string): ApprovalRequestId {
   return id as ApprovalRequestId
 }
 
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
   interface Context {
     /** Process-local dynamic Plugin registry and lifecycle service. */
     dynamicCordisRunner: DynamicCordisRunnerService
@@ -90,7 +90,7 @@ declare module '@deepseek-ai/cordis' {
 export interface Config {
   /** Maximum synchronous VM evaluation time in milliseconds. */
   vmTimeoutMs?: number
-  /** Harness home that owns persistent dynamic definitions; defaults to `$DSH_HOME` or `~/.dsh`. */
+  /** Harness home that owns persistent dynamic definitions; defaults to `$VOYASEEK_HOME` or `~/.voyaseek`. */
   dshHome?: string
   /** Watch editable working copies and reload approved, currently running Client Plugins. */
   developmentHmr?: boolean

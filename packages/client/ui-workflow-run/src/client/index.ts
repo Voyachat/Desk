@@ -1,14 +1,14 @@
 /** Browser plugin for durable workflow-run nodes and the current-session dashboard. */
 
-import type { ClientContext, SessionId } from '@deepseek-ai/dsh-client-runtime/client'
-import type {} from '@deepseek-ai/dsh-client-locale/client'
-import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { ClientContext, SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
+import type {} from '@voyaseek-ai/dsh-client-locale/client'
+import type {} from '@voyaseek-ai/dsh-client-ui-conversation/client'
 import { WorkflowDashboardAction } from './WorkflowDashboardAction.tsx'
 import { WorkflowRunPanel, type WorkflowRunInjected } from './WorkflowRunPanel.tsx'
 import { en, NS, type WorkflowRunKey, zh } from './locales.ts'
 import { workflowRunDefinition } from './workflow-definition.ts'
 
-declare module '@deepseek-ai/dsh-client-ui-slots' {
+declare module '@voyaseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
     /** Durable workflow-run node copy. */
     workflowRun: WorkflowRunKey

@@ -6,7 +6,7 @@ import { dirname, join, parse, resolve } from 'node:path'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import sharp from 'sharp'
-import type { ImageAttachmentLimits } from '@deepseek-ai/dsh-attachment'
+import type { ImageAttachmentLimits } from '@voyaseek-ai/dsh-attachment'
 import { readImageFile, saveImageFile } from '../src/store.ts'
 
 const fsControl = vi.hoisted(() => ({
@@ -80,7 +80,7 @@ describe('local attachment store', () => {
 
     await saveImageFile(storageRoot, { data: PNG, mediaType: 'image/png' }, LIMITS)
 
-    // Each process first proves DSH_HOME durable all the way to the filesystem
+    // Each process first proves VOYASEEK_HOME durable all the way to the filesystem
     // root; existence alone cannot vouch for a concurrent creator's fsync.
     // Later directory creation can then stop at that process-proven boundary.
     expect(fsControl.syncedDirectories).toEqual([

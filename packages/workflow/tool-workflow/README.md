@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-tool-workflow
+# @voyaseek-ai/dsh-tool-workflow
 
 English | [中文](README.zh.md)
 
@@ -18,7 +18,7 @@ When an Agent resumes a persisted Session, the plugin folds the Session log and 
 
 When the optional Commands service is present, `/workflow-retry <runId>` provides the explicit recovery action used by Web. It accepts only a durably failed or interrupted run, resolves its exact originating `tool/call` through the recorded `callId`, validates the logged arguments, and starts a new recorded run with those arguments. This operation runs the script from the beginning; it does not resume a JavaScript instruction pointer, reuse in-process closures, or automatically replay possible side effects.
 
-The browser-safe `@deepseek-ai/dsh-tool-workflow/types` subpath owns these four log-only event payloads and their `SessionEventMap` declaration. The package invariant rejects duplicate starts, unpaired members, terminal events with open members, and updates after run-end on both cold load and live append while accepting missing terminal suffixes.
+The browser-safe `@voyaseek-ai/dsh-tool-workflow/types` subpath owns these four log-only event payloads and their `SessionEventMap` declaration. The package invariant rejects duplicate starts, unpaired members, terminal events with open members, and updates after run-end on both cold load and live append while accepting missing terminal suffixes.
 
 ## Render intent
 

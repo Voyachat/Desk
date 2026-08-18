@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Session } from '@deepseek-ai/dsh-session'
+import type { Session } from '@voyaseek-ai/dsh-session'
 import { activeRulesFor, renderRules, type LanguageRule } from '../src/rules.ts'
 
 /** Build one persisted rule with sensible defaults. */

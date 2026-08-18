@@ -3,9 +3,9 @@
  * supplied each value. Harness consumers resolve through it instead of a flattened
  * `process.env`; launchers may still materialize accepted values for config
  * expressions and third-party libraries.
- * @module @deepseek-ai/dsh-launch-environment
+ * @module @voyaseek-ai/dsh-launch-environment
  */
-import type { Context } from '@deepseek-ai/cordis';
+import type { Context } from '@voyaseek-ai/cordis';
 /**
  * Which layer supplied a value, from most to least trusted: the environment
  * this process inherited, the invoking directory's `.env`, the Harness home's
@@ -65,7 +65,7 @@ export declare const DSH_LAUNCH_ENVIRONMENT_KEY = "launchEnvironment";
  * @returns the snapshot to resolve user-facing values against.
  */
 export declare function launchEnvironmentOf(ctx: Context): LaunchEnvironmentSnapshot;
-declare module '@deepseek-ai/cordis' {
+declare module '@voyaseek-ai/cordis' {
     interface Context {
         /** Launcher-owned snapshot of this run's environment; absent in compositions the product CLI did not boot. */
         launchEnvironment?: LaunchEnvironmentSnapshot;

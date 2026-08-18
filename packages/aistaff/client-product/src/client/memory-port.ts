@@ -10,7 +10,7 @@ import type {
   Receipt,
   RespondApprovalInput,
   Task,
-} from '@deepseek-ai/dsh-aistaff-product-contracts'
+} from '@voyaseek-ai/dsh-aistaff-product-contracts'
 
 const ISO_BASE = Date.parse('2026-01-01T00:00:00.000Z')
 

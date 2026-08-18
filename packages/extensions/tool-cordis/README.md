@@ -1,22 +1,22 @@
-# @deepseek-ai/dsh-tool-cordis
+# @voyaseek-ai/dsh-tool-cordis
 
 English | [中文](README.zh.md)
 
-The self-referential Cordis toolset: five model-facing tools over the live runtime in the current DSH process. Compilation, durable registry, vm sandbox, and browser run requests belong to [`@deepseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md) (`ctx.dynamicCordisRunner`), which this toolset injects — a composition with these tools but no runner never activates them. Design home — sandbox semantics, dynamic-package lifecycle and composition, standing decisions: [the toolset Agent Note](../../../.agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md).
+The self-referential Cordis toolset: five model-facing tools over the live runtime in the current DSH process. Compilation, durable registry, vm sandbox, and browser run requests belong to [`@voyaseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md) (`ctx.dynamicCordisRunner`), which this toolset injects — a composition with these tools but no runner never activates them. Design home — sandbox semantics, dynamic-package lifecycle and composition, standing decisions: [the toolset Agent Note](../../../.agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md).
 
 ## What it does
 
 Two paired verbs, plus the read-only report.
 
 - `cordis_inspect` — read-only report over the current process: services, all live plugin fibers, registered tools, this session's dynamic packages, the reflection-backed `api` / `events` references, and the compile-time `client` slot surface a browser half can contribute UI into. An exact `name` with `what: "api"`, `what: "events"`, or `what: "client"` narrows the report and adds the full contract.
-- `cordis_define` — compiles and durably records an immutable Package (`name`, `purpose`, and Host JavaScript/TypeScript and/or Client JavaScript/TypeScript/TSX). Nothing normally runs; development-HMR results name stable editable working files under `$DSH_HOME/dynamic-cordis/sources/<pluginId>/`, and the user sees a card with a start control. Production results omit the edit hint because no watcher is active. The minted Plugin and Package IDs ride both the value and durable presentation metadata.
+- `cordis_define` — compiles and durably records an immutable Package (`name`, `purpose`, and Host JavaScript/TypeScript and/or Client JavaScript/TypeScript/TSX). Nothing normally runs; development-HMR results name stable editable working files under `$VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/`, and the user sees a card with a start control. Production results omit the edit hint because no watcher is active. The minted Plugin and Package IDs ride both the value and durable presentation metadata.
 - `cordis_run` — evaluates the Host artifact in the sandbox and lets an answering web page load the Client artifact. Running an already-running Package re-delivers the live activation instead of failing, which is how a reloaded page gets it back.
 - `cordis_stop` — disposes the host half to quiescence and withdraws the browser half; the definition survives and can run again.
 - `cordis_undefine` — stops the package if needed and forgets the definition; its card stays in the conversation as an unloaded record.
 
 Exact model-facing schemas: [the generated tool catalog](../../../docs/tool-catalog.md).
 
-Dynamic definitions and compiled artifacts persist under `$DSH_HOME/dynamic-cordis`; they create no repository Plugin, install no package, and change no `cordis.yml` or project configuration. A DSH restart restores identities, immutable Package history, and the last current pointer, but no Fiber, handlers, pending approval, grants, or running state: the Plugin remains stopped until an explicit run/approval. `cordis_undefine` removes the durable definition. Every verb remains session-scoped: a Plugin is visible and controllable only in the session that defined it.
+Dynamic definitions and compiled artifacts persist under `$VOYASEEK_HOME/dynamic-cordis`; they create no repository Plugin, install no package, and change no `cordis.yml` or project configuration. A DSH restart restores identities, immutable Package history, and the last current pointer, but no Fiber, handlers, pending approval, grants, or running state: the Plugin remains stopped until an explicit run/approval. `cordis_undefine` removes the durable definition. Every verb remains session-scoped: a Plugin is visible and controllable only in the session that defined it.
 
 ## Trust stance
 
@@ -24,7 +24,7 @@ The sandbox isolates globals but is not a security boundary. Node globals are ab
 
 ## Config
 
-None. Durable-home, vm, and development-watcher settings belong to the runner service that owns compilation, storage, and lifecycle — see [`@deepseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md#config).
+None. Durable-home, vm, and development-watcher settings belong to the runner service that owns compilation, storage, and lifecycle — see [`@voyaseek-ai/dsh-cordis-host-runner`](../cordis-host-runner/README.md#config).
 
 ## The generated client slot catalog
 
@@ -47,7 +47,7 @@ The generated `INHERITED_CTX_API` closes the `api` report with the framework-inh
 
 ## Rendering
 
-Every tool renders a `generic` card (`read` / `execute` / `delete`); `cordis_define` carries the submitted halves as `rawInput` and titles the card with the label and purpose. Presenters are pure functions of the args, and results keep the default text rendering. A Web client registers its own keyed `cordis_define` row (`@deepseek-ai/dsh-client-ui-cordis`) and reads the label, purpose, and minted id from the call arguments and the result metadata; the generic card is what a surface without that registration falls back to.
+Every tool renders a `generic` card (`read` / `execute` / `delete`); `cordis_define` carries the submitted halves as `rawInput` and titles the card with the label and purpose. Presenters are pure functions of the args, and results keep the default text rendering. A Web client registers its own keyed `cordis_define` row (`@voyaseek-ai/dsh-client-ui-cordis`) and reads the label, purpose, and minted id from the call arguments and the result metadata; the generic card is what a surface without that registration falls back to.
 
 ## Export shape
 

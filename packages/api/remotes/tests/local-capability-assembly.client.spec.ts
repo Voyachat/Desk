@@ -1,7 +1,7 @@
-import { Context } from '@deepseek-ai/cordis'
-import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
-import * as GatewayClient from '@deepseek-ai/dsh-api-gateway/client'
-import TypertRegistry from '@deepseek-ai/dsh-typert-registry'
+import { Context } from '@voyaseek-ai/cordis'
+import type { ConnectionHandle } from '@voyaseek-ai/dsh-client-connection/client'
+import * as GatewayClient from '@voyaseek-ai/dsh-api-gateway/client'
+import TypertRegistry from '@voyaseek-ai/dsh-typert-registry'
 import { describe, expect, it, vi } from 'vitest'
 import * as RemoteAssembly from '../src/client/index.ts'
 
