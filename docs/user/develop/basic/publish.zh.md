@@ -74,13 +74,19 @@ profile manifest 从不需要手写：`dsh plugin` 负责创建和维护它。�
 
 ## 安装进 profile
 
-`dsh plugin --profile <name> <args...>` 在 profile 目录内转发给 pnpm，因此所有 pnpm 子命令都可用。在包含 `hello-plugin` 的目录中安装该包的 checkout：
+`dsh plugin --profile <name> audit <artifact>` 检查本地目录或 tarball，但不执行安装。在包含 `hello-plugin` 的目录中，先检查开发 checkout：
 
 ```sh
-dsh plugin --profile demo add ./hello-plugin
+dsh plugin --profile demo audit ./hello-plugin
 ```
 
-首次使用会初始化 profile（`@voyaseek-ai/dsh-base` 作为它的第一个组合包），pnpm 链接该 checkout，而 `dsh` 因为这个包声明了 `dsh.bundle`，把它追加进 `dsh.profile.bundles`：
+报告会把目录标为可变并打印 SHA-256。检查每条警告后，用报告中的摘要安装这些字节：
+
+```sh
+dsh plugin --profile demo add ./hello-plugin --approve-audit sha256:<digest-from-report>
+```
+
+首次成功添加会初始化 profile（`@voyaseek-ai/dsh-base` 作为它的第一个组合包），pnpm 在禁用生命周期脚本的情况下链接该 checkout，而 `dsh` 因为这个包声明了 `dsh.bundle`，把它追加进 `dsh.profile.bundles`：
 
 ```json
 {
@@ -150,32 +156,25 @@ dsh --profile demo
 
 遇到 `--help` 时，提供方不会发布该服务，所以这些行不会激活。Loader 只挂载一次组合，等待每一行的普通注入，再基于其已注入的上下文求值该行的 `!!js` 配置。
 
-## 从 GitHub 安装：构建脚本这道坎
+## 分发已构建、可检查的产物
 
-发布到注册表不是必须的——用户可以直接从 git 托管安装：
+直接 npm 和 GitHub 规格会被拒绝，因为 CLI 还不能把它们的解析结果和完整依赖图绑定到安装前报告。请改为交付已构建的 tarball：
 
 ```sh
-dsh plugin --profile demo add github:you/hello-plugin
+pnpm pack
+dsh plugin --profile demo audit ./hello-plugin-1.0.0.tgz
+dsh plugin --profile demo add ./hello-plugin-1.0.0.tgz
 ```
 
-但 git 安装拉取的是**源码，不是构建产物**：没有任何环节运行你的 `build` 脚本，因此 TypeScript 包到手时没有 `lib/` 输出，加载会失败。必须两边各做一件事：
+包内必须已经包含声明的 `main` 文件和 `dsh.bundle.patch`。安装始终禁用依赖生命周期脚本，因此 `prepare`、`install` 和 `postinstall` 都不能补建缺失产物。审计还要求许可证字段，拒绝包管理器配置和归档链接，并报告运行时能力迹象以及未被递归检查的依赖。
 
-- **作者**提供一个 `prepare` 脚本——pnpm 在 git 安装后运行它——从源码构建出发布入口，且必须自包含：不能假设仅开发环境才有的上下文，例如旁边有一份 monorepo checkout。[turtle-ui](https://github.com/deepseek-harness/turtle-ui) 是一个可用的例子：它的 `prepare` 运行一份专用的 tsdown 配置，直接转译 `src/`，不用项目引用，也不做类型检查。
-- **用户**为构建授权。pnpm ≥10 在得到显式允许之前拒绝运行 git 依赖的 `prepare` 脚本，所以第一次 `add` 会失败；`dsh` 会指出修法——把 pnpm 打印的确切包键复制进该 profile 的 `pnpm-workspace.yaml`：
+如果 tarball 报告包含警告，请用它的精确摘要重新执行 `add`：
 
-  ```yaml
-  allowBuilds:
-    dsh-hello-plugin: true
-  ```
+```sh
+dsh plugin --profile demo add ./hello-plugin-1.0.0.tgz --approve-audit sha256:<digest-from-report>
+```
 
-  然后重新执行 `add`。
-
-请如实看待这项授权：**允许该包的代码在安装时于你的机器上执行**，且不在 agent 运行的任何沙箱之内。只对源码可信的包授权，并锁定 commit（`github:you/hello-plugin#<sha>`），让后续推送无法悄悄改变实际运行的内容。
-
-如果不想让用户做这项授权，就改为分发构建产物——以下两种形式都不需要任何构建权限：
-
-- **发布到 npm**，在 `pnpm publish` 时构建好 `lib/`；`dsh plugin add your-package` 安装的就是预构建代码。
-- **交付 tarball**：用 `pnpm pack` 打包；用户执行 `dsh plugin add ./hello-plugin-0.1.0.tgz`。
+摘要确认只表示接受列出的静态检查缺口；它不会授权安装时脚本，也不是包及其依赖无害的证明。
 
 ## 下一步
 

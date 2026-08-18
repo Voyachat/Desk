@@ -36,11 +36,11 @@ interface DumpConfigInvocation {
   patches: string[]
 }
 
-/** Manage a profile's plugins: forward `args` to pnpm inside the profile directory. */
+/** Audit or manage a profile's plugins; mutation policy is enforced by the plugin runner. */
 interface PluginInvocation {
   mode: 'plugin'
   profile: string
-  /** Raw pnpm arguments, verbatim. */
+  /** Raw plugin-management arguments, including audit approval when present. */
   args: string[]
 }
 
@@ -68,7 +68,8 @@ Examples:
   dsh --profile tui --patch ./extra.yml      boot a custom profile with one extra overlay
   dsh --profile tui --resume <session>       arguments after the launcher flags reach the app
   dsh --profile web --help                   the web app's own flags and help
-  dsh plugin --profile tui add <package>     install a plugin into the tui profile
+  dsh plugin --profile tui audit <artifact>  inspect a local plugin without installing it
+  dsh plugin --profile tui add <artifact>    audit and install a local plugin artifact
 `
 
 /**
@@ -168,15 +169,15 @@ export function parseDshArgs(argv: readonly string[], version: string): DshInvoc
       resolved = resolveBoot(web, 'web', options, args)
     })
 
-  const plugin = program.command('plugin').description('manage a profile\'s plugins by forwarding the remaining arguments to pnpm in the profile directory')
+  const plugin = program.command('plugin').description('audit and manage a profile\'s plugins; local additions are reviewed before pnpm runs')
   plugin
     .requiredOption('--profile <name>', 'the profile whose plugins to manage (initialized on first use)')
     .allowUnknownOption()
-    .argument('[args...]', 'pnpm arguments, forwarded verbatim (add <pkg>, remove <pkg>, why <pkg>, ...)')
+    .argument('[args...]', 'plugin operation (audit/add local artifact, remove, why, list, ...)')
     .action((args: string[], options: { profile: string }) => {
       rejectParentOptions('plugin')
       if (options.profile === '') program.error('error: --profile needs a name')
-      if (args.length === 0) program.error('error: plugin needs pnpm arguments to forward (e.g. add <package>)')
+      if (args.length === 0) program.error('error: plugin needs an operation (e.g. audit <artifact> or add <artifact>)')
       resolved = { mode: 'plugin', profile: options.profile, args }
     })
 

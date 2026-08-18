@@ -92,6 +92,21 @@ export default class Fix {
     expect(entries[0]?.kind).toBe('library')
   })
 
+  it('excludes product-plane packages from the public harness configuration catalog', () => {
+    const root = makeRoot()
+    writePkg(root, 'aistaff/product', '@fix/product', {
+      'src/index.ts': `import type { Context } from '@voyaseek-ai/cordis'
+${DOCUMENTED_CONFIG}
+export default class ProductAdapter {
+  constructor(ctx: Context, config: Config) {}
+}
+`,
+    })
+    writePkg(root, 'group/one', '@fix/one', { 'src/index.ts': 'export const helper = 1\n' })
+
+    expect(collectConfigCatalog(root).map(entry => entry.pkg)).toEqual(['@fix/one'])
+  })
+
   it('hard-errors on a package with no entry file', () => {
     const root = makeRoot()
     mkdirSync(join(root, 'packages', 'group', 'one'), { recursive: true })

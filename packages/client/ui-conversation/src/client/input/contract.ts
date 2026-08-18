@@ -237,23 +237,9 @@ export interface PendingSend {
   readonly sendId: string
   /** Content as composed: unsent images ride local blob-URL blocks. */
   readonly content: readonly unknown[]
-  readonly preview: string
-  /** Complete text; null when the message contains non-text blocks. */
-  readonly text: string | null
   /** Browser-owned ids consumed by this send (rollback re-admits them). */
   readonly imageIds: readonly DraftAttachmentId[]
 }
-
-/**
- * One optimistic send staged on a shell: the published echo plus the
- * authoritative-queue subscription that settles the handoff.
- */
-export interface StagedPendingSend {
-  /** The published echo row. */
-  readonly send: PendingSend
-  /** Host-queue subscription to release on settle/retract/teardown. */
-  readonly unsubscribe: () => void
- }
 
 /**
  * One in-flight submission attempt: the ONLY id concept in the submit plane.

@@ -74,13 +74,19 @@ You never write a profile manifest by hand: `dsh plugin` creates and maintains i
 
 ## Install into a profile
 
-`dsh plugin --profile <name> <args...>` forwards to pnpm in the profile directory, so every pnpm verb works. From the directory that contains `hello-plugin`, install the package checkout:
+`dsh plugin --profile <name> audit <artifact>` reviews a local directory or tarball without installing it. From the directory that contains `hello-plugin`, review the development checkout first:
 
 ```sh
-dsh plugin --profile demo add ./hello-plugin
+dsh plugin --profile demo audit ./hello-plugin
 ```
 
-The first use initializes the profile (with `@voyaseek-ai/dsh-base` as its first bundle), pnpm links the checkout, and `dsh` appends the bundle to `dsh.profile.bundles` because the package declares `dsh.bundle`:
+The report marks a directory as mutable and prints its SHA-256. After reviewing every warning, install those exact bytes with the printed digest:
+
+```sh
+dsh plugin --profile demo add ./hello-plugin --approve-audit sha256:<digest-from-report>
+```
+
+The first successful add initializes the profile (with `@voyaseek-ai/dsh-base` as its first bundle), pnpm links the checkout with lifecycle scripts disabled, and `dsh` appends the bundle to `dsh.profile.bundles` because the package declares `dsh.bundle`:
 
 ```json
 {
@@ -150,32 +156,25 @@ Rows configured by those arguments inject the provider's service and read it fro
 
 On `--help`, the provider publishes no service, so those rows never activate. Loader mounts the composition once, waits for each row's ordinary injections, and only then evaluates that row's `!!js` config against its injected context.
 
-## Installing from GitHub: the build-script catch
+## Distribute a built, reviewable artifact
 
-Publishing to a registry is not required — users can install straight from a git host:
+Direct npm and GitHub specs are rejected because the CLI cannot yet bind their resolution and complete dependency graph to the pre-install report. Ship a built tarball instead:
 
 ```sh
-dsh plugin --profile demo add github:you/hello-plugin
+pnpm pack
+dsh plugin --profile demo audit ./hello-plugin-1.0.0.tgz
+dsh plugin --profile demo add ./hello-plugin-1.0.0.tgz
 ```
 
-But a git install fetches **sources, not built artifacts**: nothing runs your `build` script, so a TypeScript package arrives without its `lib/` output and fails to load. Two things must happen, one on each side:
+The package must already contain its declared `main` file and `dsh.bundle.patch`. Installation always disables dependency lifecycle scripts, so `prepare`, `install`, or `postinstall` cannot create missing output. The audit also requires a license field, rejects package-manager configuration and archive links, and reports runtime capability indicators plus dependencies that were not recursively inspected.
 
-- **The author** ships a `prepare` script — pnpm runs it after a git install — that builds the published entry points from source, self-contained: it must not assume dev-only context such as a sibling monorepo checkout. [turtle-ui](https://github.com/deepseek-harness/turtle-ui) is a working example: its `prepare` runs a dedicated tsdown config that transpiles `src/` without project references or type checking.
-- **The user** allowlists the build. pnpm ≥10 refuses to run a git dependency's `prepare` script until it is explicitly allowed, so the first `add` fails; `dsh` points at the fix — copy the exact package key pnpm printed into the profile's `pnpm-workspace.yaml`:
+If the tarball report contains warnings, re-run `add` with its exact digest:
 
-  ```yaml
-  allowBuilds:
-    dsh-hello-plugin: true
-  ```
+```sh
+dsh plugin --profile demo add ./hello-plugin-1.0.0.tgz --approve-audit sha256:<digest-from-report>
+```
 
-  and re-run the `add`.
-
-Treat that allowance as what it is: **permission to execute the package's code on your machine at install time**, outside any sandbox the agent runs under. Only allow packages whose source you trust, and pin a commit (`github:you/hello-plugin#<sha>`) so a later push cannot silently change what runs.
-
-If you would rather not ask users for the allowance, distribute built artifacts instead — neither form needs any build permission:
-
-- **Publish to npm** with `lib/` built at `pnpm publish` time; `dsh plugin add your-package` then installs prebuilt code.
-- **Ship a tarball** from `pnpm pack`; users run `dsh plugin add ./hello-plugin-0.1.0.tgz`.
+Digest approval acknowledges the listed static-review gaps; it does not authorize install-time scripts, and it is not proof that the package or its dependencies are benign.
 
 ## Next steps
 

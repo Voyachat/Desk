@@ -69,10 +69,12 @@ export interface Config {
    * never sends image data to another provider implicitly.
    */
   imageFallback?: false | {
-    /** Registered provider route that receives the original images. */
-    provider: string
-    /** Exact image-capable model on that route. */
-    model: string
+    /** Prefer the mounted local document converter. @default true */
+    local?: boolean
+    /** Optional hosted provider route used only when local conversion is unavailable. */
+    provider?: string
+    /** Exact image-capable model on the optional hosted route. */
+    model?: string
     /** Maximum output tokens for one image-analysis call. @default 4096 */
     maxTokens?: number
   }
@@ -97,8 +99,9 @@ export class ApiProxyService extends Service implements ApiProxy {
     imageFallback: z.union([
       z.const(false),
       z.object({
-        provider: z.string().required(),
-        model: z.string().required(),
+        local: z.boolean().default(true),
+        provider: z.string(),
+        model: z.string(),
         maxTokens: z.number().step(1).min(1).default(DEFAULT_IMAGE_FALLBACK_MAX_TOKENS),
       }),
     ]).default(false),
@@ -124,8 +127,9 @@ export class ApiProxyService extends Service implements ApiProxy {
       || config.imageFallback === false
       ? undefined
       : {
-        provider: config.imageFallback.provider,
-        model: config.imageFallback.model,
+        local: config.imageFallback.local ?? true,
+        ...(config.imageFallback.provider === undefined ? {} : { provider: config.imageFallback.provider }),
+        ...(config.imageFallback.model === undefined ? {} : { model: config.imageFallback.model }),
         maxTokens: config.imageFallback.maxTokens ?? DEFAULT_IMAGE_FALLBACK_MAX_TOKENS,
       }
     const api = createApiProxy(ctx, {

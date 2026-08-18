@@ -283,6 +283,8 @@ export interface InputZone {
  * toolview hole).
  */
 export interface ConvViewOwnerProps {
+  /** Local sends waiting for Host admission; only Chat renders this overlay. */
+  pendingSends: InputState['pendingSends']
   /** One-shot inspect request from another view (chat's Inspect button); null when idle. */
   inspect?: { callId: CallId } | null
   /** Acknowledge the inspect request once applied (clears the store field). */

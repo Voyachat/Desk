@@ -8,13 +8,16 @@ import type {
   ContentBlock, FinishReason, TokenUsage,
 } from '@voyaseek-ai/dsh-llm'
 import type { SessionId } from '@voyaseek-ai/dsh-session'
+import { DocumentConversionError } from '@voyaseek-ai/dsh-document-converter'
 
 /** Explicit auxiliary route used to turn images into text for a text-only target model. */
 export interface ImageFallbackConfig {
-  /** Registered provider route that receives the original prompt and images. */
-  readonly provider: string
-  /** Exact image-capable model on the provider route. */
-  readonly model: string
+  /** Prefer the mounted local document converter before any hosted vision route. */
+  readonly local?: boolean
+  /** Optional registered provider route used only when local conversion is unavailable. */
+  readonly provider?: string
+  /** Exact image-capable model on the optional provider route. */
+  readonly model?: string
   /** Maximum output tokens for one image-analysis call. */
   readonly maxTokens: number
 }
@@ -82,7 +85,7 @@ function labeledAnalysisContent(content: readonly ContentBlock[]): ContentBlock[
 }
 
 /** Replace original images with numbered anchors for the text-only target model. */
-function textTargetContent(content: readonly ContentBlock[], analysis: string): ContentBlock[] {
+function textTargetContent(content: readonly ContentBlock[], analysis: string, source: string): ContentBlock[] {
   let image = 0
   const original = content.map((block): ContentBlock => {
     if (block.type !== 'image') return block
@@ -94,9 +97,49 @@ function textTargetContent(content: readonly ContentBlock[], analysis: string): 
     ...original,
     {
       type: 'text',
-      text: `\n\n<image-analysis source="auxiliary-vision-model">\n${analysis}\n</image-analysis>`,
+      text: `\n\n<image-analysis source="${source}">\n${analysis}\n</image-analysis>`,
     },
   ]
+}
+
+async function translateLocally(
+  ctx: Context,
+  content: readonly ContentBlock[],
+): Promise<ImageFallbackResult> {
+  const converter = ctx.get('documentConverter')
+  if (converter === undefined) {
+    throw new ImageFallbackError('configured local image analysis is unavailable', 'UNAVAILABLE')
+  }
+  const imageBlocks = content.filter((block): block is Extract<ContentBlock, { type: 'image' }> => block.type === 'image')
+  let converted
+  try {
+    const inputs = await Promise.all(imageBlocks.map(async (block, index) => {
+      const stored = await ctx.attachments.readImage(block.attachment)
+      return {
+        name: block.attachment.name ?? `image-${String(index + 1)}`,
+        mediaType: stored.ref.mediaType,
+        data: stored.data,
+      }
+    }))
+    converted = await converter.convert(inputs)
+  } catch (error) {
+    if (error instanceof DocumentConversionError && error.code === 'UNAVAILABLE') {
+      throw new ImageFallbackError('configured local image analysis is unavailable', 'UNAVAILABLE')
+    }
+    throw new ImageFallbackError('configured local image analysis failed', 'FAILED')
+  }
+  if (converted.documents.length !== imageBlocks.length) {
+    throw new ImageFallbackError('configured local image analysis returned an incomplete result', 'INVALID_OUTPUT')
+  }
+  const analysis = converted.documents.map((document, index) => [
+    `## Image ${String(index + 1)}${document.name.length === 0 ? '' : ` (${document.name})`}`,
+    document.markdown,
+  ].join('\n\n')).join('\n\n')
+  return {
+    content: textTargetContent(content, analysis, 'local-document-ocr'),
+    displayContent: [...content],
+    attribution: { provider: converted.provider, model: converted.engine },
+  }
 }
 
 /** Map a terminal auxiliary finish to a safe failure category. */
@@ -125,6 +168,19 @@ export async function translateImagesForTextModel(
   content: readonly ContentBlock[],
   sessionId: SessionId,
 ): Promise<ImageFallbackResult> {
+  if (config.local === true) {
+    try {
+      return await translateLocally(ctx, content)
+    } catch (error) {
+      if (!(error instanceof ImageFallbackError)
+        || error.code !== 'UNAVAILABLE'
+        || config.provider === undefined
+        || config.model === undefined) throw error
+    }
+  }
+  if (config.provider === undefined || config.model === undefined) {
+    throw new ImageFallbackError('no usable image analysis route is configured', 'UNAVAILABLE')
+  }
   let fallbackInfo
   try {
     fallbackInfo = await ctx.llm.resolveModelInfo(config.provider, config.model)
@@ -169,7 +225,7 @@ export async function translateImagesForTextModel(
     throw new ImageFallbackError('configured image analysis returned no text', 'INVALID_OUTPUT')
   }
   return {
-    content: textTargetContent(content, analysis),
+    content: textTargetContent(content, analysis, 'auxiliary-vision-model'),
     displayContent: [...content],
     attribution: {
       provider: config.provider,

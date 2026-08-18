@@ -134,7 +134,7 @@ describe('ShellEnvRegistry', () => {
     })).toThrow(/invalid key/)
     expect(() => registry.register({
       name: 'reserved-key',
-      variables: { VOYASEEK_HOME: { description: 'Reserved key.' } },
+      variables: { DSH_SHELL: { description: 'Reserved key.' } },
       resolve: () => ({}),
     })).toThrow(/reserved key/)
     expect(() => registry.register({

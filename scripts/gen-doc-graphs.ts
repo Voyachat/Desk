@@ -63,6 +63,7 @@ type EventReceiverKind = 'context' | 'agent-dispatch' | 'events-service'
 const GROUP_ORDER = [
   'util',
   'attachment',
+  'document',
   'llm',
   'core',
   'typert',
@@ -104,6 +105,15 @@ const SERVICE_ROLES: ServiceRole[] = [
     implementations: ['attachment-local'],
     consumers: ['host-runtime', 'llm-pi-ai'],
     note: 'The host commits accepted images before session events; provider adapters resolve authorized durable references into provider-native content.',
+  },
+  {
+    key: 'documentConverter',
+    pkg: 'document-converter',
+    title: 'Document-to-Markdown conversion',
+    mode: 'seam',
+    implementations: ['document-converter-mac-ocr'],
+    consumers: ['apiproxy'],
+    note: 'Providers convert local document bytes into bounded Markdown; the Host image fallback consumes the service before an optional hosted vision route.',
   },
   {
     key: 'llm',

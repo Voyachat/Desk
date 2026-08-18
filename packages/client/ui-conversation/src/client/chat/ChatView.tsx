@@ -31,7 +31,7 @@ import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { collectFoldFacts, groupChatFlow, partialHasReasoning, partialHasVisibleProse } from './activity-fold.ts'
 import type { ChatFlowRow } from './activity-fold.ts'
 import { ActivityFold } from './ActivityFold.tsx'
-import { PendingSteeringBubble } from './MessageItem.tsx'
+import { PendingSendBubble, PendingSteeringBubble } from './MessageItem.tsx'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
 import { formatRunDuration } from './message-chrome.ts'
 import css from './ChatView.module.css'
@@ -60,7 +60,10 @@ const VIRTUAL_INITIAL_VIEWPORT_HEIGHT_PX = 600
  *  non-virtual flow exactly. */
 const COLUMN_GAP_PX = 16
 /** Bounded scrollToIndex retries while an off-window restore anchor mounts. */
-const MAX_RESTORE_ATTEMPTS = 4
+const MAX_RESTORE_MOUNT_ATTEMPTS = 4
+/** Bounded paint frames while virtual row estimates converge to measured sizes. */
+const MAX_RESTORE_SETTLE_FRAMES = 30
+const REQUIRED_RESTORE_STABLE_FRAMES = 8
 
 /** Active column host when present; otherwise the view-local scroller. */
 function scrollerOf(from: HTMLElement): HTMLElement {
@@ -121,6 +124,15 @@ function pagingAnchor(list: HTMLElement, scrollport: HTMLElement): HTMLElement |
 }
 
 type ChatScrollPosition = NonNullable<ReturnType<ChatViewSlotProps['chatScroll']['read']>>
+
+interface PendingRestore extends ChatScrollPosition {
+  /** Number of index jumps used to mount an off-window anchor. */
+  mountAttempts: number
+  /** Paint frames observed after the anchor mounted. */
+  settleFrames: number
+  /** Consecutive frames already within the geometry tolerance. */
+  stableFrames: number
+}
 
 /** Capture a reflow-resistant reader position from the current rendered window. */
 function scrollPosition(list: HTMLElement, scrollport: HTMLElement): ChatScrollPosition | null {
@@ -184,7 +196,7 @@ function TurnStatus({ startTime, t }: {
  */
 export function ChatView({
   useSession, useSessions, useStore, renderSlot, sessionId, openFile, loadOlder, loadImage, inspectCall, chatScroll, forkAt,
-  fileMentions, useShowReasoning, t,
+  fileMentions, pendingSends, useShowReasoning, t,
 }: ChatViewSlotProps) {
   const order = useSession(s => s.chat.order)
   const nodeStore = useSession(s => s.chat.nodes)
@@ -225,7 +237,10 @@ export function ChatView({
   const olderArmedRef = useRef(true)
   /** Virtualized open-restore: the saved position waiting for its anchor row
    *  to mount into the window so the raw offset can be refined exactly. */
-  const pendingRestoreRef = useRef<(ChatScrollPosition & { attempts: number }) | null>(null)
+  const pendingRestoreRef = useRef<PendingRestore | null>(null)
+  const restoreFrameRef = useRef<number | null>(null)
+  const resizeAnchorFrameRef = useRef<number | null>(null)
+  const readerScrollAtRef = useRef(0)
   const firstSeqRef = useRef<number | null>(null)
   const openedRef = useRef(false)
   const lastKeyRef = useRef<string | null>(null)
@@ -370,7 +385,12 @@ export function ChatView({
         // The saved anchor row usually sits outside the initial window.
         // Restore the raw offset as the floor, then let the restore effect
         // pin the exact row once the window lands on it.
-        pendingRestoreRef.current = { ...saved, attempts: 0 }
+        pendingRestoreRef.current = {
+          ...saved,
+          mountAttempts: 0,
+          settleFrames: 0,
+          stableFrames: 0,
+        }
         el.scrollTop = saved.scrollTop
         observedTopRef.current = el.scrollTop
         const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_THRESHOLD + 1
@@ -397,13 +417,26 @@ export function ChatView({
     // Prepend (head seq decreased): preserve the same settled row at the
     // position established by the reader's latest scroll. This excludes
     // unrelated tail/composer growth while the request was in flight. The
-    // virtualized flow gets the same guarantee from the library's end anchor.
-    if (!virtualizationEnabled
-      && anchorRef.current !== null && firstSeq !== null && firstSeqRef.current !== null && firstSeq < firstSeqRef.current) {
+    // virtualized flow first asks the library to resolve the stable key into
+    // the new index, then the second layout effect refines the exact top once
+    // that row is mounted. This explicit semantic anchor is necessary when
+    // streaming changes measurements while an older-page request is pending.
+    if (anchorRef.current !== null && firstSeq !== null && firstSeqRef.current !== null && firstSeq < firstSeqRef.current) {
       const anchor = anchorRef.current
       anchorRef.current = null
-      const row = anchorElement(local, anchor.key)
-      if (row !== null) el.scrollTop += flowTop(row, el) - anchor.top
+      if (virtualizationEnabled) {
+        pendingRestoreRef.current = {
+          anchorKey: anchor.key,
+          anchorTop: anchor.top,
+          scrollTop: el.scrollTop,
+          mountAttempts: 0,
+          settleFrames: 0,
+          stableFrames: 0,
+        }
+      } else {
+        const row = anchorElement(local, anchor.key)
+        if (row !== null) el.scrollTop += flowTop(row, el) - anchor.top
+      }
       observedTopRef.current = el.scrollTop
       firstSeqRef.current = firstSeq
       /* v8 ignore next -- ?? arm: a prepend adds nodes, so the flow list here is never empty. */
@@ -438,6 +471,8 @@ export function ChatView({
     if (local === null) return
     const el = scrollerOf(local)
     const finish = (): void => {
+      if (restoreFrameRef.current !== null) cancelAnimationFrame(restoreFrameRef.current)
+      restoreFrameRef.current = null
       pendingRestoreRef.current = null
       observedTopRef.current = el.scrollTop
       const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight <= FOLLOW_THRESHOLD + 1
@@ -449,18 +484,44 @@ export function ChatView({
     }
     const row = anchorElement(local, pending.anchorKey)
     if (row !== null) {
-      el.scrollTop += flowTop(row, el) - pending.anchorTop
-      finish()
+      const settle = (): void => {
+        const current = pendingRestoreRef.current
+        if (current === null) return
+        const currentRow = anchorElement(local, current.anchorKey)
+        if (currentRow === null) {
+          finish()
+          return
+        }
+        const delta = flowTop(currentRow, el) - current.anchorTop
+        if (Math.abs(delta) > 0.5) {
+          el.scrollTop += delta
+          observedTopRef.current = el.scrollTop
+        }
+        const stableFrames = Math.abs(delta) <= 0.5 ? current.stableFrames + 1 : 0
+        const settleFrames = current.settleFrames + 1
+        if (stableFrames >= REQUIRED_RESTORE_STABLE_FRAMES || settleFrames >= MAX_RESTORE_SETTLE_FRAMES) {
+          finish()
+          return
+        }
+        pendingRestoreRef.current = { ...current, settleFrames, stableFrames }
+        restoreFrameRef.current = requestAnimationFrame(settle)
+      }
+      settle()
       return
     }
     const index = rows.findIndex(r => r.kind === 'node' && r.key === pending.anchorKey)
-    if (index >= 0 && pending.attempts < MAX_RESTORE_ATTEMPTS) {
-      pendingRestoreRef.current = { ...pending, attempts: pending.attempts + 1 }
+    if (index >= 0 && pending.mountAttempts < MAX_RESTORE_MOUNT_ATTEMPTS) {
+      pendingRestoreRef.current = { ...pending, mountAttempts: pending.mountAttempts + 1 }
       rowVirtualizer.scrollToIndex(index, { align: 'start' })
       return
     }
     finish()
   })
+
+  useEffect(() => () => {
+    if (restoreFrameRef.current !== null) cancelAnimationFrame(restoreFrameRef.current)
+    if (resizeAnchorFrameRef.current !== null) cancelAnimationFrame(resizeAnchorFrameRef.current)
+  }, [])
 
   const onScrollRef = useRef(() => {})
   onScrollRef.current = () => {
@@ -477,6 +538,11 @@ export function ChatView({
     // the current ownership state.
     const floor = Math.max(0, el.scrollHeight - el.clientHeight)
     const movedByReader = Math.abs(el.scrollTop - Math.min(observedTopRef.current, floor)) > 0.5
+    if (movedByReader) {
+      readerScrollAtRef.current = Date.now()
+      if (resizeAnchorFrameRef.current !== null) cancelAnimationFrame(resizeAnchorFrameRef.current)
+      resizeAnchorFrameRef.current = null
+    }
     const isAtBottom = movedByReader
       ? floor - el.scrollTop <= FOLLOW_THRESHOLD + 1
       : atBottomRef.current
@@ -510,18 +576,39 @@ export function ChatView({
     }
   }
 
-  // Bind the scroll listener on the resolved scrollport once per mount;
-  // reader-input attribution rides the observed-top ledger, not per-device
-  // input listeners.
+  // Bind the scroll listener on the resolved scrollport once per mount.
+  // Reader-input attribution rides the observed-top ledger; input listeners
+  // only cancel a bounded virtual-anchor correction when the reader takes
+  // control again before its measurement frames finish.
   useEffect(() => {
     const local = listRef.current
     /* v8 ignore next -- ref-null guard: effect runs after the list node commits. */
     if (local === null) return
     const el = scrollerOf(local)
     const onScroll = (): void => { onScrollRef.current() }
+    const cancelRestore = (): void => {
+      if (pendingRestoreRef.current === null) return
+      pendingRestoreRef.current = null
+      if (restoreFrameRef.current !== null) cancelAnimationFrame(restoreFrameRef.current)
+      restoreFrameRef.current = null
+    }
+    const cancelForReader = (): void => {
+      readerScrollAtRef.current = Date.now()
+      cancelRestore()
+      if (resizeAnchorFrameRef.current !== null) cancelAnimationFrame(resizeAnchorFrameRef.current)
+      resizeAnchorFrameRef.current = null
+    }
     el.addEventListener('scroll', onScroll, { passive: true })
+    el.addEventListener('wheel', cancelForReader, { passive: true })
+    el.addEventListener('touchstart', cancelForReader, { passive: true })
+    el.addEventListener('pointerdown', cancelRestore, { passive: true })
+    el.addEventListener('keydown', cancelForReader)
     return () => {
       el.removeEventListener('scroll', onScroll)
+      el.removeEventListener('wheel', cancelForReader)
+      el.removeEventListener('touchstart', cancelForReader)
+      el.removeEventListener('pointerdown', cancelRestore)
+      el.removeEventListener('keydown', cancelForReader)
     }
   }, [])
 
@@ -537,19 +624,55 @@ export function ChatView({
       chatScroll.save(null)
     }
   }
-  // Streaming, tool disclosures, and other flow changes resize the column;
-  // the sticky composer resizes outside it. This observer owns ChatView's
-  // dynamic-height follow decisions and writes only while the reader is pinned.
+  // Streaming, tool disclosures, responsive reflow, and other flow changes
+  // resize the column; the sticky composer resizes outside it. Pinned readers
+  // follow the floor. Mid-flow readers keep the semantic row/top last saved by
+  // the scroll handler, including when a tab stays mounted while its width
+  // changes.
   useEffect(() => {
     const column = columnRef.current
     const local = listRef.current
     if (column === null || local === null || typeof ResizeObserver === 'undefined') return
     const scrollport = scrollerOf(local)
     const composer = scrollport.querySelector<HTMLElement>('[data-composer-seat]')
-    const observer = new ResizeObserver(() => { followRef.current?.() })
+    const observer = new ResizeObserver(() => {
+      if (atBottomRef.current) {
+        followRef.current?.()
+        return
+      }
+      if (Date.now() - readerScrollAtRef.current < 120) return
+      if (scrollport.clientHeight === 0) return
+      const saved = chatScroll.read()
+      if (saved === null) return
+      if (resizeAnchorFrameRef.current !== null) cancelAnimationFrame(resizeAnchorFrameRef.current)
+      let frames = 0
+      let stableFrames = 0
+      const correct = (): void => {
+        resizeAnchorFrameRef.current = null
+        if (atBottomRef.current || Date.now() - readerScrollAtRef.current < 120) return
+        const row = anchorElement(local, saved.anchorKey)
+        if (row === null) return
+        const delta = flowTop(row, scrollport) - saved.anchorTop
+        if (Math.abs(delta) > 0.5) {
+          scrollport.scrollTop += delta
+          observedTopRef.current = scrollport.scrollTop
+          stableFrames = 0
+        } else {
+          stableFrames += 1
+        }
+        frames += 1
+        if (stableFrames >= REQUIRED_RESTORE_STABLE_FRAMES || frames >= MAX_RESTORE_SETTLE_FRAMES) return
+        resizeAnchorFrameRef.current = requestAnimationFrame(correct)
+      }
+      correct()
+    })
     observer.observe(column)
     if (composer !== null) observer.observe(composer)
-    return () => { observer.disconnect() }
+    return () => {
+      observer.disconnect()
+      if (resizeAnchorFrameRef.current !== null) cancelAnimationFrame(resizeAnchorFrameRef.current)
+      resizeAnchorFrameRef.current = null
+    }
   }, [])
 
   // A failed/empty page leaves the head unchanged. Once the request leaves
@@ -561,7 +684,7 @@ export function ChatView({
   const loadOlderAnchored = (): void => {
     const local = listRef.current
     /* v8 ignore next -- ref-null guard: the paging button renders inside the list tree. */
-    if (local !== null && !virtualizationEnabled) {
+    if (local !== null) {
       const el = scrollerOf(local)
       const row = pagingAnchor(local, el)
       if (row !== null && row.dataset.chatAnchorKey !== undefined) {
@@ -577,7 +700,12 @@ export function ChatView({
   return (
     <div className={css.root}>
       <div ref={listRef} className={css.scroll}>
-        <div ref={columnRef} className={css.column} data-chat-flow="">
+        <div
+          ref={columnRef}
+          className={css.column}
+          data-chat-flow=""
+          data-chat-flow-row-count={rows.length}
+        >
           <div ref={headerRef} className={css.header}>
             {openState === 'loading' && <div className={css.hint}>{t('chat.loadingHistory')}</div>}
             {openState === 'error' && openError !== null && (
@@ -627,6 +755,9 @@ export function ChatView({
               running activity fold already carries the working signal, so the
               status only covers the node-less first-token wait. */}
           {running && !hasRunningFold && <TurnStatus startTime={runningTurnStart} t={t} />}
+          {pendingSends.map(send => (
+            <PendingSendBubble key={send.sendId} content={send.content} t={t} />
+          ))}
           {pendingSteering.map(item => (
             <PendingSteeringBubble key={item.id} content={item.content} loadImage={loadImage} t={t} />
           ))}

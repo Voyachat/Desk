@@ -160,9 +160,13 @@ describe('image fallback config', () => {
       .toEqual({
         sessionExportCompressionLevel: 6,
         coldBlankProbeMaxBytes: 1024,
-        imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 4096 },
+        imageFallback: { local: true, provider: 'vision', model: 'eyes', maxTokens: 4096 },
       })
-    expect(() => ApiProxyService.Config({ imageFallback: { provider: 'vision' } } as never)).toThrow()
+    expect(ApiProxyService.Config({ imageFallback: {} })).toEqual({
+      sessionExportCompressionLevel: 6,
+      coldBlankProbeMaxBytes: 1024,
+      imageFallback: { local: true, maxTokens: 4096 },
+    })
     expect(() => ApiProxyService.Config({
       imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 0 },
     })).toThrow()

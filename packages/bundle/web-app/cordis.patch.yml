@@ -98,6 +98,9 @@
     # shares. The base layer's agent-default-model service owns the default model.
     - id: api-gateway
       name: '@voyaseek-ai/dsh-host-apiproxy'
+      config:
+        imageFallback:
+          local: true
 
     - id: cordis-host-runner
       name: '@voyaseek-ai/dsh-cordis-host-runner'
@@ -118,6 +121,13 @@
       config:
         host: !!js ctx.webStartup.host ?? '127.0.0.1'
         port: !!js ctx.webStartup.port ?? 3080
+
+    # Header-authenticated read-only phone view. Loopback remains the default;
+    # the user must explicitly choose a trusted LAN/private-mesh bind host.
+    - id: mobile-view
+      name: '@voyaseek-ai/dsh-mobile-view'
+      config:
+        remoteHost: !!js process.env.VOYASEEK_MOBILE_VIEW_HOST
 
     # Web glue owned by this bundle: resolves the built frontend dist (an
     # assembly fact of dsh-web-app, never user config), mounts the

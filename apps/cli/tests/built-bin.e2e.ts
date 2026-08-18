@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { startMockLlmServer } from '@voyaseek-ai/dsh-llm-mock-server'
 import { execa } from 'execa'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { auditPluginSource } from '../src/plugin-audit.ts'
 
 /** Published-entry acceptance for argument errors, profile lifecycle, and boot-free config dumps. */
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url))
@@ -632,10 +633,17 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       writeFileSync(join(checkout, 'package.json'), JSON.stringify({
         name: 'anchored-bundle',
         version: '1.0.0',
+        license: 'MIT',
+        type: 'module',
+        main: 'plugin.mjs',
         dsh: { bundle: { patch: './cordis.patch.yml' } },
       }))
       writeFileSync(join(checkout, 'cordis.patch.yml'), '[]\n')
-      const result = await execa(process.execPath, [dshBin, 'plugin', '--profile', 'anchor', 'add', '.'], {
+      writeFileSync(join(checkout, 'plugin.mjs'), 'export const name = "anchor-fixture"\n')
+      const approval = auditPluginSource(checkout).digest
+      const result = await execa(process.execPath, [
+        dshBin, 'plugin', '--profile', 'anchor', 'add', '.', '--approve-audit', approval,
+      ], {
         cwd: checkout,
         input: '',
         timeout: 60_000,
@@ -675,7 +683,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
       writeFileSync(join(profileDir, 'cordis.patch.yml'), '[]\n')
       // v1: no dsh manifest — a plain dependency.
       writeFileSync(join(installed, 'package.json'), JSON.stringify({ name: 'late-bundle', version: '1.0.0' }))
-      const first = await runBuiltBin(['plugin', '--profile', 'up', 'root'], { VOYASEEK_HOME: home })
+      const first = await runBuiltBin(['plugin', '--profile', 'up', 'list'], { VOYASEEK_HOME: home })
       expect(first.code).toBe(0)
       let manifest = JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')) as { dsh: { profile: { bundles: string[] } } }
       expect(manifest.dsh.profile.bundles).toEqual(['@voyaseek-ai/dsh-base'])
@@ -684,7 +692,7 @@ describe.skipIf(!existsSync(dshBin))('dsh BUILT bin (node lib/bin.js, no tsx)', 
         name: 'late-bundle', version: '2.0.0', dsh: { bundle: { patch: './cordis.patch.yml' } },
       }))
       writeFileSync(join(installed, 'cordis.patch.yml'), '[]\n')
-      const second = await runBuiltBin(['plugin', '--profile', 'up', 'root'], { VOYASEEK_HOME: home })
+      const second = await runBuiltBin(['plugin', '--profile', 'up', 'list'], { VOYASEEK_HOME: home })
       expect(second.code).toBe(0)
       manifest = JSON.parse(readFileSync(join(profileDir, 'package.json'), 'utf8')) as { dsh: { profile: { bundles: string[] } } }
       expect(manifest.dsh.profile.bundles).toEqual(['@voyaseek-ai/dsh-base', 'late-bundle'])

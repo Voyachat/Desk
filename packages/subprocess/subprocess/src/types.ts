@@ -16,7 +16,7 @@ export const DSH_ENV_PREFIX = 'DSH_' as const
 export type DshEnvironmentKey = `${typeof DSH_ENV_PREFIX}${string}`
 
 /** Trusted Voyaseek Harness variables for one child-process execution. */
-export type DshEnvironment = Readonly<Record<DshEnvironmentKey, string>>
+export type DshEnvironment = Readonly<Record<DshEnvironmentKey, string> & { VOYASEEK_HOME?: string }>
 
 /** One captured stream: the (possibly truncated) text plus recovery info. */
 export interface CollectedOutput {

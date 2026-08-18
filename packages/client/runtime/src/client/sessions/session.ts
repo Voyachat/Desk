@@ -31,6 +31,9 @@ import { SessionQueueMirror } from './queue-mirror.ts'
 /** Messages requested per history page. */
 export const PAGE_MESSAGES = 50
 
+/** Maximum raw events retained by one browser Session window. */
+export const SESSION_EVENT_WINDOW_LIMIT = 5_000
+
 /** Manager-owned observers of a Session object's local state edges. */
 export interface SessionOptions {
   /** Catalog-discovered address selecting non-activating subagent transport. */
@@ -54,6 +57,8 @@ export interface SessionOptions {
   projections?: ProjectionValueStore
   /** Runtime registries used by this Session-owned Conversation assembler. */
   conversation?: ConversationRuntime
+  /** Raw event window limit; tests may lower it to exercise pruning. */
+  maxWindowEvents?: number
 }
 
 /**
@@ -68,6 +73,7 @@ export class Session implements SessionFace {
   /** Wire views aligned with `events` by index (envelope-level annotations; undefined = no view).
    *  Kept parallel rather than merged so `events` stays the raw log slice (model-visible ⟺ logged). */
   private views: (ToolEventView | undefined)[] = []
+  private readonly maxWindowEvents: number
   private baseSeq = 0
   private hasMore = false
   private openState: OpenState = 'cold'
@@ -145,6 +151,10 @@ export class Session implements SessionFace {
     private readonly remote: SessionRemotes,
     private readonly options: SessionOptions = {},
   ) {
+    this.maxWindowEvents = options.maxWindowEvents ?? SESSION_EVENT_WINDOW_LIMIT
+    if (!Number.isSafeInteger(this.maxWindowEvents) || this.maxWindowEvents < PAGE_MESSAGES) {
+      throw new RangeError(`maxWindowEvents must be an integer of at least ${String(PAGE_MESSAGES)}`)
+    }
     this.projections = options.projections ?? new ProjectionValueStore()
     this.address = options.address
     this.parentAvailable = options.parentAvailable ?? false
@@ -375,11 +385,15 @@ export class Session implements SessionFace {
 
   /** Page up: pull one earlier page with the window's first seq as beforeSeq and prepend. */
   async loadOlder(): Promise<void> {
-    if (this.openState !== 'open' || !this.hasMore || this.loadingOlder) return
+    const remaining = this.maxWindowEvents - this.events.length
+    if (this.openState !== 'open' || !this.hasMore || this.loadingOlder || remaining <= 0) return
     this.loadingOlder = true
     this.notifier.markDirty()
     try {
-      const { result } = await this.history({ beforeSeq: this.baseSeq, maxMessages: PAGE_MESSAGES })
+      const { result } = await this.history({
+        beforeSeq: this.baseSeq,
+        maxMessages: Math.min(PAGE_MESSAGES, remaining),
+      })
       if (!result.ok) return // keep the window as-is; do not overwrite openError (open already succeeded)
       const older = result.value.events
       if (older.length === 0) {
@@ -395,12 +409,13 @@ export class Session implements SessionFace {
         this.conversation.prepend([], false)
         return
       }
-      this.events = [...older.map(e => e.event), ...this.events]
-      this.views = [...older.map(e => e.view), ...this.views]
+      const retained = older.slice(-remaining)
+      this.events = [...retained.map(e => e.event), ...this.events]
+      this.views = [...retained.map(e => e.view), ...this.views]
       /* v8 ignore next -- the ?? arm needs older[0] undefined, but the empty-page branch above already returned. */
-      this.baseSeq = older[0]?.event.seq ?? this.baseSeq
-      this.hasMore = result.value.hasMore
-      this.conversation.prepend(older.map(conversationInput), this.hasMore)
+      this.baseSeq = retained[0]?.event.seq ?? this.baseSeq
+      this.hasMore = result.value.hasMore || retained.length < older.length
+      this.conversation.prepend(retained.map(conversationInput), this.hasMore)
     } catch (error) {
       console.error('[web-runtime] loadOlder failed:', error)
     } finally {
@@ -673,6 +688,21 @@ export class Session implements SessionFace {
     if (event.type === 'turn/start') this.firstPromptPendingTurn = false
     const queueChanged = this.queueMirror.acceptDurable(event)
     const publication = this.conversation.append({ event, view })
+    if (this.events.length > this.maxWindowEvents) {
+      const pruneCount = Math.min(
+        PAGE_MESSAGES,
+        Math.max(1, Math.floor(this.maxWindowEvents / 10)),
+      )
+      this.events.splice(0, pruneCount)
+      this.views.splice(0, pruneCount)
+      this.baseSeq = this.events[0]?.seq ?? 0
+      this.hasMore = true
+      this.conversation.replaceWindow(
+        this.events.map((retained, index) => ({ event: retained, view: this.views[index] })),
+        true,
+      )
+      return 'immediate'
+    }
     return queueChanged ? 'immediate' : publication
   }
 
@@ -759,7 +789,7 @@ export class Session implements SessionFace {
       removed: this.removed,
       openState: this.openState,
       openError: this.openError,
-      hasMore: this.hasMore,
+      hasMore: this.hasMore && this.events.length < this.maxWindowEvents,
       loadingOlder: this.loadingOlder,
       promptError: this.promptError,
       blank: this.blankBit,

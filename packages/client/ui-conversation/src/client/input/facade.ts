@@ -14,7 +14,7 @@ import type {
 } from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
 import type {
   DraftAttachmentId, EditRange, EditSelection, InputActions, InputEffect, InputNotice, InputState,
-  PasteComponent, PendingSend, QueuedMessage, SessionInput, StagedPendingSend, SubmitAttempt,
+  PasteComponent, PendingSend, QueuedMessage, SessionInput, SubmitAttempt,
 } from './contract.ts'
 import type { InputSubmitMode } from '../contract/composer-submission.ts'
 import { InputMachine } from './machine.ts'
@@ -89,7 +89,7 @@ export class SessionInputShell implements SessionInput {
   private noticeSeq = 0
   private lastDraft = ''
   private imageIds: readonly DraftAttachmentId[] = []
-  private readonly staged = new Map<string, StagedPendingSend>()
+  private readonly staged = new Map<string, PendingSend>()
   private pendingCache: readonly PendingSend[] = EMPTY_PENDING
   private disposed = false
   /** Draft persistence mirror (chat store write; receives the clipboard projection, never raw placeholders). */
@@ -354,12 +354,17 @@ export class SessionInputShell implements SessionInput {
 
   // ---- wiring-layer extras (not on the frozen SessionInput face) ----
 
-  /** Teardown: abort any in-flight attempt and stop accepting async settlements. */
-  dispose(): void {
+  /**
+   * Teardown: abort any in-flight attempt and stop accepting async settlements.
+   * @returns image ids still owned by optimistic sends for URL release.
+   */
+  dispose(): readonly DraftAttachmentId[] {
     this.disposed = true
-    for (const staged of this.staged.values()) staged.unsubscribe()
+    const imageIds = [...this.staged.values()].flatMap(send => [...send.imageIds])
     this.staged.clear()
+    this.pendingCache = EMPTY_PENDING
     this.run(this.core.dispatch({ type: 'release' }))
+    return imageIds
   }
 
   // ---- optimistic-send staging (hub default-sink choreography) ----
@@ -367,14 +372,17 @@ export class SessionInputShell implements SessionInput {
   /**
    * Stage one optimistic send: the echo publishes with the next InputState
    * and stays until host admission (settle) or send failure (retract).
-   * @param staged - the echo row plus its authoritative-queue subscription.
+   * @param send - the echo row retained until RPC acceptance or rejection.
    */
-  stagePendingSend(staged: StagedPendingSend): void {
-    this.staged.set(staged.send.sendId, staged)
+  stagePendingSend(send: PendingSend): void {
+    this.staged.set(send.sendId, send)
     this.refreshPending()
   }
 
-  /** Drop the echo once the host's authoritative frame carries the message. */
+  /**
+   * Drop the echo once the host's authoritative frame carries the message.
+   * @param sendId - staged send identity.
+   */
   settlePendingSend(sendId: string): void {
     this.unstage(sendId)
   }
@@ -388,23 +396,11 @@ export class SessionInputShell implements SessionInput {
     const staged = this.staged.get(sendId)
     if (staged === undefined) return []
     this.unstage(sendId)
-    return staged.send.imageIds
-  }
-
-  /** Whether one staged send is still unsettled. */
-  hasPendingSend(sendId: string): boolean {
-    return this.staged.has(sendId)
-  }
-
-  /** The staged send's queue-mirror preview text (frame-match key). */
-  pendingPreviewOf(sendId: string): string | undefined {
-    return this.staged.get(sendId)?.send.preview
+    return staged.imageIds
   }
 
   private unstage(sendId: string): void {
-    const staged = this.staged.get(sendId)
-    if (staged === undefined) return
-    staged.unsubscribe()
+    if (!this.staged.has(sendId)) return
     this.staged.delete(sendId)
     this.refreshPending()
   }
@@ -412,7 +408,7 @@ export class SessionInputShell implements SessionInput {
   private refreshPending(): void {
     this.pendingCache = this.staged.size === 0
       ? EMPTY_PENDING
-      : [...this.staged.values()].map(staged => staged.send)
+      : [...this.staged.values()]
     this.publish()
   }
 

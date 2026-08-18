@@ -11,7 +11,10 @@
 | `dsh --profile <name>` | 启动位于 `$VOYASEEK_HOME/profiles/<name>` 的指定 profile。 |
 | `dsh --profile headless "job"` | 运行一个全新的持久化会话，打印最终答案并退出。 |
 | `dsh web` | `--profile web` 的别名。 |
-| `dsh plugin --profile <name> <pnpm args>` | 通过在 profile 目录中转发给 pnpm 来管理该 profile 的插件。 |
+| `dsh plugin --profile <name> audit <artifact>` | 静态检查本地插件目录或 tarball，不执行安装。 |
+| `dsh plugin --profile <name> add <artifact>` | 审计并安装一个本地插件，且禁用生命周期脚本。 |
+| `dsh plugin --profile <name> remove <package>` | 按已安装包名移除依赖，且禁用生命周期脚本。 |
+| `dsh plugin --profile <name> list` | 列出 profile 的直接依赖，不暴露任意 pnpm 命令。 |
 
 运行命令时所在的目录将作为默认 workspace 根目录。`web` 和 `headless` profile 在首次使用时会从随附模板自动初始化；其他任何 profile 都必须通过 `dsh plugin` 创建。
 

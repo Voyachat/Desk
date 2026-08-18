@@ -17,6 +17,10 @@ import { githubSlug } from './verify-md-links.ts'
 const root = resolve(import.meta.dirname, '..')
 const OUT = 'docs/config-catalog.md'
 
+/** Product-plane packages own their configuration in package documentation,
+ * matching the public Cordis catalog exclusion recorded for `packages/aistaff`. */
+const EXCLUDED_PACKAGE_PREFIXES = ['packages/aistaff/']
+
 /** The fenced-block info string for pasted config declarations (skipped by
  * doc-typecheck, since a lone declaration referencing imports is not
  * standalone-compilable). */
@@ -585,6 +589,7 @@ export function collectConfigCatalog(scanRoot: string = root): CatalogEntry[] {
   const manifests: { dir: string; pkg: string }[] = []
   for (const manifestRel of globSync('packages/*/*/package.json', { cwd: scanRoot }).map(path => path.split(sep).join('/')).sort()) {
     const dir = manifestRel.slice(0, -'/package.json'.length)
+    if (EXCLUDED_PACKAGE_PREFIXES.some(prefix => dir.startsWith(prefix))) continue
     const manifest = JSON.parse(readFileSync(resolve(scanRoot, manifestRel), 'utf8')) as { name?: string; os?: string[]; cpu?: string[] }
     const pkg = manifest.name
     if (!pkg) {

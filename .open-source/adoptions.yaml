@@ -18,6 +18,41 @@
       "decision": "用户指定从 /Users/baron/projects/DsAgent 复制首个源码基线；Aistaff 通过独立插件岛接入，后续升级与官方 upstream 比较"
     },
     {
+      "id": "dsh-find-plugin",
+      "mode": "source",
+      "upstream": "https://github.com/awesome-dsh-plugin/dsh-find-plugin.git",
+      "upstream_ref": "e75dc2ee10567789a5273e13ee8db62ae285a725",
+      "license": "MIT",
+      "upstream_paths": [
+        "src/index.ts",
+        "src/registry.ts"
+      ],
+      "local_paths": [
+        "packages/extensions/tool-plugin-discovery/src/index.ts",
+        "packages/extensions/tool-plugin-discovery/src/directory.ts"
+      ],
+      "local_changes": "Rescoped to @voyaseek-ai; curated catalog only; strict external JSON validation; bounded single-catalog cache; explicit unreviewed result; executable install commands omitted and delegated to the audited CLI path",
+      "update_policy": "reviewed-exact-commit",
+      "decision": "采用 MIT 上游的精选目录发现数据流，保留独立适配包；安装权限与静态审计由本项目 CLI 单独拥有"
+    },
+    {
+      "id": "dsh-remote",
+      "mode": "architecture",
+      "upstream": "https://github.com/Blank-not-black/dsh-Remote.git",
+      "upstream_ref": "81dee547f66a690a2d1c79c696d3c3b6aa77af4e",
+      "license": "MIT",
+      "upstream_paths": [
+        "gateway",
+        "public"
+      ],
+      "local_paths": [
+        "packages/host/mobile-view"
+      ],
+      "local_changes": "Independent implementation with no copied source: existing WebServer and SessionQuery seams, header-only bearer authentication, bounded read-only projections, no token persistence, commands, files, uploads, daemon, tunnel, or write endpoint",
+      "update_policy": "reviewed-exact-commit",
+      "decision": "仅采用手机浏览会话的产品边界；因上游暴露范围和 token 生命周期不符合要求，舍弃其实现并独立构建最小只读插件"
+    },
+    {
       "id": "electron-forge",
       "mode": "dependency",
       "upstream": "https://github.com/electron/forge.git",
@@ -46,6 +81,55 @@
       "local_changes": "固定 42.7.0；产品只配置安全窗口、内置 runtime 与打包资源",
       "update_policy": "reviewed-exact-version",
       "decision": "采用 Electron 作为独立桌面运行时，精确锁定版本并由产品层保持 DSH 内核与 UI 组合不变"
+    },
+    {
+      "id": "mac-ocr",
+      "mode": "dependency",
+      "upstream": "https://github.com/privatenumber/mac-ocr.git",
+      "upstream_ref": "v1.1.1",
+      "license": "MIT",
+      "upstream_paths": [
+        "src",
+        "bin/mac-ocr"
+      ],
+      "local_paths": [
+        "packages/document/document-converter-mac-ocr",
+        "packages/host/apiproxy/src/image-fallback.ts"
+      ],
+      "local_changes": "Pinned npm dependency; uses only the byte-input OCR page stream; local adapter adds batch ordering, Markdown assembly, cancellation, and aggregate output limits; searchable PDF, URLs, passwords, geometry, structured recognition, and service mode are excluded",
+      "update_policy": "reviewed-exact-version",
+      "decision": "采用 mac-ocr 的通用预编译 Swift binary 与 Node API，在 macOS 上复用 Apple Vision 完成本机图片/PDF OCR；不复制上游源码，不引入 Python 或模型下载"
+    },
+    {
+      "id": "modelscope-hub",
+      "mode": "dependency",
+      "upstream": "https://github.com/modelscope/modelscope_hub.git",
+      "upstream_ref": "v0.2.0",
+      "license": "Apache-2.0",
+      "upstream_paths": [
+        "modelscope_hub/api.py"
+      ],
+      "local_paths": [
+        "packages/extensions/tool-modelscope"
+      ],
+      "local_changes": "Pinned Python package executed through uv; read-only list_repos model search only; strict bounded JSON projection; token remains in child environment; downloads, uploads, training, serving, repository code execution, plugins, and MCP are excluded",
+      "update_policy": "reviewed-exact-version",
+      "decision": "采用独立的官方 ModelScope Hub 客户端而非完整 modelscope SDK，只提供只读模型目录搜索"
+    },
+    {
+      "id": "node-tar",
+      "mode": "dependency",
+      "upstream": "https://github.com/isaacs/node-tar.git",
+      "upstream_ref": "v7.5.22",
+      "license": "BlueOak-1.0.0",
+      "upstream_paths": [],
+      "local_paths": [
+        "apps/cli/package.json",
+        "apps/cli/src/plugin-audit.ts"
+      ],
+      "local_changes": "Uses synchronous listing only; never extracts; rejects link entries and traversal paths; independently enforces file and byte budgets",
+      "update_policy": "reviewed-exact-version",
+      "decision": "采用维护中的 node-tar 解析本地插件归档，避免自写 tar 解析器，并在调用层保留更严格的不解包审计限制"
     },
     {
       "id": "rusqlite",

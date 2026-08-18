@@ -40,15 +40,16 @@ dsh --profile web --patch ./extra.yml --dump-config
 
 ## Plugin management
 
-`dsh plugin --profile <name> <args...>` initializes the profile when missing (shipped template, or `@voyaseek-ai/dsh-base` alone for other names), then forwards `<args...>` to `pnpm` with the profile directory as working directory — `add`, `remove`, `why`, `update`, and every other pnpm verb work unchanged; pnpm must be on PATH. Relative path specs (`.`, `../plugin`, and their `file:`/`link:` forms) are anchored to the invoking directory first, so `add .` from a plugin checkout installs that checkout, not the profile. After every successful run, `dsh.profile.bundles` is reconciled against the installed state: each dependency resolving to a package whose manifest declares `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }` joins the layer stack (so an `update` that gains the declaration activates it), a bundle-less dependency stays plain with a one-time warning, and a removed dependency leaves the stack.
+`dsh plugin --profile <name> audit <artifact>` statically reviews one local directory, `.tgz`, or `.tar.gz` without initializing a profile or invoking pnpm. It validates archive paths and links, package identity and SPDX license presence, `dsh.bundle.patch`, YAML syntax, the built `main` entry, lifecycle scripts, dependency count, package-manager configuration, opaque runtimes, and source indicators for subprocess, environment/credential, network, listener, destructive-filesystem, dynamic-code, and sensitive-path capabilities. The SHA-256 in the report identifies the reviewed bytes; this is a bounded heuristic review, not proof of benign behavior, and dependencies are counted but not recursively audited.
+
+`dsh plugin --profile <name> add <artifact>` runs the same review before profile initialization. Blocking findings stop installation. Warnings require re-running with the exact `--approve-audit sha256:...` printed by that report. A successful add always supplies `--ignore-scripts` to pnpm, accepts exactly one local artifact, rejects `link:` and remote npm/GitHub specs, and anchors relative paths to the invoking directory. Local directories are always warnings because pnpm links mutable source; a built tarball is the supported immutable delivery form. `remove` accepts installed package names and forces `--ignore-scripts`; `list` is fixed to direct dependencies. Every other pnpm verb and flag is blocked so `exec`, `run`, `dlx`, install, and update cannot bypass artifact review. After a successful operation, `dsh.profile.bundles` is reconciled against installed packages declaring `dsh.bundle`.
 
 ```sh
-dsh plugin --profile tui add github:voyaseek-harness/turtle-ui
+dsh plugin --profile tui audit ./turtle-ui-1.0.0.tgz
+dsh plugin --profile tui add ./turtle-ui-1.0.0.tgz
 dsh plugin --profile tui remove turtle-ui
 dsh --profile tui
 ```
-
-Git-hosted plugins that ship sources build during install through their `prepare` script, which pnpm ≥10 blocks until the consumer allows it: the first `add` fails with pnpm's `allowBuilds` hint (and a dsh pointer at the profile's `pnpm-workspace.yaml`); copy the printed key there and re-run. Installing a built tarball or a local checkout needs no allowance.
 
 ## Web alias
 
@@ -77,7 +78,7 @@ The base bundle mounts the native DeepSeek adapter, settings and credential prov
 
 Session telemetry stays local by default. `DSH_TELEMETRY_MODE=FULL` streams every projected session event as OTLP/HTTP logs, while `DSH_TELEMETRY_MODE=FEEDBACK_ONLY` uploads a session-log suffix only when feedback is recorded. `DSH_TELEMETRY_OTLP_URL` selects another collector, and any non-empty `DSH_TELEMETRY_DISABLED` remains an authoritative hard opt-out. The shipped base has no telemetry redaction rule, so explicitly enabled exports can contain message text, tool arguments and results, and workspace paths; the [default-off Agent Note](../../../.agents/notes/implemented/feature/2026-08-10-telemetry-default-off.md) owns that deployment decision.
 
-Install external plugin bundles through `dsh plugin --profile <name> add <package-or-git-spec>`. The installed package owns its dependencies and contributes its declared `cordis.patch.yml` layer. The CLI also ships `@voyaseek-ai/dsh-mcp-client` as a dependency for patch layers, but no MCP server is enabled by default because each server command is trusted executable code outside the agent sandbox.
+Install external plugin bundles through `dsh plugin --profile <name> add <local-artifact>`. The reviewed package owns its dependencies and contributes its declared `cordis.patch.yml` layer; dependency source is not recursively inspected, so a report that names dependencies requires explicit digest approval. The CLI also ships `@voyaseek-ai/dsh-mcp-client` as a dependency for patch layers, but no MCP server is enabled by default because each server command is trusted executable code outside the agent sandbox.
 
 ## Source execution
 

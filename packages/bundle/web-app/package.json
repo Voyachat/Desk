@@ -96,6 +96,7 @@
     "@voyaseek-ai/dsh-host-plugin-inventory": "workspace:^",
     "@voyaseek-ai/dsh-host-webserver": "workspace:^",
     "@voyaseek-ai/dsh-message-feedback": "workspace:^",
+    "@voyaseek-ai/dsh-mobile-view": "workspace:^",
     "@voyaseek-ai/dsh-session-projection-cache": "workspace:^",
     "@voyaseek-ai/dsh-session-log-export": "workspace:^",
     "@voyaseek-ai/dsh-session-stats": "workspace:^",

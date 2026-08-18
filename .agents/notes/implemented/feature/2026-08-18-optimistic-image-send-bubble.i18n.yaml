@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-18-optimistic-image-send-bubble.md
+2026-08-18-optimistic-image-send-bubble.md: 4a8a354798aa4fa1bbc037a6ab78f550f76b03d6
+2026-08-18-optimistic-image-send-bubble.zh.md: 39fb94b5276f66fd1d24031aad81df1f8d9de92a

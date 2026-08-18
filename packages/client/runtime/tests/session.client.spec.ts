@@ -443,6 +443,52 @@ describe('paging', () => {
     await Promise.all([first, second])
     expect(api.callsOf('session.history')).toHaveLength(2) // open + one page, not two
   })
+
+  it('bounds the raw event window while paging and exposes no older-page action at capacity', async () => {
+    const api = new FakeApiClient()
+    const session = new Session(SID, api, fakeRemote(), {
+      conversation: TEST_CONVERSATION,
+      maxWindowEvents: 50,
+    })
+    api.onHistory = (payload) => {
+      if (payload.beforeSeq === undefined) {
+        return histResponse(Array.from({ length: 6 }, (_, index) => ev.user(50 + index, `new-${String(index)}`)), true)
+      }
+      expect(payload).toMatchObject({ beforeSeq: 50, maxMessages: 44 })
+      return histResponse(Array.from({ length: 44 }, (_, index) => ev.user(6 + index, `old-${String(index)}`)), true)
+    }
+
+    await session.open()
+    await session.loadOlder()
+
+    expect(chatSeqs(session.getSnapshot())).toEqual(Array.from({ length: 50 }, (_, index) => index + 6))
+    expect(session.getSnapshot().hasMore).toBe(false)
+    await session.loadOlder()
+    expect(api.callsOf('session.history')).toHaveLength(2)
+  })
+
+  it('prunes an old chunk when live events would exceed the raw event window', async () => {
+    const api = new FakeApiClient()
+    const session = new Session(SID, api, fakeRemote(), {
+      conversation: TEST_CONVERSATION,
+      maxWindowEvents: 50,
+    })
+    api.onHistory = () => histResponse(
+      Array.from({ length: 50 }, (_, index) => ev.user(index, `message-${String(index)}`)),
+      false,
+    )
+    await session.open()
+
+    session.handleMuxEnvelope('live' as never, {
+      type: 'session/event',
+      sessionId: SID,
+      event: ev.user(50, 'latest'),
+    })
+    await Promise.resolve()
+
+    expect(chatSeqs(session.getSnapshot())).toEqual(Array.from({ length: 46 }, (_, index) => index + 5))
+    expect(session.getSnapshot().hasMore).toBe(true)
+  })
 })
 
 describe('prompt and cancel errors', () => {

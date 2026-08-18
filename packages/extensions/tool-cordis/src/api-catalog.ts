@@ -551,6 +551,19 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'documentConverter',
+    summary: 'Provider-neutral document conversion service.',
+    description: 'Provider-neutral document conversion service.',
+    methods: [
+      {
+        signature: 'abstract convert(inputs: readonly DocumentConversionInput[], signal?: AbortSignal): Promise<DocumentConversionResult>',
+        description: 'Convert one or more immutable documents to Markdown without publishing files.',
+        parameters: [{ name: 'inputs', description: 'complete validated documents in presentation order.' }, { name: 'signal', description: 'optional cooperative cancellation.' }],
+        returns: 'one Markdown document per input, in the same order.',
+      },
+    ],
+  },
+  {
     key: 'e2b',
     summary: 'Creates one lazily consumable E2B SDK handle and deletes the sandbox at timeout or disposal.',
     description: 'Creates one lazily consumable E2B SDK handle and deletes the sandbox at timeout or disposal. Creation begins at plugin construction; adapters await getSandbox before their first operation.',
@@ -2894,6 +2907,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ContinuableSubagentDescriptorData extends SubagentDescriptorBase {\n    readonly mode: \'continuable\';\n    readonly label: string;\n    readonly agentProvider?: string;\n    readonly agentModel?: string;\n    readonly persona?: string;\n    readonly toolFilter?: ToolRestriction;\n}',
   },
   {
+    name: 'ConvertedDocument',
+    declaration: 'export interface ConvertedDocument {\n    readonly name: string;\n    readonly markdown: string;\n}',
+  },
+  {
     name: 'CordisDynamicPackageId',
     declaration: 'export type CordisDynamicPackageId = Branded<\'CordisDynamicPackageId\'>;',
   },
@@ -2978,6 +2995,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface DirectoryRegistrationHandle {\n    (): void;\n    replace(entries: readonly LlmConfigurableProvider[]): void;\n}',
   },
   {
+    name: 'DocumentConversionInput',
+    declaration: 'export interface DocumentConversionInput {\n    readonly name: string;\n    readonly mediaType: string;\n    readonly data: Uint8Array;\n}',
+  },
+  {
+    name: 'DocumentConversionResult',
+    declaration: 'export interface DocumentConversionResult {\n    readonly provider: string;\n    readonly engine: string;\n    readonly documents: readonly ConvertedDocument[];\n}',
+  },
+  {
     name: 'Domain',
     declaration: 'export interface Domain<S extends DomainSpec> {\n    readonly name: string;\n    readonly global: DomainGlobalHandleOf<S>;\n    table<N extends keyof S[\'tables\'] & string>(name: N): KvTable<TableKeyOf<S, N>, TableValueOf<S, N>>;\n    close(): Promise<void>;\n}',
   },
@@ -3027,7 +3052,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'DshEnvironment',
-    declaration: 'export type DshEnvironment = Readonly<Record<DshEnvironmentKey, string>>;',
+    declaration: 'export type DshEnvironment = Readonly<Record<DshEnvironmentKey, string> & {\n    VOYASEEK_HOME?: string;\n}>;',
   },
   {
     name: 'DshEnvironmentKey',

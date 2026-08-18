@@ -40,15 +40,16 @@ dsh --profile web --patch ./extra.yml --dump-config
 
 ## 插件管理
 
-`dsh plugin --profile <name> <args...>` 在 profile 缺失时先初始化它（有随附模板的用模板，其他名称只装 `@voyaseek-ai/dsh-base`），然后以 profile 目录为工作目录，把 `<args...>` 转发给 `pnpm`：`add`、`remove`、`why`、`update` 及其他所有 pnpm 子命令都照常可用；pnpm 必须在 PATH 上。相对路径 spec（`.`、`../plugin` 及其 `file:`/`link:` 形式）会先锚定到调用目录，因此在插件 checkout 中执行 `add .` 安装的是该 checkout，而不是 profile。每次成功运行后，系统都会根据当前安装状态更新 `dsh.profile.bundles`：如果某项依赖解析到的包在 manifest 中声明了 `"dsh": { "bundle": { "patch": "./cordis.patch.yml" } }`，该依赖就会加入配置层栈；如果某项依赖在 `update` 后获得该声明，也会随即激活。没有组合包声明的依赖仍作为普通依赖保留，并显示一次性警告；已移除的依赖则从配置层栈中删除。
+`dsh plugin --profile <name> audit <artifact>` 对一个本地目录、`.tgz` 或 `.tar.gz` 做静态检查，不初始化 profile，也不调用 pnpm。检查包括归档路径和链接、包身份和 SPDX 许可证字段、`dsh.bundle.patch`、YAML 语法、已构建的 `main` 入口、生命周期脚本、依赖数量、包管理器配置、不透明运行时，以及源码中对子进程、环境变量或凭据、网络、监听端口、删除文件、动态代码和敏感路径能力的迹象。报告中的 SHA-256 标识本次检查的字节；这是一项有界启发式检查，不是无害证明，依赖只统计数量，不递归审计。
+
+`dsh plugin --profile <name> add <artifact>` 会在初始化 profile 前执行同一检查。阻断项会停止安装；警告项要求使用报告输出的精确 `--approve-audit sha256:...` 重新执行。安装成功前始终给 pnpm 传入 `--ignore-scripts`，每次只接受一个本地产物，拒绝 `link:`、远程 npm 和 GitHub 规格，并把相对路径锚定到调用目录。本地目录会因为 pnpm 链接可变源码而始终产生警告；已构建 tarball 是受支持的不可变交付形式。`remove` 只接受已安装包名并强制 `--ignore-scripts`；`list` 固定为直接依赖。其他 pnpm verb 与 flag 全部被阻止，因此 `exec`、`run`、`dlx`、install 和 update 都不能绕过产物审查。操作成功后，系统会依据声明 `dsh.bundle` 的已安装包更新 `dsh.profile.bundles`。
 
 ```sh
-dsh plugin --profile tui add github:voyaseek-harness/turtle-ui
+dsh plugin --profile tui audit ./turtle-ui-1.0.0.tgz
+dsh plugin --profile tui add ./turtle-ui-1.0.0.tgz
 dsh plugin --profile tui remove turtle-ui
 dsh --profile tui
 ```
-
-随源码发布的 Git 托管插件会在安装期间通过 `prepare` 脚本构建，而 pnpm ≥10 默认会阻止该脚本，直到使用方明确允许。首次运行 `add` 会失败，并显示 pnpm 的 `allowBuilds` 提示；dsh 还会提示应修改该 profile 的 `pnpm-workspace.yaml`。将输出的键复制到该文件后，重新运行命令即可。安装已经构建好的 tarball 或本地 checkout 时，无需加入 `allowBuilds`。
 
 ## Web 别名
 
@@ -77,7 +78,7 @@ dsh web --help
 
 会话遥测默认留在本地。`DSH_TELEMETRY_MODE=FULL` 将每条已投影会话事件作为 OTLP/HTTP 日志流式发送，`DSH_TELEMETRY_MODE=FEEDBACK_ONLY` 则仅在记录反馈时上传会话日志后缀。`DSH_TELEMETRY_OTLP_URL` 选择其他 collector。任何非空的 `DSH_TELEMETRY_DISABLED` 都是具有最终效力的遥测强制关闭开关。随附基础配置没有遥测脱敏规则，因此显式启用的导出可能包含消息文本、工具参数和结果，以及 workspace 路径；相关部署决策见[默认关闭 Agent Note](../../../.agents/notes/implemented/feature/2026-08-10-telemetry-default-off.md)。
 
-通过 `dsh plugin --profile <name> add <package-or-git-spec>` 安装外部插件组合包。安装的包拥有其依赖，并贡献其声明的 `cordis.patch.yml` 层。CLI 还随附 `@voyaseek-ai/dsh-mcp-client` 作为供 patch 层使用的依赖，但默认不启用 MCP 服务器，因为每条服务器命令都是 agent（智能体）沙箱之外的受信任可执行代码。
+通过 `dsh plugin --profile <name> add <local-artifact>` 安装外部插件组合包。已审计的包拥有其依赖，并贡献其声明的 `cordis.patch.yml` 层；依赖源码不会被递归检查，因此报告只要列出依赖，就需要对摘要进行显式确认。CLI 还随附 `@voyaseek-ai/dsh-mcp-client` 作为供 patch 层使用的依赖，但默认不启用 MCP 服务器，因为每条服务器命令都是 agent（智能体）沙箱之外的受信任可执行代码。
 
 ## 源码执行
 

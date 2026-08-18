@@ -166,6 +166,7 @@ export function ConversationSession({
   return (
     <div className={css.viewArea}>
       {active !== undefined && renderSlot('conversation.view', {
+        pendingSends: inputState.pendingSends,
         inspect,
         onInspectDone: () => { actions.setInspect(null) },
       }, { only: active.id })}

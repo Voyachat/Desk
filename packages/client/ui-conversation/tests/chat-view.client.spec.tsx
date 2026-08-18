@@ -269,6 +269,7 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
   const SessionProviderStub: ChatViewSlotProps['SessionProvider'] = ({ children }) => <>{children(SID)}</>
   const props: ChatViewSlotProps = {
     sessionId: SID,
+    pendingSends: [],
     useSession: bindSnapshotSelector(source),
     useSessions: emptySessions(),
     useWorkspaces: emptyWorkspaces(),
@@ -339,6 +340,22 @@ function expandActivityFolds(view: ReturnType<typeof render>): void {
 }
 
 describe('Chat node rendering', () => {
+
+  it('renders optimistic text and local image previews before Host admission', () => {
+    const h = makeHarness()
+    h.props.pendingSends = [{
+      sendId: 'pending-1',
+      content: [
+        { type: 'image', previewUrl: 'blob:pending-image' },
+        { type: 'text', text: '正在发送' },
+      ],
+      imageIds: [],
+    }]
+    const view = render(<h.ChatView {...h.props} />)
+    const row = view.container.querySelector('[data-pending-send]')
+    expect(row?.textContent).toContain('正在发送')
+    expect(row?.querySelector('img')?.getAttribute('src')).toBe('blob:pending-image')
+  })
 
   it('threads the injected file-mention vocabulary into the closing prose only', () => {
     const wrote = (seq: number, callId: string, path: string): ToolResultNode => ({

@@ -312,6 +312,57 @@ export function PendingSteeringBubble({ content, loadImage, t }: {
   )
 }
 
+/**
+ * Render one browser-local send while image serialization and Host admission
+ * are still in flight.
+ * @param props - Optimistic content carrying local blob preview URLs.
+ * @returns the pending user bubble.
+ */
+export function PendingSendBubble({ content, t }: {
+  content: ChatViewSlotProps['pendingSends'][number]['content']
+  t: ChatViewSlotProps['t']
+}): ReactNode {
+  const text: string[] = []
+  const previews: string[] = []
+  const rest: unknown[] = []
+  for (const block of content) {
+    const candidate = block as { type?: unknown; text?: unknown; previewUrl?: unknown }
+    if (candidate.type === 'text' && typeof candidate.text === 'string') text.push(candidate.text)
+    else if (candidate.type === 'image' && typeof candidate.previewUrl === 'string') previews.push(candidate.previewUrl)
+    else rest.push(block)
+  }
+  const joined = text.join('')
+  const truncated = (total: number): string => t('json.truncated', { total })
+  const imageLabel = messageImageLabels(t).image
+  return (
+    <div className={css.userRow} data-pending-send="" data-time-hover-root>
+      <div className={css.userStack}>
+        {previews.length > 0 && (
+          <div className={css.pendingImages} data-multiple={previews.length > 1 || undefined}>
+            {previews.map((src, index) => (
+              <img
+                key={`${src}:${String(index)}`}
+                className={css.pendingImage}
+                src={src}
+                alt={imageLabel}
+              />
+            ))}
+          </div>
+        )}
+        {(joined !== '' || rest.length > 0) && (
+          <div className={css.bubble}>
+            {projectUserText(joined)}
+            {rest.map((block, index) => (
+              <JsonBlock key={index} label={t('message.extraBlock')} payload={block} truncatedLabel={truncated} />
+            ))}
+          </div>
+        )}
+      </div>
+      <MessageIconActions text={joined} clock="start" className={css.actions} t={t} />
+    </div>
+  )
+}
+
 /** User and admitted-steering keyed Chat renderer. */
 export const UserMessageNodeView = memo(function UserMessageNodeView({
   node, loadImage, t,

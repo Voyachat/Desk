@@ -67,7 +67,7 @@ describe('initProfile', () => {
     // Re-init keeps user edits.
     writeFileSync(join(dir, PROFILE_PATCH_FILENAME), '- id: x\n  config: {}\n')
     initProfile(dir, ['other'])
-    expect(readProfileManifest('t', dir).voyaseek?.profile?.bundles).toEqual(['@voyaseek-ai/dsh-base'])
+    expect(readProfileManifest('t', dir).dsh?.profile?.bundles).toEqual(['@voyaseek-ai/dsh-base'])
     expect(readFileSync(join(dir, PROFILE_PATCH_FILENAME), 'utf8')).toContain('- id: x')
   })
 })
@@ -76,7 +76,7 @@ describe('manifest round-trip', () => {
   it('writes and reads back, and fails loud on a broken manifest', () => {
     const dir = tmp()
     writeProfileManifest(dir, { name: 'p', dsh: { profile: { bundles: ['a'] } } })
-    expect(readProfileManifest('t', dir).voyaseek?.profile?.bundles).toEqual(['a'])
+    expect(readProfileManifest('t', dir).dsh?.profile?.bundles).toEqual(['a'])
     writeFileSync(join(dir, 'package.json'), '[]')
     expect(() => readProfileManifest('t', dir)).toThrow('must hold a JSON object')
     expect(() => readProfileManifest('t', join(dir, 'nope'))).toThrow('failed to read profile manifest')
@@ -157,7 +157,7 @@ describe('loadProfile', () => {
     } catch {
       // Resolution failure is the plain-Node outcome for this empty anchor.
     }
-    expect(readProfileManifest('t', resolveProfileDir('web', home)).voyaseek?.profile?.bundles)
+    expect(readProfileManifest('t', resolveProfileDir('web', home)).dsh?.profile?.bundles)
       .toEqual([...PROFILE_TEMPLATES.web ?? []])
   })
 
@@ -174,7 +174,7 @@ describe('loadProfile', () => {
       '@voyaseek-ai/dsh-base', '@voyaseek-ai/dsh-web-app', '@voyaseek-ai/dsh-headless',
     ])
     loadProfile('t', 'headless', anchor, home)
-    expect(readProfileManifest('t', stock).voyaseek?.profile?.bundles)
+    expect(readProfileManifest('t', stock).dsh?.profile?.bundles)
       .toEqual(['@voyaseek-ai/dsh-base', '@voyaseek-ai/dsh-headless'])
 
     const customHome = tmp()
@@ -183,7 +183,7 @@ describe('loadProfile', () => {
       '@voyaseek-ai/dsh-base', '@voyaseek-ai/dsh-web-app', '@voyaseek-ai/dsh-headless', 'custom-bundle',
     ])
     loadProfile('t', 'headless', anchor, customHome)
-    expect(readProfileManifest('t', custom).voyaseek?.profile?.bundles).toEqual([
+    expect(readProfileManifest('t', custom).dsh?.profile?.bundles).toEqual([
       '@voyaseek-ai/dsh-base', '@voyaseek-ai/dsh-web-app', '@voyaseek-ai/dsh-headless', 'custom-bundle',
     ])
   })

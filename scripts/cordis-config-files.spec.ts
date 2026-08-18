@@ -14,7 +14,10 @@ describe('cordisConfigFiles', () => {
   it('finds Loader YAML without treating translation records as configs', () => {
     const root = mkdtempSync(join(tmpdir(), 'dsh-cordis-config-files-'))
     roots.push(root)
-    for (const directory of ['.claude', 'docs', 'examples', 'node_modules/pkg', 'vendor/pkg']) {
+    for (const directory of [
+      '.claude', 'apps/runtime/node_modules/pkg', 'docs', 'examples', 'node_modules/pkg',
+      'packages/example/dist', 'packages/example/lib', 'packages/example/out', 'vendor/pkg',
+    ]) {
       mkdirSync(join(root, directory), { recursive: true })
     }
     for (const file of [
@@ -22,7 +25,11 @@ describe('cordisConfigFiles', () => {
       'docs/cordis-primer.i18n.yaml',
       'examples/agent.cordis.yaml',
       'examples/headless.cordis.yml',
+      'apps/runtime/node_modules/pkg/hidden.cordis.yml',
       'node_modules/pkg/hidden.cordis.yml',
+      'packages/example/dist/hidden.cordis.yml',
+      'packages/example/lib/hidden.cordis.yml',
+      'packages/example/out/hidden.cordis.yml',
       'vendor/pkg/hidden.cordis.yml',
     ]) {
       writeFileSync(join(root, file), '[]\n')

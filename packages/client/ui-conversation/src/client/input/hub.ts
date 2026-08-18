@@ -39,18 +39,6 @@ interface ConversationAttachmentFace {
   draftImages(ids: readonly DraftAttachmentId[]): readonly { readonly id: DraftAttachmentId; readonly previewUrl: string }[]
 }
 
-/** Text + preview projections of one outgoing message (host queue-mirror vocabulary). */
-function pendingContentParts(text: string, imageCount: number): { preview: string; plain: string | null } {
-  const flat = (Array.from({ length: imageCount }, () => '[image]') as string[])
-    .concat(text === '' ? [] : [text])
-    .join(' ').replace(/\s+/g, ' ').trim()
-  const chars = Array.from(flat)
-  return {
-    preview: chars.length > 200 ? `${chars.slice(0, 200).join('')}…` : flat,
-    plain: imageCount === 0 ? text : null,
-  }
-}
-
 /** Session-addressed input facade registry (SessionInputResolver face + composer-layer extras). */
 export class InputHub implements SessionInputResolver {
   private readonly shells = new Map<SessionId, SessionInputShell>()
@@ -113,11 +101,10 @@ export class InputHub implements SessionInputResolver {
       ]
       return () => {
         for (const off of offs) off()
-        const drafts = shell.snapshot.imageIds
-        shell.dispose()
+        const drafts = [...shell.snapshot.imageIds, ...shell.dispose()]
         this.shells.delete(id)
         const conversation = this.rootCtx.get('conversation') as ConversationAttachmentFace | undefined
-        for (const imageId of drafts) conversation?.releaseDraftImage(imageId)
+        for (const imageId of new Set(drafts)) conversation?.releaseDraftImage(imageId)
       }
     }, 'conversation.input: session shell')
     return shell
@@ -163,8 +150,8 @@ export class InputHub implements SessionInputResolver {
    * Default sink: optimistic projection + prompt. The committed draft enters
    * the shell's local pending overlay BEFORE the send starts (image sends
    * serialize and admit asynchronously, and the echo bubble must be visible
-   * that whole time); the authoritative host queue frame settles the overlay,
-   * while a rejected send retracts it and restores the draft. The session is
+   * that whole time); the accepted RPC receipt settles the overlay, while a
+   * rejected send retracts it and restores the draft. The session is
    * always a real host entity (materialized when its workspace was picked),
    * so there is exactly one path; a failed first prompt is an ordinary prompt
    * failure (error strip via promptError, draft restored only while untouched).
@@ -181,16 +168,12 @@ export class InputHub implements SessionInputResolver {
     const conversation = this.conversation()
     // Commit, not an editable clear: undo must not resurrect sent content.
     shell.commitSend(imageIds)
-    const { preview, plain } = pendingContentParts(text, imageIds.length)
     const imageBlocks: readonly unknown[] = conversation.draftImages(imageIds)
       .map(image => ({ type: 'image', previewUrl: image.previewUrl }))
     const content: readonly unknown[] = text === '' ? imageBlocks : [...imageBlocks, { type: 'text', text }]
     const sendId = `pending-${++this.sendSeq}`
-    const send: PendingSend = { sendId, content, preview, text: plain, imageIds }
-    shell.stagePendingSend({
-      send,
-      unsubscribe: session.subscribe(() => { this.onQueueFrame(session, sendId) }),
-    })
+    const send: PendingSend = { sendId, content, imageIds }
+    shell.stagePendingSend(send)
     void conversation.sendSession(session, text, imageIds, mode).then(
       () => { shell.settlePendingSend(sendId) },
       () => {
@@ -203,20 +186,6 @@ export class InputHub implements SessionInputResolver {
         for (const id of imageIds) conversation.releaseDraftImage(id)
       },
     )
-  }
-
-  /**
-   * The host queue frame is the send's acceptance signal: once the preview
-   * text is listed authoritatively, the local echo hands over. Frames can be
-   * dropped or replayed, so the RPC settlement remains the fallback settle.
-   */
-  private onQueueFrame(session: SessionFace, sendId: string): void {
-    const shell = this.shells.get(session.sessionId)
-    if (shell === undefined || !shell.hasPendingSend(sendId)) return
-    const pending = shell.pendingPreviewOf(sendId)
-    if (session.getSnapshot().queue.some(item => item.preview === pending)) {
-      shell.settlePendingSend(sendId)
-    }
   }
 
   /**

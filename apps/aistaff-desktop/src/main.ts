@@ -22,7 +22,7 @@ if (!app.requestSingleInstanceLock()) {
     if (mainWindow.isMinimized()) mainWindow.restore()
     mainWindow.focus()
   })
-  app.on('window-all-closed', () => app.quit())
+  app.on('window-all-closed', () => { app.quit() })
   app.on('before-quit', (event) => {
     if (shutdownComplete || runtime === undefined) return
     event.preventDefault()
@@ -42,10 +42,10 @@ async function startApplication(): Promise<void> {
   const dshHome = join(userData, 'dsh')
   const workspace = join(userData, 'workspace')
   mkdirSync(workspace, { recursive: true })
-  ensureAistaffProfile(dshHome)
+  ensureAistaffProfile(dshHome, app.getLocaleCountryCode())
   const credentialEnvironment = loadModelCredentials(app.getPath('home'))
   const networkEnvironment = await resolveProxyEnvironment(
-    (url) => session.defaultSession.resolveProxy(url),
+    url => session.defaultSession.resolveProxy(url),
     process.env,
   )
 
@@ -58,7 +58,7 @@ async function startApplication(): Promise<void> {
     cwd: workspace,
     credentialEnvironment,
     networkEnvironment,
-    onLog: (message) => process.stderr.write(message),
+    onLog: message => process.stderr.write(message),
     onUnexpectedExit: (message) => {
       process.stderr.write(`${message}\n`)
       app.quit()
@@ -76,15 +76,15 @@ async function startApplication(): Promise<void> {
   }
 
   contents.setWindowOpenHandler(() => ({ action: 'deny' }))
-  contents.on('will-navigate', (event) => event.preventDefault())
-  contents.on('will-redirect', (event) => event.preventDefault())
-  contents.on('will-attach-webview', (event) => event.preventDefault())
+  contents.on('will-navigate', (event) => { event.preventDefault() })
+  contents.on('will-redirect', (event) => { event.preventDefault() })
+  contents.on('will-attach-webview', (event) => { event.preventDefault() })
   contents.on('did-navigate', (_event, url) => {
     if (!isRuntimeDocument(url, runtimeUrl)) window.destroy()
   })
-  contents.session.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false))
+  contents.session.setPermissionRequestHandler((_webContents, _permission, callback) => { callback(false) })
   contents.session.setPermissionCheckHandler(() => false)
-  window.once('ready-to-show', () => window.show())
+  window.once('ready-to-show', () => { window.show() })
   window.once('closed', () => {
     if (mainWindow === window) mainWindow = undefined
   })
@@ -107,7 +107,7 @@ function installApplicationMenu(): void {
         },
         {
           label: '开源软件许可',
-          click: () => { void openLegalDocument('third-party', 'voyaseek-harness', 'LICENSE') },
+          click: () => { void openLegalDocument('third-party', 'deepseek-harness', 'LICENSE') },
         },
       ],
     },

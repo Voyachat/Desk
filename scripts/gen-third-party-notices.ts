@@ -116,11 +116,14 @@ interface RustDep {
   repo: string
 }
 
-function cargoDependencyName(name: string, value: TomlValueWithoutBigInt): string {
-  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-    const packageName = (value as TomlTableWithoutBigInt).package
-    if (typeof packageName === 'string' && packageName.length > 0) return packageName
-  }
+function tomlTable(value: unknown): Record<string, unknown> | undefined {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return undefined
+  return value as Record<string, unknown>
+}
+
+function cargoDependencyName(name: string, value: unknown): string {
+  const packageName = tomlTable(value)?.package
+  if (typeof packageName === 'string' && packageName.length > 0) return packageName
   return name
 }
 
@@ -130,20 +133,18 @@ function cargoDependencyName(name: string, value: TomlValueWithoutBigInt): strin
  * @returns sorted published crate identities.
  */
 export function parseCargoDirectDependencies(source: string): string[] {
-  const document = parseToml(source, { integersAsBigInt: false })
+  const document = tomlTable(parseToml(source, { integersAsBigInt: false }))
+  if (document === undefined) throw new Error('gen-third-party-notices: Cargo.toml root must be a table')
   const names = new Set<string>()
-  const add = (value: TomlValueWithoutBigInt | undefined): void => {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) return
-    for (const [name, spec] of Object.entries(value)) names.add(cargoDependencyName(name, spec))
+  const add = (value: unknown): void => {
+    const table = tomlTable(value)
+    if (table === undefined) return
+    for (const [name, spec] of Object.entries(table)) names.add(cargoDependencyName(name, spec))
   }
   add(document.dependencies)
-  const targets = document.target
-  if (typeof targets === 'object' && targets !== null && !Array.isArray(targets)) {
-    for (const target of Object.values(targets)) {
-      if (typeof target === 'object' && target !== null && !Array.isArray(target)) {
-        add((target as TomlTableWithoutBigInt).dependencies)
-      }
-    }
+  const targets = tomlTable(document.target)
+  for (const target of Object.values(targets ?? {})) {
+    add(tomlTable(target)?.dependencies)
   }
   return [...names].sort((left, right) => left.localeCompare(right))
 }
@@ -151,7 +152,7 @@ export function parseCargoDirectDependencies(source: string): string[] {
 function collectRust(): RustDep[] {
   return parseCargoDirectDependencies(
     readFileSync(resolve(root, 'native/aistaff-desktop-supervisor/Cargo.toml'), 'utf8'),
-  ).map(name => {
+  ).map((name) => {
     const metadata = RUST_METADATA[name]
     if (metadata === undefined) {
       throw new Error(`gen-third-party-notices: Rust dependency ${name} is missing from RUST_METADATA.`)
@@ -170,6 +171,17 @@ const BUILD_TIME_TOOLS = [
     repo: 'https://github.com/yao-pkg/pkg',
     role: 'invoked by `scripts/build-exe-for-python-sdk.ts` to assemble the single-file SDK runtime executable',
     pinSource: 'scripts/build-exe-for-python-sdk.ts',
+  },
+]
+
+/** Pinned packages fetched into a user cache only by an invoked runtime feature. */
+const RUNTIME_FETCHED_TOOLS = [
+  {
+    name: 'modelscope-hub',
+    license: 'Apache-2.0',
+    repo: 'https://github.com/modelscope/modelscope_hub',
+    role: 'fetched by `modelscope_search` through uv for read-only official Hub metadata queries',
+    pinSource: 'packages/extensions/tool-modelscope/src/index.ts',
   },
 ]
 
@@ -649,10 +661,10 @@ function collectPatched(): { spec: string; patch: string }[] {
 
 /** Verify each build-time tool pin still appears in its owning script. */
 function verifyBuildTimePins(): void {
-  for (const tool of BUILD_TIME_TOOLS) {
+  for (const tool of [...BUILD_TIME_TOOLS, ...RUNTIME_FETCHED_TOOLS]) {
     const text = readFileSync(resolve(root, tool.pinSource), 'utf8')
     if (!text.includes(tool.name)) {
-      throw new Error(`gen-third-party-notices: ${tool.pinSource} no longer references ${tool.name}; update BUILD_TIME_TOOLS.`)
+      throw new Error(`gen-third-party-notices: ${tool.pinSource} no longer references ${tool.name}; update the fetched-tool metadata.`)
     }
   }
 }
@@ -774,7 +786,7 @@ export function render(): string {
 
 Voyaseek Harness is licensed under [MIT](LICENSE). It depends on the third-party software listed below. Each project remains under its own license; nothing in this file changes those terms.
 
-This file lists **direct** dependencies declared by the workspace, the packaged Rust Supervisor, and the explicitly disclosed official Claude platform payload closure. It is generated from the workspace and Cargo manifests by \`scripts/gen-third-party-notices.ts\`: a pre-commit hook regenerates it whenever a staged file changes one of its inputs, and \`scripts/gen-third-party-notices.spec.ts\` asserts in the test lane that the committed bytes match. Deleting a manifest runs no hook, so that case is caught by the assertion instead. Run \`pnpm run verify-third-party-notices\` for the standalone check.
+This file lists **direct** dependencies declared by the workspace, the packaged Rust Supervisor, pinned runtime-fetched tools, and the explicitly disclosed official Claude platform payload closure. It is generated from the workspace and Cargo manifests by \`scripts/gen-third-party-notices.ts\`: a pre-commit hook regenerates it whenever a staged file changes one of its inputs, and \`scripts/gen-third-party-notices.spec.ts\` asserts in the test lane that the committed bytes match. Deleting a manifest runs no hook, so that case is caught by the assertion instead. Run \`pnpm run verify-third-party-notices\` for the standalone check.
 
 The complete npm transitive closure, including the Landlock launcher workspace, is recorded with exact pinned versions in [\`pnpm-lock.yaml\`](pnpm-lock.yaml) — inspect it with \`pnpm licenses list\`. The packaged Supervisor Rust closure is recorded in [\`native/aistaff-desktop-supervisor/Cargo.lock\`](native/aistaff-desktop-supervisor/Cargo.lock), and the Python closure in [\`python/sdk/uv.lock\`](python/sdk/uv.lock).
 
@@ -819,6 +831,14 @@ Direct dependencies of the \`pyproject.toml\` manifests, plus \`uv\` as the deve
 | --- | --- | --- |
 ${python.map(dep => `| [\`${dep.name}\`](${dep.repo}) | ${dep.license} | ${dep.role} |`).join('\n')}
 | [\`uv\`](https://github.com/astral-sh/uv) | MIT / Apache-2.0 | development workflow tool |
+
+## Fetched at runtime
+
+These pinned packages are downloaded only when their opt-in feature is invoked. They are not imported into the Node.js process or included in the default application startup path.
+
+| Package | License | Role |
+| --- | --- | --- |
+${RUNTIME_FETCHED_TOOLS.map(tool => `| [\`${tool.name}\`](${tool.repo}) | ${tool.license} | ${tool.role} |`).join('\n')}
 
 ## Fetched at build time
 

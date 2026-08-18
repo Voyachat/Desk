@@ -45,6 +45,8 @@ import * as ToolPwsh from '@voyaseek-ai/dsh-tool-pwsh'
 import * as ToolBashPersistent from '@voyaseek-ai/dsh-tool-bash-persistent'
 import CordisHostRunner from '@voyaseek-ai/dsh-cordis-host-runner'
 import * as ToolCordis from '@voyaseek-ai/dsh-tool-cordis'
+import * as ToolPluginDiscovery from '@voyaseek-ai/dsh-tool-plugin-discovery'
+import * as ToolModelScope from '@voyaseek-ai/dsh-tool-modelscope'
 import * as ToolFs from '@voyaseek-ai/dsh-tool-fs'
 import * as ToolFsSearch from '@voyaseek-ai/dsh-tool-fs-search'
 import * as ToolStrReplaceEditor from '@voyaseek-ai/dsh-tool-str-replace-editor'
@@ -266,6 +268,31 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'Not in any shipped tree (a deliberate opt-in — dynamic package code reaches the real runtime, see .agents/notes/implemented/feature/2026-07-08-self-referential-cordis-toolset.md). The toolset injects `ctx.dynamicCordisRunner` from `@voyaseek-ai/dsh-cordis-host-runner`, which owns the definition registry and the vm sandbox; a composition missing it never activates the tools. A running package may register ADDITIONAL model-visible tools until it is stopped, undefined, or DSH restarts; a full changed request header logs those tool-set changes.',
+  },
+  {
+    pkg: '@voyaseek-ai/dsh-tool-plugin-discovery',
+    dir: 'tool-plugin-discovery',
+    source: 'packages/extensions/tool-plugin-discovery/src/index.ts',
+    requires: ['ctx.tools', 'network access to the configured curated catalog at execution time'],
+    writes: ['tool/call', 'tool/result'],
+    async mount(ctx) {
+      await ctx.plugin(ToolPluginDiscovery, {})
+    },
+    note:
+      'Shipped in the base bundle. Catalog entries are validated discovery leads marked unreviewed; installation remains a separate user-confirmed CLI audit operation.',
+  },
+  {
+    pkg: '@voyaseek-ai/dsh-tool-modelscope',
+    dir: 'tool-modelscope',
+    source: 'packages/extensions/tool-modelscope/src/index.ts',
+    requires: ['ctx.tools', 'ctx.subprocess', 'network access to the official ModelScope Hub at execution time', 'uv and Python'],
+    writes: ['tool/call', 'tool/result', 'uv package cache'],
+    async mount(ctx) {
+      await ctx.plugin(LocalSubprocessRuntime)
+      await ctx.plugin(ToolModelScope, {})
+    },
+    note:
+      'Shipped in the base bundle as read-only catalog discovery. It pins the official `modelscope-hub` client, returns bounded metadata, and neither downloads nor executes model repositories.',
   },
   {
     pkg: '@voyaseek-ai/dsh-tool-bash-persistent',

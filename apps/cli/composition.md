@@ -54,6 +54,8 @@ flowchart LR
   cfg --> plugin_dsh_base_session_telemetry_otel
   plugin_dsh_base_subprocess["subprocess<br/>@voyaseek-ai/dsh-subprocess-local"]
   cfg --> plugin_dsh_base_subprocess
+  plugin_dsh_base_document_converter_mac_ocr["document-converter-mac-ocr<br/>@voyaseek-ai/dsh-document-converter-mac-ocr"]
+  cfg --> plugin_dsh_base_document_converter_mac_ocr
   plugin_dsh_base_sandbox["sandbox<br/>@voyaseek-ai/dsh-sandbox-local"]
   cfg --> plugin_dsh_base_sandbox
   plugin_dsh_base_sandbox_policy["sandbox-policy<br/>@voyaseek-ai/dsh-sandbox-policy"]
@@ -90,6 +92,10 @@ flowchart LR
   cfg --> plugin_dsh_base_skill_badge
   plugin_dsh_base_tool_skill["tool-skill<br/>@voyaseek-ai/dsh-tool-skill"]
   cfg --> plugin_dsh_base_tool_skill
+  plugin_dsh_base_tool_plugin_discovery["tool-plugin-discovery<br/>@voyaseek-ai/dsh-tool-plugin-discovery"]
+  cfg --> plugin_dsh_base_tool_plugin_discovery
+  plugin_dsh_base_tool_modelscope["tool-modelscope<br/>@voyaseek-ai/dsh-tool-modelscope"]
+  cfg --> plugin_dsh_base_tool_modelscope
   plugin_dsh_base_commands["commands<br/>@voyaseek-ai/dsh-commands"]
   cfg --> plugin_dsh_base_commands
   plugin_dsh_base_command_feedback["command-feedback<br/>@voyaseek-ai/dsh-command-feedback"]
@@ -191,6 +197,7 @@ flowchart LR
 | `session-projection` | `@voyaseek-ai/dsh-session-projection` |
 | `session-telemetry-otel` | `@voyaseek-ai/dsh-session-telemetry-otel` |
 | `subprocess` | `@voyaseek-ai/dsh-subprocess-local` |
+| `document-converter-mac-ocr` | `@voyaseek-ai/dsh-document-converter-mac-ocr` |
 | `sandbox` | `@voyaseek-ai/dsh-sandbox-local` |
 | `sandbox-policy` | `@voyaseek-ai/dsh-sandbox-policy` |
 | `bash-sandbox` | `@voyaseek-ai/dsh-bash-sandbox` |
@@ -209,6 +216,8 @@ flowchart LR
 | `skill-filesystem` | `@voyaseek-ai/dsh-skill-filesystem` |
 | `skill-badge` | `@voyaseek-ai/dsh-skill-badge` |
 | `tool-skill` | `@voyaseek-ai/dsh-tool-skill` |
+| `tool-plugin-discovery` | `@voyaseek-ai/dsh-tool-plugin-discovery` |
+| `tool-modelscope` | `@voyaseek-ai/dsh-tool-modelscope` |
 | `commands` | `@voyaseek-ai/dsh-commands` |
 | `command-feedback` | `@voyaseek-ai/dsh-command-feedback` |
 | `goal` | `@voyaseek-ai/dsh-goal` |

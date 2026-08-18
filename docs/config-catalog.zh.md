@@ -11,7 +11,7 @@
 
 `Requires:` 行列出插件通过 `inject` 注入的服务键：其 `cordis.yml` 树还必须加载这些服务的提供者。范围限定为 harness 层级（`packages/`）；配置树还可能加载的 vendored cordis 插件（`hmr`、控制台日志记录器等）固定为上游源代码（参见 [vendoring policy](../vendor/README.md)），未收录于此目录。
 
-<a id="deepseek-aidsh-acp"></a>
+<a id="voyaseek-aidsh-acp"></a>
 
 ## `@voyaseek-ai/dsh-acp`
 
@@ -33,7 +33,7 @@ export interface AcpConfig {
 
 来源：[`packages/acp/acp/src/index.ts:70`](../packages/acp/acp/src/index.ts)
 
-<a id="deepseek-aidsh-acp-demo"></a>
+<a id="voyaseek-aidsh-acp-demo"></a>
 
 ## `@voyaseek-ai/dsh-acp-demo`
 
@@ -84,11 +84,11 @@ export interface Config {
 }
 ```
 
-依赖：[`agentCore`](../packages/examples/agent-spine-demo/src/index.ts) · [`JsonlCompression`](../packages/session/session-persistence-jsonl/src/index.ts) · [`ToolsConfig`](#deepseek-aidsh-tools)
+依赖：[`agentCore`](../packages/examples/agent-spine-demo/src/index.ts) · [`JsonlCompression`](../packages/session/session-persistence-jsonl/src/index.ts) · [`ToolsConfig`](#voyaseek-aidsh-tools)
 
 来源：[`packages/examples/acp-demo/src/index.ts:39`](../packages/examples/acp-demo/src/index.ts)
 
-<a id="deepseek-aidsh-agent-default-model"></a>
+<a id="voyaseek-aidsh-agent-default-model"></a>
 
 ## `@voyaseek-ai/dsh-agent-default-model`
 
@@ -104,7 +104,7 @@ export interface Config {
 
 来源：[`packages/core/agent-default-model/src/index.ts:41`](../packages/core/agent-default-model/src/index.ts)
 
-<a id="deepseek-aidsh-agent-instructions"></a>
+<a id="voyaseek-aidsh-agent-instructions"></a>
 
 ## `@voyaseek-ai/dsh-agent-instructions`
 
@@ -134,7 +134,7 @@ export interface Config {
 
 来源：[`packages/context/agent-instructions/src/config.ts:18`](../packages/context/agent-instructions/src/config.ts)
 
-<a id="deepseek-aidsh-agent-loop"></a>
+<a id="voyaseek-aidsh-agent-loop"></a>
 
 ## `@voyaseek-ai/dsh-agent-loop`
 
@@ -166,7 +166,7 @@ export interface Config {
 
 来源：[`packages/core/agent-loop/src/index.ts:255`](../packages/core/agent-loop/src/index.ts)
 
-<a id="deepseek-aidsh-agent-presets"></a>
+<a id="voyaseek-aidsh-agent-presets"></a>
 
 ## `@voyaseek-ai/dsh-agent-presets`
 
@@ -204,7 +204,7 @@ export type PresetTrust = 'system' | 'user'
 
 来源：[`packages/preset/agent-presets/src/preset.ts:52`](../packages/preset/agent-presets/src/preset.ts)
 
-<a id="deepseek-aidsh-agent-spine-demo"></a>
+<a id="voyaseek-aidsh-agent-spine-demo"></a>
 
 ## `@voyaseek-ai/dsh-agent-spine-demo`
 
@@ -292,11 +292,11 @@ export interface GoalConfig {
 }
 ```
 
-依赖：[`AgentLoopConfig`](#deepseek-aidsh-agent-loop) · [`GoalDomainConfig`](#deepseek-aidsh-goal) · [`InvariantConfig`](#deepseek-aidsh-invariants) · [`JobsConfig`](#deepseek-aidsh-jobs-local) · [`SessionTitleConfig`](#deepseek-aidsh-session-title) · [`SkillFileSystem`](../packages/skill/skill-filesystem/src/index.ts) · [`SkillRegistryConfig`](#deepseek-aidsh-skill) · [`SystemPromptConfig`](#deepseek-aidsh-system-prompt) · [`toolBash`](../packages/shell/tool-bash/src/index.ts) · [`toolGoal`](../packages/goal/tool-goal/src/index.ts) · [`toolJobs`](../packages/jobs/tool-jobs/src/index.ts) · [`ToolsConfig`](#deepseek-aidsh-tools) · [`toolSkill`](../packages/skill/tool-skill/src/index.ts) · [`workspaceContext`](../packages/context/agent-instructions/src/index.ts)
+依赖：[`AgentLoopConfig`](#voyaseek-aidsh-agent-loop) · [`GoalDomainConfig`](#voyaseek-aidsh-goal) · [`InvariantConfig`](#voyaseek-aidsh-invariants) · [`JobsConfig`](#voyaseek-aidsh-jobs-local) · [`SessionTitleConfig`](#voyaseek-aidsh-session-title) · [`SkillFileSystem`](../packages/skill/skill-filesystem/src/index.ts) · [`SkillRegistryConfig`](#voyaseek-aidsh-skill) · [`SystemPromptConfig`](#voyaseek-aidsh-system-prompt) · [`toolBash`](../packages/shell/tool-bash/src/index.ts) · [`toolGoal`](../packages/goal/tool-goal/src/index.ts) · [`toolJobs`](../packages/jobs/tool-jobs/src/index.ts) · [`ToolsConfig`](#voyaseek-aidsh-tools) · [`toolSkill`](../packages/skill/tool-skill/src/index.ts) · [`workspaceContext`](../packages/context/agent-instructions/src/index.ts)
 
 来源：[`packages/examples/agent-spine-demo/src/index.ts:92`](../packages/examples/agent-spine-demo/src/index.ts)
 
-<a id="deepseek-aidsh-agent-tool-presentation"></a>
+<a id="voyaseek-aidsh-agent-tool-presentation"></a>
 
 ## `@voyaseek-ai/dsh-agent-tool-presentation`
 
@@ -320,7 +320,7 @@ export interface Config {
 
 来源：[`packages/core/agent-tool-presentation/src/index.ts:38`](../packages/core/agent-tool-presentation/src/index.ts)
 
-<a id="deepseek-aidsh-attachment-local"></a>
+<a id="voyaseek-aidsh-attachment-local"></a>
 
 ## `@voyaseek-ai/dsh-attachment-local`
 
@@ -342,7 +342,7 @@ export interface Config {
 
 来源：[`packages/attachment/attachment-local/src/index.ts:24`](../packages/attachment/attachment-local/src/index.ts)
 
-<a id="deepseek-aidsh-bash-local"></a>
+<a id="voyaseek-aidsh-bash-local"></a>
 
 ## `@voyaseek-ai/dsh-bash-local`
 
@@ -368,7 +368,7 @@ export interface Config {
 
 来源：[`packages/shell/bash-local/src/index.ts:41`](../packages/shell/bash-local/src/index.ts)
 
-<a id="deepseek-aidsh-bash-sandbox"></a>
+<a id="voyaseek-aidsh-bash-sandbox"></a>
 
 ## `@voyaseek-ai/dsh-bash-sandbox`
 
@@ -385,11 +385,48 @@ export interface Config {
 export type Config = LocalConfig
 ```
 
-依赖：[`LocalConfig`](#deepseek-aidsh-bash-local)
+依赖：[`LocalConfig`](#voyaseek-aidsh-bash-local)
 
 来源：[`packages/shell/bash-sandbox/src/index.ts:35`](../packages/shell/bash-sandbox/src/index.ts)
 
-<a id="deepseek-aidsh-client-connection"></a>
+<a id="voyaseek-aidsh-claude-agent"></a>
+
+## `@voyaseek-ai/dsh-claude-agent`
+
+需要：`agentLoop` · `subprocess`
+
+```ts config-catalog
+/** Plugin config. All fields optional; `Config` supplies the defaults. */
+export interface Config {
+  /** Runtime id matched against session headers; deployments rarely rename it. */
+  readonly runtime?: string
+  /** Model id pinned for every query; absent keeps the SDK/CLI default. */
+  readonly model?: string
+  /** Claude-API-compatible endpoint base URL (`ANTHROPIC_BASE_URL`). */
+  readonly baseUrl?: string
+  /** Bearer token for gateway endpoints (`ANTHROPIC_AUTH_TOKEN`). */
+  readonly authToken?: string
+  /** API key (`ANTHROPIC_API_KEY`); gateways accept either credential field. */
+  readonly apiKey?: string
+  /** SDK permission posture; `bypassPermissions` disables the approval bridge. */
+  readonly permissionMode?: ClaudePermissionMode
+  /** Explicit Claude Code executable; absent uses the SDK-distributed CLI. */
+  readonly executable?: string
+  /** Extra child environment layered over the credential-scrubbed parent env. */
+  readonly env?: Record<string, string>
+  /** Process-tree termination grace in milliseconds. */
+  readonly disposeGraceMs?: number
+}
+
+/** Permission postures the plugin admits; the SDK's interactive modes stay out. */
+export type ClaudePermissionMode = Extract<PermissionMode, 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan'>
+```
+
+依赖：`PermissionMode`（`@anthropic-ai/claude-agent-sdk`）
+
+来源：[`packages/claude/claude-agent/src/index.ts:27`](../packages/claude/claude-agent/src/index.ts)
+
+<a id="voyaseek-aidsh-client-connection"></a>
 
 ## `@voyaseek-ai/dsh-client-connection`
 
@@ -414,7 +451,7 @@ export interface ConnectionConfig {
 
 来源：[`packages/client/connection/src/index.ts:50`](../packages/client/connection/src/index.ts)
 
-<a id="deepseek-aidsh-client-hmr"></a>
+<a id="voyaseek-aidsh-client-hmr"></a>
 
 ## `@voyaseek-ai/dsh-client-hmr`
 
@@ -430,7 +467,7 @@ export interface Config {
 
 来源：[`packages/client/hmr/src/index.ts:31`](../packages/client/hmr/src/index.ts)
 
-<a id="deepseek-aidsh-code-runtime-worker-thread"></a>
+<a id="voyaseek-aidsh-code-runtime-worker-thread"></a>
 
 ## `@voyaseek-ai/dsh-code-runtime-worker-thread`
 
@@ -467,7 +504,7 @@ export interface Config {
 
 来源：[`packages/code-runtime/code-runtime-worker-thread/src/index.ts:25`](../packages/code-runtime/code-runtime-worker-thread/src/index.ts)
 
-<a id="deepseek-aidsh-compaction-basic"></a>
+<a id="voyaseek-aidsh-compaction-basic"></a>
 
 ## `@voyaseek-ai/dsh-compaction-basic`
 
@@ -513,7 +550,7 @@ export interface ModelCompactPolicyConfig extends CompactionPolicyConfig {
 
 来源：[`packages/compaction/compaction-basic/src/types.ts:38`](../packages/compaction/compaction-basic/src/types.ts)
 
-<a id="deepseek-aidsh-compaction-tool-result-pruner"></a>
+<a id="voyaseek-aidsh-compaction-tool-result-pruner"></a>
 
 ## `@voyaseek-ai/dsh-compaction-tool-result-pruner`
 
@@ -533,7 +570,7 @@ export interface ToolResultPruneConfig {
 
 来源：[`packages/compaction/compaction-tool-result-pruner/src/types.ts:4`](../packages/compaction/compaction-tool-result-pruner/src/types.ts)
 
-<a id="deepseek-aidsh-cordis-host-runner"></a>
+<a id="voyaseek-aidsh-cordis-host-runner"></a>
 
 ## `@voyaseek-ai/dsh-cordis-host-runner`
 
@@ -544,12 +581,18 @@ export interface ToolResultPruneConfig {
 export interface Config {
   /** Maximum synchronous VM evaluation time in milliseconds. */
   vmTimeoutMs?: number
+  /** Harness home that owns persistent dynamic definitions; defaults to `$VOYASEEK_HOME` or `~/.voyaseek`. */
+  dshHome?: string
+  /** Watch editable working copies and reload approved, currently running Client Plugins. */
+  developmentHmr?: boolean
+  /** Development working-copy polling interval in milliseconds. */
+  developmentHmrPollMs?: number
 }
 ```
 
 来源：[`packages/extensions/cordis-host-runner/src/index.ts:88`](../packages/extensions/cordis-host-runner/src/index.ts)
 
-<a id="deepseek-aidsh-credentials-local"></a>
+<a id="voyaseek-aidsh-credentials-local"></a>
 
 ## `@voyaseek-ai/dsh-credentials-local`
 
@@ -569,7 +612,27 @@ export interface Config {
 
 来源：[`packages/credentials/credentials-local/src/index.ts:55`](../packages/credentials/credentials-local/src/index.ts)
 
-<a id="deepseek-aidsh-e2b"></a>
+<a id="voyaseek-aidsh-document-converter-mac-ocr"></a>
+
+## `@voyaseek-ai/dsh-document-converter-mac-ocr`
+
+```ts config-catalog
+/** Apple Vision recognition and operation limits. */
+export interface Config {
+  /** BCP-47 recognition languages, in preference order. */
+  languages?: string[]
+  /** Use the faster, lower-accuracy Vision recognizer. */
+  fast?: boolean
+  /** Complete Markdown byte cap across all inputs. */
+  maxOutputBytes?: number
+  /** Conversion deadline in milliseconds. */
+  timeoutMs?: number
+}
+```
+
+来源：[`packages/document/document-converter-mac-ocr/src/index.ts:17`](../packages/document/document-converter-mac-ocr/src/index.ts)
+
+<a id="voyaseek-aidsh-e2b"></a>
 
 ## `@voyaseek-ai/dsh-e2b`
 
@@ -587,7 +650,7 @@ export interface Config {
 
 来源：[`packages/e2b/e2b/src/index.ts:43`](../packages/e2b/e2b/src/index.ts)
 
-<a id="deepseek-aidsh-fs-local"></a>
+<a id="voyaseek-aidsh-fs-local"></a>
 
 ## `@voyaseek-ai/dsh-fs-local`
 
@@ -606,7 +669,7 @@ export interface Config {
 
 来源：[`packages/fs/fs-local/src/index.ts:41`](../packages/fs/fs-local/src/index.ts)
 
-<a id="deepseek-aidsh-fs-sandbox"></a>
+<a id="voyaseek-aidsh-fs-sandbox"></a>
 
 ## `@voyaseek-ai/dsh-fs-sandbox`
 
@@ -622,11 +685,11 @@ export interface Config {
 export type Config = LocalConfig
 ```
 
-依赖：[`LocalConfig`](#deepseek-aidsh-fs-local)
+依赖：[`LocalConfig`](#voyaseek-aidsh-fs-local)
 
 来源：[`packages/fs/fs-sandbox/src/index.ts:49`](../packages/fs/fs-sandbox/src/index.ts)
 
-<a id="deepseek-aidsh-goal"></a>
+<a id="voyaseek-aidsh-goal"></a>
 
 ## `@voyaseek-ai/dsh-goal`
 
@@ -642,7 +705,7 @@ export interface Config {
 
 来源：[`packages/goal/goal/src/index.ts:116`](../packages/goal/goal/src/index.ts)
 
-<a id="deepseek-aidsh-headless"></a>
+<a id="voyaseek-aidsh-headless"></a>
 
 ## `@voyaseek-ai/dsh-headless`
 
@@ -658,7 +721,7 @@ export interface Config {
 
 来源：[`packages/bundle/headless/src/index.ts:31`](../packages/bundle/headless/src/index.ts)
 
-<a id="deepseek-aidsh-hooks-claude-code"></a>
+<a id="voyaseek-aidsh-hooks-claude-code"></a>
 
 ## `@voyaseek-ai/dsh-hooks-claude-code`
 
@@ -696,7 +759,7 @@ export interface Config {
 
 来源：[`packages/hooks/hooks-claude-code/src/index.ts:45`](../packages/hooks/hooks-claude-code/src/index.ts)
 
-<a id="deepseek-aidsh-hooks-codex"></a>
+<a id="voyaseek-aidsh-hooks-codex"></a>
 
 ## `@voyaseek-ai/dsh-hooks-codex`
 
@@ -723,7 +786,7 @@ export interface Config {
 
 来源：[`packages/hooks/hooks-codex/src/index.ts:44`](../packages/hooks/hooks-codex/src/index.ts)
 
-<a id="deepseek-aidsh-host-apiproxy"></a>
+<a id="voyaseek-aidsh-host-apiproxy"></a>
 
 ## `@voyaseek-ai/dsh-host-apiproxy`
 
@@ -752,12 +815,27 @@ export interface Config {
    * @default 1024
    */
   coldBlankProbeMaxBytes?: number
+  /**
+   * Explicit image-capable route used to describe images before a text-only
+   * session model receives the prompt. Omission preserves strict refusal and
+   * never sends image data to another provider implicitly.
+   */
+  imageFallback?: false | {
+    /** Prefer the mounted local document converter. @default true */
+    local?: boolean
+    /** Optional hosted provider route used only when local conversion is unavailable. */
+    provider?: string
+    /** Exact image-capable model on the optional hosted route. */
+    model?: string
+    /** Maximum output tokens for one image-analysis call. @default 4096 */
+    maxTokens?: number
+  }
 }
 ```
 
 来源：[`packages/host/apiproxy/src/index.ts:41`](../packages/host/apiproxy/src/index.ts)
 
-<a id="deepseek-aidsh-host-directory-picker-browse"></a>
+<a id="voyaseek-aidsh-host-directory-picker-browse"></a>
 
 ## `@voyaseek-ai/dsh-host-directory-picker-browse`
 
@@ -771,7 +849,7 @@ export interface Config {
 
 来源：[`packages/host/directory-picker-browse/src/index.ts:181`](../packages/host/directory-picker-browse/src/index.ts)
 
-<a id="deepseek-aidsh-host-frontend-static"></a>
+<a id="voyaseek-aidsh-host-frontend-static"></a>
 
 ## `@voyaseek-ai/dsh-host-frontend-static`
 
@@ -787,7 +865,7 @@ export interface Config {
 
 来源：[`packages/host/frontend-static/src/index.ts:28`](../packages/host/frontend-static/src/index.ts)
 
-<a id="deepseek-aidsh-host-webserver"></a>
+<a id="voyaseek-aidsh-host-webserver"></a>
 
 ## `@voyaseek-ai/dsh-host-webserver`
 
@@ -803,7 +881,7 @@ export interface Config {
 
 来源：[`packages/host/webserver/src/index.ts:45`](../packages/host/webserver/src/index.ts)
 
-<a id="deepseek-aidsh-invariants"></a>
+<a id="voyaseek-aidsh-invariants"></a>
 
 ## `@voyaseek-ai/dsh-invariants`
 
@@ -821,7 +899,7 @@ export interface Config {
 
 来源：[`packages/runtime-diagnostics/invariants/src/index.ts:15`](../packages/runtime-diagnostics/invariants/src/index.ts)
 
-<a id="deepseek-aidsh-jobs-local"></a>
+<a id="voyaseek-aidsh-jobs-local"></a>
 
 ## `@voyaseek-ai/dsh-jobs-local`
 
@@ -838,7 +916,7 @@ export interface Config {
 
 来源：[`packages/jobs/jobs-local/src/index.ts:31`](../packages/jobs/jobs-local/src/index.ts)
 
-<a id="deepseek-aidsh-llm-deepseek"></a>
+<a id="voyaseek-aidsh-llm-deepseek"></a>
 
 ## `@voyaseek-ai/dsh-llm-deepseek`
 
@@ -893,7 +971,7 @@ export interface DeepSeekCatalogModel {
 
 来源：[`packages/llm/llm-deepseek/src/index.ts:62`](../packages/llm/llm-deepseek/src/index.ts)
 
-<a id="deepseek-aidsh-llm-pi-ai"></a>
+<a id="voyaseek-aidsh-llm-pi-ai"></a>
 
 ## `@voyaseek-ai/dsh-llm-pi-ai`
 
@@ -1083,7 +1161,7 @@ type WithheldThinkingFormat = 'chat-template' | 'qwen-chat-template'
 
 来源：[`packages/llm/llm-pi-ai/src/config.ts:172`](../packages/llm/llm-pi-ai/src/config.ts)
 
-<a id="deepseek-aidsh-llm-replay"></a>
+<a id="voyaseek-aidsh-llm-replay"></a>
 
 ## `@voyaseek-ai/dsh-llm-replay`
 
@@ -1151,7 +1229,7 @@ export interface ReplayModelConfig {
 
 来源：[`packages/test-support/llm-replay/src/index.ts:776`](../packages/test-support/llm-replay/src/index.ts)
 
-<a id="deepseek-aidsh-llm-retry"></a>
+<a id="voyaseek-aidsh-llm-retry"></a>
 
 ## `@voyaseek-ai/dsh-llm-retry`
 
@@ -1164,7 +1242,7 @@ export type Config = Readonly<Record<string, never>>
 
 来源：[`packages/llm/llm-retry/src/index.ts:24`](../packages/llm/llm-retry/src/index.ts)
 
-<a id="deepseek-aidsh-lsp-stdio"></a>
+<a id="voyaseek-aidsh-lsp-stdio"></a>
 
 ## `@voyaseek-ai/dsh-lsp-stdio`
 
@@ -1206,7 +1284,7 @@ export interface LspLocalServerConfig {
 
 来源：[`packages/lsp/lsp-stdio/src/index.ts:82`](../packages/lsp/lsp-stdio/src/index.ts)
 
-<a id="deepseek-aidsh-mcp-client"></a>
+<a id="voyaseek-aidsh-mcp-client"></a>
 
 ## `@voyaseek-ai/dsh-mcp-client`
 
@@ -1279,7 +1357,7 @@ export interface ReconnectConfig {
 
 来源：[`packages/mcp/mcp-client/src/index.ts:98`](../packages/mcp/mcp-client/src/index.ts)
 
-<a id="deepseek-aidsh-message-feedback"></a>
+<a id="voyaseek-aidsh-message-feedback"></a>
 
 ## `@voyaseek-ai/dsh-message-feedback`
 
@@ -1295,7 +1373,33 @@ export interface Config {
 
 来源：[`packages/feedback/message-feedback/src/index.ts:49`](../packages/feedback/message-feedback/src/index.ts)
 
-<a id="deepseek-aidsh-permission-presets"></a>
+<a id="voyaseek-aidsh-mobile-view"></a>
+
+## `@voyaseek-ai/dsh-mobile-view`
+
+需要：`webServer` · `sessionQuery` · `credentials`
+
+```ts config-catalog
+/** Read-only mobile viewer limits and credential reference. */
+export interface Config {
+  /** Credential reference containing the bearer token. */
+  tokenEnv?: string
+  /** Maximum newest sessions returned to the page. */
+  maxSessions?: number
+  /** Maximum newest user/assistant messages returned for one session. */
+  maxMessages?: number
+  /** Browser refresh interval in milliseconds. */
+  pollIntervalMs?: number
+  /** Optional dedicated read-only listener host, such as `0.0.0.0`. */
+  remoteHost?: string
+  /** Dedicated read-only listener port. */
+  remotePort?: number
+}
+```
+
+来源：[`packages/host/mobile-view/src/index.ts:22`](../packages/host/mobile-view/src/index.ts)
+
+<a id="voyaseek-aidsh-permission-presets"></a>
 
 ## `@voyaseek-ai/dsh-permission-presets`
 
@@ -1334,7 +1438,7 @@ export interface PresetSpec {
 
 来源：[`packages/interaction/permission-presets/src/index.ts:140`](../packages/interaction/permission-presets/src/index.ts)
 
-<a id="deepseek-aidsh-persona"></a>
+<a id="voyaseek-aidsh-persona"></a>
 
 ## `@voyaseek-ai/dsh-persona`
 
@@ -1358,7 +1462,7 @@ export interface Config {
 
 来源：[`packages/preset/persona/src/index.ts:34`](../packages/preset/persona/src/index.ts)
 
-<a id="deepseek-aidsh-plan-mode"></a>
+<a id="voyaseek-aidsh-plan-mode"></a>
 
 ## `@voyaseek-ai/dsh-plan-mode`
 
@@ -1374,7 +1478,7 @@ export interface PlanModeConfig {
 
 来源：[`packages/plan/plan-mode/src/index.ts:70`](../packages/plan/plan-mode/src/index.ts)
 
-<a id="deepseek-aidsh-pwsh-local"></a>
+<a id="voyaseek-aidsh-pwsh-local"></a>
 
 ## `@voyaseek-ai/dsh-pwsh-local`
 
@@ -1407,7 +1511,7 @@ export interface Config {
 
 来源：[`packages/shell/pwsh-local/src/index.ts:58`](../packages/shell/pwsh-local/src/index.ts)
 
-<a id="deepseek-aidsh-pwsh-sandbox"></a>
+<a id="voyaseek-aidsh-pwsh-sandbox"></a>
 
 ## `@voyaseek-ai/dsh-pwsh-sandbox`
 
@@ -1425,11 +1529,11 @@ export interface Config {
 export type Config = LocalConfig
 ```
 
-依赖：[`LocalConfig`](#deepseek-aidsh-pwsh-local)
+依赖：[`LocalConfig`](#voyaseek-aidsh-pwsh-local)
 
 来源：[`packages/shell/pwsh-sandbox/src/index.ts:40`](../packages/shell/pwsh-sandbox/src/index.ts)
 
-<a id="deepseek-aidsh-repeat-tool-reminder"></a>
+<a id="voyaseek-aidsh-repeat-tool-reminder"></a>
 
 ## `@voyaseek-ai/dsh-repeat-tool-reminder`
 
@@ -1463,7 +1567,7 @@ export interface Config {
 
 来源：[`packages/guard/repeat-tool-reminder/src/index.ts:28`](../packages/guard/repeat-tool-reminder/src/index.ts)
 
-<a id="deepseek-aidsh-sandbox-local"></a>
+<a id="voyaseek-aidsh-sandbox-local"></a>
 
 ## `@voyaseek-ai/dsh-sandbox-local`
 
@@ -1495,7 +1599,7 @@ export interface Config {
 
 来源：[`packages/sandbox/sandbox-local/src/index.ts:44`](../packages/sandbox/sandbox-local/src/index.ts)
 
-<a id="deepseek-aidsh-sandbox-policy"></a>
+<a id="voyaseek-aidsh-sandbox-policy"></a>
 
 ## `@voyaseek-ai/dsh-sandbox-policy`
 
@@ -1522,7 +1626,7 @@ export interface Config {
 
 来源：[`packages/sandbox/sandbox-policy/src/index.ts:67`](../packages/sandbox/sandbox-policy/src/index.ts)
 
-<a id="deepseek-aidsh-sdk-jsonrpc-server"></a>
+<a id="voyaseek-aidsh-sdk-jsonrpc-server"></a>
 
 ## `@voyaseek-ai/dsh-sdk-jsonrpc-server`
 
@@ -1546,7 +1650,7 @@ export interface JsonRpcConfig {
 
 来源：[`packages/sdk/server/src/index.ts:29`](../packages/sdk/server/src/index.ts)
 
-<a id="deepseek-aidsh-session-persistence-jsonl"></a>
+<a id="voyaseek-aidsh-session-persistence-jsonl"></a>
 
 ## `@voyaseek-ai/dsh-session-persistence-jsonl`
 
@@ -1585,7 +1689,7 @@ export type JsonlCompression = 'zstd' | 'none'
 
 来源：[`packages/session/session-persistence-jsonl/src/index.ts:60`](../packages/session/session-persistence-jsonl/src/index.ts)
 
-<a id="deepseek-aidsh-session-persistence-sqlite"></a>
+<a id="voyaseek-aidsh-session-persistence-sqlite"></a>
 
 ## `@voyaseek-ai/dsh-session-persistence-sqlite`
 
@@ -1630,7 +1734,7 @@ export type JournalMode = 'wal' | 'delete' | 'truncate' | 'persist'
 
 来源：[`packages/session/session-persistence-sqlite/src/index.ts:70`](../packages/session/session-persistence-sqlite/src/index.ts)
 
-<a id="deepseek-aidsh-session-projection-cache"></a>
+<a id="voyaseek-aidsh-session-projection-cache"></a>
 
 ## `@voyaseek-ai/dsh-session-projection-cache`
 
@@ -1653,7 +1757,7 @@ export interface Config {
 
 来源：[`packages/session/session-projection-cache/src/index.ts:42`](../packages/session/session-projection-cache/src/index.ts)
 
-<a id="deepseek-aidsh-session-query-sqlite"></a>
+<a id="voyaseek-aidsh-session-query-sqlite"></a>
 
 ## `@voyaseek-ai/dsh-session-query-sqlite`
 
@@ -1699,7 +1803,7 @@ export type JournalMode = 'wal' | 'delete' | 'truncate' | 'persist'
 
 来源：[`packages/session-query/session-query-sqlite/src/index.ts:89`](../packages/session-query/session-query-sqlite/src/index.ts)
 
-<a id="deepseek-aidsh-session-reference"></a>
+<a id="voyaseek-aidsh-session-reference"></a>
 
 ## `@voyaseek-ai/dsh-session-reference`
 
@@ -1719,7 +1823,7 @@ export interface Config {
 
 来源：[`packages/context/session-reference/src/config.ts:11`](../packages/context/session-reference/src/config.ts)
 
-<a id="deepseek-aidsh-session-telemetry-otel"></a>
+<a id="voyaseek-aidsh-session-telemetry-otel"></a>
 
 ## `@voyaseek-ai/dsh-session-telemetry-otel`
 
@@ -1765,7 +1869,7 @@ export enum SessionTelemetryMode {
 
 来源：[`packages/session/session-telemetry-otel/src/index.ts:91`](../packages/session/session-telemetry-otel/src/index.ts)
 
-<a id="deepseek-aidsh-session-title"></a>
+<a id="voyaseek-aidsh-session-title"></a>
 
 ## `@voyaseek-ai/dsh-session-title`
 
@@ -1785,7 +1889,7 @@ export interface Config {
 
 来源：[`packages/session/session-title/src/index.ts:79`](../packages/session/session-title/src/index.ts)
 
-<a id="deepseek-aidsh-session-title-all-prompts-llm"></a>
+<a id="voyaseek-aidsh-session-title-all-prompts-llm"></a>
 
 ## `@voyaseek-ai/dsh-session-title-all-prompts-llm`
 
@@ -1800,7 +1904,7 @@ export type Config = SessionTitleLlmConfig
 
 来源：[`packages/session/session-title-all-prompts-llm/src/index.ts:15`](../packages/session/session-title-all-prompts-llm/src/index.ts)
 
-<a id="deepseek-aidsh-session-title-first-prompt-llm"></a>
+<a id="voyaseek-aidsh-session-title-first-prompt-llm"></a>
 
 ## `@voyaseek-ai/dsh-session-title-first-prompt-llm`
 
@@ -1815,7 +1919,7 @@ export type Config = SessionTitleLlmConfig
 
 来源：[`packages/session/session-title-first-prompt-llm/src/index.ts:15`](../packages/session/session-title-first-prompt-llm/src/index.ts)
 
-<a id="deepseek-aidsh-settings-file"></a>
+<a id="voyaseek-aidsh-settings-file"></a>
 
 ## `@voyaseek-ai/dsh-settings-file`
 
@@ -1835,7 +1939,7 @@ export interface Config {
 
 来源：[`packages/settings/settings-file/src/index.ts:21`](../packages/settings/settings-file/src/index.ts)
 
-<a id="deepseek-aidsh-shell-env"></a>
+<a id="voyaseek-aidsh-shell-env"></a>
 
 ## `@voyaseek-ai/dsh-shell-env`
 
@@ -1849,7 +1953,7 @@ export interface Config {
 
 来源：[`packages/shell/shell-env/src/index.ts:29`](../packages/shell/shell-env/src/index.ts)
 
-<a id="deepseek-aidsh-skill"></a>
+<a id="voyaseek-aidsh-skill"></a>
 
 ## `@voyaseek-ai/dsh-skill`
 
@@ -1863,7 +1967,7 @@ export interface Config {
 
 来源：[`packages/skill/skill/src/index.ts:279`](../packages/skill/skill/src/index.ts)
 
-<a id="deepseek-aidsh-skill-filesystem"></a>
+<a id="voyaseek-aidsh-skill-filesystem"></a>
 
 ## `@voyaseek-ai/dsh-skill-filesystem`
 
@@ -1901,7 +2005,7 @@ export interface Config {
 
 来源：[`packages/skill/skill-filesystem/src/index.ts:49`](../packages/skill/skill-filesystem/src/index.ts)
 
-<a id="deepseek-aidsh-spill-local"></a>
+<a id="voyaseek-aidsh-spill-local"></a>
 
 ## `@voyaseek-ai/dsh-spill-local`
 
@@ -1919,7 +2023,7 @@ export interface Config {
 
 来源：[`packages/spill/spill-local/src/index.ts:22`](../packages/spill/spill-local/src/index.ts)
 
-<a id="deepseek-aidsh-spill-policy"></a>
+<a id="voyaseek-aidsh-spill-policy"></a>
 
 ## `@voyaseek-ai/dsh-spill-policy`
 
@@ -1939,7 +2043,7 @@ export interface Config {
 
 来源：[`packages/spill/spill-policy/src/index.ts:60`](../packages/spill/spill-policy/src/index.ts)
 
-<a id="deepseek-aidsh-storage-domain"></a>
+<a id="voyaseek-aidsh-storage-domain"></a>
 
 ## `@voyaseek-ai/dsh-storage-domain`
 
@@ -1962,7 +2066,7 @@ export interface Config {
 
 来源：[`packages/storage/storage-domain/src/index.ts:52`](../packages/storage/storage-domain/src/index.ts)
 
-<a id="deepseek-aidsh-storage-json"></a>
+<a id="voyaseek-aidsh-storage-json"></a>
 
 ## `@voyaseek-ai/dsh-storage-json`
 
@@ -1983,7 +2087,7 @@ export interface Config {
 
 来源：[`packages/storage/storage-json/src/index.ts:27`](../packages/storage/storage-json/src/index.ts)
 
-<a id="deepseek-aidsh-storage-sqlite"></a>
+<a id="voyaseek-aidsh-storage-sqlite"></a>
 
 ## `@voyaseek-ai/dsh-storage-sqlite`
 
@@ -2023,7 +2127,7 @@ export type JournalMode = 'wal' | 'delete' | 'truncate' | 'persist'
 
 来源：[`packages/storage/storage-sqlite/src/index.ts:24`](../packages/storage/storage-sqlite/src/index.ts)
 
-<a id="deepseek-aidsh-subagent-acp"></a>
+<a id="voyaseek-aidsh-subagent-acp"></a>
 
 ## `@voyaseek-ai/dsh-subagent-acp`
 
@@ -2076,7 +2180,7 @@ export type PermissionPolicy = 'allow' | 'reject'
 
 来源：[`packages/subagent/subagent-acp/src/index.ts:27`](../packages/subagent/subagent-acp/src/index.ts)
 
-<a id="deepseek-aidsh-subagent-claude-code"></a>
+<a id="voyaseek-aidsh-subagent-claude-code"></a>
 
 ## `@voyaseek-ai/dsh-subagent-claude-code`
 
@@ -2097,7 +2201,7 @@ export interface Config {
 
 来源：[`packages/subagent/subagent-claude-code/src/index.ts:32`](../packages/subagent/subagent-claude-code/src/index.ts)
 
-<a id="deepseek-aidsh-subagent-codex"></a>
+<a id="voyaseek-aidsh-subagent-codex"></a>
 
 ## `@voyaseek-ai/dsh-subagent-codex`
 
@@ -2118,7 +2222,7 @@ export interface Config {
 
 来源：[`packages/subagent/subagent-codex/src/index.ts:30`](../packages/subagent/subagent-codex/src/index.ts)
 
-<a id="deepseek-aidsh-subagent-dsh-sdk"></a>
+<a id="voyaseek-aidsh-subagent-dsh-sdk"></a>
 
 ## `@voyaseek-ai/dsh-subagent-dsh-sdk`
 
@@ -2171,7 +2275,7 @@ export interface Config {
 
 来源：[`packages/subagent/subagent-dsh-sdk/src/index.ts:29`](../packages/subagent/subagent-dsh-sdk/src/index.ts)
 
-<a id="deepseek-aidsh-subagent-fork-in-process"></a>
+<a id="voyaseek-aidsh-subagent-fork-in-process"></a>
 
 ## `@voyaseek-ai/dsh-subagent-fork-in-process`
 
@@ -2187,7 +2291,7 @@ export interface Config {
 
 来源：[`packages/subagent/subagent-fork-in-process/src/index.ts:31`](../packages/subagent/subagent-fork-in-process/src/index.ts)
 
-<a id="deepseek-aidsh-subagent-spawn-in-process"></a>
+<a id="voyaseek-aidsh-subagent-spawn-in-process"></a>
 
 ## `@voyaseek-ai/dsh-subagent-spawn-in-process`
 
@@ -2203,7 +2307,7 @@ export interface Config {
 
 来源：[`packages/subagent/subagent-spawn-in-process/src/index.ts:25`](../packages/subagent/subagent-spawn-in-process/src/index.ts)
 
-<a id="deepseek-aidsh-subprocess-e2b"></a>
+<a id="voyaseek-aidsh-subprocess-e2b"></a>
 
 ## `@voyaseek-ai/dsh-subprocess-e2b`
 
@@ -2219,7 +2323,7 @@ export interface Config {
 
 来源：[`packages/e2b/subprocess-e2b/src/index.ts:25`](../packages/e2b/subprocess-e2b/src/index.ts)
 
-<a id="deepseek-aidsh-system-prompt"></a>
+<a id="voyaseek-aidsh-system-prompt"></a>
 
 ## `@voyaseek-ai/dsh-system-prompt`
 
@@ -2246,7 +2350,7 @@ export interface Config {
 
 来源：[`packages/core/system-prompt/src/index.ts:186`](../packages/core/system-prompt/src/index.ts)
 
-<a id="deepseek-aidsh-terminal-bash"></a>
+<a id="voyaseek-aidsh-terminal-bash"></a>
 
 ## `@voyaseek-ai/dsh-terminal-bash`
 
@@ -2291,7 +2395,7 @@ export interface Config {
 
 来源：[`packages/terminal/terminal-bash/src/config.ts:6`](../packages/terminal/terminal-bash/src/config.ts)
 
-<a id="deepseek-aidsh-time-context"></a>
+<a id="voyaseek-aidsh-time-context"></a>
 
 ## `@voyaseek-ai/dsh-time-context`
 
@@ -2309,7 +2413,7 @@ export interface Config {
 
 来源：[`packages/context/time-context/src/index.ts:27`](../packages/context/time-context/src/index.ts)
 
-<a id="deepseek-aidsh-tmux-context"></a>
+<a id="voyaseek-aidsh-tmux-context"></a>
 
 ## `@voyaseek-ai/dsh-tmux-context`
 
@@ -2325,7 +2429,7 @@ export interface Config {
 
 来源：[`packages/context/tmux-context/src/index.ts:34`](../packages/context/tmux-context/src/index.ts)
 
-<a id="deepseek-aidsh-token-meter"></a>
+<a id="voyaseek-aidsh-token-meter"></a>
 
 ## `@voyaseek-ai/dsh-token-meter`
 
@@ -2336,7 +2440,7 @@ export type TokenMeterConfig = Record<string, never>
 
 来源：[`packages/llm/token-meter/src/types.ts:12`](../packages/llm/token-meter/src/types.ts)
 
-<a id="deepseek-aidsh-tool-bash"></a>
+<a id="voyaseek-aidsh-tool-bash"></a>
 
 ## `@voyaseek-ai/dsh-tool-bash`
 
@@ -2352,7 +2456,7 @@ export interface Config {
 
 来源：[`packages/shell/tool-bash/src/index.ts:34`](../packages/shell/tool-bash/src/index.ts)
 
-<a id="deepseek-aidsh-tool-bash-persistent"></a>
+<a id="voyaseek-aidsh-tool-bash-persistent"></a>
 
 ## `@voyaseek-ai/dsh-tool-bash-persistent`
 
@@ -2374,7 +2478,7 @@ export interface Config {
 
 来源：[`packages/shell/tool-bash-persistent/src/index.ts:405`](../packages/shell/tool-bash-persistent/src/index.ts)
 
-<a id="deepseek-aidsh-tool-fs"></a>
+<a id="voyaseek-aidsh-tool-fs"></a>
 
 ## `@voyaseek-ai/dsh-tool-fs`
 
@@ -2396,7 +2500,7 @@ export interface Config {
 
 来源：[`packages/fs/tool-fs/src/index.ts:25`](../packages/fs/tool-fs/src/index.ts)
 
-<a id="deepseek-aidsh-tool-fs-search"></a>
+<a id="voyaseek-aidsh-tool-fs-search"></a>
 
 ## `@voyaseek-ai/dsh-tool-fs-search`
 
@@ -2431,7 +2535,7 @@ export interface Config {
 
 来源：[`packages/fs/tool-fs-search/src/index.ts:73`](../packages/fs/tool-fs-search/src/index.ts)
 
-<a id="deepseek-aidsh-tool-goal"></a>
+<a id="voyaseek-aidsh-tool-goal"></a>
 
 ## `@voyaseek-ai/dsh-tool-goal`
 
@@ -2447,7 +2551,7 @@ export interface Config {
 
 来源：[`packages/goal/tool-goal/src/index.ts:26`](../packages/goal/tool-goal/src/index.ts)
 
-<a id="deepseek-aidsh-tool-jobs"></a>
+<a id="voyaseek-aidsh-tool-jobs"></a>
 
 ## `@voyaseek-ai/dsh-tool-jobs`
 
@@ -2481,7 +2585,7 @@ export type CompletionDelivery = 'quiet' | 'wakeup'
 
 来源：[`packages/jobs/tool-jobs/src/index.ts:32`](../packages/jobs/tool-jobs/src/index.ts)
 
-<a id="deepseek-aidsh-tool-lsp"></a>
+<a id="voyaseek-aidsh-tool-lsp"></a>
 
 ## `@voyaseek-ai/dsh-tool-lsp`
 
@@ -2501,7 +2605,53 @@ export interface Config {
 
 来源：[`packages/lsp/tool-lsp/src/index.ts:58`](../packages/lsp/tool-lsp/src/index.ts)
 
-<a id="deepseek-aidsh-tool-pwsh"></a>
+<a id="voyaseek-aidsh-tool-modelscope"></a>
+
+## `@voyaseek-ai/dsh-tool-modelscope`
+
+需要：`tools` · `subprocess`
+
+```ts config-catalog
+/** Isolated Python runner and ModelScope endpoint configuration. */
+export interface Config {
+  /** Bare executable or absolute uv path. */
+  runner?: string
+  /** Exact official Hub client requirement. */
+  packageSpec?: string
+  /** Optional ModelScope endpoint override. */
+  endpoint?: string
+  /** Credential reference used for private catalog access. */
+  tokenEnv?: string
+  /** Search timeout in milliseconds. */
+  timeoutMs?: number
+  /** Maximum JSON bytes accepted from the child. */
+  maxOutputBytes?: number
+}
+```
+
+来源：[`packages/extensions/tool-modelscope/src/index.ts:26`](../packages/extensions/tool-modelscope/src/index.ts)
+
+<a id="voyaseek-aidsh-tool-plugin-discovery"></a>
+
+## `@voyaseek-ai/dsh-tool-plugin-discovery`
+
+需要：`tools`
+
+```ts config-catalog
+/** Deployment-varying catalog endpoint, timeout, and cache policy. */
+export interface Config {
+  /** Machine-readable awesome-dsh-plugin catalog URL. */
+  catalogUrl?: string
+  /** Cooperative timeout for one catalog request. */
+  requestTimeoutMs?: number
+  /** Time to retain the single validated catalog in memory. */
+  cacheTtlMs?: number
+}
+```
+
+来源：[`packages/extensions/tool-plugin-discovery/src/index.ts:25`](../packages/extensions/tool-plugin-discovery/src/index.ts)
+
+<a id="voyaseek-aidsh-tool-pwsh"></a>
 
 ## `@voyaseek-ai/dsh-tool-pwsh`
 
@@ -2517,7 +2667,7 @@ export interface Config {
 
 来源：[`packages/shell/tool-pwsh/src/index.ts:52`](../packages/shell/tool-pwsh/src/index.ts)
 
-<a id="deepseek-aidsh-tool-ralph"></a>
+<a id="voyaseek-aidsh-tool-ralph"></a>
 
 ## `@voyaseek-ai/dsh-tool-ralph`
 
@@ -2539,7 +2689,7 @@ export interface Config {
 
 来源：[`packages/workflow/tool-ralph/src/index.ts:23`](../packages/workflow/tool-ralph/src/index.ts)
 
-<a id="deepseek-aidsh-tool-session-query"></a>
+<a id="voyaseek-aidsh-tool-session-query"></a>
 
 ## `@voyaseek-ai/dsh-tool-session-query`
 
@@ -2557,7 +2707,7 @@ export interface Config {
 
 来源：[`packages/session-query/tool-session-query/src/index.ts:29`](../packages/session-query/tool-session-query/src/index.ts)
 
-<a id="deepseek-aidsh-tool-skill"></a>
+<a id="voyaseek-aidsh-tool-skill"></a>
 
 ## `@voyaseek-ai/dsh-tool-skill`
 
@@ -2573,7 +2723,7 @@ export interface Config {
 
 来源：[`packages/skill/tool-skill/src/index.ts:61`](../packages/skill/tool-skill/src/index.ts)
 
-<a id="deepseek-aidsh-tool-str-replace-editor"></a>
+<a id="voyaseek-aidsh-tool-str-replace-editor"></a>
 
 ## `@voyaseek-ai/dsh-tool-str-replace-editor`
 
@@ -2591,7 +2741,7 @@ export interface Config {
 
 来源：[`packages/fs/tool-str-replace-editor/src/index.ts:497`](../packages/fs/tool-str-replace-editor/src/index.ts)
 
-<a id="deepseek-aidsh-tool-subagent"></a>
+<a id="voyaseek-aidsh-tool-subagent"></a>
 
 ## `@voyaseek-ai/dsh-tool-subagent`
 
@@ -2656,7 +2806,7 @@ export interface Config {
 
 来源：[`packages/subagent/tool-subagent/src/index.ts:29`](../packages/subagent/tool-subagent/src/index.ts)
 
-<a id="deepseek-aidsh-tool-subagent-report"></a>
+<a id="voyaseek-aidsh-tool-subagent-report"></a>
 
 ## `@voyaseek-ai/dsh-tool-subagent-report`
 
@@ -2678,7 +2828,7 @@ export interface Config {
 
 来源：[`packages/subagent/tool-subagent-report/src/index.ts:27`](../packages/subagent/tool-subagent-report/src/index.ts)
 
-<a id="deepseek-aidsh-tool-terminal"></a>
+<a id="voyaseek-aidsh-tool-terminal"></a>
 
 ## `@voyaseek-ai/dsh-tool-terminal`
 
@@ -2696,7 +2846,7 @@ export interface Config {
 
 来源：[`packages/terminal/tool-terminal/src/index.ts:35`](../packages/terminal/tool-terminal/src/index.ts)
 
-<a id="deepseek-aidsh-tool-todo"></a>
+<a id="voyaseek-aidsh-tool-todo"></a>
 
 ## `@voyaseek-ai/dsh-tool-todo`
 
@@ -2718,7 +2868,7 @@ export interface Config {
 
 来源：[`packages/todo/tool-todo/src/index.ts:29`](../packages/todo/tool-todo/src/index.ts)
 
-<a id="deepseek-aidsh-tool-web"></a>
+<a id="voyaseek-aidsh-tool-web"></a>
 
 ## `@voyaseek-ai/dsh-tool-web`
 
@@ -2744,7 +2894,7 @@ export interface Config {
 
 来源：[`packages/web/tool-web/src/index.ts:37`](../packages/web/tool-web/src/index.ts)
 
-<a id="deepseek-aidsh-tool-workflow"></a>
+<a id="voyaseek-aidsh-tool-workflow"></a>
 
 ## `@voyaseek-ai/dsh-tool-workflow`
 
@@ -2762,7 +2912,7 @@ export interface Config {
 
 来源：[`packages/workflow/tool-workflow/src/index.ts:33`](../packages/workflow/tool-workflow/src/index.ts)
 
-<a id="deepseek-aidsh-tools"></a>
+<a id="voyaseek-aidsh-tools"></a>
 
 ## `@voyaseek-ai/dsh-tools`
 
@@ -2798,7 +2948,7 @@ export type ToolPresentationMode = 'native' | 'code' | 'both'
 
 来源：[`packages/core/tools/src/index.ts:654`](../packages/core/tools/src/index.ts)
 
-<a id="deepseek-aidsh-typert-loader"></a>
+<a id="voyaseek-aidsh-typert-loader"></a>
 
 ## `@voyaseek-ai/dsh-typert-loader`
 
@@ -2814,7 +2964,7 @@ export interface Config {
 
 来源：[`packages/typert/loader/src/index.ts:47`](../packages/typert/loader/src/index.ts)
 
-<a id="deepseek-aidsh-user-approval"></a>
+<a id="voyaseek-aidsh-user-approval"></a>
 
 ## `@voyaseek-ai/dsh-user-approval`
 
@@ -2845,7 +2995,7 @@ export type ApprovalPolicy = 'ask' | 'never'
 
 来源：[`packages/interaction/user-approval/src/index.ts:177`](../packages/interaction/user-approval/src/index.ts)
 
-<a id="deepseek-aidsh-web"></a>
+<a id="voyaseek-aidsh-web"></a>
 
 ## `@voyaseek-ai/dsh-web`
 
@@ -2866,7 +3016,7 @@ export interface WebRuntimeConfig {
 
 来源：[`packages/web/web/src/index.ts:55`](../packages/web/web/src/index.ts)
 
-<a id="deepseek-aidsh-web-app"></a>
+<a id="voyaseek-aidsh-web-app"></a>
 
 ## `@voyaseek-ai/dsh-web-app`
 
@@ -2891,7 +3041,7 @@ export interface Config {
 
 来源：[`packages/bundle/web-app/src/index.ts:38`](../packages/bundle/web-app/src/index.ts)
 
-<a id="deepseek-aidsh-web-fetch-http"></a>
+<a id="voyaseek-aidsh-web-fetch-http"></a>
 
 ## `@voyaseek-ai/dsh-web-fetch-http`
 
@@ -2917,7 +3067,7 @@ export interface Config {
 
 来源：[`packages/web/web-fetch-http/src/index.ts:34`](../packages/web/web-fetch-http/src/index.ts)
 
-<a id="deepseek-aidsh-web-search-deepseek"></a>
+<a id="voyaseek-aidsh-web-search-deepseek"></a>
 
 ## `@voyaseek-ai/dsh-web-search-deepseek`
 
@@ -2945,7 +3095,7 @@ export interface Config {
 
 来源：[`packages/web/web-search-deepseek/src/index.ts:46`](../packages/web/web-search-deepseek/src/index.ts)
 
-<a id="deepseek-aidsh-web-search-exa"></a>
+<a id="voyaseek-aidsh-web-search-exa"></a>
 
 ## `@voyaseek-ai/dsh-web-search-exa`
 
@@ -2969,7 +3119,7 @@ export interface Config {
 
 来源：[`packages/web/web-search-exa/src/index.ts:38`](../packages/web/web-search-exa/src/index.ts)
 
-<a id="deepseek-aidsh-web-search-perplexity"></a>
+<a id="voyaseek-aidsh-web-search-perplexity"></a>
 
 ## `@voyaseek-ai/dsh-web-search-perplexity`
 
@@ -2993,7 +3143,7 @@ export interface Config {
 
 来源：[`packages/web/web-search-perplexity/src/index.ts:32`](../packages/web/web-search-perplexity/src/index.ts)
 
-<a id="deepseek-aidsh-workflow-worker-thread"></a>
+<a id="voyaseek-aidsh-workflow-worker-thread"></a>
 
 ## `@voyaseek-ai/dsh-workflow-worker-thread`
 
@@ -3030,6 +3180,7 @@ export interface Config {
 - `@voyaseek-ai/dsh-agent`（[`packages/core/agent/src/index.ts`](../packages/core/agent/src/index.ts)）
 - `@voyaseek-ai/dsh-api-gateway` — 需要 `typert`（[`packages/api/gateway/src/index.ts`](../packages/api/gateway/src/index.ts)）
 - `@voyaseek-ai/dsh-api-remotes`（[`packages/api/remotes/src/index.ts`](../packages/api/remotes/src/index.ts)）
+- `@voyaseek-ai/dsh-claude-runtime-ui`（[`packages/claude/ui-runtime/src/index.ts`](../packages/claude/ui-runtime/src/index.ts)）
 - `@voyaseek-ai/dsh-client-locale`（[`packages/client/locale/src/index.ts`](../packages/client/locale/src/index.ts)）
 - `@voyaseek-ai/dsh-client-modules` — 需要 `webServer` · `loader`（[`packages/client/modules/src/index.ts`](../packages/client/modules/src/index.ts)）
 - `@voyaseek-ai/dsh-client-runtime`（[`packages/client/runtime/src/index.ts`](../packages/client/runtime/src/index.ts)）
@@ -3101,6 +3252,7 @@ export interface Config {
 - `@voyaseek-ai/dsh-code-runtime` — 抽象 `CodeRuntime`（[`packages/code-runtime/code-runtime/src/index.ts`](../packages/code-runtime/code-runtime/src/index.ts)）
 - `@voyaseek-ai/dsh-compaction` — 抽象 `CompactionEngine`（[`packages/compaction/compaction/src/index.ts`](../packages/compaction/compaction/src/index.ts)）
 - `@voyaseek-ai/dsh-credentials` — 抽象 `Credentials`（[`packages/credentials/credentials/src/index.ts`](../packages/credentials/credentials/src/index.ts)）
+- `@voyaseek-ai/dsh-document-converter` — 抽象 `DocumentConverter`（[`packages/document/document-converter/src/index.ts`](../packages/document/document-converter/src/index.ts)）
 - `@voyaseek-ai/dsh-fs` — 抽象 `FileSystem`（[`packages/fs/fs/src/index.ts`](../packages/fs/fs/src/index.ts)）
 - `@voyaseek-ai/dsh-host-directory-picker` — 抽象 `DirectoryPicker`（[`packages/host/directory-picker/src/index.ts`](../packages/host/directory-picker/src/index.ts)）
 - `@voyaseek-ai/dsh-jobs` — 抽象 `JobRegistry`（[`packages/jobs/jobs/src/index.ts`](../packages/jobs/jobs/src/index.ts)）

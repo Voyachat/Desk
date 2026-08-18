@@ -642,6 +642,12 @@ importers:
       node-addon-require-builtin:
         specifier: ^0.1.4
         version: 0.1.4
+      spdx-expression-parse:
+        specifier: ^5.0.0
+        version: 5.0.0
+      tar:
+        specifier: ^7.5.22
+        version: 7.5.22
     devDependencies:
       '@types/js-yaml':
         specifier: ^4.0.9
@@ -1842,6 +1848,9 @@ importers:
       '@voyaseek-ai/dsh-credentials-local':
         specifier: workspace:^
         version: link:../../credentials/credentials-local
+      '@voyaseek-ai/dsh-document-converter-mac-ocr':
+        specifier: workspace:^
+        version: link:../../document/document-converter-mac-ocr
       '@voyaseek-ai/dsh-fs-local':
         specifier: workspace:^
         version: link:../../fs/fs-local
@@ -1971,6 +1980,12 @@ importers:
       '@voyaseek-ai/dsh-tool-jobs':
         specifier: workspace:^
         version: link:../../jobs/tool-jobs
+      '@voyaseek-ai/dsh-tool-modelscope':
+        specifier: workspace:^
+        version: link:../../extensions/tool-modelscope
+      '@voyaseek-ai/dsh-tool-plugin-discovery':
+        specifier: workspace:^
+        version: link:../../extensions/tool-plugin-discovery
       '@voyaseek-ai/dsh-tool-pwsh':
         specifier: workspace:^
         version: link:../../shell/tool-pwsh
@@ -2225,6 +2240,9 @@ importers:
       '@voyaseek-ai/dsh-message-feedback':
         specifier: workspace:^
         version: link:../../feedback/message-feedback
+      '@voyaseek-ai/dsh-mobile-view':
+        specifier: workspace:^
+        version: link:../../host/mobile-view
       '@voyaseek-ai/dsh-session-log-export':
         specifier: workspace:^
         version: link:../../session-query/session-log-export
@@ -4592,6 +4610,35 @@ importers:
         specifier: workspace:^
         version: link:../../util/launch-environment
 
+  packages/document/document-converter:
+    devDependencies:
+      '@voyaseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+
+  packages/document/document-converter-mac-ocr:
+    dependencies:
+      '@voyaseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@voyaseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-document-converter':
+        specifier: workspace:^
+        version: link:../document-converter
+      '@voyaseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+    optionalDependencies:
+      mac-ocr:
+        specifier: 1.1.1
+        version: 1.1.1
+
   packages/e2b/e2b:
     dependencies:
       '@voyaseek-ai/schemastery':
@@ -4948,6 +4995,53 @@ importers:
       '@voyaseek-ai/dsh-session':
         specifier: workspace:^
         version: link:../../core/session
+      '@voyaseek-ai/dsh-system-prompt':
+        specifier: workspace:^
+        version: link:../../core/system-prompt
+      '@voyaseek-ai/dsh-tools':
+        specifier: workspace:^
+        version: link:../../core/tools
+
+  packages/extensions/tool-modelscope:
+    dependencies:
+      '@voyaseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@voyaseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-credentials':
+        specifier: workspace:^
+        version: link:../../credentials/credentials
+      '@voyaseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@voyaseek-ai/dsh-llm':
+        specifier: workspace:^
+        version: link:../../llm/llm
+      '@voyaseek-ai/dsh-subprocess':
+        specifier: workspace:^
+        version: link:../../subprocess/subprocess
+      '@voyaseek-ai/dsh-system-prompt':
+        specifier: workspace:^
+        version: link:../../core/system-prompt
+      '@voyaseek-ai/dsh-tools':
+        specifier: workspace:^
+        version: link:../../core/tools
+
+  packages/extensions/tool-plugin-discovery:
+    dependencies:
+      '@voyaseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@voyaseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
       '@voyaseek-ai/dsh-system-prompt':
         specifier: workspace:^
         version: link:../../core/system-prompt
@@ -5633,6 +5727,9 @@ importers:
       '@voyaseek-ai/dsh-credentials':
         specifier: workspace:^
         version: link:../../credentials/credentials
+      '@voyaseek-ai/dsh-document-converter':
+        specifier: workspace:^
+        version: link:../../document/document-converter
       '@voyaseek-ai/dsh-goal':
         specifier: workspace:^
         version: link:../../goal/goal
@@ -5820,6 +5917,31 @@ importers:
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
+
+  packages/host/mobile-view:
+    dependencies:
+      '@voyaseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@voyaseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-credentials':
+        specifier: workspace:^
+        version: link:../../credentials/credentials
+      '@voyaseek-ai/dsh-host-webserver':
+        specifier: workspace:^
+        version: link:../webserver
+      '@voyaseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@voyaseek-ai/dsh-session':
+        specifier: workspace:^
+        version: link:../../core/session
+      '@voyaseek-ai/dsh-session-query':
+        specifier: workspace:^
+        version: link:../../session-query/session-query
 
   packages/host/plugin-inventory:
     dependencies:
@@ -14188,6 +14310,12 @@ packages:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
 
+  mac-ocr@1.1.1:
+    resolution: {integrity: sha512-2b5xNapCpbjAjntPZmP8nVEDe8zzOXVUAOerh36azjuJqZfDTt9y8flwCVrcG+0GL1ox4UcWUE4PtGH34ChChw==}
+    engines: {node: '>=22'}
+    os: [darwin]
+    hasBin: true
+
   macos-alias@0.2.12:
     resolution: {integrity: sha512-yiLHa7cfJcGRFq4FrR4tMlpNHb4Vy4mWnpajlSSIFM5k4Lv8/7BbbDLzCAVogWNl0LlLhizRp1drXv0hK9h0Yw==}
     os: [darwin]
@@ -20087,6 +20215,9 @@ snapshots:
       yallist: 3.1.1
 
   lz-string@1.5.0: {}
+
+  mac-ocr@1.1.1:
+    optional: true
 
   macos-alias@0.2.12:
     dependencies:

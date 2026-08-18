@@ -15,8 +15,8 @@ describe('desktop main lifecycle', () => {
   it('does not report an intentional shutdown while the runtime document is loading', async () => {
     const userData = mkdtempSync(join(tmpdir(), 'aistaff-main-'))
     temporaryDirectories.push(userData)
-    const load = deferred<void>()
-    const stopped = deferred<void>()
+    const load = deferred<undefined>()
+    const stopped = deferred<undefined>()
     const eventHandlers = new Map<string, Array<(...args: unknown[]) => void>>()
     const quit = vi.fn()
     const showErrorBox = vi.fn()
@@ -53,6 +53,7 @@ describe('desktop main lifecycle', () => {
       }),
       whenReady: vi.fn(async () => undefined),
       getPath: vi.fn((name: string) => name === 'userData' ? userData : join(userData, 'home')),
+      getLocaleCountryCode: vi.fn(() => 'CN'),
       getAppPath: vi.fn(() => '/Applications/Voyaseek.app/Contents/Resources/app.asar'),
       isReady: vi.fn(() => true),
       quit,
@@ -80,7 +81,7 @@ describe('desktop main lifecycle', () => {
     vi.doMock('../src/runtime-process.js', () => ({ ManagedRuntime }))
 
     await import('../src/main.js')
-    await vi.waitFor(() => expect(window.loadURL).toHaveBeenCalledWith('http://127.0.0.1:53100/'))
+    await vi.waitFor(() => { expect(window.loadURL).toHaveBeenCalledWith('http://127.0.0.1:53100/') })
 
     const quitEvent = { preventDefault: vi.fn() }
     emit(eventHandlers, 'before-quit', quitEvent)
@@ -88,11 +89,11 @@ describe('desktop main lifecycle', () => {
     expect(runtime.stop).toHaveBeenCalledOnce()
 
     load.reject(new Error("ERR_FAILED (-2) loading 'http://127.0.0.1:53100/'"))
-    await vi.waitFor(() => expect(showErrorBox).not.toHaveBeenCalled())
+    await vi.waitFor(() => { expect(showErrorBox).not.toHaveBeenCalled() })
     expect(quit).not.toHaveBeenCalled()
 
-    stopped.resolve()
-    await vi.waitFor(() => expect(quit).toHaveBeenCalledOnce())
+    stopped.resolve(undefined)
+    await vi.waitFor(() => { expect(quit).toHaveBeenCalledOnce() })
     expect(showErrorBox).not.toHaveBeenCalled()
   })
 })

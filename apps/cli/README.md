@@ -11,7 +11,10 @@ The `dsh` command is the product launcher for profiles: ordered stacks of plugin
 | `dsh --profile <name>` | Boot the named profile under `$VOYASEEK_HOME/profiles/<name>`. |
 | `dsh --profile headless "job"` | Run one fresh persisted session, print the final answer, and exit. |
 | `dsh web` | Alias of `--profile web`. |
-| `dsh plugin --profile <name> <pnpm args>` | Manage a profile's plugins by forwarding to pnpm in the profile directory. |
+| `dsh plugin --profile <name> audit <artifact>` | Statically review a local plugin directory or tarball without installing it. |
+| `dsh plugin --profile <name> add <artifact>` | Audit and install one local plugin with lifecycle scripts disabled. |
+| `dsh plugin --profile <name> remove <package>` | Remove installed package names with lifecycle scripts disabled. |
+| `dsh plugin --profile <name> list` | List direct profile dependencies without exposing arbitrary pnpm commands. |
 
 The invoking directory is the default workspace root. The `web` and `headless` profiles auto-initialize on first use from shipped templates; any other profile must be created through `dsh plugin`.
 

@@ -103,6 +103,62 @@ describe('ConversationController', () => {
     await b.runtime.dispose()
   })
 
+  it('releases optimistic image previews when their session scope is disposed', async () => {
+    const b = await bench()
+    const created = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pending-draft')
+    const revoked = vi.spyOn(URL, 'revokeObjectURL').mockReturnValue(undefined)
+    try {
+      const [attachment] = b.root.createDraftImages([
+        new File([new Uint8Array(4)], 'pending.png', { type: 'image/png' }),
+      ])
+      if (attachment === undefined) throw new Error('draft attachment missing')
+      b.shell.stagePendingSend({
+        sendId: 'pending-image',
+        content: [{ type: 'image', previewUrl: attachment.previewUrl }],
+        imageIds: [attachment.id],
+      })
+      await b.runtime.sessions.remove('s1')
+      expect(b.root.draftImages([attachment.id])).toEqual([])
+      expect(revoked).toHaveBeenCalledWith('blob:pending-draft')
+    } finally {
+      created.mockRestore()
+      revoked.mockRestore()
+    }
+    await b.runtime.dispose()
+  })
+
+  it('keeps an optimistic send visible until acceptance and restores a rejected draft', async () => {
+    const b = await bench()
+    const accepted = Promise.withResolvers<{
+      ok: true
+      value: { accepted: true }
+    }>()
+    b.prompt.mockImplementationOnce(() => accepted.promise)
+    b.shell.setDraft('accepted message')
+    b.shell.submit()
+    await vi.waitFor(() => {
+      expect(b.shell.snapshot.pendingSends).toHaveLength(1)
+      expect(b.shell.snapshot.draft).toBe('')
+    })
+    accepted.resolve({ ok: true, value: { accepted: true } })
+    await vi.waitFor(() => { expect(b.shell.snapshot.pendingSends).toEqual([]) })
+
+    const rejected = Promise.withResolvers<{
+      ok: false
+      error: { code: string; message: string; details: object }
+    }>()
+    b.prompt.mockImplementationOnce(() => rejected.promise as never)
+    b.shell.setDraft('rejected message')
+    b.shell.submit()
+    await vi.waitFor(() => { expect(b.shell.snapshot.pendingSends).toHaveLength(1) })
+    rejected.resolve({ ok: false, error: { code: 'agent-busy', message: 'busy', details: {} } })
+    await vi.waitFor(() => {
+      expect(b.shell.snapshot.pendingSends).toEqual([])
+      expect(b.shell.snapshot.draft).toBe('rejected message')
+    })
+    await b.runtime.dispose()
+  })
+
   it('validates every MIME type before allocating previews', async () => {
     const b = await bench()
     const created = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:preview')

@@ -71,7 +71,7 @@ export interface BashEnvVariableInfo extends BashEnvVariable {
 const DSH_SHELL_KEY = `${DSH_ENV_PREFIX}SHELL` as const
 const DSH_SESSION_ID_KEY = `${DSH_ENV_PREFIX}SESSION_ID` as const
 const DSH_SESSION_JSONL_KEY = `${DSH_ENV_PREFIX}SESSION_JSONL` as const
-const RESERVED_BASH_ENV_KEYS = new Set<DshEnvironmentKey>([
+const RESERVED_BASH_ENV_KEYS = new Set<string>([
   VOYASEEK_HOME_ENV,
   DSH_SHELL_KEY,
   DSH_SESSION_ID_KEY,
@@ -118,12 +118,12 @@ export class ShellEnvRegistry extends Service {
 
       const variables = Object.entries(contributor.variables) as [DshEnvironmentKey, BashEnvVariable][]
       for (const [key, variable] of variables) {
+        if (RESERVED_BASH_ENV_KEYS.has(key)) {
+          throw new Error(`bash env contributor "${contributor.name}" cannot own reserved key "${key}"`)
+        }
         if (!key.startsWith(DSH_ENV_PREFIX)
           || !BASH_ENV_KEY_SUFFIX.test(key.slice(DSH_ENV_PREFIX.length))) {
           throw new Error(`bash env contributor "${contributor.name}" declared invalid key "${key}"`)
-        }
-        if (RESERVED_BASH_ENV_KEYS.has(key)) {
-          throw new Error(`bash env contributor "${contributor.name}" cannot own reserved key "${key}"`)
         }
         if (variable.description.trim().length === 0) {
           throw new Error(`bash env contributor "${contributor.name}" must describe "${key}"`)
@@ -150,7 +150,7 @@ export class ShellEnvRegistry extends Service {
    * @returns an immutable environment overlay containing built-ins and current contributions.
    */
   collect(execution: ToolExecution): DshEnvironment {
-    const values: Record<DshEnvironmentKey, string> = {
+    const values: Record<DshEnvironmentKey, string> & { VOYASEEK_HOME: string } = {
       [VOYASEEK_HOME_ENV]: this.dshHome,
       [DSH_SHELL_KEY]: '1',
     }
@@ -172,7 +172,9 @@ export class ShellEnvRegistry extends Service {
       }
     }
 
-    return Object.freeze(Object.fromEntries(Object.entries(values).sort(([left], [right]) => left.localeCompare(right))))
+    return Object.freeze(Object.fromEntries(
+      Object.entries(values).sort(([left], [right]) => left.localeCompare(right)),
+    ))
   }
 
   // TODO(bash-env-list-builtins): Include registry-owned built-ins before diagnostics,

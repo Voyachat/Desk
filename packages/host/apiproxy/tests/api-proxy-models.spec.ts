@@ -7,6 +7,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
+import type { ImageAttachmentRef } from '@voyaseek-ai/dsh-attachment'
 import AgentRegistry, { agentEvents } from '@voyaseek-ai/dsh-agent'
 import type { Agent } from '@voyaseek-ai/dsh-agent'
 import LlmRuntime, { LlmAdapter, ReasoningEffortId } from '@voyaseek-ai/dsh-llm'
@@ -146,10 +147,54 @@ function providePromptImages(ctx: Context): void {
       height: 1,
       ...input.name === undefined ? {} : { name: input.name },
     }),
+    readImage: (ref: ImageAttachmentRef) => Promise.resolve({ ref, data: Uint8Array.of(1) }),
   } as never)
 }
 
 describe('Web session model selection', () => {
+  it('converts image prompts locally before a text-only model receives them', async () => {
+    const { ctx, agent, sessionId } = await harness({ provider: 'text-only', model: 'plain' })
+    registerTextOnly(ctx)
+    providePromptImages(ctx)
+    const convert = vi.fn(() => Promise.resolve({
+      provider: 'mac-ocr-local',
+      engine: 'mac-ocr@1.1.1',
+      documents: [{ name: 'receipt.png', markdown: '| Item | Price |\n| --- | --- |\n| Tea | 8 |' }],
+    }))
+    ctx.provide('documentConverter', { convert } as never)
+    const followup = vi.fn()
+    Object.assign(agent, { followup })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
+      imageFallback: { local: true, maxTokens: 512 },
+      cwd: '/tmp',
+    })
+
+    const response = await api.sessions.prompt(request({
+      sessionId,
+      mode: 'queue' as const,
+      content: [{ type: 'image' as const, mediaType: 'image/png' as const, data: 'AQ==', name: 'receipt.png' }],
+    }))
+
+    expect(response.result.ok).toBe(true)
+    expect(convert).toHaveBeenCalledWith([expect.objectContaining({
+      name: 'receipt.png', mediaType: 'image/png', data: Uint8Array.of(1),
+    })])
+    const message = followup.mock.calls[0]?.[0] as UserMessage
+    expect(message.content).toEqual([
+      { type: 'text', text: '[Image 1: receipt.png]' },
+      {
+        type: 'text',
+        text: '\n\n<image-analysis source="local-document-ocr">\n## Image 1 (receipt.png)\n\n| Item | Price |\n| --- | --- |\n| Tea | 8 |\n</image-analysis>',
+      },
+    ])
+    expect(message.source).toMatchObject({
+      imageFallback: { provider: 'mac-ocr-local', model: 'mac-ocr@1.1.1' },
+      displayContent: [{ type: 'image', attachment: { name: 'receipt.png' } }],
+    })
+    await ctx.fiber.dispose()
+  })
+
   it('validates an ordered image batch before persisting any member', async () => {
     const { ctx, agent, sessionId } = await harness()
     const validateImage = vi.fn((_input: { data: Uint8Array }) => Promise.resolve())

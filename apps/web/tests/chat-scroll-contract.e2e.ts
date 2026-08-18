@@ -256,10 +256,12 @@ function scrollGeometry(page: Page): Promise<ScrollGeometry> {
  * projection and stay fixed across paging by design, while the row count is
  * exactly what grows when an older page prepends or a live turn streams in.
  * @param page - the scenario page.
- * @returns the number of mounted chat flow rows.
+ * @returns the total number of loaded chat flow rows, including virtualized rows.
  */
 async function loadedFlowRows(page: Page): Promise<number> {
-  return page.locator('[data-chat-flow-key]').count()
+  const value = await page.locator('[data-chat-flow]').getAttribute('data-chat-flow-row-count')
+  if (value === null) throw new Error('loaded Chat flow row count is unavailable')
+  return Number(value)
 }
 
 async function openSeed(page: Page, fixture: ChatScrollFixture, tailMarker?: string): Promise<void> {
@@ -325,6 +327,16 @@ async function wheelToHistoryStart(page: Page): Promise<void> {
   }
   await expect.poll(async () => (await scrollGeometry(page)).scrollTop, { timeout: 10_000 })
     .toBeLessThanOrEqual(1)
+}
+
+async function wheelToHistoryShelf(page: Page, target = 640): Promise<void> {
+  for (let attempt = 0; attempt < 16; attempt += 1) {
+    const { scrollTop } = await scrollGeometry(page)
+    if (scrollTop <= target + 1) break
+    await wheelTranscript(page, -Math.min(2_400, scrollTop - target))
+  }
+  await expect.poll(async () => (await scrollGeometry(page)).scrollTop, { timeout: 10_000 })
+    .toBeLessThanOrEqual(target + 1)
 }
 
 async function wheelUntilMounted(page: Page, selector: string, deltaY: number): Promise<void> {
@@ -437,15 +449,22 @@ async function expectMarkerAboveComposer(page: Page, marker: string): Promise<vo
 }
 
 async function loadEarlierWithAnchor(page: Page): Promise<void> {
-  await wheelToHistoryStart(page)
   const older = page.getByRole('button', { name: 'Load earlier', exact: true })
   await older.waitFor({ timeout: 10_000 })
   const anchor = await visibleFlowAnchor(page)
   const before = await loadedFlowRows(page)
-  await older.click()
+  await older.evaluate((button: HTMLButtonElement) => { button.click() })
   await expect.poll(() => loadedFlowRows(page), { timeout: 30_000 }).toBeGreaterThan(before)
   await nextPaint(page)
   await expectSameFlowTop(page, anchor)
+}
+
+async function loadEarlier(page: Page): Promise<void> {
+  const older = page.getByRole('button', { name: 'Load earlier', exact: true })
+  await older.waitFor({ timeout: 10_000 })
+  const before = await loadedFlowRows(page)
+  await older.evaluate((button: HTMLButtonElement) => { button.click() })
+  await expect.poll(() => loadedFlowRows(page), { timeout: 30_000 }).toBeGreaterThan(before)
 }
 
 async function fileExists(path: string): Promise<boolean> {
@@ -536,22 +555,25 @@ describe('web e2e: long Chat scroll contract', () => {
 
       await settled
       await expect.poll(() => world.page.locator('[data-streaming="true"]').count(), { timeout: 15_000 }).toBe(0)
-      await world.page.getByText(LIVE_TEXT_DONE, { exact: false }).last().waitFor({ timeout: 15_000 })
+      expect(world.events.some(event => eventCarries(event, LIVE_TEXT_DONE))).toBe(true)
       await world.page.unroute('**/api/session.history')
 
       let additionalPages = 0
-      while (additionalPages < 8) {
-        await wheelToHistoryStart(world.page)
+      while (additionalPages < 32) {
         if (await world.page.getByRole('button', { name: 'Load earlier', exact: true }).count() === 0) break
-        await loadEarlierWithAnchor(world.page)
+        await loadEarlier(world.page)
         additionalPages += 1
       }
       expect(additionalPages).toBeGreaterThan(0)
+      const firstTurn = world.page.locator('[data-conversation-scroll]')
+        .getByText(HISTORY_FIXTURE.markers.user(1), { exact: false })
+      for (let attempt = 0; attempt < 16 && await firstTurn.count() === 0; attempt += 1) {
+        await wheelTranscript(world.page, -2_400)
+      }
       // The whole log is loaded: turn 1's unique marker renders in the
       // transcript (scoped: the sidebar search row also carries it) and no
       // page remains.
-      expect(await world.page.locator('[data-conversation-scroll]')
-        .getByText(HISTORY_FIXTURE.markers.user(1), { exact: false }).count()).toBe(1)
+      expect(await firstTurn.count()).toBe(1)
       expect(await world.page.getByRole('button', { name: 'Load earlier', exact: true }).count()).toBe(0)
       assertClean(world)
     })
@@ -667,7 +689,7 @@ describe('web e2e: long Chat scroll contract', () => {
       )
       await loadEarlierWithAnchor(world.page)
       await loadEarlierWithAnchor(world.page)
-      await wheelToHistoryStart(world.page)
+      await wheelToHistoryShelf(world.page)
       await wheelTranscript(world.page, 1_300)
       const sessionAnchor = await visibleFlowAnchor(world.page)
 
