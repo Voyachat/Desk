@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-spill",
   "description": "Abstract spill storage seam (ctx.spillStore) for the Voyaseek Harness — save oversized tool text and return a retrieval locator",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },

@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-model-selection",
   "description": "Model selection: the /model popupSelect over session.models / session.selectModel",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -52,13 +52,9 @@
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-commands": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-input-trigger": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "clsx": "^2.1.1",
-    "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
@@ -68,12 +64,11 @@
     "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-commands": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-input-trigger": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@types/react": "~18.3.1",
-    "clsx": "^2.1.1",
     "@voyaseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"
   },
@@ -82,5 +77,8 @@
     "lib/invariant.js",
     "lib/client.js",
     "lib/types/**/*.d.ts"
-  ]
+  ],
+  "dependencies": {
+    "clsx": "^2.1.1"
+  }
 }

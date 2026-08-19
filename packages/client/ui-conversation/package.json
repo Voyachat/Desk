@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-conversation",
   "description": "Conversation domain: skeleton, ordered chat flow, composer with the Host-backed busy-Enter preference, and details host",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -48,7 +48,6 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@voyaseek-ai/dsh-settings": "workspace:^",
     "clsx": "^2.0.0",
     "@voyaseek-ai/schemastery": "workspace:^"
   },
@@ -61,11 +60,8 @@
     "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-attachment": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-input-trigger": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-commands": "workspace:^",
     "@voyaseek-ai/dsh-compaction": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
@@ -73,7 +69,12 @@
     "@voyaseek-ai/dsh-session-stats": "workspace:^",
     "@voyaseek-ai/dsh-token-meter": "workspace:^",
     "@voyaseek-ai/dsh-tools": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-layout": "workspace:^",
+    "@voyaseek-ai/dsh-goal": "workspace:^",
+    "@voyaseek-ai/dsh-permission-presets": "workspace:^",
+    "@voyaseek-ai/dsh-plan-mode": "workspace:^",
+    "@voyaseek-ai/dsh-tool-todo": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
@@ -86,7 +87,6 @@
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-layout": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-attachment": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-input-trigger": "workspace:^",
@@ -104,7 +104,8 @@
     "@voyaseek-ai/dsh-tool-todo": "workspace:^",
     "@voyaseek-ai/dsh-tools": "workspace:^",
     "@types/react": "~18.3.1",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "@voyaseek-ai/dsh-settings": "workspace:^"
   },
   "files": [
     "lib/index.js",

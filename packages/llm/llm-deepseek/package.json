@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-llm-deepseek",
   "description": "DeepSeek chat-completions adapter for the Voyaseek Harness LLM seam",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -32,6 +32,7 @@
   ],
   "license": "MIT",
   "peerDependencies": {
+    "@voyaseek-ai/dsh-attachment": "workspace:^",
     "@voyaseek-ai/dsh-credentials": "workspace:^",
     "@voyaseek-ai/dsh-launch-environment": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
@@ -46,6 +47,7 @@
     "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
+    "@voyaseek-ai/dsh-attachment": "workspace:^",
     "@voyaseek-ai/dsh-credentials": "workspace:^",
     "@voyaseek-ai/dsh-launch-environment": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",

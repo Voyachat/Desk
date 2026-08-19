@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-deliverables",
   "description": "Produced-files turn tail and clickable final-response file references for Web",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -45,15 +45,11 @@
     "watch": "tsdown --watch"
   },
   "license": "MIT",
-  "dependencies": {
-    "react": "^18.2.0"
-  },
   "peerDependencies": {
     "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^"
@@ -68,7 +64,9 @@
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@types/react": "~18.3.1",
-    "@voyaseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "react": "^18.2.0",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^"
   },
   "files": [
     "lib/index.js",

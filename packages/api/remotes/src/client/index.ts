@@ -4,16 +4,20 @@ import type { Context } from '@voyaseek-ai/cordis'
 import commandsRemote from '@voyaseek-ai/dsh-commands/remote'
 import goalsRemote from '@voyaseek-ai/dsh-goal/remote'
 import dynamicRemote from '@voyaseek-ai/dsh-cordis-host-runner/remote'
+import fileReferencesRemote from '@voyaseek-ai/dsh-file-reference/remote'
 import pluginInventoryRemote from '@voyaseek-ai/dsh-host-plugin-inventory/remote'
 import messageFeedbackRemote from '@voyaseek-ai/dsh-message-feedback/remote'
+import sessionReferencesRemote from '@voyaseek-ai/dsh-session-reference/remote'
 import type { TypertClientRemote } from '@voyaseek-ai/dsh-typert-protocol'
 
 export type { TypertClientRemote as ClientRemote } from '@voyaseek-ai/dsh-typert-protocol'
 export type { PluginInventorySnapshot } from '@voyaseek-ai/dsh-host-plugin-inventory/types'
 export type {} from '@voyaseek-ai/dsh-commands/remote'
+export type {} from '@voyaseek-ai/dsh-file-reference/remote'
 export type {} from '@voyaseek-ai/dsh-goal/remote'
 export type {} from '@voyaseek-ai/dsh-host-plugin-inventory/remote'
 export type {} from '@voyaseek-ai/dsh-message-feedback/remote'
+export type {} from '@voyaseek-ai/dsh-session-reference/remote'
 // The forwarded-event allowlist's selection seat: without it in the consumer's
 // compilation face `TypertRemoteEvent` is `never` and every `$on` call fails.
 export type { ApiRemoteForwardedEvent } from '../types.ts'
@@ -86,6 +90,10 @@ export type {
 // reason: a Client contribution names what it sends without importing a Host
 // package, and this assembly is where both planes legitimately meet.
 export type { JsonValue } from '@voyaseek-ai/dsh-session/types'
+// Reference-discovery result vocabulary for the fileReferences and
+// sessionReferenceResolver namespaces.
+export type { FileReferenceCandidate } from '@voyaseek-ai/dsh-file-reference/types'
+export type { SessionReferenceMentionCandidate } from '@voyaseek-ai/dsh-session-reference/types'
 
 declare module '@voyaseek-ai/cordis' {
   interface Context {
@@ -106,7 +114,8 @@ export async function apply(ctx: Context): Promise<() => Promise<void>> {
   const disposers: Array<() => Promise<void>> = []
   try {
     for (const contribution of [
-      commandsRemote, goalsRemote, dynamicRemote, pluginInventoryRemote, messageFeedbackRemote,
+      commandsRemote, goalsRemote, dynamicRemote, fileReferencesRemote,
+      pluginInventoryRemote, messageFeedbackRemote, sessionReferencesRemote,
     ]) {
       disposers.push(await ctx.remote.$mount(contribution))
     }

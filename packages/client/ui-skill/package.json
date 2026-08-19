@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-skill",
   "description": "Web skill references and the dedicated skill tool row",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -51,13 +51,10 @@
     "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-input-trigger": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-tool": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",

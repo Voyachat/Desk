@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-settings",
   "description": "Settings domain base plugin: the settings-namespace scope service and the canonical settings slot-type contract",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -44,28 +44,28 @@
     "watch": "tsdown --watch"
   },
   "license": "MIT",
+  "dependencies": {
+    "@voyaseek-ai/schemastery": "workspace:^"
+  },
   "peerDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
     "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-client-schema-form": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "@voyaseek-ai/dsh-settings": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/dsh-settings": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-client-schema-form": "workspace:^",
     "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-settings": "workspace:^",
     "@types/react": "~18.3.1",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "@voyaseek-ai/dsh-client-connection": "workspace:^"
   },
   "files": [
     "lib/index.js",

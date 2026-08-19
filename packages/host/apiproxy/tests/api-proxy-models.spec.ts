@@ -9,6 +9,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
 import AgentRegistry, { agentEvents } from '@voyaseek-ai/dsh-agent'
 import type { Agent } from '@voyaseek-ai/dsh-agent'
+import AttachmentStore from '@voyaseek-ai/dsh-attachment'
 import LlmRuntime, { LlmAdapter, ReasoningEffortId } from '@voyaseek-ai/dsh-llm'
 import type {
   GenerateOptions, LlmCallConfig, LlmModelInfo, LlmModelReasoningInfo, LlmProviderInfo,
@@ -140,16 +141,23 @@ describe('Web session model selection', () => {
       height: 1,
       ...input.name === undefined ? {} : { name: input.name },
     }))
-    ctx.provide('attachments', {
+    const attachments = {
       imageLimits: {
         maxImageBytes: 4,
         maxImagesPerMessage: 2,
         maxMessageImageBytes: 4,
         maxImagePixels: 4,
+        maxImageDimension: 2000,
         mediaTypes: ['image/png'],
       },
       validateImage,
       saveImage,
+    }
+    ctx.provide('attachments', {
+      ...attachments,
+      saveImages(inputs: readonly Parameters<typeof saveImage>[0][]) {
+        return AttachmentStore.prototype.saveImages.call(attachments, inputs)
+      },
     } as never)
     const followup = vi.fn()
     Object.assign(agent, { followup })

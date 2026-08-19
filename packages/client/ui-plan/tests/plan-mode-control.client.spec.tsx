@@ -8,7 +8,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { createSnapshotStore } from '@voyaseek-ai/dsh-client-runtime/client'
-import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-test-runtime'
 import type { PlanProjection } from '@voyaseek-ai/dsh-plan-mode/client'
 import { PlanChip, type PlanChipProps } from '../src/client/PlanModeControl.tsx'
 import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'

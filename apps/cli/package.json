@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh",
   "description": "dsh CLI: profile boot, plugin management, and the browser UI alias",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -59,6 +59,7 @@
     "@voyaseek-ai/dsh-tool-ask-user": "workspace:^",
     "@voyaseek-ai/dsh-tool-bash": "workspace:^",
     "@voyaseek-ai/dsh-tool-bash-persistent": "workspace:^",
+    "@voyaseek-ai/dsh-tool-pwsh-persistent": "workspace:^",
     "@voyaseek-ai/dsh-tool-cordis": "workspace:^",
     "@voyaseek-ai/dsh-tool-fs": "workspace:^",
     "@voyaseek-ai/dsh-tool-fs-search": "workspace:^",

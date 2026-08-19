@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-test-runtime",
-  "description": "jsdom slot test runtime: real Cordis Context + SlotRegistry + web-react renderer with test-owned session/workspace doubles for feature specs",
-  "version": "0.1.0-rc.5",
+  "description": "jsdom slot test runtime: real Cordis Context + SlotRegistry + UI renderer with test-owned session/workspace doubles for feature specs",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -34,7 +34,7 @@
   "peerDependencies": {
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@voyaseek-ai/dsh-client-web-react": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-renderer": "workspace:^",
     "@voyaseek-ai/dsh-host-apiproxy": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^",
@@ -44,7 +44,7 @@
   "devDependencies": {
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@voyaseek-ai/dsh-client-web-react": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-renderer": "workspace:^",
     "@voyaseek-ai/dsh-host-apiproxy": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@types/react": "~18.3.1",

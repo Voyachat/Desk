@@ -1,6 +1,6 @@
 - banner:
   - navigation "Session hierarchy":
-    - button "Use web_search to search exactly" [disabled]
+    - button "Use web_search once with queries" [disabled]
   - img
   - text: Standard mode
   - button "Session log":
@@ -9,17 +9,17 @@
   - tablist:
     - tab "Chat" [selected]
     - tab "Trajectory"
-- text: Use web_search to search exactly "Voyaseek Harness snapshot search". Then reply exactly SEARCH_DONE and stop. {{clock}}
+- text: Use web_search once with queries ["Voyaseek Harness snapshot search","Voyaseek Harness multi-query search"]. Then reply exactly SEARCH_DONE and stop. {{clock}}
 - button "Copy":
   - img
 - button "Context injection @voyaseek-ai/dsh-system-prompt":
   - img
   - img
   - text: Context injection @voyaseek-ai/dsh-system-prompt
-- button "Search Voyaseek Harness snapshot search":
+- button "Search Voyaseek Harness snapshot search, Voyaseek Harness multi-query search":
   - img
   - img
-  - text: Search Voyaseek Harness snapshot search
+  - text: Search Voyaseek Harness snapshot search, Voyaseek Harness multi-query search
 - paragraph: SEARCH_DONE
 - button "Copy":
   - img

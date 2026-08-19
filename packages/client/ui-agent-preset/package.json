@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-agent-preset",
   "description": "Agent-preset surfaces: the default for later sessions, this session's seat, and the composition editor",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -54,12 +54,8 @@
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@voyaseek-ai/dsh-client-web-react": "workspace:^",
-    "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
@@ -71,7 +67,6 @@
     "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@voyaseek-ai/dsh-client-web-react": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@types/react": "~18.3.1",
     "@voyaseek-ai/cordis": "workspace:^",

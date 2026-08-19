@@ -8,10 +8,12 @@
 export const PLATFORM_MODULES = [
   'react', 'react/jsx-runtime', 'react-dom', 'react-dom/client', '@voyaseek-ai/cordis',
   '@voyaseek-ai/dsh-client-ui-slots',
-  '@voyaseek-ai/dsh-client-web-react',
   '@voyaseek-ai/dsh-client-ui-primitives',
-  '@voyaseek-ai/dsh-client-ui-attachment',
-  '@voyaseek-ai/dsh-client-schema-form',
+] as const
+
+/** Client-bundle specifiers whose factories the parser preloads before the shell starts. */
+export const PRELOADED_CLIENT_EXTERNALS = [
+  '@voyaseek-ai/dsh-client-runtime/client',
 ] as const
 
 /** One platform module specifier (a seed-table key). */

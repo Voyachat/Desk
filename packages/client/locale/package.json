@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-locale",
   "description": "Locale plugin: Host-backed zh/en preference, browser-derived fallback, locale snapshots, and typed namespace dictionaries",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -47,25 +47,25 @@
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
     "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/dsh-settings": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@types/react": "~18.3.1",
-    "react": "^18.2.0"
+    "react": "^18.2.0",
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^"
   },
   "dependencies": {
-    "@voyaseek-ai/dsh-settings": "workspace:^",
     "@voyaseek-ai/schemastery": "workspace:^"
   },
   "files": [

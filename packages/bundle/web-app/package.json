@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-web-app",
   "description": "The dsh browser-surface bundle: the web patch layer over dsh-base plus the runtime glue plugin (frontend dist serving, web-surface prompt, bash runtime variables, URL line)",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -51,8 +51,11 @@
     "@voyaseek-ai/dsh-client-hmr": "workspace:^",
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-modules": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-renderer": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-agent-preset": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-attachment": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-brand-official": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-commands": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-cordis": "workspace:^",
@@ -74,6 +77,7 @@
     "@voyaseek-ai/dsh-client-ui-sidebar": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-skill": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-input-trigger": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-reference": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-subagent": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-jobs": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-theme": "workspace:^",
@@ -93,16 +97,22 @@
     "@voyaseek-ai/dsh-host-directory-picker-native": "workspace:^",
     "@voyaseek-ai/dsh-host-plugin-inventory": "workspace:^",
     "@voyaseek-ai/dsh-host-webserver": "workspace:^",
+    "@voyaseek-ai/dsh-file-reference": "workspace:^",
+    "@voyaseek-ai/dsh-file-reference-local": "workspace:^",
+    "@voyaseek-ai/dsh-launch-environment": "workspace:^",
     "@voyaseek-ai/dsh-message-feedback": "workspace:^",
     "@voyaseek-ai/dsh-session-projection-cache": "workspace:^",
+    "@voyaseek-ai/dsh-session-reference": "workspace:^",
     "@voyaseek-ai/dsh-session-log-export": "workspace:^",
     "@voyaseek-ai/dsh-session-stats": "workspace:^",
     "@voyaseek-ai/dsh-storage": "workspace:^",
     "@voyaseek-ai/dsh-storage-domain": "workspace:^",
     "@voyaseek-ai/dsh-storage-json": "workspace:^",
+    "@voyaseek-ai/dsh-subprocess": "workspace:^",
     "@voyaseek-ai/dsh-workspace": "workspace:^",
     "@voyaseek-ai/schemastery": "workspace:^",
-    "commander": "^15.0.0"
+    "commander": "^15.0.0",
+    "open": "^11.0.0"
   },
   "peerDependencies": {
     "@voyaseek-ai/cordis-plugin-loader": "workspace:^",

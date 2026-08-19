@@ -7,7 +7,7 @@ import type {
 import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/zh.ts'
 import type { DirectoryFlowOwnerProps, WorkspacePickerProps } from '../src/client/contract/slots.ts'
-import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-test-runtime'
 import { WorkspacePicker } from '../src/client/WorkspacePicker.tsx'
 import { zh } from '../src/client/locales.ts'
 
