@@ -103,6 +103,8 @@ describe('approveEscalation', () => {
       .rejects.toThrow('approval for escalating to "workspace-write" was cancelled')
     await expect(approveEscalation(req(), ingredients({ approver: approver('unavailable') })))
       .rejects.toThrow('no approval channel is available')
+    await expect(approveEscalation(req(), ingredients({ approver: approver('allowed-and-remembered') })))
+      .rejects.toThrow('sandbox escalation does not support remembered approval')
   })
 
   it('an outcome outside the closed union trips the exhaustiveness guard (defensive)', async () => {

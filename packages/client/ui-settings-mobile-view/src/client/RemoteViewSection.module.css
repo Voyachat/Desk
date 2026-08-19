@@ -1,0 +1,141 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 720px;
+  color: var(--dsw-alias-label-primary);
+}
+
+.section h2,
+.section h3,
+.section p {
+  margin: 0;
+}
+
+.section header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section header p,
+.muted {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 13px;
+}
+
+.card,
+.inline,
+.copyRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card {
+  justify-content: space-between;
+  padding: 16px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+}
+
+.card > div,
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group label,
+.group h3 {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.group input {
+  width: 140px;
+  padding: 8px 10px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 7px;
+  background: var(--dsw-alias-bg-layer-1);
+  color: inherit;
+}
+
+.section button {
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.section button:disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.section .primary {
+  border-color: var(--dsw-alias-button-primary-fill);
+  background: var(--dsw-alias-button-primary-fill);
+  color: var(--dsw-alias-label-primary-foreground);
+}
+
+.section .primary:hover:not(:disabled) {
+  background: var(--dsw-alias-button-primary-hover);
+}
+
+.section .secondary:hover:not(:disabled),
+.copyRow button:hover:not(:disabled),
+.error button:hover:not(:disabled) {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
+.copyRow {
+  justify-content: space-between;
+}
+
+.copyRow code {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.token {
+  user-select: all;
+}
+
+.warning,
+.security {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.warning {
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-state-warn-label);
+}
+
+.security {
+  background: var(--dsw-alias-bg-module-platform);
+  color: var(--dsw-alias-label-secondary);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--dsw-alias-interactive-bg-hover-danger);
+  color: var(--dsw-alias-state-error-primary);
+  font-size: 13px;
+}
+
+.state {
+  padding: 24px;
+  color: var(--dsw-alias-label-tertiary);
+}

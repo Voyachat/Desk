@@ -31,7 +31,7 @@ function openState(partial?: Partial<MenuState>): MenuState {
     hit,
     generation: 1,
     groups: [
-      { source: 'command', status: 'ready', items: [{ name: 'goal', description: 'Set up a goal', icon: '⚑' }, { name: 'plan' }] },
+      { source: 'command', status: 'ready', items: [{ name: 'goal', label: '目标', description: '设置目标', icon: '⚑' }, { name: 'plan' }] },
       { source: 'skill', status: 'pending', items: [] },
     ],
     highlight: { source: 'command', index: 0 },
@@ -83,7 +83,7 @@ describe('MenuView', () => {
   it('renders ready groups as option rows and pending groups as loading rows', () => {
     mount(openState())
     const options = screen.getAllByRole('option')
-    expect(options.map(o => o.textContent)).toEqual(['⚑goalSet up a goal', 'plan'])
+    expect(options.map(o => o.textContent)).toEqual(['⚑目标设置目标', 'plan'])
     expect(screen.queryByText('正在加载…')).not.toBeNull()
   })
 
@@ -97,6 +97,12 @@ describe('MenuView', () => {
       ],
     }))
     expect(titles(view.container)).toEqual(['命令', 'mystery', '技能'])
+  })
+
+  it('keeps the stable candidate name as the pick identity when a localized label is rendered', () => {
+    const { onPick } = mount(openState())
+    fireEvent.mouseDown(screen.getByRole('option', { name: '目标设置目标' }))
+    expect(onPick).toHaveBeenCalledWith('command', 0)
   })
 
   it('exposes the highlight via aria-activedescendant and aria-selected', () => {

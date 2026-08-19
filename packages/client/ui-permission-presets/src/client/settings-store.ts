@@ -13,8 +13,6 @@ import {
 import {
   nodeAtPath, rehydrateSchema, type SchemaNode,
 } from '@voyaseek-ai/dsh-client-schema-form'
-import { displayPermissionPreset } from './presentation.ts'
-
 /** Permission's settings namespace on the host wire. */
 export const PERMISSION_SETTINGS_NS = 'permission'
 
@@ -22,8 +20,10 @@ export const PERMISSION_SETTINGS_NS = 'permission'
 export interface PermissionDefaultOption {
   /** Preset key written to Settings. */
   id: string
-  /** Host-supplied label or a title-cased preset key. */
-  label: string
+  /** Host-supplied name; built-in modes are localized at render time. */
+  name: string
+  /** Host-supplied explanation; built-in modes are localized at render time. */
+  description?: string
 }
 
 /** Permission settings-row snapshot. */
@@ -32,6 +32,8 @@ export interface PermissionSettingsState {
   error: string | null
   writable: boolean
   currentValue: string
+  /** Per-project defaults keyed by canonical workspace path. */
+  workspaceValues: Readonly<Record<string, string>>
   options: readonly PermissionDefaultOption[]
   revision: number
 }
@@ -49,10 +51,21 @@ interface ConstChoice {
  */
 export function permissionDefaultOf(view: SettingsNamespaceView): {
   currentValue: string
+  workspaceValues: Record<string, string>
   options: PermissionDefaultOption[]
 } {
-  const value = (view.value as { defaultPreset?: unknown } | null)?.defaultPreset
+  const settings = view.value as { defaultPreset?: unknown; workspacePresets?: unknown } | null
+  const value = settings?.defaultPreset
   if (typeof value !== 'string') throw new Error('permission settings has no defaultPreset value')
+  const rawWorkspaceValues: unknown = settings?.workspacePresets ?? {}
+  if (typeof rawWorkspaceValues !== 'object' || rawWorkspaceValues === null || Array.isArray(rawWorkspaceValues)) {
+    throw new Error('permission settings workspacePresets is not an object')
+  }
+  const workspaceValues: Record<string, string> = {}
+  for (const [path, preset] of Object.entries(rawWorkspaceValues)) {
+    if (typeof preset !== 'string') throw new Error(`permission settings has an invalid project preset for ${path}`)
+    workspaceValues[path] = preset
+  }
   const node = nodeAtPath(rehydrateSchema(view.schema), ['defaultPreset'])
   if (node === undefined) throw new Error('permission settings schema has no defaultPreset field')
   const rawChoices = node.type === 'union'
@@ -64,15 +77,16 @@ export function permissionDefaultOf(view: SettingsNamespaceView): {
     const described = choice.meta?.description
     return [{
       id: choice.value,
-      label: typeof described === 'string' && described.length > 0
-        ? displayPermissionPreset(choice.value, described)
-        : displayPermissionPreset(choice.value, choice.value),
+      name: typeof described === 'string' && described.length > 0 ? described : choice.value,
     }]
   })
   if (options.length === 0 || !options.some(option => option.id === value)) {
     throw new Error('permission settings schema does not advertise its current preset')
   }
-  return { currentValue: value, options }
+  if (Object.values(workspaceValues).some(preset => !options.some(option => option.id === preset))) {
+    throw new Error('permission settings contains a project preset outside the advertised options')
+  }
+  return { currentValue: value, workspaceValues, options }
 }
 
 /** Controller joining Settings reads, writes, and pushed invalidations. */
@@ -83,6 +97,7 @@ export class PermissionPresetSettingsController {
     error: null,
     writable: false,
     currentValue: '',
+    workspaceValues: {},
     options: [],
     revision: 0,
   })
@@ -114,6 +129,7 @@ export class PermissionPresetSettingsController {
           state.status = 'unavailable'
           state.writable = false
           state.currentValue = ''
+          state.workspaceValues = {}
           state.options = []
         })
         return
@@ -131,6 +147,26 @@ export class PermissionPresetSettingsController {
    * @returns nothing; {@link store} carries success or failure.
    */
   async select(preset: string): Promise<void> {
+    await this.write([{ op: 'set', path: ['defaultPreset'], value: preset }])
+  }
+
+  /**
+   * Persist or clear the default for one canonical workspace path.
+   * @param path - canonical project directory path.
+   * @param preset - advertised preset, or undefined to inherit the global default.
+   * @returns nothing; {@link store} carries success or failure.
+   */
+  async selectWorkspace(path: string, preset: string | undefined): Promise<void> {
+    if (path.length === 0) return
+    await this.write([preset === undefined
+      ? { op: 'unset', path: ['workspacePresets', path] }
+      : { op: 'set', path: ['workspacePresets', path], value: preset }])
+  }
+
+  /** Execute one revision-guarded settings mutation. */
+  private async write(
+    ops: Parameters<Pick<IApiClient, 'settings'>['settings']['mutate']>[0]['ops'],
+  ): Promise<void> {
     const view = this.view
     const state = this.store.getSnapshot()
     if (view === undefined || !state.writable) return
@@ -142,7 +178,7 @@ export class PermissionPresetSettingsController {
     try {
       const response = await this.api.settings.mutate({
         ns: PERMISSION_SETTINGS_NS,
-        ops: [{ op: 'set', path: ['defaultPreset'], value: preset }],
+        ops,
         expectedRevision: view.revision,
       })
       if (generation !== this.generation) return
@@ -168,6 +204,7 @@ export class PermissionPresetSettingsController {
       state.error = null
       state.writable = writable
       state.currentValue = resolved.currentValue
+      state.workspaceValues = resolved.workspaceValues
       state.options = resolved.options
       state.revision = view.revision
     })

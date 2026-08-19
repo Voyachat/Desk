@@ -8,7 +8,7 @@ import { Context } from '@voyaseek-ai/cordis'
 import { createUserMessage } from '@voyaseek-ai/dsh-llm'
 import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
 import type { Session } from '@voyaseek-ai/dsh-session'
-import type { Options, Query, SDKMessage } from '@anthropic-ai/claude-agent-sdk'
+import type { CanUseTool, Options, PermissionMode, Query, SDKMessage } from '@anthropic-ai/claude-agent-sdk'
 import { ClaudeSdkAgent } from '../src/driver.ts'
 import { SdkQueryEngine } from '../src/engine.ts'
 import type {} from '../src/types.ts'
@@ -71,7 +71,7 @@ function successScript(claudeSessionId: string, reply: string): SDKMessage[] {
   ]
 }
 
-async function makeDriver(): Promise<{ ctx: Context; session: Session; driver: ClaudeSdkAgent; sdk: FakeSdk }> {
+async function makeDriver(permissionMode: () => PermissionMode = () => 'bypassPermissions', canUseTool?: CanUseTool): Promise<{ ctx: Context; session: Session; driver: ClaudeSdkAgent; sdk: FakeSdk }> {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
   const session = ctx.sessions.create(SessionId('claude-session'), {
@@ -85,7 +85,8 @@ async function makeDriver(): Promise<{ ctx: Context; session: Session; driver: C
     session,
     () => new SdkQueryEngine({
       childEnv: { PATH: '/usr/bin' },
-      permissionMode: 'bypassPermissions',
+      permissionMode,
+      ...canUseTool === undefined ? {} : { canUseTool },
       disposeGraceMs: 100,
       spawn: () => { throw new Error('unit tests never spawn') },
       query: sdk.query,
@@ -150,6 +151,31 @@ describe('ClaudeSdkAgent', () => {
     expect(eventTypes(session).filter(type => type === 'turn/start')).toHaveLength(2)
   })
 
+  it('resolves changed session permissions for each query', async () => {
+    let permissionMode: PermissionMode = 'default'
+    const canUseTool: CanUseTool = async (_toolName, input) => ({ behavior: 'allow', updatedInput: input })
+    const { driver, sdk } = await makeDriver(() => permissionMode, canUseTool)
+    sdk.script(successScript('claude-permission', 'first'))
+    sendPrompt(driver, 'one')
+    await driver.whenIdle()
+
+    permissionMode = 'bypassPermissions'
+    sdk.script(successScript('claude-permission', 'second'))
+    sendPrompt(driver, 'two')
+    await driver.whenIdle()
+
+    expect(sdk.captured[0]!.options).toMatchObject({
+      permissionMode: 'default',
+      canUseTool,
+    })
+    expect(sdk.captured[0]!.options.allowDangerouslySkipPermissions).toBeUndefined()
+    expect(sdk.captured[1]!.options).toMatchObject({
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+    })
+    expect(sdk.captured[1]!.options.canUseTool).toBeUndefined()
+  })
+
   it('restores the SDK conversation id from the log on reconstruction', async () => {
     const { session, driver, sdk } = await makeDriver()
     sdk.script(successScript('claude-42', 'seeded'))
@@ -165,7 +191,7 @@ describe('ClaudeSdkAgent', () => {
       session,
       () => new SdkQueryEngine({
         childEnv: { PATH: '/usr/bin' },
-        permissionMode: 'bypassPermissions',
+        permissionMode: () => 'bypassPermissions',
         disposeGraceMs: 100,
         spawn: () => { throw new Error('unit tests never spawn') },
         query: sdk.query,

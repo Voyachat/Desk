@@ -789,12 +789,12 @@ describe('remaining branches', () => {
     expect(snapshot.nodes.map(n => n.seq)).toEqual([1, 3]) // first window kept
   })
 
-  it('approval frame with callId/reason keeps the optional fields; duplicate resolved is a no-op', () => {
+  it('approval frame keeps optional metadata; duplicate resolved is a no-op', () => {
     const { session } = makeSession()
     session.handleMuxEnvelope('ra' as never, {
-      type: 'approval/requested', sessionId: SID, approvalId: 'ap2' as never, toolName: 'rm', callId: 'c1' as never, reason: '危险',
+      type: 'approval/requested', sessionId: SID, approvalId: 'ap2' as never, toolName: 'rm', callId: 'c1' as never, reason: '危险', rememberable: true,
     })
-    expect(session.getSnapshot().pending[0]).toMatchObject({ kind: 'approval', payload: { callId: 'c1', reason: '危险' } })
+    expect(session.getSnapshot().pending[0]).toMatchObject({ kind: 'approval', payload: { callId: 'c1', reason: '危险', rememberable: true } })
     session.handleMuxEnvelope('rx' as never, { type: 'approval/resolved', sessionId: SID, approvalId: 'ap2' as never, outcome: 'approved' as never })
     session.handleMuxEnvelope('rx2' as never, { type: 'approval/resolved', sessionId: SID, approvalId: 'ap2' as never, outcome: 'approved' as never })
     session.handleMuxEnvelope('ry2' as never, { type: 'question/resolved', sessionId: SID, questionRpcId: 'never-was' as never, outcome: 'cancelled' })

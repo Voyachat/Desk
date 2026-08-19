@@ -7,7 +7,7 @@ import type { ApprovalRequestId } from './index.ts'
 import { APPROVAL_POLICIES } from './index.ts'
 
 const PACKAGE_NAME = '@voyaseek-ai/dsh-user-approval'
-const APPROVAL_OUTCOMES = ['allowed-once', 'rejected', 'cancelled', 'unavailable'] as const
+const APPROVAL_OUTCOMES = ['allowed-once', 'allowed-and-remembered', 'rejected', 'cancelled', 'unavailable'] as const
 
 /** Cordis companion plugin name. */
 export const name = 'user-approval-invariant'
@@ -15,12 +15,12 @@ export const name = 'user-approval-invariant'
 export const inject = ['invariants']
 
 type ApprovalTransition =
-  | { kind: 'asked'; id: ApprovalRequestId }
+  | { kind: 'asked'; id: ApprovalRequestId; rememberable: boolean }
   | { kind: 'decided'; id: ApprovalRequestId }
 
 interface ApprovalTrace {
   openTurn: number | null
-  pending: Set<ApprovalRequestId>
+  pending: Map<ApprovalRequestId, boolean>
 }
 
 /** Validate one approval event against committed unmatched questions. */
@@ -33,13 +33,16 @@ function validateApprovalEvent(
     if (trace.openTurn === null) fail('approval/asked appended outside any open turn')
     if (event.data.toolName.length === 0) fail('approval/asked toolName must be non-empty')
     if (trace.pending.has(event.data.id)) fail(`approval/asked repeated open id ${JSON.stringify(event.data.id)}`)
-    return { kind: 'asked', id: event.data.id }
+    return { kind: 'asked', id: event.data.id, rememberable: event.data.rememberable === true }
   }
   if (event.type === 'approval/decided') {
     if (trace.openTurn === null) fail('approval/decided appended outside any open turn')
     if (!trace.pending.has(event.data.id)) fail(`approval/decided has no matching approval/asked for id ${JSON.stringify(event.data.id)}`)
     if (!APPROVAL_OUTCOMES.includes(event.data.outcome)) {
       fail(`approval/decided carries unknown outcome ${JSON.stringify(event.data.outcome)}`)
+    }
+    if (event.data.outcome === 'allowed-and-remembered' && trace.pending.get(event.data.id) !== true) {
+      fail(`approval/decided remembers a request that did not advertise it for id ${JSON.stringify(event.data.id)}`)
     }
     return { kind: 'decided', id: event.data.id }
   }
@@ -50,8 +53,8 @@ function validateApprovalEvent(
 }
 
 /** Apply one accepted approval-pair transition. */
-function applyApprovalTransition(pending: Set<ApprovalRequestId>, transition: ApprovalTransition): void {
-  if (transition.kind === 'asked') pending.add(transition.id)
+function applyApprovalTransition(pending: Map<ApprovalRequestId, boolean>, transition: ApprovalTransition): void {
+  if (transition.kind === 'asked') pending.set(transition.id, transition.rememberable)
   else pending.delete(transition.id)
 }
 
@@ -62,7 +65,7 @@ const install: InvariantInstaller = Object.assign((ctx: Context, fail: Invariant
   const traces = new WeakMap<Session, ApprovalTrace>()
   const staged = new WeakMap<SessionEvent, { session: Session; transition: ApprovalTransition }>()
   const seed = (session: Session): ApprovalTrace => {
-    const trace: ApprovalTrace = { openTurn: null, pending: new Set() }
+    const trace: ApprovalTrace = { openTurn: null, pending: new Map() }
     traces.set(session, trace)
     for (const event of session.events) {
       if (event.type === 'turn/start') trace.openTurn = event.data.turn

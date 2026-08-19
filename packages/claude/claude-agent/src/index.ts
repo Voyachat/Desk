@@ -9,9 +9,14 @@
 
 import type { Context } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
-import type { CanUseTool, PermissionMode } from '@anthropic-ai/claude-agent-sdk'
+import type { CanUseTool, PermissionMode, PermissionResult, PermissionUpdate } from '@anthropic-ai/claude-agent-sdk'
 import type { AgentDriverFactory } from '@voyaseek-ai/dsh-agent-loop'
+import { CallId } from '@voyaseek-ai/dsh-llm'
+import { effectiveSandboxMode } from '@voyaseek-ai/dsh-sandbox-policy'
+import type { SessionEvent } from '@voyaseek-ai/dsh-session'
 import { scrubbedParentEnv } from '@voyaseek-ai/dsh-subprocess'
+import { effectiveApprovalPolicy } from '@voyaseek-ai/dsh-user-approval'
+import type { ApprovalOutcome } from '@voyaseek-ai/dsh-user-approval'
 import { CLAUDE_PROVIDER, CLAUDE_RUNTIME } from './constants.ts'
 import { ClaudeSdkAgent } from './driver.ts'
 import { SdkQueryEngine } from './engine.ts'
@@ -35,7 +40,7 @@ export interface Config {
   readonly authToken?: string
   /** API key (`ANTHROPIC_API_KEY`); gateways accept either credential field. */
   readonly apiKey?: string
-  /** SDK permission posture; `bypassPermissions` disables the approval bridge. */
+  /** Explicit SDK permission posture; absent follows the session's DSH permission state. */
   readonly permissionMode?: ClaudePermissionMode
   /** Explicit Claude Code executable; absent uses the SDK-distributed CLI. */
   readonly executable?: string
@@ -51,7 +56,7 @@ export const Config: z<Config> = z.object({
   baseUrl: z.string(),
   authToken: z.string(),
   apiKey: z.string(),
-  permissionMode: z.union(['default', 'acceptEdits', 'bypassPermissions', 'plan'] as const).default('default'),
+  permissionMode: z.union(['default', 'acceptEdits', 'bypassPermissions', 'plan'] as const),
   executable: z.string(),
   env: z.dict(z.string()).default({}),
   disposeGraceMs: z.number().default(3_000),
@@ -60,7 +65,7 @@ export const Config: z<Config> = z.object({
 /** Validated config owned by the plugin. */
 export interface ResolvedConfig {
   readonly runtime: string
-  readonly permissionMode: ClaudePermissionMode
+  readonly permissionMode?: ClaudePermissionMode
   readonly env: Record<string, string>
   readonly disposeGraceMs: number
   readonly model?: string
@@ -89,6 +94,57 @@ export function claudeChildEnv(config: ResolvedConfig): Record<string, string> {
 }
 
 /**
+ * Resolve the Claude SDK permission posture from the latest durable session
+ * permission state. An explicit plugin setting wins. Otherwise only DSH's
+ * full-access, no-prompt combination bypasses the SDK permission checks;
+ * workspace-write with interactive approval accepts file edits while keeping
+ * the approval bridge for other SDK permission requests; every remaining
+ * combination uses the SDK default posture.
+ * @param events - current session events in log order.
+ * @param configured - optional deployment override.
+ * @returns the SDK permission posture for the next query.
+ */
+export function claudePermissionMode(
+  events: readonly SessionEvent[],
+  configured?: ClaudePermissionMode,
+): ClaudePermissionMode {
+  if (configured !== undefined) return configured
+  const sandbox = effectiveSandboxMode(events)
+  const approval = effectiveApprovalPolicy(events)
+  if (sandbox === 'danger-full-access' && approval === 'never') return 'bypassPermissions'
+  if (sandbox === 'workspace-write' && approval === 'ask') return 'acceptEdits'
+  return 'default'
+}
+
+/**
+ * Translate one DSH approval outcome into the Claude SDK permission result.
+ * Remembered grants return the SDK's complete suggestion set unchanged; the
+ * host never broadens or reconstructs Claude's permission rules.
+ * @param outcome - normalized DSH approval outcome.
+ * @param input - original Claude tool input.
+ * @param suggestions - SDK-authored permission updates for this request.
+ * @returns the SDK permission result.
+ */
+export function claudePermissionResult(
+  outcome: ApprovalOutcome,
+  input: Record<string, unknown>,
+  suggestions: readonly PermissionUpdate[] | undefined,
+): PermissionResult {
+  if (outcome === 'allowed-once') return { behavior: 'allow', updatedInput: input }
+  if (outcome === 'allowed-and-remembered' && suggestions !== undefined && suggestions.length > 0) {
+    return { behavior: 'allow', updatedInput: input, updatedPermissions: [...suggestions] }
+  }
+  const message = outcome === 'rejected'
+    ? 'The user rejected this operation.'
+    : outcome === 'cancelled'
+      ? 'The approval request was cancelled.'
+      : outcome === 'allowed-and-remembered'
+        ? 'Claude supplied no permission rule to remember; the operation was refused.'
+        : 'No approval answerer is available; the operation was refused.'
+  return { behavior: 'deny', message }
+}
+
+/**
  * Bridge SDK permission questions onto the DSH approval seam. The answer is
  * one DSH approval outcome translated verbatim; a missing approval service
  * fails closed exactly like the default tool pipeline.
@@ -108,16 +164,14 @@ function makeCanUseTool(ctx: Context, agent: ClaudeSdkAgent): CanUseTool {
     const outcome = await approval.request({
       agent,
       toolName,
+      callId: CallId(sdkOptions.toolUseID),
       reason: sdkOptions.title ?? `Claude wants to use the ${toolName} tool`,
+      ...sdkOptions.suggestions !== undefined && sdkOptions.suggestions.length > 0
+        ? { rememberable: true as const }
+        : {},
       signal: sdkOptions.signal,
     })
-    if (outcome === 'allowed-once') return { behavior: 'allow', updatedInput: input }
-    const message = outcome === 'rejected'
-      ? 'The user rejected this operation.'
-      : outcome === 'cancelled'
-        ? 'The approval request was cancelled.'
-        : 'No approval answerer is available; the operation was refused.'
-    return { behavior: 'deny', message }
+    return claudePermissionResult(outcome, input, sdkOptions.suggestions)
   }
 }
 
@@ -151,13 +205,11 @@ export function apply(ctx: Context, config: Config): void {
         id,
         options,
         session,
-        (agent) => new SdkQueryEngine({
+        agent => new SdkQueryEngine({
           childEnv,
           ...resolved.model === undefined ? {} : { model: resolved.model },
-          permissionMode: resolved.permissionMode,
-          ...resolved.permissionMode === 'bypassPermissions'
-            ? {}
-            : { canUseTool: makeCanUseTool(ctx, agent) },
+          permissionMode: () => claudePermissionMode(session.events, resolved.permissionMode),
+          canUseTool: makeCanUseTool(ctx, agent),
           ...resolved.executable === undefined ? {} : { executable: resolved.executable },
           disposeGraceMs: resolved.disposeGraceMs,
           spawn: spawnSpec => ctx.subprocess.spawn(spawnSpec),

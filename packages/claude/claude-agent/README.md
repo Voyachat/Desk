@@ -1,5 +1,7 @@
 # @voyaseek-ai/dsh-claude-agent
 
+English | [中文](README.zh.md)
+
 Claude Agent SDK driver for DSH sessions: a session created under the
 `claude` runtime is orchestrated by Claude Code (through the official
 `@anthropic-ai/claude-agent-sdk`) instead of the default DSH ReactLoopAgent.
@@ -32,8 +34,15 @@ Any Claude-API-compatible endpoint works: `baseUrl`/`authToken`/`apiKey`/
 parent environment, so third-party gateways need only their env vars.
 
 Tool approval bridges to the host approval service through the SDK
-`canUseTool` hook (fail-closed when no approval service is present), unless
-`permissionMode: 'bypassPermissions'` opts the session out entirely.
+`canUseTool` hook (fail-closed when no approval service is present). Without
+an explicit `permissionMode`, each query reads the latest session permission
+events: `read-only` uses SDK `default`, `workspace-write` plus approval policy
+`ask` uses `acceptEdits`, and `danger-full-access` plus `never` uses
+`bypassPermissions`. Non-bypass modes keep the approval bridge. An explicit
+`permissionMode` remains a deployment-wide override. When Claude supplies an exact permission-update
+suggestion, the approval panel offers allow once, allow and remember, and
+reject. The remembered result returns Claude's complete suggestion set to the
+SDK unchanged; DSH never derives a broader rule from the tool name or path.
 
 ## Config
 
@@ -44,7 +53,7 @@ Tool approval bridges to the host approval service through the SDK
 | `baseUrl` | absent | `ANTHROPIC_BASE_URL` overlay (compat gateways) |
 | `authToken` | absent | `ANTHROPIC_AUTH_TOKEN` overlay |
 | `apiKey` | absent | `ANTHROPIC_API_KEY` overlay |
-| `permissionMode` | `default` | SDK permission mode (`default`, `acceptEdits`, `plan`, `bypassPermissions`) |
+| `permissionMode` | session permission state | explicit SDK permission mode (`default`, `acceptEdits`, `plan`, `bypassPermissions`) |
 | `executable` | SDK-resolved | explicit `claude` CLI path (`pathToClaudeCodeExecutable`) |
 | `env` | `{}` | extra child-env entries layered over the scrubbed parent env |
 | `disposeGraceMs` | `3000` | grace period before a cancelled SDK child is terminated |
@@ -70,3 +79,4 @@ Tool approval bridges to the host approval service through the SDK
   of the repo, older logs carrying the event need the package mounted (the
   append API gains plugin-ignorable events when a second consumer exists).
 - Token/usage statistics and per-turn cost reporting are deferred.
+- Claude permission modes and the native DSH file sandbox share product-level intent but not an operating-system enforcement implementation; UI copy must not claim identical kernel isolation or network control.

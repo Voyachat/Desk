@@ -23,7 +23,8 @@ export function ApprovalRequestId(id: string): ApprovalRequestId {
 }
 
 /**
- * Closed approval outcomes: a one-shot grant, explicit rejection, withdrawn
+ * Closed approval outcomes: a one-shot grant, a grant whose requester applies
+ * its advertised remembered-permission update, explicit rejection, withdrawn
  * request, or unavailable answerer. Callers fail closed on `unavailable`.
  */
-export type ApprovalOutcome = 'allowed-once' | 'rejected' | 'cancelled' | 'unavailable'
+export type ApprovalOutcome = 'allowed-once' | 'allowed-and-remembered' | 'rejected' | 'cancelled' | 'unavailable'

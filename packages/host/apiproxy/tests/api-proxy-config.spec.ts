@@ -350,6 +350,10 @@ describe('settings domain', () => {
     ctx.settings.register(settingsNamespace('agent-loop'), z.object({
       maxParallelToolCalls: z.number().default(10),
     }))
+    ctx.settings.register(settingsNamespace('mobile-view'), z.object({
+      enabled: z.boolean().default(false),
+      port: z.number().default(3081),
+    }))
     ctx.settings.register(settingsNamespace('web-search-deepseek'), z.object({
       baseURL: z.string(),
     }))
@@ -358,7 +362,7 @@ describe('settings domain', () => {
     const value = expectOk(await api.settings.describe(request({})))
     expect(value.namespaces.map(view => view.ns)).toEqual([
       'llm-deepseek', 'permission', 'ui-theme', 'locale', 'ui-conversation',
-      'shell', 'agent-loop', 'web-search-deepseek',
+      'shell', 'agent-loop', 'mobile-view', 'web-search-deepseek',
     ])
     const permission = expectOk(await api.settings.mutate(request({
       ns: 'permission',
@@ -390,6 +394,11 @@ describe('settings domain', () => {
       ops: [{ op: 'set', path: ['maxParallelToolCalls'], value: 2 }],
     })))
     expect(agentLoop.value).toEqual({ maxParallelToolCalls: 2 })
+    const mobileView = expectOk(await api.settings.mutate(request({
+      ns: 'mobile-view',
+      ops: [{ op: 'set', path: ['enabled'], value: true }],
+    })))
+    expect(mobileView.value).toEqual({ enabled: true, port: 3081 })
     const webSearch = expectOk(await api.settings.mutate(request({
       ns: 'web-search-deepseek',
       ops: [{ op: 'set', path: ['baseURL'], value: 'https://search.test/v1' }],

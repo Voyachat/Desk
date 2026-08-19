@@ -10,11 +10,13 @@
 import { Context } from '@voyaseek-ai/cordis'
 import { describe, expect, it, vi } from 'vitest'
 import type { CommandResult } from '@voyaseek-ai/dsh-commands/types'
+import { LocaleRuntime } from '@voyaseek-ai/dsh-client-locale/client'
 import { createScope, scopeOf } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { ClientSessionContext, ConsumeTokenRequest, InputTriggerPick, InputTriggerSource } from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
 import type { CommandContribution, CommandDecoration, CommandUiSpec, SelectOption } from '../src/client/contract.ts'
 import type { CommandDescriptor } from '../src/client/directory.ts'
+import { en, zh } from '../src/client/locales.ts'
 import { CommandUiRuntime } from '../src/client/service.ts'
 
 const sid = (k: string): SessionId => k as SessionId
@@ -65,6 +67,9 @@ async function carried<T>(produce: () => Promise<T>) {
 
 async function bench(opts: BenchOptions = {}) {
   const ctx = new Context()
+  const locale = new LocaleRuntime(ctx)
+  locale.register('command', { zh, en })
+  ctx.provide('locale', locale)
   const registered = new Map<string, InputTriggerSource>()
   const listCalls: Array<{ sessionId: SessionId }> = []
   const executeCalls: Array<{ sessionId: SessionId; line: string }> = []
@@ -150,7 +155,7 @@ async function bench(opts: BenchOptions = {}) {
   const warm = async (session: ClientSessionContext) => {
     await source.candidates(session, { query: '', position: 'leading', signal: new AbortController().signal })
   }
-  return { ctx, fiber, command, source, mint, warm, listCalls, executeCalls, executions, registered, notices }
+  return { ctx, fiber, command, source, mint, warm, listCalls, executeCalls, executions, registered, notices, locale }
 }
 
 function menuPick(source: InputTriggerSource, name: string, session: ClientSessionContext, end?: number) {
@@ -215,7 +220,46 @@ describe('candidates', () => {
     const { source, listCalls } = await bench()
     const list = await source.candidates(proj('s1'), req('g'))
     expect(listCalls).toEqual([{ sessionId: sid('s1') }])
-    expect(list).toEqual([{ name: 'goal', description: 'leadingInput kind', hint: 'goal text' }])
+    expect(list).toEqual([{ name: 'goal', label: '目标', description: '设置或查看长时任务的目标', hint: 'goal text' }])
+  })
+
+  it('localizes shipped command labels and descriptions from the live locale while preserving names and unknown rows', async () => {
+    const commands: CommandDescriptor[] = [
+      { name: 'compact', description: 'host compact' },
+      { name: 'export', description: 'host export' },
+      { name: 'feedback', description: 'host feedback' },
+      { name: 'goal', description: 'host goal' },
+      { name: 'permission', description: 'host permission' },
+      { name: 'plan', description: 'host plan' },
+      { name: 'workflow-retry', description: 'host workflow retry' },
+      { name: 'third-party', description: 'Host-owned fallback' },
+    ]
+    const { source, locale } = await bench({ commands: () => Promise.resolve({ commands }) })
+
+    const zhRows = await source.candidates(proj('s1'), req(''))
+    expect(zhRows.map(({ name, label, description }) => ({ name, label, description }))).toEqual([
+      { name: 'compact', label: '压缩', description: '压缩较早的对话历史' },
+      { name: 'export', label: '导出', description: '将此会话日志下载为 ZIP 压缩包' },
+      { name: 'feedback', label: '反馈', description: '记录关于此会话的反馈' },
+      { name: 'goal', label: '目标', description: '设置或查看长时任务的目标' },
+      { name: 'permission', label: '权限', description: '切换权限预设（沙箱模式与审批策略）' },
+      { name: 'plan', label: '计划', description: '进入或退出计划模式' },
+      { name: 'workflow-retry', label: '重试工作流', description: '从已记录的源调用重新启动中断或失败的工作流' },
+      { name: 'third-party', label: undefined, description: 'Host-owned fallback' },
+    ])
+
+    locale.setLocale('en')
+    const enRows = await source.candidates(proj('s1'), req(''))
+    expect(enRows.map(({ name, label, description }) => ({ name, label, description }))).toEqual([
+      { name: 'compact', label: 'Compact', description: 'Compact older conversation history' },
+      { name: 'export', label: 'Export', description: 'Download this Session log as a ZIP archive' },
+      { name: 'feedback', label: 'Feedback', description: 'Record feedback about this session' },
+      { name: 'goal', label: 'Goal', description: 'Set or view the goal for a long-running task' },
+      { name: 'permission', label: 'Permission', description: 'Switch the permission preset (sandbox mode + approval policy)' },
+      { name: 'plan', label: 'Plan', description: 'Enter or leave plan mode' },
+      { name: 'workflow-retry', label: 'Retry workflow', description: 'Restart an interrupted or failed workflow from its logged source call' },
+      { name: 'third-party', label: undefined, description: 'Host-owned fallback' },
+    ])
   })
 
   it('matches case-insensitive subsequences and ranks prefixes, boundaries, adjacency, gaps, then source order', async () => {

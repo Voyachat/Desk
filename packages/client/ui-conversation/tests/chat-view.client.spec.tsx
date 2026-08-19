@@ -1039,6 +1039,23 @@ describe('ChatView', () => {
     expect(h.toolOwners[0]?.block).toMatchObject({ callId: 'r1', argsRaw: '{"command":"cmd-r1"}' })
   })
 
+  it('keeps terminal settled activity live until the owning turn completes', () => {
+    const h = makeHarness({ nodes: [user(1, 'q'), toolResult(3, 'r1')], running: true })
+    const view = render(<h.ChatView {...h.props} />)
+
+    expect(view.getByText('正在处理')).toBeTruthy()
+    expect(view.queryByText('Deep diving...')).toBeNull()
+    expect(view.queryByTestId('tool-seat-r1')).toBeNull()
+    expandActivityFolds(view)
+    expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
+
+    act(() => { h.set({ running: false }) })
+    expect(view.getByText('已处理')).toBeTruthy()
+    expect(view.queryByTestId('tool-seat-r1')).toBeNull()
+    fireEvent.click(view.getByText('已处理'))
+    expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
+  })
+
   it('keeps the Tool renderer mounted when a running call settles into log order', () => {
     const mounted = vi.fn()
     const unmounted = vi.fn()

@@ -108,8 +108,10 @@ describe('ui-permission browser plugin', () => {
     expect(injected?.hooks.permission).toBeDefined()
     expect(typeof injected?.load).toBe('function')
     expect(typeof injected?.select).toBe('function')
+    expect(typeof injected?.selectWorkspace).toBe('function')
     await injected!.load()
     await injected!.select('read-only')
+    await injected!.selectWorkspace('/workspace', undefined)
   })
 
   it('availability follows the projection key; options mark the current value active and exclude custom', async () => {
@@ -125,9 +127,9 @@ describe('ui-permission browser plugin', () => {
     b.values.set(sid('s1'), SELECT)
     const again = await c.ui.options(proj, new AbortController().signal)
     expect(again.find(option => option.id === 'workspace-write')?.active).toBe(true)
-    expect(again.find(option => option.id === 'read-only')?.detail).toBe('Reads only.')
-    // Kebab-case names title-case; non-kebab host-configured names pass through.
-    expect(again.map(option => option.label)).toEqual(['Read Only', 'Workspace Write', 'Full access'])
+    // Built-ins follow locale; non-kebab host-configured names pass through.
+    expect(again.map(option => option.label)).toEqual(['Ask for approval', 'Agent approval', 'Full access'])
+    expect(again.find(option => option.id === 'read-only')?.detail).toBe('Stay read-only by default and ask before writing files')
     expect(again.find(option => option.id === 'danger-full-access')?.confirmation).toEqual({
       title: 'Enable Full access?',
       description: accessEn['confirm.description'],
@@ -135,6 +137,9 @@ describe('ui-permission browser plugin', () => {
       cancelLabel: 'Cancel',
       confirmLabel: 'Enable Full access',
     })
+    b.ctx.locale.setLocale('zh')
+    const chinese = await c.ui.options(proj, new AbortController().signal)
+    expect(chinese.map(option => option.label)).toEqual(['请求批准', '帮我批准', '完全访问权限'])
     b.values.set(sid('s1'), { ...SELECT, options: [{ value: 'plain', name: 'Ask Every Time' }] })
     const passthrough = await c.ui.options(proj, new AbortController().signal)
     expect(passthrough[0]?.label).toBe('Ask Every Time')

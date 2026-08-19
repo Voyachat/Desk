@@ -226,6 +226,7 @@
       "@voyaseek-ai/dsh-client-ui-settings": ["./packages/client/ui-settings/src"],
       "@voyaseek-ai/dsh-client-ui-settings-general": ["./packages/client/ui-settings-general/src"],
       "@voyaseek-ai/dsh-client-ui-settings-models": ["./packages/client/ui-settings-models/src"],
+      "@voyaseek-ai/dsh-client-ui-settings-mobile-view": ["./packages/client/ui-settings-mobile-view/src"],
       "@voyaseek-ai/dsh-client-ui-settings-plugin-inventory": ["./packages/client/ui-settings-plugin-inventory/src"],
       "@voyaseek-ai/dsh-client-locale": ["./packages/client/locale/src"],
       "@voyaseek-ai/dsh-client-web": ["./packages/client/web/src"],

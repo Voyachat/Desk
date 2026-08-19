@@ -91,9 +91,19 @@
    only the reject's danger hover is local. */
 .actionRow {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 8px;
   padding: 14px 16px 14px;
+}
+
+/* Three translated labels may not fit on one phone-width row. Native buttons
+   retain their intrinsic keyboard behavior while flex wrapping keeps every
+   decision reachable without horizontal scrolling. */
+@media (max-width: 560px) {
+  .actionRow > button {
+    flex: 1 1 auto;
+  }
 }
 
 .reject:hover:not(:disabled) {

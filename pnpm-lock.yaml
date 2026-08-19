@@ -2168,6 +2168,9 @@ importers:
       '@voyaseek-ai/dsh-client-ui-settings-general':
         specifier: workspace:^
         version: link:../../client/ui-settings-general
+      '@voyaseek-ai/dsh-client-ui-settings-mobile-view':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-mobile-view
       '@voyaseek-ai/dsh-client-ui-settings-models':
         specifier: workspace:^
         version: link:../../client/ui-settings-models
@@ -2314,6 +2317,9 @@ importers:
       '@voyaseek-ai/dsh-llm':
         specifier: workspace:^
         version: link:../../llm/llm
+      '@voyaseek-ai/dsh-sandbox-policy':
+        specifier: workspace:^
+        version: link:../../sandbox/sandbox-policy
       '@voyaseek-ai/dsh-scope':
         specifier: workspace:^
         version: link:../../core/scope
@@ -2326,6 +2332,9 @@ importers:
       '@voyaseek-ai/dsh-subprocess-local':
         specifier: workspace:^
         version: link:../../subprocess/subprocess-local
+      '@voyaseek-ai/dsh-user-approval':
+        specifier: workspace:^
+        version: link:../../interaction/user-approval
 
   packages/claude/ui-runtime:
     devDependencies:
@@ -3400,6 +3409,45 @@ importers:
       '@voyaseek-ai/dsh-client-web-react':
         specifier: workspace:^
         version: link:../web-react
+      '@voyaseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      react:
+        specifier: ^18.2.0
+        version: 18.3.1
+
+  packages/client/ui-settings-mobile-view:
+    devDependencies:
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.31))(@types/react@18.3.31)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/react':
+        specifier: ~18.3.1
+        version: 18.3.31
+      '@voyaseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-api-remotes':
+        specifier: workspace:^
+        version: link:../../api/remotes
+      '@voyaseek-ai/dsh-client-connection':
+        specifier: workspace:^
+        version: link:../connection
+      '@voyaseek-ai/dsh-client-locale':
+        specifier: workspace:^
+        version: link:../locale
+      '@voyaseek-ai/dsh-client-runtime':
+        specifier: workspace:^
+        version: link:../runtime
+      '@voyaseek-ai/dsh-client-test-runtime':
+        specifier: workspace:^
+        version: link:../../test-support/client-runtime
+      '@voyaseek-ai/dsh-client-ui-settings':
+        specifier: workspace:^
+        version: link:../ui-settings
+      '@voyaseek-ai/dsh-client-ui-slots':
+        specifier: workspace:^
+        version: link:../ui-slots
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
@@ -5942,6 +5990,9 @@ importers:
       '@voyaseek-ai/dsh-session-query':
         specifier: workspace:^
         version: link:../../session-query/session-query
+      '@voyaseek-ai/dsh-settings':
+        specifier: workspace:^
+        version: link:../../settings/settings
 
   packages/host/plugin-inventory:
     dependencies:

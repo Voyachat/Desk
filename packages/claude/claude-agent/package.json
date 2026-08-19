@@ -39,9 +39,11 @@
     "@voyaseek-ai/dsh-agent": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
     "@voyaseek-ai/dsh-scope": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
-    "@voyaseek-ai/dsh-subprocess": "workspace:^"
+    "@voyaseek-ai/dsh-subprocess": "workspace:^",
+    "@voyaseek-ai/dsh-user-approval": "workspace:^"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "0.3.220",
@@ -53,9 +55,11 @@
     "@voyaseek-ai/dsh-agent-loop": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
     "@voyaseek-ai/dsh-scope": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-subprocess": "workspace:^",
-    "@voyaseek-ai/dsh-subprocess-local": "workspace:^"
+    "@voyaseek-ai/dsh-subprocess-local": "workspace:^",
+    "@voyaseek-ai/dsh-user-approval": "workspace:^"
   }
 }

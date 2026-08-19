@@ -31,6 +31,10 @@
   cursor: default;
 }
 
+.triggerWarning:not(:disabled) {
+  color: var(--dsw-alias-state-warn-label);
+}
+
 .triggerIcon {
   display: inline-flex;
   flex: 0 0 auto;
@@ -73,4 +77,52 @@
 
 .chevronOpen {
   transform: rotate(180deg);
+}
+
+/* Permission choices use the shared Menu card and cells, with a local
+   two-line body. The scoped :global selectors adjust only this menu instance;
+   other primitive consumers keep their one-line cell contract. */
+.permissionMenu :global([role='menu']) {
+  width: min(360px, calc(100vw - 24px));
+}
+
+.permissionMenu :global([role='menuitem']) {
+  min-height: 58px;
+  align-items: flex-start;
+}
+
+.optionText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  white-space: normal;
+}
+
+.optionTitle {
+  color: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.optionDescription {
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 18px;
+  white-space: normal;
+}
+
+.warningIcon,
+.warningOption .optionTitle {
+  color: var(--dsw-alias-state-warn-label);
+}
+
+.permissionMenu :global([role='menuitem']):has(.warningOptionSelected) {
+  background: var(--dsw-alias-state-warn-tertiary);
+}
+
+.permissionMenu :global([role='menuitem']):has(.warningOption):hover:not(:disabled) {
+  background: var(--dsw-alias-state-warn-tertiary);
 }

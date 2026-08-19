@@ -1712,6 +1712,10 @@ export class ToolRuntime extends Service {
     })
     switch (outcome) {
       case 'allowed-once': return { decision: { kind: 'allow' }, approvalCancelled: false }
+      case 'allowed-and-remembered': return {
+        decision: { kind: 'deny', reason: `tool "${exec.name}" received an unsupported remembered approval` },
+        approvalCancelled: false,
+      }
       case 'rejected': return {
         decision: { kind: 'deny', reason: `the user rejected tool "${exec.name}"` },
         approvalCancelled: false,

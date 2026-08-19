@@ -9,13 +9,13 @@ import type { ApprovalRequestId } from '@voyaseek-ai/dsh-user-approval/types'
 import type { SessionId } from '@voyaseek-ai/dsh-session/types'
 
 /**
- * Approval answer payload (the result.value slot of a client-response). outcome accepts only
- * the two values a client can give (cancelled/unavailable are host-side outcomes). approvalId
+ * Approval answer payload (the result.value slot of a client-response). Outcome accepts the
+ * grants and rejection a client can give (cancelled/unavailable are host-side outcomes). approvalId
  * is the core audit correlation (used by the impl to reconcile `approval/asked`/`decided`;
  * passes through core's existing brand); wire correlation is governed by the echoed rpcId.
  */
 export interface ApprovalResponsePayload {
   sessionId: SessionId
   approvalId: ApprovalRequestId
-  outcome: 'allowed-once' | 'rejected'
+  outcome: 'allowed-once' | 'allowed-and-remembered' | 'rejected'
 }

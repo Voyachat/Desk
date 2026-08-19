@@ -449,7 +449,10 @@ describe('ModelsSection', () => {
     const names = screen.getAllByLabelText(new RegExp(en.modelName))
     expandRow(3)
     fireEvent.change(ids[2] as HTMLInputElement, { target: { value: 'private-preview' } })
+    expect((names[2] as HTMLInputElement).value).toBe('private-preview')
     fireEvent.change(names[2] as HTMLInputElement, { target: { value: 'Private Preview' } })
+    fireEvent.change(ids[2] as HTMLInputElement, { target: { value: 'private-preview-v2' } })
+    expect((names[2] as HTMLInputElement).value).toBe('Private Preview')
     // Only row 3 is open, so its capacity is addressed by its own label.
     fireEvent.change(screen.getByLabelText(`${en.contextWindow} 3`), { target: { value: '131072' } })
     fireEvent.click(screen.getByText(en.apply))
@@ -462,7 +465,7 @@ describe('ModelsSection', () => {
         path: ['models'],
         value: [
           ...DEFAULT_DEEPSEEK_MODELS,
-          { id: 'private-preview', name: 'Private Preview', contextWindow: 131_072 },
+          { id: 'private-preview-v2', name: 'Private Preview', contextWindow: 131_072 },
         ],
       }],
       expectedRevision: 0,

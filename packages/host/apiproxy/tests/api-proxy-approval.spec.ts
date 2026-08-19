@@ -80,7 +80,7 @@ async function waitForCount(mux: { frames: MuxFrame[] }, type: MuxFrame['type'],
   expect(mux.frames.filter(frame => frame.type === type).length).toBeGreaterThanOrEqual(count)
 }
 
-function answer(rpcId: RpcId, sessionId: unknown, approvalId: ApprovalRequestId, outcome: 'allowed-once' | 'rejected'): Parameters<ApiProxy['respond']>[0] {
+function answer(rpcId: RpcId, sessionId: unknown, approvalId: ApprovalRequestId, outcome: 'allowed-once' | 'allowed-and-remembered' | 'rejected'): Parameters<ApiProxy['respond']>[0] {
   return { type: 'client-response', rpcId, result: { ok: true, value: { sessionId, approvalId, outcome } } }
 }
 
@@ -106,6 +106,33 @@ describe('approval pending registry', () => {
     // The question settled: a duplicate answer is late, not re-decidable.
     const dup = await api.respond(answer(envelope.rpcId, requested.sessionId, requested.approvalId, 'rejected'))
     expect(dup).toEqual({ accepted: false, reason: 'not-pending' })
+    abort.abort()
+  })
+
+  it('round-trips an advertised remembered grant and rejects a forged one', async () => {
+    const { ctx, api } = await harness()
+    const abort = new AbortController()
+    const mux = openMux(api, abort)
+    const agent = agentOf(ctx)
+
+    const rememberedAsk = ctx.approval.request({ agent, toolName: 'Write', rememberable: true })
+    const remembered = requestedOf(await mux.waitFor('approval/requested'))
+    expect(remembered.rememberable).toBe(true)
+    const rememberedEnvelope = mux.envelopes.find(e => e.payload.type === 'approval/requested') as RpcRequest<MuxFrame>
+    expect(await api.respond(answer(rememberedEnvelope.rpcId, agent.session.id, remembered.approvalId, 'allowed-and-remembered')))
+      .toEqual({ accepted: true })
+    await expect(rememberedAsk).resolves.toBe('allowed-and-remembered')
+
+    const ordinaryAsk = ctx.approval.request({ agent, toolName: 'Write' })
+    await waitForCount(mux, 'approval/requested', 2)
+    const ordinaryEnvelope = mux.envelopes.filter(e => e.payload.type === 'approval/requested')[1] as RpcRequest<MuxFrame>
+    const ordinary = requestedOf(ordinaryEnvelope.payload)
+    expect(ordinary.rememberable).toBeUndefined()
+    expect(await api.respond(answer(ordinaryEnvelope.rpcId, agent.session.id, ordinary.approvalId, 'allowed-and-remembered')))
+      .toEqual({ accepted: false, reason: 'bad-response' })
+    expect(await api.respond(answer(ordinaryEnvelope.rpcId, agent.session.id, ordinary.approvalId, 'rejected')))
+      .toEqual({ accepted: true })
+    await expect(ordinaryAsk).resolves.toBe('rejected')
     abort.abort()
   })
 

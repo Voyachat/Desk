@@ -44,9 +44,9 @@ export interface ClaudeEngineConfig {
   childEnv: Record<string, string>
   /** Model id handed to the SDK, when the deployment pins one. */
   model?: string
-  /** SDK permission posture for the child. */
-  permissionMode: PermissionMode
-  /** DSH approval bridge; absent only under `bypassPermissions`. */
+  /** Resolve the SDK permission posture from current session state before each query. */
+  permissionMode: () => PermissionMode
+  /** DSH approval bridge; omitted from a `bypassPermissions` query. */
   canUseTool?: CanUseTool
   /** Explicit Claude Code executable; absent uses the SDK-distributed CLI. */
   executable?: string
@@ -83,17 +83,20 @@ export class SdkQueryEngine {
     }
     input.signal.addEventListener('abort', forwardAbort, { once: true })
     let child: SubprocessHandle | undefined
+    const permissionMode = this.config.permissionMode()
     const options: Options = {
       abortController: controller,
       cwd: input.cwd,
       env: { ...this.config.childEnv },
       ...input.resume === undefined ? {} : { resume: input.resume },
       ...this.config.model === undefined ? {} : { model: this.config.model },
-      permissionMode: this.config.permissionMode,
-      ...this.config.permissionMode === 'bypassPermissions'
+      permissionMode,
+      ...permissionMode === 'bypassPermissions'
         ? { allowDangerouslySkipPermissions: true }
         : {},
-      ...this.config.canUseTool === undefined ? {} : { canUseTool: this.config.canUseTool },
+      ...permissionMode === 'bypassPermissions' || this.config.canUseTool === undefined
+        ? {}
+        : { canUseTool: this.config.canUseTool },
       ...this.config.executable === undefined ? {} : { pathToClaudeCodeExecutable: this.config.executable },
       spawnClaudeCodeProcess: (spawnOptions) => {
         const handle = this.config.spawn(claudeSpawnSpec(spawnOptions, this.config.disposeGraceMs))
@@ -113,7 +116,9 @@ export class SdkQueryEngine {
         } else {
           const detail = Array.isArray(record.errors) && record.errors.length > 0
             ? record.errors.map(String).join('; ')
-            : record.subtype === 'success' ? 'result marked as error' : String(record.subtype ?? 'unknown error')
+            : record.subtype === 'success'
+              ? 'result marked as error'
+              : typeof record.subtype === 'string' ? record.subtype : 'unknown error'
           outcome = { isError: true, errorDetail: detail }
         }
       }

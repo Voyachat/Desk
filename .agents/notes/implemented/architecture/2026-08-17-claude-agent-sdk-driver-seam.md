@@ -33,8 +33,16 @@ messages onto durable events (`assistant/message`, `tool/call`,
 `tool/result` linked by `sourceEventSeqs`), records the SDK conversation id
 from `system/init` for multi-turn `resume` (restored from the log after
 restart), spawns the CLI through `dsh-subprocess` with a scrubbed parent env,
-and bridges tool approval through `canUseTool` (fail-closed) unless
-`permissionMode: 'bypassPermissions'`.
+and bridges tool approval through `canUseTool` (fail-closed). Each query reads
+the latest durable session permission state: the full-access, no-prompt
+combination selects the SDK's `bypassPermissions`, while confined or
+interactive combinations keep the approval bridge. An explicitly configured
+`permissionMode` overrides that session mapping. If an SDK permission request
+includes `suggestions`, the bridge advertises that the request is rememberable;
+the UI may return `allowed-and-remembered`, and the bridge gives the complete
+SDK-authored update list back as `updatedPermissions`. A request without an SDK
+suggestion cannot receive that outcome, and DSH never synthesizes a permission
+rule from a tool name, argument, or path.
 
 The gateway threads the choice end to end: `session.create` validates
 `agentRuntime` against `driverRuntimes()` (`runtime-not-found`), records it
@@ -54,6 +62,8 @@ runtime, so the switch lands on a session minted under the pick.
   messages, and the UI renders them message-wise.
 - DSH tools, subagents, and projections do not run inside claude turns;
   Claude Code's built-in surface orchestrates.
+- Permission changes made from the composer apply to the next Claude query in
+  the same session; creating a new runtime session is unnecessary.
 - The deployment composes the driver where it wants it: the Aistaff product
   bundle carries the host row, the web-app roster carries the chip; base
   deployments see neither.

@@ -174,6 +174,19 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
     props.onChange(next)
   }
 
+  const updateId = (index: number, value: string): void => {
+    const next = props.models.map((model, at) => {
+      const copy = { ...model }
+      if (at !== index) return copy
+      const previousId = typeof model['id'] === 'string' ? model['id'] : ''
+      const previousName = typeof model['name'] === 'string' ? model['name'] : ''
+      copy['id'] = value
+      if (previousName.length > 0 && previousName === previousId) copy['name'] = value
+      return copy
+    })
+    props.onChange(next)
+  }
+
   const remove = (index: number): void => {
     setEditing((current) => {
       const next = new Map<string, string>()
@@ -298,18 +311,20 @@ export function DeepSeekModelsEditor(props: DeepSeekModelsEditorProps): ReactNod
                     placeholder={props.t('modelId')}
                     aria-label={`${props.t('modelId')} ${String(index + 1)}`}
                     disabled={props.disabled}
-                    onChange={(event) => { update(index, 'id', event.target.value) }}
+                    onChange={(event) => { updateId(index, event.target.value) }}
                     onBlur={(event) => {
                       // Settle a pasted id rather than trimming per keystroke,
                       // which would stop the user typing an interior space.
                       const trimmed = event.target.value.trim()
-                      if (trimmed !== event.target.value) update(index, 'id', trimmed)
+                      if (trimmed !== event.target.value) updateId(index, trimmed)
                     }}
                   />
                   <input
                     className={styles['input']}
                     type="text"
-                    value={typeof model['name'] === 'string' ? model['name'] : ''}
+                    value={typeof model['name'] === 'string'
+                      ? model['name']
+                      : typeof model['id'] === 'string' ? model['id'] : ''}
                     placeholder={props.t('modelName')}
                     aria-label={`${props.t('modelName')} ${String(index + 1)}`}
                     disabled={props.disabled}

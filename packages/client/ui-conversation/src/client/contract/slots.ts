@@ -632,13 +632,18 @@ export class PendingApproval {
     return this.wait.payload.callId
   }
 
+  /** Whether this request can apply the asker's remembered-permission proposal. */
+  get rememberable(): boolean {
+    return this.wait.payload.rememberable === true
+  }
+
   /**
    * Deliver the user's decision; a rejected carrier receipt throws. Panel
    * removal stays frame-driven: the broadcast `approval/resolved` settles the
    * wait and drops it from the pending list.
-   * @param outcome - the only two client-answerable outcomes.
+   * @param outcome - one of the client-answerable approval outcomes.
    */
-  async answer(outcome: 'allowed-once' | 'rejected'): Promise<void> {
+  async answer(outcome: 'allowed-once' | 'allowed-and-remembered' | 'rejected'): Promise<void> {
     const receipt = await this.wait.respond({
       ok: true,
       value: { sessionId: this.wait.sessionId, approvalId: this.wait.payload.approvalId, outcome },

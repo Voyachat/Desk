@@ -198,6 +198,7 @@ describe('model list editing', () => {
 
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'acme-large' } })
+    expect(screen.getByLabelText<HTMLInputElement>(`${en.modelName} 1`).value).toBe('acme-large')
     expandModel(1)
     fireEvent.change(screen.getByLabelText(`${en.modelContextWindow} 1`), { target: { value: '65536' } })
     fireEvent.change(screen.getByLabelText(`${en.modelName} 1`), { target: { value: 'Acme' } })
@@ -489,6 +490,32 @@ describe('endpoint interrogation', () => {
       { id: 'kept', contextWindow: 111 },
       { id: 'fresh', contextWindow: 4096, name: 'Fresh' },
     ])
+  })
+
+  it('filters discovered models by maker and searches IDs or display names', async () => {
+    const discover = vi.fn(() => Promise.resolve(ok({
+      models: [
+        { id: 'ZHIPU/GLM-5.3' },
+        { id: 'deepseek-v4-pro-0813' },
+        { id: 'qwen3.8-max' },
+        { id: 'acme-preview', name: 'Kimi Vision' },
+      ],
+    })))
+    await mountSection({ discover })
+    openEditor('openai')
+
+    fireEvent.click(screen.getByText(en.fetchModels))
+    await screen.findByText(en.fetchTitle)
+    fireEvent.click(screen.getByRole('button', { name: 'qwen' }))
+    expect(screen.getByText('qwen3.8-max')).toBeTruthy()
+    expect(screen.queryByText('deepseek-v4-pro-0813')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: en.fetchManufacturerAll }))
+    fireEvent.change(screen.getByLabelText(en.fetchSearch), { target: { value: 'kimi vision' } })
+    expect(screen.getByText('acme-preview')).toBeTruthy()
+    expect(screen.queryByText('ZHIPU/GLM-5.3')).toBeNull()
+    fireEvent.change(screen.getByLabelText(en.fetchSearch), { target: { value: 'missing' } })
+    expect(screen.getByText(en.fetchNoMatches)).toBeTruthy()
   })
 
   it('keeps the rows editable when the provider cannot be interrogated', async () => {

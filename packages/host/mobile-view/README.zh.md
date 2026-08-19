@@ -4,7 +4,9 @@
 
 位于 `/mobile-view` 的响应式只读会话查看器。页面只在当前页面内存中保留 Bearer Token。JSON 路由只接受 `Authorization: Bearer`；不存在查询参数 Token、Cookie、写操作、命令、文件访问、上传、下载或远程进程控制。
 
-通过 credentials 服务设置 `VOYASEEK_MOBILE_VIEW_TOKEN`。设置 `VOYASEEK_MOBILE_VIEW_HOST=0.0.0.0` 后，插件会在 3081 端口启动一个独立的只读监听器；它只暴露三条 `/mobile-view` 路由，并且在缺少 Bearer 凭据时拒绝启动。该监听器不会暴露主 Web 服务器或其控制 API。相较公网端口，仍应优先使用私有组网或带允许列表的反向代理。插件行可覆盖 `remoteHost` 与 `remotePort`；插件不会启动隧道。
+Host 注册实时生效的 `mobile-view` 设置 namespace（`enabled`、`port`）和仅回环可访问的 `/mobile-view/api/status` 路由。本机“远程查看”设置页先通过 credentials 服务写入令牌，再启停绑定到 `0.0.0.0` 的独立监听器。该监听器只暴露页面、会话列表和单会话消息三条路由；缺少 Bearer 凭据时拒绝启动，并且绝不会暴露状态路由、主 Web 服务器或控制 API。状态响应只返回检测到的外部 IPv4 地址，不返回凭据。
+
+`remoteHost` 与 `remotePort` 仍可作为部署组合输入；已有部署配置 `remoteHost` 后会得到初始启用状态。相较公网端口，仍应优先使用私有组网或带允许列表的反向代理。插件不提供 TLS、NAT 穿透或隧道。
 
 ## 模型体验
 

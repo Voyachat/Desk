@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { resolve } from 'node:path'
 import { Context } from '@voyaseek-ai/cordis'
 import SessionStore, { Session, SessionId } from '@voyaseek-ai/dsh-session'
 import type { SandboxMode } from '@voyaseek-ai/dsh-sandbox'
@@ -229,6 +230,38 @@ describe('new-session default', () => {
     ])
   })
 
+  it('prefers a canonical workspace preset for a fresh session and leaves other workspaces on the global default', async () => {
+    const ctx = await mountedStore()
+    const project = resolve('permission-project')
+    await ctx.settings.update(PERMISSION_SETTINGS_NAMESPACE, {
+      workspacePresets: { [project]: 'danger-full-access' },
+    })
+
+    const projectSession = ctx.sessions.create(SessionId('project-default'), { meta: { cwd: project } })
+    const otherSession = ctx.sessions.create(SessionId('global-default'), { meta: { cwd: resolve('another-project') } })
+
+    expect(ctx.permissionPresets.current(projectSession.events)).toBe('danger-full-access')
+    expect(ctx.permissionPresets.current(otherSession.events)).toBe('workspace-write')
+  })
+
+  it('does not apply a workspace default to a seeded session in that workspace', async () => {
+    const ctx = await mountedStore()
+    const project = resolve('seeded-permission-project')
+    await ctx.settings.update(PERMISSION_SETTINGS_NAMESPACE, {
+      workspacePresets: { [project]: 'danger-full-access' },
+    })
+    const seed = freshSession('workspace-seed')
+    seed.append('turn/start', { turn: 1 })
+    seed.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
+
+    const resumed = ctx.sessions.create(SessionId('workspace-resumed'), {
+      seed: seed.events,
+      meta: { cwd: project },
+    })
+
+    expect(ctx.permissionPresets.current(resumed.events)).toBe('workspace-write')
+  })
+
   it('preserves composition defaults when an empty stored session resumes', async () => {
     const ctx = await mountedStore()
     await ctx.settings.update(PERMISSION_SETTINGS_NAMESPACE, {
@@ -297,5 +330,16 @@ describe('new-session default', () => {
       defaultPreset: 'missing',
     })).rejects.toThrow()
     expect(ctx.permissionPresets.defaultPreset).toBe('workspace-write')
+  })
+
+  it('rejects unknown workspace presets and non-canonical workspace keys', async () => {
+    const ctx = await mountedStore()
+    const project = resolve('validated-permission-project')
+    await expect(ctx.settings.update(PERMISSION_SETTINGS_NAMESPACE, {
+      workspacePresets: { [project]: 'missing' },
+    })).rejects.toThrow()
+    await expect(ctx.settings.update(PERMISSION_SETTINGS_NAMESPACE, {
+      workspacePresets: { [`${project}/.`]: 'workspace-write' },
+    })).rejects.toThrow(/canonical absolute path/)
   })
 })

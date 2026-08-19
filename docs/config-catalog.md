@@ -406,7 +406,7 @@ export interface Config {
   readonly authToken?: string
   /** API key (`ANTHROPIC_API_KEY`); gateways accept either credential field. */
   readonly apiKey?: string
-  /** SDK permission posture; `bypassPermissions` disables the approval bridge. */
+  /** Explicit SDK permission posture; absent follows the session's DSH permission state. */
   readonly permissionMode?: ClaudePermissionMode
   /** Explicit Claude Code executable; absent uses the SDK-distributed CLI. */
   readonly executable?: string
@@ -422,7 +422,7 @@ export type ClaudePermissionMode = Extract<PermissionMode, 'default' | 'acceptEd
 
 Depends on: `PermissionMode` (`@anthropic-ai/claude-agent-sdk`)
 
-Source: [`packages/claude/claude-agent/src/index.ts:27`](../packages/claude/claude-agent/src/index.ts)
+Source: [`packages/claude/claude-agent/src/index.ts:32`](../packages/claude/claude-agent/src/index.ts)
 
 <a id="voyaseek-aidsh-client-connection"></a>
 
@@ -2991,7 +2991,7 @@ export interface Config {
 export type ApprovalPolicy = 'ask' | 'never'
 ```
 
-Source: [`packages/interaction/user-approval/src/index.ts:177`](../packages/interaction/user-approval/src/index.ts)
+Source: [`packages/interaction/user-approval/src/index.ts:181`](../packages/interaction/user-approval/src/index.ts)
 
 <a id="voyaseek-aidsh-web"></a>
 

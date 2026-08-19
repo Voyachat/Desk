@@ -4,7 +4,7 @@
 // pending, this panel occupies the composer slot in place of the InputBar:
 // an amber "Waiting for approval" strip on the card top, the model's
 // justification as the headline, the paired command in muted code text, and
-// a right-aligned refuse/allow action row. Justification and command are
+// a right-aligned allow-once/remember/refuse action row. Justification and command are
 // unbounded model text, so they scroll inside the card at the shared composer
 // cap (`data-approval-scroll`) and the action row stays outside it — the
 // buttons must be reachable no matter how long the command is.
@@ -58,7 +58,7 @@ function ApprovalFlow({ pending, command, t }: {
   // lands; until then the buttons must not re-fire. An answer failure
   // (rejected receipt / transport) re-arms them for retry.
   const [answered, setAnswered] = useState(false)
-  const answer = (outcome: 'allowed-once' | 'rejected'): void => {
+  const answer = (outcome: 'allowed-once' | 'allowed-and-remembered' | 'rejected'): void => {
     setAnswered(true)
     void pending.answer(outcome).catch(() => { setAnswered(false) })
   }
@@ -74,11 +74,16 @@ function ApprovalFlow({ pending, command, t }: {
           {command !== undefined && <div className={css.command}>{command}</div>}
         </div>
         <div className={css.actionRow}>
+          <Button variant="outline" disabled={answered} onClick={() => { answer('allowed-once') }}>
+            {t('approval.allowOnce')}
+          </Button>
+          {pending.rememberable && (
+            <Button variant="primary" disabled={answered} onClick={() => { answer('allowed-and-remembered') }}>
+              {t('approval.allowAndRemember')}
+            </Button>
+          )}
           <Button variant="outline" className={css.reject} disabled={answered} onClick={() => { answer('rejected') }}>
             {t('approval.reject')}
-          </Button>
-          <Button variant="primary" disabled={answered} onClick={() => { answer('allowed-once') }}>
-            {t('approval.allowOnce')}
           </Button>
         </div>
       </div>

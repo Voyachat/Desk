@@ -28,10 +28,16 @@
       "path": "../../core/session"
     },
     {
+      "path": "../../sandbox/sandbox-policy"
+    },
+    {
       "path": "../../llm/llm"
     },
     {
       "path": "../../subprocess/subprocess"
+    },
+    {
+      "path": "../../interaction/user-approval"
     },
     {
       "path": "../../runtime-diagnostics/invariants"

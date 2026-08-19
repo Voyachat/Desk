@@ -64,6 +64,7 @@
     "@voyaseek-ai/dsh-client-ui-layout": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-model-selection": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings-models": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-settings-mobile-view": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-settings-plugin-inventory": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-permission-presets": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-plan": "workspace:^",

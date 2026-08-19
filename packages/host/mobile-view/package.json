@@ -21,6 +21,7 @@
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-session-query": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^"
   },
   "dependencies": { "@voyaseek-ai/schemastery": "workspace:^" },
@@ -30,6 +31,7 @@
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-session-query": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^"
   }
 }

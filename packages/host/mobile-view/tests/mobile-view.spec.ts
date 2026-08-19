@@ -11,6 +11,7 @@ import Loader from '@voyaseek-ai/cordis-plugin-loader'
 import Include from '@voyaseek-ai/cordis-plugin-include'
 import { SESSION_FORMAT_VERSION, SessionId } from '@voyaseek-ai/dsh-session'
 import HttpServer from '@voyaseek-ai/dsh-host-webserver'
+import { SettingsProvider, settingsNamespace, type SettingsNamespace } from '@voyaseek-ai/dsh-settings'
 import * as MobileView from '../src/index.ts'
 
 let root: string | undefined
@@ -59,6 +60,18 @@ const SessionQueryFixture = {
   },
 }
 
+class SettingsFixture extends SettingsProvider {
+  get writable(): boolean { return true }
+
+  protected load(): Promise<Record<string, unknown>> {
+    return Promise.resolve({})
+  }
+
+  protected persist(_ns: SettingsNamespace, _section: Record<string, unknown>): Promise<void> {
+    return Promise.resolve()
+  }
+}
+
 async function freePort(): Promise<number> {
   const server = createServer()
   await new Promise<void>((resolve, reject) => {
@@ -74,7 +87,7 @@ async function freePort(): Promise<number> {
   return address.port
 }
 
-async function loadComposition(remotePort: number): Promise<Context> {
+async function loadComposition(remotePort: number, initiallyEnabled = true): Promise<Context> {
   root = await mkdtemp(join(tmpdir(), 'dsh-mobile-view-loader-'))
   const configPath = join(root, 'cordis.yml')
   await writeFile(configPath, [
@@ -84,13 +97,14 @@ async function loadComposition(remotePort: number): Promise<Context> {
     '    port: 0',
     "- name: 'fixture:credentials'",
     "- name: 'fixture:session-query'",
+    "- name: 'fixture:settings'",
     "- name: '@voyaseek-ai/dsh-mobile-view'",
     '  config:',
     "    tokenEnv: 'TEST_MOBILE_TOKEN'",
     '    maxSessions: 1',
     '    maxMessages: 1',
     '    pollIntervalMs: 1000',
-    "    remoteHost: '127.0.0.1'",
+    ...initiallyEnabled ? ["    remoteHost: '127.0.0.1'"] : [],
     `    remotePort: ${String(remotePort)}`,
     '',
   ].join('\n'))
@@ -103,6 +117,7 @@ async function loadComposition(remotePort: number): Promise<Context> {
     ['@voyaseek-ai/dsh-host-webserver', HttpServer],
     ['fixture:credentials', CredentialsFixture],
     ['fixture:session-query', SessionQueryFixture],
+    ['fixture:settings', SettingsFixture],
     ['@voyaseek-ai/dsh-mobile-view', MobileView],
   ])
   context.loader.internal = {
@@ -130,6 +145,15 @@ describe('mobile-view real composition', () => {
     expect(page.status).toBe(200)
     expect(await page.text()).toContain('Voyaseek Mobile View')
 
+    const status = await fetch(`${origin}/mobile-view/api/status`)
+    expect(status.status).toBe(200)
+    expect(await status.json()).toMatchObject({
+      requested: true,
+      listening: true,
+      port: remotePort,
+      urls: expect.any(Array),
+    })
+
     expect((await fetch(`${origin}/mobile-view/api/sessions?token=test-token`)).status).toBe(401)
     expect((await fetch(`${origin}/mobile-view/api/sessions`, { method: 'POST' })).status).toBe(405)
 
@@ -151,6 +175,42 @@ describe('mobile-view real composition', () => {
     const remoteOrigin = `http://127.0.0.1:${String(remotePort)}`
     expect((await fetch(`${remoteOrigin}/mobile-view`)).status).toBe(200)
     expect((await fetch(`${remoteOrigin}/api`)).status).toBe(404)
+    expect((await fetch(`${remoteOrigin}/mobile-view/api/status`)).status).toBe(404)
     expect((await fetch(`${remoteOrigin}/mobile-view/api/sessions`, { headers: auth })).status).toBe(200)
+  })
+
+  it('starts and stops the dedicated listener from the durable setting', { timeout: 60_000 }, async () => {
+    const remotePort = await freePort()
+    const loaded = await loadComposition(remotePort, false)
+    const origin = `http://127.0.0.1:${String(loaded.webServer.port)}`
+    const statusUrl = `${origin}/mobile-view/api/status`
+    expect(await (await fetch(statusUrl)).json()).toEqual({
+      requested: false,
+      listening: false,
+      port: remotePort,
+      urls: [],
+    })
+
+    await loaded.settings.update(settingsNamespace(MobileView.MOBILE_VIEW_SETTINGS_NAMESPACE), {
+      enabled: true,
+      port: remotePort,
+    })
+    await expect.poll(async () => (await fetch(statusUrl)).json()).toMatchObject({
+      requested: true,
+      listening: true,
+      port: remotePort,
+    })
+    expect((await fetch(`http://127.0.0.1:${String(remotePort)}/mobile-view`)).status).toBe(200)
+
+    await loaded.settings.update(settingsNamespace(MobileView.MOBILE_VIEW_SETTINGS_NAMESPACE), {
+      enabled: false,
+    })
+    await expect.poll(async () => (await fetch(statusUrl)).json()).toEqual({
+      requested: false,
+      listening: false,
+      port: remotePort,
+      urls: [],
+    })
+    await expect(fetch(`http://127.0.0.1:${String(remotePort)}/mobile-view`)).rejects.toThrow()
   })
 })

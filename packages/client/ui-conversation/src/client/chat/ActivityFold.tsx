@@ -4,7 +4,7 @@
 // place under the summary line; the fold itself carries no anchor key, so
 // paging anchors always resolve to a member seat.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { DisclosureRow, IconThinkOutline14 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
@@ -38,7 +38,13 @@ export function ActivityFold({
   members, running, toolCalls, startTime, endTime, renderMember, t,
 }: ActivityFoldProps) {
   const [expanded, setExpanded] = useState(false)
+  const wasRunning = useRef(running)
   const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const finished = wasRunning.current && !running
+    wasRunning.current = running
+    if (finished) setExpanded(false)
+  }, [running])
   useEffect(() => {
     if (!running) return
     const id = setInterval(() => { setNow(Date.now()) }, 1000)

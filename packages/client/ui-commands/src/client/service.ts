@@ -12,6 +12,8 @@ import type { Context } from '@voyaseek-ai/cordis'
 // Type-only: pulls the ctx.remote merge and the forwarded-event key face
 // (`commands/change` rides the allowlist) into this program.
 import type {} from '@voyaseek-ai/dsh-api-remotes/client'
+// Type-only: resolves ctx.locale for locale-aware candidate synthesis.
+import type {} from '@voyaseek-ai/dsh-client-locale/client'
 import type { CommandResult } from '@voyaseek-ai/dsh-commands/types'
 import type { ClientContext, ISessions, SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
 import type {
@@ -23,6 +25,7 @@ import type { CommandDescriptor } from './directory.ts'
 import { CommandDirectory } from './directory.ts'
 import { PopupSelectController } from './popup.ts'
 import type { TokenSegment } from './popup.ts'
+import type { CommandKey } from './locales.ts'
 
 declare module '@voyaseek-ai/cordis' {
   interface Events {
@@ -59,6 +62,33 @@ interface RankedCandidate {
   readonly index: number
   readonly prefix: boolean
   readonly score: number
+}
+
+/** Shipped command names whose discovery copy is owned by this menu surface. */
+const BUILTIN_COMMAND_COPY: Partial<Record<string, { label: CommandKey; description: CommandKey }>> = {
+  compact: { label: 'catalog.compact.label', description: 'catalog.compact.description' },
+  export: { label: 'catalog.export.label', description: 'catalog.export.description' },
+  feedback: { label: 'catalog.feedback.label', description: 'catalog.feedback.description' },
+  goal: { label: 'catalog.goal.label', description: 'catalog.goal.description' },
+  permission: { label: 'catalog.permission.label', description: 'catalog.permission.description' },
+  plan: { label: 'catalog.plan.label', description: 'catalog.plan.description' },
+  'workflow-retry': { label: 'catalog.workflow-retry.label', description: 'catalog.workflow-retry.description' },
+}
+
+/** Localize one shipped command without changing its executable name. */
+function commandCandidate(
+  descriptor: CommandDescriptor,
+  t: (key: CommandKey) => string,
+): InputTriggerCandidate {
+  const copy = BUILTIN_COMMAND_COPY[descriptor.name]
+  return {
+    name: descriptor.name,
+    ...(copy === undefined ? { description: descriptor.description } : {
+      label: t(copy.label),
+      description: t(copy.description),
+    }),
+    ...(descriptor.input !== undefined ? { hint: descriptor.input.hint } : {}),
+  }
 }
 
 /** Extra weight for command-name starts and separator boundaries. */
@@ -118,7 +148,7 @@ function fuzzyCandidates(candidates: readonly InputTriggerCandidate[], rawQuery:
 
 /** Command surface: session-keyed directory + '/' source + contribution registry + per-session popups. */
 export class CommandUiRuntime extends Service implements CommandUiContract {
-  static inject = ['inputTriggers', 'sessions', 'remote', 'remote.commands']
+  static inject = ['inputTriggers', 'sessions', 'remote', 'remote.commands', 'locale']
 
   private readonly directory: CommandDirectory
   private readonly live: LiveState = { contributions: new Map(), decorations: new Map(), popups: new Map() }
@@ -242,11 +272,14 @@ export class CommandUiRuntime extends Service implements CommandUiContract {
   /** Menu candidates: host catalog + contribution availability, then position filtering and fuzzy name ranking. */
   private async candidates(session: ClientSessionContext, req: CandidateRequest): Promise<readonly InputTriggerCandidate[]> {
     const list = await this.directory.ensureReady(session.sessionId, req.signal)
+    const locale = this.ctx.get('locale')
+    if (locale === undefined) throw new Error('ui-commands: locale service unavailable')
+    const t = locale.bind('command')
     const rows: InputTriggerCandidate[] = []
     const seen = new Set<string>()
     for (const c of list) {
       seen.add(c.name)
-      rows.push({ name: c.name, description: c.description, ...(c.input !== undefined ? { hint: c.input.hint } : {}) })
+      rows.push(commandCandidate(c, t))
     }
     for (const contribution of this.live.contributions.values()) {
       if (!contribution.available(session)) continue

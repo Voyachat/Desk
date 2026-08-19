@@ -43,6 +43,29 @@ interface Config {
 
 The service requires a confining `ctx.shell` executor and `ctx.approval`, and misconfiguration fails at plugin load: a table entry named `custom` throws (the name is reserved for the derived not-a-preset state), and composing over a bash executor that does not confine (no `sandboxMode` capability fact) throws, because presets bundle a sandbox mode.
 
+## Permission scopes and user controls
+
+The shipped desktop composition presents three product modes over stable preset keys:
+
+| Product label | Preset | Sandbox | Approval | Meaning |
+| --- | --- | --- | --- | --- |
+| Ask for approval | `read-only` | `read-only` | `ask` | Stay read-only until the user approves a write. |
+| Agent approval | `workspace-write` | `workspace-write` | `ask` | Write inside the current project; ask before broader file access. |
+| Full access | `danger-full-access` | `danger-full-access` | `never` | Remove the DSH file sandbox and skip approval prompts. |
+
+Permission selection has three lifetimes. `/permission <preset>` changes the current session and appends the durable preset and knob events. `permission.workspacePresets[canonicalAbsolutePath]` selects the default for newly created sessions in one project. `permission.defaultPreset` is the fallback for newly created sessions without a project override. Project and global setting changes never rewrite an existing, resumed, seeded, or forked session.
+
+```yaml
+permission:
+  defaultPreset: workspace-write
+  workspacePresets:
+    /Users/example/projects/sensitive: read-only
+```
+
+The authority for both defaults is the user's private Host settings document, normally `$VOYASEEK_HOME/settings.yaml`. Repository files such as `AGENTS.md` and `CLAUDE.md` are model instructions and never grant execution permission; reading a permission value from a project-controlled file would let an untrusted checkout elevate itself. Workspace keys must be canonical absolute paths, and an unknown preset is rejected by the settings schema.
+
+Native and Claude sessions read the same durable permission facts. Native execution enforces the DSH sandbox directly. Without an explicit deployment override, Claude maps `read-only` to SDK `default`, `workspace-write + ask` to `acceptEdits`, and `danger-full-access + never` to `bypassPermissions`; these SDK modes share the product intent but do not claim the same operating-system isolation strength. Permission presets currently control file effects and approval prompts, not network access.
+
 ## Current preset and the derived `custom`
 
 `current(events)` derives the effective preset from the knobs, not from its own event alone: it folds the session's effective sandbox mode (falling back to the executor's configured mode) and effective approval policy (falling back to the approval service config, then `ask`), prefers a still-matching recorded selection, then the first matching table entry in declaration order, and otherwise returns `CUSTOM_PRESET` (`'custom'`). `custom` is derived-only: clients may display it as the current value, but it is never a switch target or an event payload.
@@ -127,5 +150,5 @@ set(session: Session, name: string): void
 
 Types: [Session](session.md) · [SessionEvent](session.md)
 
-Source: [`packages/interaction/permission-presets/src/index.ts:159`](../../packages/interaction/permission-presets/src/index.ts)
+Source: [`packages/interaction/permission-presets/src/index.ts:162`](../../packages/interaction/permission-presets/src/index.ts)
 <!-- END GENERATED cordis-surface -->

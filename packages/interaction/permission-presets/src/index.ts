@@ -10,11 +10,12 @@
  * @module dsh-permission-presets
  */
 
+import { resolve as resolvePath } from 'node:path'
 import { Context, Service } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
 import { z as zod } from 'zod'
 import type { Session, SessionEvent } from '@voyaseek-ai/dsh-session'
-import type { SandboxMode } from '@voyaseek-ai/dsh-sandbox'
+import { canonicalPath, type SandboxMode } from '@voyaseek-ai/dsh-sandbox'
 import { SANDBOX_MODES, effectiveSandboxMode, setSandboxMode } from '@voyaseek-ai/dsh-sandbox-policy'
 // Side-effect type import: declaration-merges `ctx.shell` (the capability fact
 // `sandboxMode` this service reads), without a value dependency on the seam.
@@ -132,8 +133,10 @@ function foldKnobs(events: readonly SessionEvent[]): KnobState {
 
 /** User setting resolved when a new session receives its initial permission. */
 export interface PermissionSettings {
-  /** Preset pinned into a newly created session. */
+  /** Preset pinned into a newly created session without a workspace override. */
   defaultPreset: string
+  /** Preset overrides keyed by canonical absolute session workspace path. */
+  workspacePresets: Record<string, string>
 }
 
 /** The {@link PermissionPresetService} config: preset table and composition default. */
@@ -198,7 +201,7 @@ export class PermissionPresetService extends Service {
       throw new Error('permission: composed sandbox and approval defaults match no preset; configure defaultPreset explicitly')
     }
     this.resolve(defaultPreset)
-    const baseSettings: PermissionSettings = { defaultPreset }
+    const baseSettings: PermissionSettings = { defaultPreset, workspacePresets: {} }
     this.defaultSettings = () => baseSettings
     const presetChoices = this.names.map((name) => {
       const choice = z.const(name)
@@ -207,6 +210,7 @@ export class PermissionPresetService extends Service {
     })
     const settingsSchema: z<PermissionSettings> = z.object({
       defaultPreset: z.union(presetChoices).required(),
+      workspacePresets: z.dict(z.union(presetChoices)).default({}),
     })
     installSettingsSection(ctx, PERMISSION_SETTINGS_NAMESPACE, settingsSchema, baseSettings, {
       setSource: (current) => {
@@ -215,6 +219,14 @@ export class PermissionPresetService extends Service {
       // The source thunk reads the latest scope snapshot at session creation;
       // no process-level registration needs replacement on change.
       onChange: () => {},
+      validate: (settings) => {
+        for (const path of Object.keys(settings.workspacePresets)) {
+          const canonical = resolvePath(canonicalPath(path))
+          if (path !== canonical) {
+            throw new Error(`permission: workspace preset key ${JSON.stringify(path)} must be the canonical absolute path ${JSON.stringify(canonical)}`)
+          }
+        }
+      },
     })
 
     ctx.on('session/created', (session) => {
@@ -292,6 +304,14 @@ export class PermissionPresetService extends Service {
    */
   get defaultPreset(): string {
     return this.defaultSettings().defaultPreset
+  }
+
+  /** Resolve the new-session preset for one immutable session workspace. */
+  private initialPreset(session: Session): string {
+    const settings = this.defaultSettings()
+    const cwd = session.header.cwd
+    if (cwd === undefined) return settings.defaultPreset
+    return settings.workspacePresets[resolvePath(canonicalPath(cwd))] ?? settings.defaultPreset
   }
 
   /**
@@ -404,7 +424,7 @@ export class PermissionPresetService extends Service {
     const approval = effectiveApprovalPolicy(events)
     const seeded = events.some(event => event.type === 'session/end-seed')
     if (selected === undefined && sandbox === undefined && approval === undefined && !seeded) {
-      const name = this.defaultPreset
+      const name = this.initialPreset(session)
       const spec = this.resolve(name)
       session.append('permission/preset', { preset: name })
       setSandboxMode(session, spec.sandbox)

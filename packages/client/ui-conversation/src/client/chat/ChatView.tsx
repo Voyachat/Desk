@@ -269,7 +269,17 @@ export function ChatView({
     () => groupChatFlow(order, nodeStore, foldFacts, partialProse, reasoningDisplay),
     [order, nodeStore, foldFacts, partialProse, reasoningDisplay],
   )
-  const hasRunningFold = rows.some(row => row.kind === 'fold' && row.running)
+  // Some drivers settle each activity member before requesting the next one,
+  // while the owning Turn remains open. Let a terminal fold carry that gap so
+  // the working signal stays one disclosure instead of becoming a completed
+  // fold followed by a separate TurnStatus row.
+  const terminalRow = rows.at(-1)
+  const continuingFoldKey = running && terminalRow?.kind === 'fold'
+    ? terminalRow.key
+    : null
+  const hasRunningFold = rows.some(
+    row => row.kind === 'fold' && (row.running || row.key === continuingFoldKey),
+  )
 
   // ---- Windowed mounting over the settled flow -------------------------------
   // Long sessions otherwise accumulate every loaded row (markdown, KaTeX,
@@ -350,7 +360,7 @@ export function ChatView({
     : (
       <ActivityFold
         members={row.members}
-        running={row.running}
+        running={row.running || row.key === continuingFoldKey}
         toolCalls={row.toolCalls}
         startTime={row.startTime}
         endTime={row.endTime}

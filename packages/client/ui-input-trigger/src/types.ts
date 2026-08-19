@@ -31,6 +31,8 @@ export type PickVia = 'menu' | 'space' | 'enter'
 
 /** One menu candidate. Pure display data — zero behavior declaration. */
 export interface InputTriggerCandidate {
+  /** Optional localized display label; `name` remains the stable pick identity. */
+  readonly label?: string
   readonly name: string
   readonly description?: string
   readonly icon?: string

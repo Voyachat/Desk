@@ -1,0 +1,57 @@
+{
+  "name": "@voyaseek-ai/dsh-client-ui-settings-mobile-view",
+  "description": "Loopback-only settings page for the authenticated read-only mobile listener",
+  "version": "0.1.0-rc.5",
+  "publishConfig": { "access": "public" },
+  "repository": { "type": "git", "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git", "directory": "packages/client/ui-settings-mobile-view" },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
+    "./invariant": { "types": "./lib/types/invariant.d.ts", "default": "./lib/invariant.js" },
+    "./client": { "types": "./lib/types/client/index.d.ts", "default": "./lib/client.js" },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@voyaseek-ai/dsh-client-runtime",
+        "@voyaseek-ai/dsh-client-ui-settings",
+        "@voyaseek-ai/dsh-client-locale",
+        "@voyaseek-ai/dsh-client-connection",
+        "@voyaseek-ai/dsh-api-remotes"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": { "bundle": "tsdown", "watch": "tsdown --watch" },
+  "license": "MIT",
+  "peerDependencies": {
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-api-remotes": "workspace:^",
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-api-remotes": "workspace:^",
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@types/react": "~18.3.1",
+    "react": "^18.2.0"
+  },
+  "files": ["lib/index.js", "lib/invariant.js", "lib/client.js", "lib/types/**/*.d.ts"]
+}

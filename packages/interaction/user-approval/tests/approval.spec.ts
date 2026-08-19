@@ -264,6 +264,21 @@ describe('ApprovalService.request', () => {
     await expect(ctx.approval.request(requestOf(agent))).resolves.toBe('unavailable')
   })
 
+  it('accepts a remembered grant only when the requester advertises it', async () => {
+    const ctx = await mounted()
+    const first = fakeAgent()
+    ctx.on('approval/request', () => Promise.resolve<ApprovalOutcome>('allowed-and-remembered'))
+
+    await expect(ctx.approval.request(requestOf(first.agent, { rememberable: true })))
+      .resolves.toBe('allowed-and-remembered')
+    expect(first.appended[0]?.data).toMatchObject({ rememberable: true })
+    expect(first.appended[1]?.data).toMatchObject({ outcome: 'allowed-and-remembered' })
+
+    const second = fakeAgent()
+    await expect(ctx.approval.request(requestOf(second.agent))).resolves.toBe('unavailable')
+    expect(second.appended[1]?.data).toMatchObject({ outcome: 'unavailable' })
+  })
+
   it('settles cancelled immediately on an already-aborted signal without asking anyone', async () => {
     const ctx = await mounted()
     const { agent, appended } = fakeAgent()

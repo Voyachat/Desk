@@ -1,6 +1,18 @@
 /** Machine value of the preset that requires an explicit GUI risk gate. */
 export const FULL_ACCESS_PRESET = 'danger-full-access'
 
+/** One localized permission mode presentation. */
+export interface PermissionPresetPresentation {
+  label: string
+  description: string | undefined
+}
+
+const BUILTIN_KEYS: Partial<Record<string, 'readOnly' | 'workspaceWrite' | 'fullAccess'>> = {
+  'read-only': 'readOnly',
+  'workspace-write': 'workspaceWrite',
+  [FULL_ACCESS_PRESET]: 'fullAccess',
+}
+
 /**
  * Convert conventional kebab-case preset names into user-facing title case.
  * @param name - host-supplied preset label or key.
@@ -12,11 +24,23 @@ export function displayPresetName(name: string): string {
 }
 
 /**
- * Render a permission preset under its product label.
+ * Resolve built-in presets through the active locale and preserve custom host copy.
  * @param value - preset machine value.
  * @param name - host-supplied preset name.
- * @returns the Full access product label or the conventional display name.
+ * @param description - host-supplied explanation for custom presets.
+ * @param t - active locale translator.
+ * @returns the localized built-in or host fallback presentation.
  */
-export function displayPermissionPreset(value: string, name: string): string {
-  return value === FULL_ACCESS_PRESET ? 'Full access' : displayPresetName(name)
+export function permissionPresetPresentation(
+  value: string,
+  name: string,
+  description: string | undefined,
+  t: (key: string) => string,
+): PermissionPresetPresentation {
+  const builtin = BUILTIN_KEYS[value]
+  if (builtin === undefined) return { label: displayPresetName(name), description }
+  return {
+    label: t(`mode.${builtin}.title`),
+    description: t(`mode.${builtin}.description`),
+  }
 }

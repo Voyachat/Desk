@@ -43,6 +43,29 @@ interface Config {
 
 该服务要求一个施加隔离的 `ctx.shell` 执行器和 `ctx.approval`，配置错误在插件加载时即失败：名为 `custom` 的表项会抛出异常（该名称保留给派生的「非预设」状态）；在不施加隔离的 bash 执行器（没有 `sandboxMode` 能力事实）之上组合同样抛出异常，因为预设捆绑了一个沙箱模式。
 
+## 权限作用域与用户控制
+
+桌面端组合通过稳定 preset key 提供三种产品模式：
+
+| 产品名称 | Preset | 沙箱 | 审批 | 含义 |
+| --- | --- | --- | --- | --- |
+| 请求批准 | `read-only` | `read-only` | `ask` | 默认保持只读，用户批准后才执行写入。 |
+| 帮我批准 | `workspace-write` | `workspace-write` | `ask` | 可写当前项目，扩大文件访问范围前请求批准。 |
+| 完全访问权限 | `danger-full-access` | `danger-full-access` | `never` | 移除 DSH 文件沙箱并跳过审批提示。 |
+
+权限选择有三个生命周期。`/permission <preset>` 切换当前会话，并追加持久的 preset 与 knob 事件。`permission.workspacePresets[canonicalAbsolutePath]` 设置一个项目中后续新会话的默认值。`permission.defaultPreset` 是没有项目覆盖时的新会话回退值。项目与全局设置变更绝不重写已有、恢复、seeded 或 forked 会话。
+
+```yaml
+permission:
+  defaultPreset: workspace-write
+  workspacePresets:
+    /Users/example/projects/sensitive: read-only
+```
+
+两个默认值的授权源都是用户私有的 host settings 文档，通常为 `$VOYASEEK_HOME/settings.yaml`。`AGENTS.md`、`CLAUDE.md` 等仓库文件属于模型指令，绝不授予执行权限；若从项目可控文件读取权限，不受信任的代码仓就能自行提权。Workspace key 必须是规范绝对路径，未知 preset 会被 settings schema 拒绝。
+
+本机与 Claude 会话读取相同的持久权限事实。本机执行直接施加 DSH 沙箱；未设置显式部署覆盖时，Claude 将 `read-only` 映射为 SDK `default`、将 `workspace-write + ask` 映射为 `acceptEdits`、将 `danger-full-access + never` 映射为 `bypassPermissions`。这些 SDK 模式共享产品意图，但不声称具有与本机操作系统沙箱相同的隔离强度。权限预设目前控制文件效果与审批提示，不控制网络访问。
+
 ## 当前预设与派生的 `custom`
 
 `current(events)` 从 knob 派生实际生效的预设，而不是只看自身事件：它折叠会话的生效沙箱模式（回退到执行器配置的模式）与生效审批策略（先回退到审批服务配置，再回退到 `ask`），优先取仍然匹配的已记录选择，其次取声明顺序中第一个匹配的表项，否则返回 `CUSTOM_PRESET`（`'custom'`）。`custom` 只是派生值：客户端可以把它显示为当前值，但它绝不是切换目标，也绝不出现在事件 payload 中。
@@ -127,5 +150,5 @@ set(session: Session, name: string): void
 
 Types: [Session](session.md) · [SessionEvent](session.md)
 
-Source: [`packages/interaction/permission-presets/src/index.ts:159`](../../packages/interaction/permission-presets/src/index.ts)
+Source: [`packages/interaction/permission-presets/src/index.ts:162`](../../packages/interaction/permission-presets/src/index.ts)
 <!-- END GENERATED cordis-surface -->

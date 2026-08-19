@@ -768,6 +768,16 @@ describe('ToolRuntime', () => {
       expect(result.content[0]).toMatchObject({ text: 'Error: the user rejected tool "echo"' })
     })
 
+    it('fails closed on a remembered grant the tool request did not advertise', async () => {
+      const ctx = await approvalSetup()
+      ctx.approval.request = () => Promise.resolve<ApprovalOutcome>('allowed-and-remembered')
+      ctx.on('tools/pre-execute', async (_exec, _next): Promise<PreToolDecision> => ({ kind: 'ask' }))
+
+      const result = await ctx.tools.execute({ signal: testToolSignal, callId: CallId('c1'), name: 'echo', arguments: {}, agent: fakeAgent() })
+      expect(result.isError).toBe(true)
+      expect(result.content[0]).toMatchObject({ text: 'Error: tool "echo" received an unsupported remembered approval' })
+    })
+
     it('denies with the cancellation reason on cancelled', async () => {
       const ctx = await approvalSetup()
       ctx.on('approval/request', () => Promise.resolve<ApprovalOutcome>('cancelled'))

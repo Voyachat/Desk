@@ -441,8 +441,8 @@ describe('events frame schemas', () => {
     const frames = [
       { type: 'session/event', sessionId: 's', event: { type: 't', seq: 0, time: 1, data: null } },
       { type: 'session/subscribed', sessionId: 's', lastSeq: -1 },
-      { type: 'approval/requested', sessionId: 's', approvalId: 'a', toolName: 'bash', callId: 'c', reason: 'r' },
-      { type: 'approval/resolved', sessionId: 's', approvalId: 'a', outcome: 'allowed-once' },
+      { type: 'approval/requested', sessionId: 's', approvalId: 'a', toolName: 'bash', callId: 'c', reason: 'r', rememberable: true },
+      { type: 'approval/resolved', sessionId: 's', approvalId: 'a', outcome: 'allowed-and-remembered' },
       { type: 'question/requested', sessionId: 's', questions: [{ id: 'q', question: 'Q?', options: [{ label: 'L' }], multiSelect: true }] },
       { type: 'question/resolved', sessionId: 's', questionRpcId: 'r', outcome: 'answered' },
       { type: 'session/queue', sessionId: 's', items: [
@@ -537,6 +537,8 @@ describe('respond payload schemas', () => {
     expect(approvalRequestIdSchema.parse('a1')).toBe('a1')
     const approval = approvalResponsePayloadSchema.parse({ sessionId: 's', approvalId: 'a', outcome: 'rejected' })
     expect(approval.outcome).toBe('rejected')
+    expect(approvalResponsePayloadSchema.parse({ sessionId: 's', approvalId: 'a', outcome: 'allowed-and-remembered' }).outcome)
+      .toBe('allowed-and-remembered')
     expect(() => approvalResponsePayloadSchema.parse({ sessionId: 's', approvalId: 'a', outcome: 'cancelled' })).toThrow()
     const answer = askUserQuestionAnswerSchema.parse({ answers: [{ id: 'q', selected: ['x'], custom: 'c' }] })
     expect(answer.answers[0]?.selected).toEqual(['x'])

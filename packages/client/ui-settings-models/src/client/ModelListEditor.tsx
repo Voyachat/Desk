@@ -14,7 +14,7 @@
  * rows the user can still fill in by hand.
  */
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { DiscoveredModelView, IApiClient } from '@voyaseek-ai/dsh-api-remotes/client'
 import { Button, Modal } from '@voyaseek-ai/dsh-client-ui-primitives'
@@ -42,6 +42,16 @@ function textOf(model: ModelDraft, key: string): string {
 function numberOf(model: ModelDraft, key: string): number | undefined {
   const value = model[key]
   return typeof value === 'number' ? value : undefined
+}
+
+/** Vendor-like prefix used to group one discovered model identifier. */
+function manufacturerOf(id: string): string {
+  const slash = id.indexOf('/')
+  const dash = id.indexOf('-')
+  const end = slash >= 0 ? slash : dash >= 0 ? dash : id.length
+  const namespace = id.slice(0, end)
+  const withoutVersion = namespace.replace(/[._-]?\d.*$/u, '')
+  return withoutVersion.length === 0 ? namespace : withoutVersion
 }
 
 /** What an interrogation needs, taken from the live form. */
@@ -164,6 +174,8 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
   const [failure, setFailure] = useState<string | undefined>(undefined)
   const [candidates, setCandidates] = useState<readonly DiscoveredModelView[] | undefined>(undefined)
   const [picked, setPicked] = useState<ReadonlySet<string>>(new Set())
+  const [manufacturer, setManufacturer] = useState<string>('')
+  const [query, setQuery] = useState('')
   // Rows carry an id and a name; capacities are the exception, so they stay
   // folded until asked for rather than crowding every row with four inputs.
   const [expanded, setExpanded] = useState<ReadonlySet<number>>(new Set())
@@ -252,6 +264,8 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
       // current account has activated them or that they accept chat requests.
       // Every adoption is therefore an explicit user choice.
       setPicked(new Set())
+      setManufacturer('')
+      setQuery('')
     } catch (error) {
       // The transport rejected rather than answering; without this the button
       // would stay busy with nothing shown.
@@ -264,6 +278,8 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
   const closePicker = (): void => {
     setCandidates(undefined)
     setPicked(new Set())
+    setManufacturer('')
+    setQuery('')
   }
 
   const adoptPicked = (): void => {
@@ -289,6 +305,22 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
       return next
     })
   }
+
+  const manufacturers = useMemo(() => {
+    const values = new Map<string, string>()
+    for (const candidate of candidates ?? []) {
+      const label = manufacturerOf(candidate.id)
+      values.set(label.toLocaleLowerCase(), label)
+    }
+    return [...values.entries()].map(([key, label]) => ({ key, label }))
+  }, [candidates])
+  const normalizedQuery = query.trim().toLocaleLowerCase()
+  const visibleCandidates = (candidates ?? []).filter((candidate) => {
+    if (manufacturer.length > 0 && manufacturerOf(candidate.id).toLocaleLowerCase() !== manufacturer) return false
+    if (normalizedQuery.length === 0) return true
+    return candidate.id.toLocaleLowerCase().includes(normalizedQuery)
+      || candidate.name?.toLocaleLowerCase().includes(normalizedQuery) === true
+  })
 
   // A route the adapter already describes answers without an endpoint; only a
   // draft with neither has nothing to ask about.
@@ -341,12 +373,20 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
               placeholder={t('modelId')}
               aria-label={`${t('modelId')} ${index + 1}`}
               disabled={disabled}
-              onChange={(event) => { patch(index, { id: event.target.value }) }}
+              onChange={(event) => {
+                const id = textOf(model, 'id')
+                const name = textOf(model, 'name')
+                const nextId = event.target.value
+                patch(index, {
+                  id: nextId,
+                  ...name.length > 0 && name === id ? { name: nextId } : {},
+                })
+              }}
             />
             <input
               className={styles['input']}
               type="text"
-              value={textOf(model, 'name')}
+              value={textOf(model, 'name') || textOf(model, 'id')}
               placeholder={t('modelName')}
               aria-label={`${t('modelName')} ${index + 1}`}
               disabled={disabled}
@@ -445,8 +485,42 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
           </>
         )}
       >
+        <div className={styles['candidateTools']}>
+          <div className={styles['manufacturerFilters']} role="group" aria-label={t('fetchManufacturer')}>
+            <button
+              type="button"
+              className={styles['filterChip']}
+              aria-pressed={manufacturer.length === 0}
+              onClick={() => { setManufacturer('') }}
+            >
+              {t('fetchManufacturerAll')}
+            </button>
+            {manufacturers.map(option => (
+              <button
+                type="button"
+                className={styles['filterChip']}
+                aria-pressed={manufacturer === option.key}
+                key={option.key}
+                onClick={() => { setManufacturer(option.key) }}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <input
+            className={styles['candidateSearch']}
+            type="search"
+            value={query}
+            aria-label={t('fetchSearch')}
+            placeholder={t('fetchSearchPlaceholder')}
+            onChange={(event) => { setQuery(event.target.value) }}
+          />
+        </div>
+        {visibleCandidates.length === 0
+          ? <p className={styles['candidateEmpty']}>{t('fetchNoMatches')}</p>
+          : null}
         <ul className={styles['candidateList']}>
-          {(candidates ?? []).map(candidate => (
+          {visibleCandidates.map(candidate => (
             <li key={candidate.id} className={styles['candidate']}>
               <label className={styles['candidateLabel']}>
                 <input

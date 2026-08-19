@@ -60,6 +60,39 @@ describe('ActivityFold', () => {
     expect(view.queryByTestId('member-a1')).toBeNull()
   })
 
+  it('collapses an expanded running fold when the activity completes', () => {
+    const view = render(
+      <ActivityFold
+        members={['c1']}
+        running
+        toolCalls={1}
+        startTime={1_000}
+        endTime={null}
+        renderMember={renderMember}
+        t={t}
+      />,
+    )
+    fireEvent.click(view.getByText('正在处理'))
+    expect(view.getByTestId('member-c1')).toBeTruthy()
+
+    view.rerender(
+      <ActivityFold
+        members={['c1']}
+        running={false}
+        toolCalls={1}
+        startTime={1_000}
+        endTime={3_000}
+        renderMember={renderMember}
+        t={t}
+      />,
+    )
+    expect(view.getByText('已处理')).toBeTruthy()
+    expect(view.queryByTestId('member-c1')).toBeNull()
+
+    fireEvent.click(view.getByText('已处理'))
+    expect(view.getByTestId('member-c1')).toBeTruthy()
+  })
+
   it('shows the running label with a live clock and running marker', () => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date(60_000))
