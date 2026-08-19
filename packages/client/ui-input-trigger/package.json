@@ -1,0 +1,75 @@
+{
+  "name": "@voyaseek-ai/dsh-client-ui-input-trigger",
+  "description": "Input trigger pipeline: '/' and '@' detection, candidate menu, pick routing to registered sources",
+  "version": "0.1.0-rc.5",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
+    "directory": "packages/client/ui-input-trigger"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@voyaseek-ai/dsh-client-runtime",
+        "@voyaseek-ai/dsh-client-locale"
+      ],
+      "platform": "web"
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "clsx": "^2.0.0"
+  },
+  "peerDependencies": {
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@types/react": "~18.3.1",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/client.js",
+    "lib/types/**/*.d.ts"
+  ]
+}

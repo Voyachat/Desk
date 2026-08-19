@@ -1,0 +1,106 @@
+{
+  "name": "@voyaseek-ai/dsh-subagent",
+  "description": "Abstract subagent seam (ctx.subagents): named-provider registry for delegating to child agents",
+  "version": "0.1.0-rc.5",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
+    "directory": "packages/subagent/subagent"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client.d.ts",
+      "default": "./lib/types/client.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "peerDependencies": {
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-presets": "workspace:^",
+    "@voyaseek-ai/dsh-brand": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-sandbox": "workspace:^",
+    "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
+    "@voyaseek-ai/dsh-scope": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence": "workspace:^",
+    "@voyaseek-ai/dsh-session-projection": "workspace:^",
+    "@voyaseek-ai/dsh-session-projection-cache": "workspace:^",
+    "@voyaseek-ai/dsh-jobs": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/dsh-user-approval": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
+  },
+  "peerDependenciesMeta": {
+    "@voyaseek-ai/dsh-agent-presets": {
+      "optional": true
+    },
+    "@voyaseek-ai/dsh-sandbox": {
+      "optional": true
+    },
+    "@voyaseek-ai/dsh-sandbox-policy": {
+      "optional": true
+    },
+    "@voyaseek-ai/dsh-session-persistence": {
+      "optional": true
+    },
+    "@voyaseek-ai/dsh-session-projection": {
+      "optional": true
+    },
+    "@voyaseek-ai/dsh-session-projection-cache": {
+      "optional": true
+    },
+    "@voyaseek-ai/dsh-jobs": {
+      "optional": true
+    },
+    "@voyaseek-ai/dsh-user-approval": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-presets": "workspace:^",
+    "@voyaseek-ai/dsh-brand": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-sandbox": "workspace:^",
+    "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
+    "@voyaseek-ai/dsh-scope": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence": "workspace:^",
+    "@voyaseek-ai/dsh-session-projection": "workspace:^",
+    "@voyaseek-ai/dsh-session-projection-cache": "workspace:^",
+    "@voyaseek-ai/dsh-storage": "workspace:^",
+    "@voyaseek-ai/dsh-storage-domain": "workspace:^",
+    "@voyaseek-ai/dsh-jobs": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/dsh-user-approval": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
+  }
+}

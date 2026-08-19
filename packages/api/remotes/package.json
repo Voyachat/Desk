@@ -1,0 +1,96 @@
+{
+  "name": "@voyaseek-ai/dsh-api-remotes",
+  "description": "Remote BFF assembly and Host Agent/Session lookup policy",
+  "version": "0.1.0-rc.5",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
+    "directory": "packages/api/remotes"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./client": {
+      "types": "./lib/types/client/index.d.ts",
+      "default": "./lib/client.js"
+    },
+    "./types": {
+      "types": "./lib/types/types.d.ts",
+      "default": "./lib/types/types.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@voyaseek-ai/dsh-api-gateway"
+      ],
+      "platform": "web",
+      "immediately": true
+    }
+  },
+  "scripts": {
+    "bundle": "tsdown",
+    "watch": "tsdown --watch"
+  },
+  "license": "MIT",
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/client.js",
+    "lib/types/**/*.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "dependencies": {
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^"
+  },
+  "peerDependencies": {
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-api-gateway": "workspace:^",
+    "@voyaseek-ai/dsh-commands": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
+    "@voyaseek-ai/dsh-goal": "workspace:^",
+    "@voyaseek-ai/dsh-cordis-host-runner": "workspace:^",
+    "@voyaseek-ai/dsh-host-plugin-inventory": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-agent-presets": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-message-feedback": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^"
+  },
+  "devDependencies": {
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-api-gateway": "workspace:^",
+    "@voyaseek-ai/dsh-commands": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
+    "@voyaseek-ai/dsh-goal": "workspace:^",
+    "@voyaseek-ai/dsh-cordis-host-runner": "workspace:^",
+    "@voyaseek-ai/dsh-host-plugin-inventory": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-agent-presets": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-message-feedback": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-typert-registry": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
+  }
+}

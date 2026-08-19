@@ -1,0 +1,29 @@
+# Keyless replay keeps the LSP composition intact and replaces only the model adapter.
+- id: base
+  name: '@voyaseek-ai/cordis-plugin-include'
+  config:
+    path: ../cordis.yml
+    patches:
+      - id: llm-deepseek
+        name: '@voyaseek-ai/dsh-llm-deepseek'
+        disabled: true
+      - insert:
+          - id: lsp
+            name: '@voyaseek-ai/dsh-lsp'
+          - id: lsp-stdio
+            name: '@voyaseek-ai/dsh-lsp-stdio'
+            config:
+              servers:
+                fixture:
+                  command: !!js process.execPath
+                  args: ['./lsp-server.mjs']
+                  extensionToLanguage:
+                    '.ts': typescript
+          - id: timeout-policy
+            name: '@voyaseek-ai/dsh-tool-call-timeout-policy'
+          - id: tool-lsp
+            name: '@voyaseek-ai/dsh-tool-lsp'
+            config:
+              maxLocations: 1
+          - id: llm-replay
+            name: '@voyaseek-ai/dsh-llm-replay'

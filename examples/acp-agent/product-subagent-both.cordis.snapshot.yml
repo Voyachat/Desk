@@ -1,0 +1,38 @@
+# Keyless twin of product-subagent-both.cordis.yml: preserve both product
+# tools while replacing only the external model adapter.
+- id: base
+  name: '@voyaseek-ai/cordis-plugin-include'
+  config:
+    path: ./cordis.yml
+    patches:
+      - id: llm-deepseek
+        name: '@voyaseek-ai/dsh-llm-deepseek'
+        disabled: true
+      - insert:
+          - id: llm-replay
+            name: '@voyaseek-ai/dsh-llm-replay'
+            config:
+              providers:
+                - id: deepseek-official
+                  name: DeepSeek
+                  models:
+                    - id: deepseek-v4-flash
+                    - id: deepseek-v4-pro
+          - id: subagent-codex
+            name: '@voyaseek-ai/dsh-subagent-codex'
+          - id: subagent-claude-code
+            name: '@voyaseek-ai/dsh-subagent-claude-code'
+          - id: tool-subagent-codex
+            name: '@voyaseek-ai/dsh-tool-subagent'
+            config:
+              provider: codex
+              toolName: subagent_codex
+              enableRunInBackground: false
+              maxDepth: provider-managed
+          - id: tool-subagent-claude-code
+            name: '@voyaseek-ai/dsh-tool-subagent'
+            config:
+              provider: claude-code
+              toolName: subagent_claude_code
+              enableRunInBackground: false
+              maxDepth: provider-managed

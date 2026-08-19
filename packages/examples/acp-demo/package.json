@@ -1,0 +1,76 @@
+{
+  "name": "@voyaseek-ai/dsh-acp-demo",
+  "description": "ACP automation server app: agent spine + JSONL persistence + ACP transport, with a JSON-RPC stdio bin",
+  "version": "0.1.0-rc.5",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
+    "directory": "packages/examples/acp-demo"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "bin": {
+    "dsh-acp-demo": "lib/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./bin": {
+      "types": "./lib/types/bin.d.ts",
+      "default": "./lib/bin.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/bin.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@voyaseek-ai/cordis-plugin-include": "workspace:^",
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-acp": "workspace:^",
+    "@voyaseek-ai/dsh-agent-spine-demo": "workspace:^",
+    "@voyaseek-ai/dsh-app-boot": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-session-checkpoint-policy": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence-jsonl": "workspace:^",
+    "@voyaseek-ai/dsh-session-query": "workspace:^",
+    "@voyaseek-ai/dsh-session-query-sqlite": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/dsh-agent-instructions": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@voyaseek-ai/cordis-plugin-include": "workspace:^",
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-acp": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-spine-demo": "workspace:^",
+    "@voyaseek-ai/dsh-app-boot": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-session-checkpoint-policy": "workspace:^",
+    "@voyaseek-ai/dsh-session-persistence-jsonl": "workspace:^",
+    "@voyaseek-ai/dsh-session-query": "workspace:^",
+    "@voyaseek-ai/dsh-session-query-sqlite": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/dsh-agent-instructions": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^"
+  }
+}

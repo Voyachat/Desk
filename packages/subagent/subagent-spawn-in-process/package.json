@@ -1,0 +1,60 @@
+{
+  "name": "@voyaseek-ai/dsh-subagent-spawn-in-process",
+  "description": "In-process spawn subagent backend: runs a fresh child agent on ctx.agents",
+  "version": "0.1.0-rc.5",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
+    "directory": "packages/subagent/subagent-spawn-in-process"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.d.ts"
+  ],
+  "license": "MIT",
+  "peerDependencies": {
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/dsh-subagent-in-process-driver": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
+  },
+  "dependencies": {
+    "@voyaseek-ai/schemastery": "workspace:^"
+  },
+  "devDependencies": {
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop-testkit": "workspace:^",
+    "@voyaseek-ai/dsh-bash-local": "workspace:^",
+    "@voyaseek-ai/dsh-subprocess-local": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-llm-deepseek": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-subagent": "workspace:^",
+    "@voyaseek-ai/dsh-subagent-in-process-driver": "workspace:^",
+    "@voyaseek-ai/dsh-tool-bash": "workspace:^",
+    "@voyaseek-ai/dsh-tool-subagent": "workspace:^",
+    "@voyaseek-ai/cordis": "workspace:^"
+  }
+}

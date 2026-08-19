@@ -1,0 +1,40 @@
+# Test-only composition of the public opt-in provider and foreground tool.
+# The owning e2e boots this tree but never invokes the model or Codex.
+- id: fixture
+  name: './fixture.ts'
+
+- id: subagent
+  name: '@voyaseek-ai/dsh-subagent'
+
+- id: subprocess
+  name: '@voyaseek-ai/dsh-subprocess-local'
+
+- id: subagent-codex
+  name: '@voyaseek-ai/dsh-subagent-codex'
+
+- id: tool-subagent-codex
+  name: '@voyaseek-ai/dsh-tool-subagent'
+  config:
+    provider: codex
+    toolName: subagent_codex
+    enableRunInBackground: false
+    maxDepth: 'provider-managed'
+
+- id: agent-spine
+  name: '@voyaseek-ai/dsh-agent-spine-demo'
+  config:
+    agents:
+      - id: main
+        provider: mock
+        model: mock-delegate
+        cwd: !!js process.cwd()
+    persona: 'This composition test must not start a model turn.'
+    workspaceContext: false
+
+- id: persistence
+  name: '@voyaseek-ai/dsh-session-persistence-jsonl'
+  config:
+    root: './.sessions'
+
+- id: checkpoint-policy
+  name: '@voyaseek-ai/dsh-session-checkpoint-policy'

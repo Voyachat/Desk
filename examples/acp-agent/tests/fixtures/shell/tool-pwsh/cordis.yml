@@ -1,0 +1,27 @@
+# Minimal tool-pwsh composition: real app boot path, real pwsh executor, real
+# foreground + background tool calls; driven by the package's loader.spec.ts.
+- id: system-prompt
+  name: '@voyaseek-ai/dsh-system-prompt'
+
+- id: tools
+  name: '@voyaseek-ai/dsh-tools'
+
+- id: subprocess
+  name: '@voyaseek-ai/dsh-subprocess-local'
+
+- id: bash
+  name: '@voyaseek-ai/dsh-pwsh-local'
+  config:
+    graceMs: 200
+
+- id: shell-env
+  name: '@voyaseek-ai/dsh-shell-env'
+
+- id: tasks
+  name: '@voyaseek-ai/dsh-jobs-local'
+
+- id: tool-jobs
+  name: '@voyaseek-ai/dsh-tool-jobs'
+
+- id: tool-pwsh
+  name: '@voyaseek-ai/dsh-tool-pwsh'

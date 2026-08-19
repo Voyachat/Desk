@@ -1,0 +1,63 @@
+{
+  "name": "@voyaseek-ai/dsh-session-log-export",
+  "description": "Web Session-log export command and shared download dialog",
+  "version": "0.1.0-rc.5",
+  "publishConfig": { "access": "public" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
+    "directory": "packages/session-query/session-log-export"
+  },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
+    "./invariant": { "types": "./lib/types/invariant.d.ts", "default": "./lib/invariant.js" },
+    "./client": { "types": "./lib/types/client/index.d.ts", "default": "./lib/client.js" },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": ["lib/index.js", "lib/invariant.js", "lib/client.js", "lib/types/**/*.d.ts"],
+  "scripts": { "bundle": "tsdown", "watch": "tsdown --watch" },
+  "license": "MIT",
+  "peerDependencies": {
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-commands": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-commands": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "react": "^18.2.0"
+  },
+  "devDependencies": {
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
+    "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-client-locale": "workspace:^",
+    "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-commands": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
+    "@voyaseek-ai/dsh-commands": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@types/react": "~18.3.1",
+    "react": "^18.2.0"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@voyaseek-ai/dsh-client-locale",
+        "@voyaseek-ai/dsh-client-runtime",
+        "@voyaseek-ai/dsh-client-ui-commands",
+        "@voyaseek-ai/dsh-client-ui-conversation"
+      ],
+      "platform": "web"
+    }
+  }
+}
