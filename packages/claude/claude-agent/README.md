@@ -33,16 +33,11 @@ Any Claude-API-compatible endpoint works: `baseUrl`/`authToken`/`apiKey`/
 `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL`, and unset fields fall through to the
 parent environment, so third-party gateways need only their env vars.
 
-Tool approval bridges to the host approval service through the SDK
-`canUseTool` hook (fail-closed when no approval service is present). Without
-an explicit `permissionMode`, each query reads the latest session permission
-events: `read-only` uses SDK `default`, `workspace-write` plus approval policy
-`ask` uses `acceptEdits`, and `danger-full-access` plus `never` uses
-`bypassPermissions`. Non-bypass modes keep the approval bridge. An explicit
-`permissionMode` remains a deployment-wide override. When Claude supplies an exact permission-update
-suggestion, the approval panel offers allow once, allow and remember, and
-reject. The remembered result returns Claude's complete suggestion set to the
-SDK unchanged; DSH never derives a broader rule from the tool name or path.
+The SDK `canUseTool` hook carries two different interactions. `AskUserQuestion` delegates to the host question service and returns its answers to Claude; it never opens an approval panel. Other permission requests delegate to the host approval service and fail closed when that service is absent.
+
+Without an explicit `permissionMode`, each query reads the latest session permission events. `read-only` uses SDK `default`; `workspace-write` plus `ask` uses classifier-backed `auto`; `danger-full-access` plus `never` keeps SDK `default` so questions remain interactive, while the bridge directly allows every non-question tool. An explicit `permissionMode` remains a deployment-wide override. Explicit `bypassPermissions` is accepted for deployments that need the raw SDK posture, but the SDK resolves tools before `canUseTool` in that mode and therefore cannot deliver `AskUserQuestion` to the host.
+
+The approval panel offers a remembered action only when Claude's entire suggestion batch consists of same-tool `addRules` updates with `behavior: allow` and `destination: session`. Accepted rules are passed to the next SDK query child in the same live driver. Mixed updates, settings-file destinations, mode changes, directory grants, deny rules, and cross-tool rules remain one-shot; DSH never writes Claude user, project, or local settings from the generic approval panel. These remembered rules do not survive an application or driver restart.
 
 ## Config
 
@@ -53,7 +48,7 @@ SDK unchanged; DSH never derives a broader rule from the tool name or path.
 | `baseUrl` | absent | `ANTHROPIC_BASE_URL` overlay (compat gateways) |
 | `authToken` | absent | `ANTHROPIC_AUTH_TOKEN` overlay |
 | `apiKey` | absent | `ANTHROPIC_API_KEY` overlay |
-| `permissionMode` | session permission state | explicit SDK permission mode (`default`, `acceptEdits`, `plan`, `bypassPermissions`) |
+| `permissionMode` | session permission state | explicit SDK permission mode (`default`, `acceptEdits`, `auto`, `plan`, `bypassPermissions`) |
 | `executable` | SDK-resolved | explicit `claude` CLI path (`pathToClaudeCodeExecutable`) |
 | `env` | `{}` | extra child-env entries layered over the scrubbed parent env |
 | `disposeGraceMs` | `3000` | grace period before a cancelled SDK child is terminated |

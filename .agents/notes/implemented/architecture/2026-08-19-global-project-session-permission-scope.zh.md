@@ -27,7 +27,9 @@ permission:
 
 内置 preset 机器值保持稳定，客户端在使用时渲染本地化产品文案：`read-only` 是「请求批准」，`workspace-write` 是「帮我批准」，`danger-full-access` 是「完全访问权限」。自定义 preset 名称与说明仍回退到 host 文案。斜杠命令协议名也保持稳定；命令菜单使用单独的本地化展示标签。
 
-本机与 Claude 会话读取相同的持久权限事实。没有显式部署覆盖时，Claude 将 `read-only` 映射为 SDK `default`、将 `workspace-write + ask` 映射为 `acceptEdits`、将 `danger-full-access + never` 映射为 `bypassPermissions`。这对齐的是交互意图，不是强制执行实现：Claude SDK 模式不声称具有与本机沙箱相同的操作系统隔离强度。权限预设控制文件效果与审批提示；网络策略仍不属于这项能力。
+本机与 Claude 会话读取相同的持久权限事实。没有显式部署覆盖时，Claude 将 `read-only` 映射为 SDK `default`，并将 `workspace-write + ask` 映射为 SDK 基于分类器的 `auto` 审查。`danger-full-access + never` 保留 SDK `default`，使 `AskUserQuestion` 能到达 host 问题服务，同时 DSH bridge 直接放行所有非提问工具。这对齐的是交互意图，不是强制执行实现：Claude SDK 模式不声称具有与本机沙箱相同的操作系统隔离强度。权限预设控制文件效果与审批行为；浏览器和网络限制仍是独立能力。
+
+`AskUserQuestion` 与权限提示共用 SDK `canUseTool` 传输，但由不同能力拥有：问题使用 `ctx.userQuestions`，权限提示使用 `ctx.approval`。通用记住操作只接受整批均为同一工具、session 目的地、allow-rule 新增的 SDK 建议。存活的 Claude driver 会把这些规则带到后续 query 子进程；混合批次、settings 文件目的地、模式或目录变更，以及其他工具的规则都会被拒绝。这种授权只是存活 driver 的内存便利功能，不是持久 DSH preset，也不能修改 Claude 的用户、项目或本机 settings。
 
 ## 后果
 
@@ -36,4 +38,9 @@ permission:
 - 修改默认值不能静默扩大已有或回放会话的权限。
 - 一个项目规则适用于以相同规范 cwd 创建的本机、Claude、CLI 及其他会话。
 - 显式配置的 Claude `permissionMode` 仍覆盖自动映射，并由部署方负责。
-- 在产品能够承诺 ChatGPT 式网络控制前，需要另建网络审批强制执行能力。
+- 显式 `bypassPermissions` 部署覆盖无法呈现 `AskUserQuestion`，因为 SDK 会在该模式下先于回调解析工具。
+- 在产品能够承诺 ChatGPT 式网络控制前，需要另建浏览器或网络 allowlist 强制执行能力。
+
+## 考虑过的替代方案
+
+把 SDK 建议持久化到 Claude 用户或项目 settings 的方案被否决，因为通用审批操作无法展示其目的地，并会绕过 DSH 拥有的设置优先级。把内置完全访问 preset 映射为 SDK `bypassPermissions` 的方案被否决，因为该模式会在 host 回调之前吞掉 `AskUserQuestion`。持久浏览器规则事件推迟到 DSH 拥有显式的规则、作用域、回放与撤销接口之后；当前存活 driver 缓存保持仅会话有效，且以重启为边界。

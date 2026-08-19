@@ -15,7 +15,11 @@ DSH 会话的 Claude Agent SDK 驱动：以 `claude` runtime 创建的会话由 
 
 任何兼容 Claude API 的 endpoint 都可使用：`baseUrl`／`authToken`／`apiKey`／`model` 分别映射到 `ANTHROPIC_BASE_URL`／`ANTHROPIC_AUTH_TOKEN`／`ANTHROPIC_API_KEY`／`ANTHROPIC_MODEL`；未设置字段继续使用父环境，因此第三方 gateway 只需提供相应环境变量。
 
-工具审批通过 SDK `canUseTool` hook 接入 host 审批服务；缺少审批服务时按拒绝处理。未显式配置 `permissionMode` 时，每次 query 都读取最新会话权限事件：`read-only` 使用 SDK `default`，`workspace-write` 加审批策略 `ask` 使用 `acceptEdits`，`danger-full-access` 加 `never` 使用 `bypassPermissions`。非 bypass 模式保留审批桥接；显式 `permissionMode` 仍是部署级覆盖。Claude 提供精确权限更新建议时，审批面板提供允许一次、允许并记住和拒绝；记住授权会把 Claude 的完整建议原样返回 SDK，DSH 不会根据工具名或路径推导更宽规则。
+SDK `canUseTool` hook 承载两类不同交互。`AskUserQuestion` 委托给 host 问题服务，并把答案返回 Claude，绝不打开审批面板。其他权限请求委托给 host 审批服务；缺少该服务时按拒绝处理。
+
+未显式配置 `permissionMode` 时，每次 query 都读取最新会话权限事件。`read-only` 使用 SDK `default`；`workspace-write` 加 `ask` 使用基于分类器的 `auto`；`danger-full-access` 加 `never` 仍使用 SDK `default` 以保留提问交互，同时 bridge 直接放行所有非提问工具。显式 `permissionMode` 仍是部署级覆盖。需要原始 SDK 姿态的部署可以显式选择 `bypassPermissions`，但该模式会在 `canUseTool` 之前解析工具，因此 SDK 无法把 `AskUserQuestion` 交给 host。
+
+只有 Claude 的整批建议全部是同一工具、`type: addRules`、`behavior: allow`、`destination: session` 时，审批面板才提供记住操作。接受后的规则会传给同一存活 driver 的下一次 SDK query 子进程。混合更新、settings 文件目的地、模式切换、目录授权、deny 规则和跨工具规则都只能单次允许；通用审批面板绝不会让 DSH 写入 Claude 的用户、项目或本机 settings。这类记住规则不会跨应用或 driver 重启保留。
 
 ## 配置
 
@@ -26,7 +30,7 @@ DSH 会话的 Claude Agent SDK 驱动：以 `claude` runtime 创建的会话由 
 | `baseUrl` | 未设置 | `ANTHROPIC_BASE_URL` 覆盖（兼容 gateway） |
 | `authToken` | 未设置 | `ANTHROPIC_AUTH_TOKEN` 覆盖 |
 | `apiKey` | 未设置 | `ANTHROPIC_API_KEY` 覆盖 |
-| `permissionMode` | 会话权限状态 | 显式 SDK 权限模式（`default`、`acceptEdits`、`plan`、`bypassPermissions`） |
+| `permissionMode` | 会话权限状态 | 显式 SDK 权限模式（`default`、`acceptEdits`、`auto`、`plan`、`bypassPermissions`） |
 | `executable` | SDK 解析 | 显式 Claude CLI 路径（`pathToClaudeCodeExecutable`） |
 | `env` | `{}` | 叠加到清理后父环境的子进程环境项 |
 | `disposeGraceMs` | `3000` | 取消 SDK 子进程后终止前的宽限毫秒数 |

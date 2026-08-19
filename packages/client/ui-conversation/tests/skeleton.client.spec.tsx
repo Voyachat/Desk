@@ -87,7 +87,7 @@ function mount(
   workspaceRows: WorkspaceView[] = [{ ...workspace('one'), sessionIds: [SID] }],
   retargetWorkspace = vi.fn(async (_workspaceId: WorkspaceId) => {}),
   options: {
-    /** When true, mimic overlay:true chain siblings (hidden fallback + takeover). */
+    /** When true, elect a composer-chain takeover instead of the fallback. */
     overlayTakeover?: boolean
     /** The session list summary's `blank` flag — independent of the snapshot's. */
     summaryBlank?: boolean
@@ -224,14 +224,7 @@ function mount(
   }) as ConversationRootProps['renderSlot']
   const renderSlotChain = ((_key, _owner, opts) => (
     options.overlayTakeover === true
-      ? (
-        <>
-          <div data-chain-overlay-fallback="conversation.composer" style={{ display: 'none' }}>
-            {opts?.fallback ?? null}
-          </div>
-          <div data-testid="composer-takeover">TAKEOVER</div>
-        </>
-      )
+      ? <div data-testid="composer-takeover">TAKEOVER</div>
       : (opts?.fallback ?? null)
   )) as ConversationRootProps['renderSlotChain']
   const props: ConversationRootProps = {
@@ -254,6 +247,10 @@ function mount(
     view, chat, sink, retargetWorkspace, session, slotCalls, seatOwners, open,
     pickerOwner: () => pickerOwner,
     rerender: () => { view.rerender(<ConversationRoot {...props} />) },
+    setTakeover: (active: boolean) => {
+      options.overlayTakeover = active
+      view.rerender(<ConversationRoot {...props} />)
+    },
   }
 }
 
@@ -339,13 +336,23 @@ describe('ConversationRoot resident composer', () => {
     expect(b.slotCalls).toContain('conversation.session.header.utilities')
   })
 
-  it('sticky composer seat wraps the whole overlay chain, not only the fallback stack', () => {
-    const b = mount(conversationSnapshot(), undefined, undefined, { overlayTakeover: true })
+  it('restores the machine-backed composer after a chain takeover', () => {
+    const b = mount(conversationSnapshot())
+    const before = b.view.getByRole('textbox') as HTMLTextAreaElement
+    fireEvent.change(before, { target: { value: 'draft survives approval' } })
+
+    act(() => { b.setTakeover(true) })
     const seat = b.view.container.querySelector('[data-composer-seat]')
     const takeover = b.view.getByTestId('composer-takeover')
-    const fallback = b.view.container.querySelector('[data-chain-overlay-fallback="conversation.composer"]')
     expect(seat?.contains(takeover)).toBe(true)
-    expect(seat?.contains(fallback)).toBe(true)
+    expect(b.view.queryByRole('textbox')).toBeNull()
+    expect(b.view.container.querySelector('[data-chain-overlay-fallback]')).toBeNull()
+
+    act(() => { b.setTakeover(false) })
+    const restored = b.view.getByRole('textbox') as HTMLTextAreaElement
+    expect(restored).not.toBe(before)
+    expect(restored.value).toBe('draft survives approval')
+    expect(seat?.contains(restored)).toBe(true)
   })
 
   it('hero phase: same textarea, hero chrome, no header, picker switches the workspace', () => {

@@ -91,9 +91,9 @@ describe('web e2e: approval takeover keeps its actions reachable', () => {
     // Read-only: the mode whose denial the model escalates from. Switched
     // through the shipped access-mode chip, not a test-only override.
     await page.locator('[aria-label^="Access mode"]').click()
-    await page.getByRole('menuitem', { name: 'Read Only' }).click()
+    await page.getByRole('menuitem', { name: /Ask for approval/ }).click()
     await expect.poll(
-      () => page.locator('[aria-label="Access mode, current: Read Only"]').count(),
+      () => page.locator('[aria-label="Access mode, current: Ask for approval"]').count(),
       { timeout: 15_000 },
     ).toBe(1)
 
@@ -152,7 +152,7 @@ describe('web e2e: approval takeover keeps its actions reachable', () => {
       await page.setViewportSize(original)
     }
 
-    await panel.getByRole('button', { name: 'Allow once' }).click()
+    await panel.getByRole('button', { name: 'Yes' }).click()
 
     const sessionId = await settled
     if (MODE === 'record') {
@@ -171,7 +171,13 @@ describe('web e2e: approval takeover keeps its actions reachable', () => {
     expect(written).toContain(TOKENS.slice(0, 64))
     await expect.poll(() => page.getByText('DONE', { exact: true }).count(), { timeout: 20_000 }).toBeGreaterThanOrEqual(1)
     expect(await page.locator('[data-approval-key]').count()).toBe(0)
-    await expect.poll(() => page.locator('textarea').first().isEnabled(), { timeout: 10_000 }).toBe(true)
+    const restoredInput = page.locator('textarea').first()
+    await restoredInput.waitFor({ state: 'visible', timeout: 10_000 })
+    await expect.poll(() => restoredInput.isEnabled(), { timeout: 10_000 }).toBe(true)
+    const restoredBox = await restoredInput.boundingBox()
+    expect(restoredBox).not.toBeNull()
+    expect(restoredBox?.height).toBeGreaterThan(0)
+    expect(restoredBox?.y).toBeLessThan(page.viewportSize()?.height ?? Number.POSITIVE_INFINITY)
     expect(tripwire.pageErrors).toEqual([])
     expect(tripwire.warnings).toEqual([])
   }, 300_000)

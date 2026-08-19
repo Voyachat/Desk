@@ -17,11 +17,11 @@
   - img
   - text: Context injection @voyaseek-ai/dsh-system-prompt
 - paragraph: partial
-- status: Deep diving...
+- status: Voyaseek thinking
 - textbox "Message the agent"
 - button "Commands":
   - img
-- 'button "Access mode, current: Workspace Write"': Workspace Write
+- 'button "Access mode, current: Agent approval"': Agent approval
 - button "Runtime mode":
   - img
   - text: Native

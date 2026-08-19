@@ -8,7 +8,7 @@ import { Context } from '@voyaseek-ai/cordis'
 import { createUserMessage } from '@voyaseek-ai/dsh-llm'
 import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
 import type { Session } from '@voyaseek-ai/dsh-session'
-import type { CanUseTool, Options, PermissionMode, Query, SDKMessage } from '@anthropic-ai/claude-agent-sdk'
+import type { CanUseTool, Options, PermissionMode, Query, SDKMessage, Settings } from '@anthropic-ai/claude-agent-sdk'
 import { ClaudeSdkAgent } from '../src/driver.ts'
 import { SdkQueryEngine } from '../src/engine.ts'
 import type {} from '../src/types.ts'
@@ -71,7 +71,11 @@ function successScript(claudeSessionId: string, reply: string): SDKMessage[] {
   ]
 }
 
-async function makeDriver(permissionMode: () => PermissionMode = () => 'bypassPermissions', canUseTool?: CanUseTool): Promise<{ ctx: Context; session: Session; driver: ClaudeSdkAgent; sdk: FakeSdk }> {
+async function makeDriver(
+  permissionMode: () => PermissionMode = () => 'bypassPermissions',
+  canUseTool?: CanUseTool,
+  permissionSettings?: () => Settings['permissions'] | undefined,
+): Promise<{ ctx: Context; session: Session; driver: ClaudeSdkAgent; sdk: FakeSdk }> {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
   const session = ctx.sessions.create(SessionId('claude-session'), {
@@ -87,6 +91,7 @@ async function makeDriver(permissionMode: () => PermissionMode = () => 'bypassPe
       childEnv: { PATH: '/usr/bin' },
       permissionMode,
       ...canUseTool === undefined ? {} : { canUseTool },
+      ...permissionSettings === undefined ? {} : { permissionSettings },
       disposeGraceMs: 100,
       spawn: () => { throw new Error('unit tests never spawn') },
       query: sdk.query,
@@ -172,8 +177,43 @@ describe('ClaudeSdkAgent', () => {
     expect(sdk.captured[1]!.options).toMatchObject({
       permissionMode: 'bypassPermissions',
       allowDangerouslySkipPermissions: true,
+      canUseTool,
     })
-    expect(sdk.captured[1]!.options.canUseTool).toBeUndefined()
+  })
+
+  it('passes the interaction callback through an explicit bypass override', async () => {
+    const canUseTool: CanUseTool = async (_toolName, input) => ({ behavior: 'allow', updatedInput: input })
+    const { driver, sdk } = await makeDriver(() => 'bypassPermissions', canUseTool)
+    sdk.script(successScript('claude-bypass-question', 'answered'))
+
+    sendPrompt(driver, 'ask me a question')
+    await driver.whenIdle()
+
+    expect(sdk.captured[0]!.options).toMatchObject({
+      permissionMode: 'bypassPermissions',
+      allowDangerouslySkipPermissions: true,
+      canUseTool,
+    })
+  })
+
+  it('passes newly remembered session rules to the next query child', async () => {
+    const state: { permissions?: Settings['permissions'] } = {}
+    const { driver, sdk } = await makeDriver(
+      () => 'default',
+      async (_toolName, input) => ({ behavior: 'allow', updatedInput: input }),
+      () => state.permissions,
+    )
+    sdk.script(successScript('claude-permission-settings', 'first'))
+    sendPrompt(driver, 'one')
+    await driver.whenIdle()
+
+    state.permissions = { allow: ['mcp__browser__open(https://example.com/**)'] }
+    sdk.script(successScript('claude-permission-settings', 'second'))
+    sendPrompt(driver, 'two')
+    await driver.whenIdle()
+
+    expect(sdk.captured[0]!.options.settings).toBeUndefined()
+    expect(sdk.captured[1]!.options.settings).toEqual({ permissions: state.permissions })
   })
 
   it('restores the SDK conversation id from the log on reconstruction', async () => {

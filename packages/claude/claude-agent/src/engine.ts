@@ -12,6 +12,7 @@ import {
   type PermissionMode,
   type Query,
   type SDKMessage,
+  type Settings,
 } from '@anthropic-ai/claude-agent-sdk'
 import type { SubprocessHandle, SubprocessSpawnSpec } from '@voyaseek-ai/dsh-subprocess'
 import { claudeSpawnSpec, ManagedClaudeCodeProcess } from './process.ts'
@@ -46,8 +47,10 @@ export interface ClaudeEngineConfig {
   model?: string
   /** Resolve the SDK permission posture from current session state before each query. */
   permissionMode: () => PermissionMode
-  /** DSH approval bridge; omitted from a `bypassPermissions` query. */
+  /** DSH interaction bridge for permission requests and AskUserQuestion. */
   canUseTool?: CanUseTool
+  /** Session-scoped permission rules remembered by the DSH approval bridge. */
+  permissionSettings?: () => Settings['permissions'] | undefined
   /** Explicit Claude Code executable; absent uses the SDK-distributed CLI. */
   executable?: string
   /** Process-tree termination grace in milliseconds. */
@@ -84,6 +87,7 @@ export class SdkQueryEngine {
     input.signal.addEventListener('abort', forwardAbort, { once: true })
     let child: SubprocessHandle | undefined
     const permissionMode = this.config.permissionMode()
+    const permissionSettings = this.config.permissionSettings?.()
     const options: Options = {
       abortController: controller,
       cwd: input.cwd,
@@ -94,9 +98,8 @@ export class SdkQueryEngine {
       ...permissionMode === 'bypassPermissions'
         ? { allowDangerouslySkipPermissions: true }
         : {},
-      ...permissionMode === 'bypassPermissions' || this.config.canUseTool === undefined
-        ? {}
-        : { canUseTool: this.config.canUseTool },
+      ...this.config.canUseTool === undefined ? {} : { canUseTool: this.config.canUseTool },
+      ...permissionSettings === undefined ? {} : { settings: { permissions: permissionSettings } },
       ...this.config.executable === undefined ? {} : { pathToClaudeCodeExecutable: this.config.executable },
       spawnClaudeCodeProcess: (spawnOptions) => {
         const handle = this.config.spawn(claudeSpawnSpec(spawnOptions, this.config.disposeGraceMs))

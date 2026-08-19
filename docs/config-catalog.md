@@ -416,13 +416,13 @@ export interface Config {
   readonly disposeGraceMs?: number
 }
 
-/** Permission postures the plugin admits; the SDK's interactive modes stay out. */
-export type ClaudePermissionMode = Extract<PermissionMode, 'default' | 'acceptEdits' | 'bypassPermissions' | 'plan'>
+/** Permission postures the plugin admits; `dontAsk` stays out because DSH owns denial policy. */
+export type ClaudePermissionMode = Extract<PermissionMode, 'default' | 'acceptEdits' | 'auto' | 'bypassPermissions' | 'plan'>
 ```
 
 Depends on: `PermissionMode` (`@anthropic-ai/claude-agent-sdk`)
 
-Source: [`packages/claude/claude-agent/src/index.ts:32`](../packages/claude/claude-agent/src/index.ts)
+Source: [`packages/claude/claude-agent/src/index.ts:41`](../packages/claude/claude-agent/src/index.ts)
 
 <a id="voyaseek-aidsh-client-connection"></a>
 
@@ -1375,7 +1375,7 @@ Source: [`packages/feedback/message-feedback/src/index.ts:49`](../packages/feedb
 
 ## `@voyaseek-ai/dsh-mobile-view`
 
-Requires: `webServer` · `sessionQuery` · `credentials`
+Requires: `webServer` · `sessionQuery` · `credentials` · `settings`
 
 ```ts config-catalog
 /** Read-only mobile viewer limits and credential reference. */
@@ -1395,7 +1395,7 @@ export interface Config {
 }
 ```
 
-Source: [`packages/host/mobile-view/src/index.ts:22`](../packages/host/mobile-view/src/index.ts)
+Source: [`packages/host/mobile-view/src/index.ts:42`](../packages/host/mobile-view/src/index.ts)
 
 <a id="voyaseek-aidsh-permission-presets"></a>
 
@@ -1434,7 +1434,7 @@ export interface PresetSpec {
 
 Depends on: [`ApprovalPolicy`](subsystems/approval.md) · [`SandboxMode`](subsystems/sandbox.md)
 
-Source: [`packages/interaction/permission-presets/src/index.ts:140`](../packages/interaction/permission-presets/src/index.ts)
+Source: [`packages/interaction/permission-presets/src/index.ts:143`](../packages/interaction/permission-presets/src/index.ts)
 
 <a id="voyaseek-aidsh-persona"></a>
 
@@ -3199,6 +3199,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@voyaseek-ai/dsh-client-ui-plan` ([`packages/client/ui-plan/src/index.ts`](../packages/client/ui-plan/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings` ([`packages/client/ui-settings/src/index.ts`](../packages/client/ui-settings/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-general` ([`packages/client/ui-settings-general/src/index.ts`](../packages/client/ui-settings-general/src/index.ts))
+- `@voyaseek-ai/dsh-client-ui-settings-mobile-view` ([`packages/client/ui-settings-mobile-view/src/index.ts`](../packages/client/ui-settings-mobile-view/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-models` ([`packages/client/ui-settings-models/src/index.ts`](../packages/client/ui-settings-models/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-plugin-inventory` ([`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-plugins` ([`packages/client/ui-settings-plugins/src/index.ts`](../packages/client/ui-settings-plugins/src/index.ts))

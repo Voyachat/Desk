@@ -24,9 +24,13 @@
   - button "标准模式":
     - text: 标准模式
     - img
-  - text: 权限 选择新会话的默认权限模式
-  - button "Workspace Write":
-    - text: Workspace Write
+  - text: 权限 设置新会话的默认权限；不会改变已经创建的会话 全局默认 没有项目覆盖时，新会话使用此权限
+  - button "帮我批准":
+    - text: 帮我批准
+    - img
+  - text: 当前项目 workspace 中新建的会话使用此权限 {{cwd}}/workspace
+  - button "跟随全局（帮我批准）":
+    - text: 跟随全局（帮我批准）
     - img
   - text: 语言
   - button "中文":
@@ -45,4 +49,8 @@
   - text: 繁忙时 Enter 键行为 仅在智能体运行时生效；Cmd/Ctrl+Enter 使用另一行为
   - button "排队发送":
     - text: 排队发送
+    - img
+  - text: 思考过程展示 逐行展示时，思考步骤独立成行，并在生成期间自动展开
+  - button "折叠进活动行":
+    - text: 折叠进活动行
     - img

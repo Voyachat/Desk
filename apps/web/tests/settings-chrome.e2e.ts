@@ -19,7 +19,7 @@ import {
   acknowledgeReloadConnectionLoss, assertFixtureInventory, captureStableAria, compareOrRefreshGolden,
   launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold,
 } from './scaffold.ts'
-import { ZH_BROWSER_LOCALE, saveFailureShot } from './support.ts'
+import { connectFreshWorkspaceZh, ZH_BROWSER_LOCALE, saveFailureShot } from './support.ts'
 
 const SNAPSHOT_DIR = fileURLToPath(new URL('./snapshots/settings-chrome', import.meta.url))
 const DIALOG_EXPECTED = join(SNAPSHOT_DIR, 'dialog.expected.md')
@@ -42,6 +42,7 @@ describe('web e2e: settings modal and General preferences', () => {
     tripwire = watchConsole(page)
     await page.goto(scaffold.baseUrl, { waitUntil: 'load' })
     await page.waitForSelector('[class*="frame"]', { timeout: 30_000 })
+    await connectFreshWorkspaceZh(page, scaffold.workspaceCwd)
   }, 120_000)
 
   afterAll(async () => {
@@ -60,7 +61,7 @@ describe('web e2e: settings modal and General preferences', () => {
     expect(await trigger.getAttribute('aria-expanded')).toBe('true')
     // General is active by default; Permission, Language and Appearance are functional.
     expect(await dialog.getByRole('button', { name: '通用设置' }).getAttribute('aria-current')).toBe('true')
-    await dialog.getByRole('button', { name: 'Workspace Write' }).waitFor({ timeout: 10_000 })
+    await dialog.getByRole('button', { name: '帮我批准', exact: true }).waitFor({ timeout: 10_000 })
     await expect.poll(() => dialog.getByText('语言', { exact: true }).count(), { timeout: 5_000 }).toBe(1)
     await expect.poll(() => dialog.getByText('外观', { exact: true }).count(), { timeout: 5_000 }).toBe(1)
     const openDocument = dialog.getByRole('button', { name: '打开配置文件' })
@@ -138,12 +139,12 @@ describe('web e2e: settings modal and General preferences', () => {
     await page.getByRole('button', { name: '设置', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: '设置' })
     await dialog.waitFor({ timeout: 10_000 })
-    const selector = dialog.getByRole('button', { name: 'Workspace Write' })
+    const selector = dialog.getByRole('button', { name: '帮我批准', exact: true })
     await selector.waitFor({ timeout: 10_000 })
     await expect.poll(() => selector.isEnabled(), { timeout: 5_000 }).toBe(true)
     await selector.click()
-    await page.getByRole('menuitem', { name: 'Read Only' }).click()
-    await dialog.getByRole('button', { name: 'Read Only' }).waitFor({ timeout: 10_000 })
+    await page.getByRole('menuitem', { name: '请求批准 默认保持只读；需要写入文件时请求你的批准' }).click()
+    await dialog.getByRole('button', { name: '请求批准', exact: true }).waitFor({ timeout: 10_000 })
 
     const document = await readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8')
     expect(document).toContain('permission:')
@@ -158,14 +159,14 @@ describe('web e2e: settings modal and General preferences', () => {
       ['approval/policy', { policy: 'ask' }],
     ])
 
-    await dialog.getByRole('button', { name: 'Read Only' }).click()
-    await page.getByRole('menuitem', { name: 'Full access' }).click()
-    const confirmation = page.getByRole('dialog', { name: '确认启用 Full access？' })
-    const enable = confirmation.getByRole('button', { name: '启用 Full access' })
+    await dialog.getByRole('button', { name: '请求批准', exact: true }).click()
+    await page.getByRole('menuitem', { name: /完全访问权限/ }).click()
+    const confirmation = page.getByRole('dialog', { name: '确认将全局默认设为完全访问权限？' })
+    const enable = confirmation.getByRole('button', { name: '启用完全访问权限' })
     expect(await enable.isDisabled()).toBe(true)
     await confirmation.getByRole('checkbox').click()
     await enable.click()
-    await dialog.getByRole('button', { name: 'Full access' }).waitFor({ timeout: 10_000 })
+    await dialog.getByRole('button', { name: '完全访问权限', exact: true }).waitFor({ timeout: 10_000 })
     const confirmedDocument = await readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8')
     expect(confirmedDocument).toContain('defaultPreset: danger-full-access')
     const confirmed = scaffold.ctx.sessions.create(SessionId('settings-permission-confirmed'))
@@ -174,6 +175,46 @@ describe('web e2e: settings modal and General preferences', () => {
       ['sandbox/mode', { mode: 'danger-full-access' }],
       ['approval/policy', { policy: 'never' }],
     ])
+    await page.keyboard.press('Escape')
+    expect(tripwire.pageErrors).toEqual([])
+  }, 60_000)
+
+  it('stores and clears a current-project override without widening other workspaces or existing sessions', async () => {
+    onTestFailed(() => saveFailureShot(page, 'web-e2e-settings-project-permission'))
+    const project = join(scaffold.workspaceCwd, 'workspace')
+    const existing = scaffold.ctx.sessions.create(SessionId('settings-project-before'), { meta: { cwd: project } })
+    expect(existing.events.find(event => event.type === 'permission/preset')?.data)
+      .toEqual({ preset: 'danger-full-access' })
+
+    await page.getByRole('button', { name: '设置', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: '设置' })
+    await dialog.waitFor({ timeout: 10_000 })
+    const projectSelector = dialog.getByRole('button', { name: '跟随全局（完全访问权限）' })
+    await projectSelector.click()
+    await page.getByRole('menuitem', { name: '请求批准 默认保持只读；需要写入文件时请求你的批准' }).click()
+    await dialog.getByRole('button', { name: '请求批准', exact: true }).waitFor({ timeout: 10_000 })
+
+    const stored = await readFile(join(scaffold.harnessHome, 'settings.yaml'), 'utf8')
+    expect(stored).toContain('workspacePresets:')
+    expect(stored).toContain(`${project}: read-only`)
+    expect(existing.events.find(event => event.type === 'permission/preset')?.data)
+      .toEqual({ preset: 'danger-full-access' })
+
+    const projectSession = scaffold.ctx.sessions.create(SessionId('settings-project-after'), { meta: { cwd: project } })
+    const otherSession = scaffold.ctx.sessions.create(SessionId('settings-other-after'), {
+      meta: { cwd: join(scaffold.workspaceCwd, 'other') },
+    })
+    expect(projectSession.events.find(event => event.type === 'permission/preset')?.data)
+      .toEqual({ preset: 'read-only' })
+    expect(otherSession.events.find(event => event.type === 'permission/preset')?.data)
+      .toEqual({ preset: 'danger-full-access' })
+
+    await dialog.getByRole('button', { name: '请求批准', exact: true }).click()
+    await page.getByRole('menuitem', { name: '跟随全局（完全访问权限）' }).click()
+    await dialog.getByRole('button', { name: '跟随全局（完全访问权限）' }).waitFor({ timeout: 10_000 })
+    const inherited = scaffold.ctx.sessions.create(SessionId('settings-project-inherited'), { meta: { cwd: project } })
+    expect(inherited.events.find(event => event.type === 'permission/preset')?.data)
+      .toEqual({ preset: 'danger-full-access' })
     await page.keyboard.press('Escape')
     expect(tripwire.pageErrors).toEqual([])
   }, 60_000)

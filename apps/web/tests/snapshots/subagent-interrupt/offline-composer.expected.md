@@ -19,7 +19,7 @@
   - img
   - text: Context injection @voyaseek-ai/dsh-system-prompt
 - paragraph: partial
-- status: Deep diving...
+- status: Voyaseek thinking
 - textbox "Parent session offline; sending is unavailable but you can still stop the run" [disabled]
 - button "Commands" [disabled]:
   - img

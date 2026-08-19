@@ -170,13 +170,14 @@ export function ConversationRoot({
   const composer = renderSlotChain(
     'conversation.composer',
     { interactions: pending, session },
-    { fallback: composerBar, overlay: true },
+    { fallback: composerBar },
   )
 
-  // Sticky wraps the whole chain output (fallback + elected overlay), not
-  // only `.composerStack`: overlay:true renders those as siblings, and sticky
-  // on the fallback alone would leave Question/Approval panels at the content
-  // end off-screen when the user is not pinned to the floor.
+  // Sticky wraps whichever chain entry is active. A takeover replaces the
+  // bar instead of hiding a resident fallback inside the sticky scroller;
+  // InputHub owns the draft across that remount. Keeping the takeover in this
+  // seat leaves Question/Approval panels reachable when the user is not
+  // pinned to the floor.
   const composerSeat = (
     <div ref={seatResizeRef} className={css.composerSeat} data-composer-seat="">
       {composer}

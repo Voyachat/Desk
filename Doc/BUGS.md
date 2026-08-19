@@ -13,6 +13,7 @@
 | BUG-005 | 模型请求已终止失败，任务面板仍显示任务进行中与其余任务待处理 | 已完成（待批量集成） | 终止型模型失败后当前任务进入明确失败/受阻状态，其余未启动任务不再显示为仍会自动执行；用户可重试或切换模型后恢复 |
 | BUG-006 | Agent 环境自检把系统 Shell、`~/.voyaseek` 开发 Profile 与桌面内置 Runtime 混为一谈，误报 Node/pnpm、Profile 和 Web Server 缺失 | 已确认 | 自检明确报告当前运行面的 `VOYASEEK_HOME`、CLI 来源、Node 来源和实际监听地址；桌面内置 Runtime 正常时不得建议安装全局 CLI 或重建无关的 `~/.voyaseek/profiles/web` |
 | BUG-007 | Claude 模式忽略会话的 Full access 预设，创建或修改文件被自动拒绝；需要审批时也没有可作答的权限面板 | 已完成（待真实桌面验收） | Claude 模式在 `danger-full-access + never` 下直接执行 SDK 文件工具；其他权限组合显示「允许这一次／允许并记住（推荐）／拒绝」，且同一会话切换权限后下一轮立即生效 |
+| BUG-008 | Claude 模式的审批卡作答后，对话区偶发变成空白页 | 已完成（待真实桌面验收） | 审批期间历史记录保持可见；点击任一审批操作后面板消失、输入栏恢复且原草稿不丢失，重新进入会话仍能完整回放 |
 
 ## 后续分支
 
@@ -47,6 +48,7 @@
 - BUG-003 验收：实际桌面 Runtime 展开配置为默认 `workspace-write`，三个客户预设均为 `ask`；旧会话不篡改历史，重新选择任一预设即可从历史 `never` 恢复。
 - BUG-006 证据：当前系统已有 Node `v26.5.0` 与 pnpm `11.7.0`；已安装客户端由包内 `Resources/runtime/apps/cli/lib/bin.js` 启动，并在 `127.0.0.1:53488` 返回 HTTP 200。桌面使用 `~/Library/Application Support/@voyaseek-ai/dsh-aistaff-desktop/dsh`，不是诊断中检查的 `~/.voyaseek`。
 - BUG-007 证据：Claude SDK 驱动此前只读取进程级静态 `permissionMode`；会话虽已记录 `danger-full-access + never`，SDK 仍以 `default` 请求审批并被 `never` 自动拒绝。修复后的查询逐轮读取该会话组合，并仅为 Full access 设置 `bypassPermissions`；交互模式把 SDK 精确权限建议投影为可记住的审批面板，Host 会拒绝未广告请求伪造的记住结果。
+- BUG-008 证据：故障会话的持久日志包含完整历史、审批请求、审批结果与后续轮次，重新打开可完整回放；空白发生在 sticky 编辑器 seat 将隐藏的 InputBar 恢复显示时。composer 接管改为替换 InputBar，草稿由既有 `InputHub` 跨卸载保留。
 - BUG-004/005 聚焦证据：真实 Loader/Web keyless 用例证明原始 429 JSON 与模拟 Secret 不进入页面，失败提示给出分类和下一步；同一失败回合的任务投影只剩 `completed`、`failed`、`blocked`，无 `pending` 或 `in_progress`。
 - GAP-001/002/003 聚焦证据：动态 Plugin 定义、immutable Package 与最后成功 artifact 可跨重启恢复为 stopped；Host TS 与 Client TS/TSX 构建为普通 JavaScript；开发 watcher 的失败构建不替换旧 UI，成功构建经现有 Fiber dispose/load 路径更新。`pnpm run dev:aistaff` 只在隔离开发 Profile 开启 watcher，发布默认关闭。
 - GAP-007/008 聚焦证据：真实 Loader/worker 的开放 Workflow 在第二个 Loader resume 后收敛为 `interrupted` 且不会自动重放；当前会话页头看板可聚合运行与步骤，并提供检查和二次确认的从头重试入口。

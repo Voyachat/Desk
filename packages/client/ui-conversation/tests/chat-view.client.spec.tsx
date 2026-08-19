@@ -20,10 +20,10 @@ import type {
   ChatNode, ChatNodeOwnerProps, ChatNodeViewProps, ChatViewSlotProps, SelectionTarget, UseChatNodeTurnData,
 } from '@voyaseek-ai/dsh-client-ui-conversation/client'
 import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
-import { zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/zh.ts'
+import { en as commonEn, zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/index.ts'
 import { createChatStore } from '../src/client/stores.ts'
 import { ChatView } from '../src/client/chat/ChatView.tsx'
-import { zh } from '../src/client/locales.ts'
+import { en, zh } from '../src/client/locales.ts'
 import { AssistantNodeView } from '../src/client/chat/AssistantNodeView.tsx'
 import { CommandNodeView, ManualCompactionNodeView } from '../src/client/chat/CommandNodeView.tsx'
 import {
@@ -154,7 +154,7 @@ function emptyWorkspaces() {
   return bindSnapshotSelector(store)
 }
 
-function makeHarness(init?: Partial<ConversationSnapshot>) {
+function makeHarness(init?: Partial<ConversationSnapshot>, locale: 'en' | 'zh' = 'zh') {
   const { set, source } = makeSource(init)
   const openDetails = vi.fn<(t: SelectionTarget) => void>()
   const openFile = vi.fn<(path: string) => void>()
@@ -170,7 +170,7 @@ function makeHarness(init?: Partial<ConversationSnapshot>) {
   // Selection rides the REAL chat store (same construction path as
   // production; the view reads it through the PropsStore useStore share).
   const chat = createChatStore().create()
-  const t = makeTranslate(zh, commonZh)
+  const t = locale === 'zh' ? makeTranslate(zh, commonZh) : makeTranslate(en, commonEn)
   const toolOwners: Array<{
     callId: string
     toolName: string
@@ -994,7 +994,7 @@ describe('ChatView', () => {
     })
     const view = render(<h.ChatView {...h.props} />)
     expect(view.getByText('正在处理')).toBeTruthy()
-    expect(view.queryByText('Deep diving...')).toBeNull()
+    expect(view.queryByText('Voyaseek 思考中')).toBeNull()
     expect(view.queryByText('hmm')).toBeNull()
     act(() => {
       h.set({
@@ -1031,9 +1031,9 @@ describe('ChatView', () => {
     const h = makeHarness({ runningCalls: [runningCall('r1')], running: true })
     const view = render(<h.ChatView {...h.props} />)
     // The running call folds into one live activity row; its disclosure
-    // replaces the bare Deep-diving status while the fold exists.
+    // replaces the bare thinking status while the fold exists.
     expect(view.getByText('正在处理')).toBeTruthy()
-    expect(view.queryByText('Deep diving...')).toBeNull()
+    expect(view.queryByText('Voyaseek 思考中')).toBeNull()
     expandActivityFolds(view)
     expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
     expect(h.toolOwners[0]?.block).toMatchObject({ callId: 'r1', argsRaw: '{"command":"cmd-r1"}' })
@@ -1044,7 +1044,7 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
 
     expect(view.getByText('正在处理')).toBeTruthy()
-    expect(view.queryByText('Deep diving...')).toBeNull()
+    expect(view.queryByText('Voyaseek 思考中')).toBeNull()
     expect(view.queryByTestId('tool-seat-r1')).toBeNull()
     expandActivityFolds(view)
     expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
@@ -1056,7 +1056,7 @@ describe('ChatView', () => {
     expect(view.getByTestId('tool-seat-r1')).toBeTruthy()
   })
 
-  it('keeps the Tool renderer mounted when a running call settles into log order', () => {
+  it('collapses an expanded Tool fold when its running call settles', () => {
     const mounted = vi.fn()
     const unmounted = vi.fn()
     function StatefulToolNode({ node }: { readonly node: ChatNode<'tool-call'> }) {
@@ -1086,7 +1086,6 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     expandActivityFolds(view)
     const tool = view.getByTestId('stateful-tool')
-    const row = view.container.querySelector('[data-chat-flow-key="fixture:tool:r1"]')
     expect(tool.dataset.state).toBe('running')
     expect(mounted).toHaveBeenCalledTimes(1)
 
@@ -1098,11 +1097,14 @@ describe('ChatView', () => {
       })
     })
 
-    expect(view.getByTestId('stateful-tool')).toBe(tool)
-    expect(view.container.querySelector('[data-chat-flow-key="fixture:tool:r1"]')).toBe(row)
-    expect(tool.dataset.state).toBe('settled')
+    expect(view.queryByTestId('stateful-tool')).toBeNull()
+    expect(view.container.querySelector('[data-chat-flow-key="fixture:tool:r1"]')).toBeNull()
     expect(mounted).toHaveBeenCalledTimes(1)
-    expect(unmounted).not.toHaveBeenCalled()
+    expect(unmounted).toHaveBeenCalledTimes(1)
+
+    fireEvent.click(view.getByText('已处理'))
+    expect(view.getByTestId('stateful-tool').dataset.state).toBe('settled')
+    expect(mounted).toHaveBeenCalledTimes(2)
   })
 
   it('the running clock uses turn/start, ignores steering, and stays out of the live region', () => {
@@ -1114,7 +1116,7 @@ describe('ChatView', () => {
     const view = render(<h.ChatView {...h.props} />)
     // Freshly mounted (as after a reload) yet already past the 15s gate.
     const status = view.getByRole('status')
-    expect(status.textContent).toMatch(/^Deep diving\.\.\.2分0\d秒$/)
+    expect(status.textContent).toMatch(/^Voyaseek 思考中2分0\d秒$/)
     expect(status.querySelector('[aria-hidden="true"]')).not.toBeNull()
     act(() => {
       h.set({ queue: [{
@@ -1126,7 +1128,18 @@ describe('ChatView', () => {
         text: 'also',
       }] })
     })
-    expect(status.textContent).toMatch(/^Deep diving\.\.\.2分0\d秒$/)
+    expect(status.textContent).toMatch(/^Voyaseek 思考中2分0\d秒$/)
+  })
+
+  it('shows the bare thinking status in the configured language', () => {
+    const chinese = makeHarness({ running: true })
+    const chineseView = render(<chinese.ChatView {...chinese.props} />)
+    expect(chineseView.getByRole('status').textContent).toBe('Voyaseek 思考中')
+    chineseView.unmount()
+
+    const english = makeHarness({ running: true }, 'en')
+    const englishView = render(<english.ChatView {...english.props} />)
+    expect(englishView.getByRole('status').textContent).toBe('Voyaseek thinking')
   })
 
   it('hands each ordered root call to the keyed business-node slot', () => {

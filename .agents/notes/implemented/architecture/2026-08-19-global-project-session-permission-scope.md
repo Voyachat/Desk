@@ -27,7 +27,9 @@ The browser Settings block writes the global value or the current Workspace path
 
 Built-in preset machine values stay stable while the client renders localized product copy at use time: `read-only` is Ask for approval, `workspace-write` is Agent approval, and `danger-full-access` is Full access. Custom preset names and descriptions remain Host-owned fallback text. Slash-command protocol names also remain stable; the command menu carries a separate localized display label.
 
-Native and Claude sessions read the same durable permission facts. Without an explicit deployment override, Claude maps `read-only` to SDK `default`, `workspace-write + ask` to `acceptEdits`, and `danger-full-access + never` to `bypassPermissions`. This aligns interaction intent, not enforcement implementation: the Claude SDK modes do not claim the same operating-system isolation strength as the Native sandbox. Permission presets control file effects and approval prompts; network policy remains outside this capability.
+Native and Claude sessions read the same durable permission facts. Without an explicit deployment override, Claude maps `read-only` to SDK `default` and `workspace-write + ask` to the SDK classifier-backed `auto` reviewer. `danger-full-access + never` retains SDK `default` so `AskUserQuestion` reaches the Host question service, while the DSH bridge directly allows every non-question tool. This aligns interaction intent, not enforcement implementation: the Claude SDK modes do not claim the same operating-system isolation strength as the Native sandbox. Permission presets control file effects and approval behavior; browser and network confinement remain separate capabilities.
+
+`AskUserQuestion` and permission prompts share the SDK `canUseTool` transport but have different owners: questions use `ctx.userQuestions`, while permission prompts use `ctx.approval`. The generic remembered action accepts only an entire SDK suggestion batch made of same-tool, session-destination allow-rule additions. The live Claude driver carries those rules into later query children; it rejects mixed batches, settings-file destinations, mode or directory changes, and rules for other tools. This grant is an in-memory live-driver convenience, not a durable DSH preset, and cannot mutate Claude user, project, or local settings.
 
 ## Consequences
 
@@ -36,4 +38,9 @@ Native and Claude sessions read the same durable permission facts. Without an ex
 - Changing a default cannot silently widen an existing or replayed session.
 - One project rule applies to Native, Claude, CLI, and any other session created with the same canonical cwd.
 - A configured Claude `permissionMode` still overrides the automatic mapping and is a deployment responsibility.
-- Network approval needs a separate enforcement capability before the product can promise ChatGPT-style internet controls.
+- An explicit `bypassPermissions` deployment override cannot surface `AskUserQuestion` because the SDK resolves tools before its callback in that mode.
+- Browser or network allowlists need a separate enforcement capability before the product can promise ChatGPT-style internet controls.
+
+## Alternatives considered
+
+Persisting SDK suggestions to Claude user or project settings was rejected because a generic approval action cannot present their destination and would bypass the DSH-owned settings priority. Mapping the shipped Full access preset to SDK `bypassPermissions` was rejected because that mode consumes `AskUserQuestion` before the Host callback. Durable browser-rule events were deferred until DSH owns an explicit rule, scope, replay, and revocation interface; the current live-driver cache stays session-only and restart-bounded.

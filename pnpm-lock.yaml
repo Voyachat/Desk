@@ -2335,6 +2335,9 @@ importers:
       '@voyaseek-ai/dsh-user-approval':
         specifier: workspace:^
         version: link:../../interaction/user-approval
+      '@voyaseek-ai/dsh-user-questions':
+        specifier: workspace:^
+        version: link:../../interaction/user-questions
 
   packages/claude/ui-runtime:
     devDependencies:

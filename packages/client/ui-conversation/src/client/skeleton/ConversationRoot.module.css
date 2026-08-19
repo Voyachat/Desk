@@ -196,7 +196,7 @@
   gap: var(--dsh-composer-stack-gap);
 }
 
-/* Common seat for the composer chain (fallback + elected overlay siblings). */
+/* Common seat for the active composer-chain entry. */
 .composerSeat {
   display: flex;
   flex: none;
@@ -205,9 +205,8 @@
      InputBar draft (figma Input 75:8208 max 14 lines × 24px line) and the
      takeover panels' bodies top out at the same height, so electing a
      takeover never grows the footer past the card it replaces. Declared on
-     the seat because it is the chain's only shared ancestor — fallback and
-     elected overlay are siblings — and custom properties inherit down to
-     whichever entry is mounted. */
+     the seat because it is the chain's shared ancestor, and custom
+     properties inherit down to whichever entry is mounted. */
   --dsh-composer-text-max-height: 336px;
 }
 
