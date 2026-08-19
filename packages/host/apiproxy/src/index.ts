@@ -15,9 +15,9 @@
 import { Context, Service } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
 import type {} from '@voyaseek-ai/dsh-agent-default-model'
+import type {} from '@voyaseek-ai/dsh-image-fallback'
 import type { ApiProxy } from './api/index.ts'
 import { createApiProxy, DEFAULT_COLD_BLANK_PROBE_MAX_BYTES } from './api-proxy.ts'
-import type { ImageFallbackConfig } from './image-fallback.ts'
 import {
   DEFAULT_SESSION_LOG_COMPRESSION_LEVEL,
   type SessionLogCompressionLevel,
@@ -30,9 +30,6 @@ export { AbstractApiClient, InProcessApiClient } from './fetch/client.ts'
 export type { IApiClient } from './fetch/client.ts'
 export { createApiProxy } from './api-proxy.ts'
 export type { ApiProxyDefaults } from './api-proxy.ts'
-
-/** Default output cap for one configured image-to-text fallback request. */
-export const DEFAULT_IMAGE_FALLBACK_MAX_TOKENS = 4_096
 
 declare module '@voyaseek-ai/cordis' {
   interface Context {
@@ -63,21 +60,6 @@ export interface Config {
    * @default 1024
    */
   coldBlankProbeMaxBytes?: number
-  /**
-   * Explicit image-capable route used to describe images before a text-only
-   * session model receives the prompt. Omission preserves strict refusal and
-   * never sends image data to another provider implicitly.
-   */
-  imageFallback?: false | {
-    /** Prefer the mounted local document converter. @default true */
-    local?: boolean
-    /** Optional hosted provider route used only when local conversion is unavailable. */
-    provider?: string
-    /** Exact image-capable model on the optional hosted route. */
-    model?: string
-    /** Maximum output tokens for one image-analysis call. @default 4096 */
-    maxTokens?: number
-  }
 }
 
 /**
@@ -87,7 +69,7 @@ export interface Config {
  */
 export class ApiProxyService extends Service implements ApiProxy {
   static inject = [
-    'agentDefaultModel', 'agents', 'attachments', 'directoryPicker', 'llm', 'sessions', 'subagents', 'sessionQuery',
+    'agentDefaultModel', 'agents', 'attachments', 'directoryPicker', 'imageFallback', 'llm', 'sessions', 'subagents', 'sessionQuery',
     'tools', 'userQuestions', 'workspaceRegistry',
   ]
 
@@ -96,15 +78,6 @@ export class ApiProxyService extends Service implements ApiProxy {
     sessionExportCompressionLevel: z.number().step(1).min(0).max(9)
       .default(DEFAULT_SESSION_LOG_COMPRESSION_LEVEL) as z<SessionLogCompressionLevel>,
     coldBlankProbeMaxBytes: z.natural().default(DEFAULT_COLD_BLANK_PROBE_MAX_BYTES),
-    imageFallback: z.union([
-      z.const(false),
-      z.object({
-        local: z.boolean().default(true),
-        provider: z.string(),
-        model: z.string(),
-        maxTokens: z.number().step(1).min(1).default(DEFAULT_IMAGE_FALLBACK_MAX_TOKENS),
-      }),
-    ]).default(false),
   })
 
   readonly sessions: ApiProxy['sessions']
@@ -123,15 +96,6 @@ export class ApiProxyService extends Service implements ApiProxy {
 
   constructor(ctx: Context, config: Config) {
     super(ctx, 'apiProxy')
-    const imageFallback: ImageFallbackConfig | undefined = config.imageFallback === undefined
-      || config.imageFallback === false
-      ? undefined
-      : {
-        local: config.imageFallback.local ?? true,
-        ...(config.imageFallback.provider === undefined ? {} : { provider: config.imageFallback.provider }),
-        ...(config.imageFallback.model === undefined ? {} : { model: config.imageFallback.model }),
-        maxTokens: config.imageFallback.maxTokens ?? DEFAULT_IMAGE_FALLBACK_MAX_TOKENS,
-      }
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ctx.agentDefaultModel.currentSelection(),
       saveDefaultModelSelection: selection => ctx.agentDefaultModel.saveSelection(selection),
@@ -143,7 +107,7 @@ export class ApiProxyService extends Service implements ApiProxy {
       ...(config.coldBlankProbeMaxBytes === undefined
         ? {}
         : { coldBlankProbeMaxBytes: config.coldBlankProbeMaxBytes }),
-      ...imageFallback === undefined ? {} : { imageFallback },
+      imageFallback: ctx.imageFallback,
     })
     this.sessions = api.sessions
     this.subagents = api.subagents

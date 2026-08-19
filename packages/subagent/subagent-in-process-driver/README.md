@@ -12,7 +12,7 @@ The driver follows this sequence:
 
 1. Validate the parent depth and optional absolute `maxDepth`, then derive child depth as parent depth plus one and persist it in the child session header.
 2. Call `parent.ctx.agents.create` directly, passing the required request signal into the factory's creation transaction.
-3. During that transaction's unpublished setup window, install the requested persona, tool restriction, and structured-output runtime.
+3. During that transaction's unpublished setup window, install the shared child composition, call the provider-owned synchronous setup hook when present, and then install the structured-output runtime.
 4. Publish the child, retain the returned `AgentHandle`, and drive one task with `child.followup(prompt)` followed by `child.whenIdle()`.
 5. Read the child's own output — its last non-empty assistant message (an empty-content message that records usage is skipped), or its accumulated assistant text when no such message exists — and the final durable turn reason from the complete owned child run, excluding any fork seed.
 
@@ -30,7 +30,7 @@ After fulfillment, the caller owns the run. Provider-plugin unload does not revo
 
 ## Spawn and fork inputs
 
-`InProcessRunOptions` is `{ seed?: SessionEvent[] }`. Spawn omits it. Fork supplies a balanced completed-turn prefix and records its length so the result reader never mistakes a seeded parent message for child output.
+`InProcessRunOptions` is `{ seed?: SessionEvent[], setup?: (childCtx: Context) => void }`. Spawn omits both fields. Fork supplies a balanced completed-turn prefix and records its length so the result reader never mistakes a seeded parent message for child output. A specialized in-process provider may use `setup` to compose provider-owned capability or policy into the unpublished child scope without copying the shared driver. The hook runs after delegated policy, inherited preset composition, persona, and tool restriction, but before structured-output installation, descriptor append, publication, and the first request. It must complete synchronously; a throw rejects the start and the agent factory rolls back the entire unpublished child scope.
 
 Depth enforcement is internal to `startInProcessRun`: it reads the parent depth via `delegationDepthOf` (the persisted `SessionHeader.delegationDepth` is authoritative; runtime `AgentOptions.subagentDepth` may deepen but never lower it, so a resumed child keeps its budget), treats absence as top-level depth zero, rejects malformed stored values, and reports an attempted child depth above `maxDepth`. An unrepresentable depth above the safe-integer domain is a `RangeError`. The child depth is written to the child header, so it survives persistence and resume.
 

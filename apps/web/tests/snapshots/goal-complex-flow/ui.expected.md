@@ -1,0 +1,55 @@
+- banner:
+  - navigation "Session hierarchy":
+    - button "Independently complete and verify the" [disabled]
+  - img
+  - text: Standard mode
+  - button "3 subagents":
+    - text: 3 subagents
+    - img
+  - button "Session log":
+    - text: Session log
+    - img
+  - tablist:
+    - tab "Chat" [selected]
+    - tab "Trajectory"
+- text: "Independently complete and verify the multi-stage task: prove that deliverable.txt exists. {{clock}}"
+- button "Copy":
+  - img
+- button "Context injection @voyaseek-ai/dsh-system-prompt":
+  - img
+  - img
+  - text: Context injection @voyaseek-ai/dsh-system-prompt
+- button "Processed 1 steps":
+  - img
+  - img
+  - text: Processed 1 steps
+- paragraph: Independent verification blocked completion because deliverable.txt is absent.
+- button "Copy":
+  - img
+- button "Good response":
+  - img
+- button "Bad response":
+  - img
+- button "Branch into a new conversation":
+  - img
+- text: {{clock}} Ran for {{duration}} TTFT {{duration}} {{throughput}} tok/s
+- img
+- text: Blocked Goal Prove that deliverable.txt exists.
+- button "Edit goal":
+  - img
+- button "Clear goal":
+  - img
+- textbox "Message the agent"
+- button "Commands":
+  - img
+- 'button "Access mode, current: Agent approval"': Agent approval
+- button "Runtime mode":
+  - img
+  - text: Native
+  - img
+- button "Select model, current DeepSeek-V4-Flash":
+  - text: DeepSeek-V4-Flash
+  - img
+- button "0% of context used"
+- button "Send message" [disabled]
+- text: 1 turns · 2 steps LLM {{duration}} · Tool call {{duration}} TTFT avg {{duration}} · {{throughput}} tok/s Cache hit 0% Input 150 tok · Output 22 tok

@@ -10,7 +10,7 @@ Text-only model routes need useful image text without spending vision API calls,
 
 ## Decision
 
-`ctx.documentConverter` is a provider-neutral document-to-Markdown seam consumed by the Host image fallback. The shipped Darwin provider depends on `mac-ocr@1.1.1`, sends bytes through its Node API to the bundled universal Swift binary, and returns bounded text in input and PDF-page order. The base bundle disables this provider outside Darwin. A text-only route uses local conversion first; an optional hosted vision route remains an unavailable-provider fallback, never an implicit replacement for a failed local OCR operation.
+`ctx.documentConverter` is a provider-neutral document-to-Markdown seam consumed by automatic image fallback. The shipped Darwin provider depends on `mac-ocr@1.1.1`, sends bytes through its Node API to the bundled universal Swift binary, and returns bounded text in input and PDF-page order. The base bundle disables this provider outside Darwin. The later [automatic image fallback routing decision](2026-08-19-automatic-image-fallback-routing.md) owns hosted-versus-local order.
 
 `mobile-view` registers the local `/mobile-view` page and two Bearer-authenticated JSON reads. When `remoteHost` is configured, it starts a second HTTP listener that serves only those three routes. The listener requires the credential before binding and does not expose the main Web server, commands, tools, files, uploads, downloads, cookies, or write methods. Tokens stay in page memory and request headers.
 

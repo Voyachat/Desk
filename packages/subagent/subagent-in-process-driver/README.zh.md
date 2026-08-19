@@ -12,7 +12,7 @@
 
 1. 校验父 agent 深度和可选的绝对 `maxDepth`，然后把子 agent 深度推导为父 agent 深度加一，并将其持久化到子 agent 会话 header。
 2. 直接调用 `parent.ctx.agents.create`，把必需的请求信号传入工厂的创建事务。
-3. 在该事务未发布的设置窗口中，安装请求的 persona、工具限制和结构化输出运行时。
+3. 在该事务未发布的设置窗口中，安装共享的子 agent 组合；若存在提供方拥有的同步 setup 钩子，则调用该钩子；然后安装结构化输出运行时。
 4. 发布子 agent，保留返回的 `AgentHandle`，并通过先调用 `child.followup(prompt)`、再调用 `child.whenIdle()` 来驱动一项任务。
 5. 从完整的自有子运行中读取子 agent 自身的输出——最后一条非空 assistant 消息（记录 usage 的空内容消息会被跳过），若没有这类消息则取其累积的 assistant 文本——以及最终持久化的轮次原因，并排除任何 fork 初始内容。
 
@@ -30,7 +30,7 @@
 
 ## spawn 与 fork 输入
 
-`InProcessRunOptions` 的形态为 `{ seed?: SessionEvent[] }`。spawn 省略该值。fork 提供已配平的已完成轮次前缀，并记录其长度，确保结果读取器不会把作为初始内容的父 agent 消息误认为子 agent 输出。
+`InProcessRunOptions` 的形态为 `{ seed?: SessionEvent[], setup?: (childCtx: Context) => void }`。spawn 省略这两个字段。fork 提供已配平的已完成轮次前缀，并记录其长度，确保结果读取器不会把作为初始内容的父 agent 消息误认为子 agent 输出。专用进程内提供方可以使用 `setup`，在未发布的子 agent 作用域中组合由提供方拥有的能力或策略，而无需复制共享驱动器。该钩子在委派策略、继承的 preset 组合、persona 和工具限制之后运行，但早于结构化输出安装、描述符追加、发布和首次请求。钩子必须同步完成；若抛出异常，启动会被拒绝，agent 工厂会回滚整个未发布子 agent 作用域。
 
 深度强制在 `startInProcessRun` 内部完成：它通过 `delegationDepthOf` 读取父 agent 深度（持久化的 `SessionHeader.delegationDepth` 具有权威性；运行时 `AgentOptions.subagentDepth` 可以加深但绝不能降低该值，因此恢复后的子 agent 会保留预算），缺失值按顶层深度零处理，拒绝格式错误的存储值，并报告尝试的子 agent 深度超过 `maxDepth`。超过安全整数范围、无法表示的深度会触发 `RangeError`。子 agent 深度写入子 agent header，因此会在持久化和恢复后保留。
 

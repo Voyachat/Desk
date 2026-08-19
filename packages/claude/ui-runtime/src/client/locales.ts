@@ -9,6 +9,8 @@ export const zh = {
   'option.native.desc': '由 Voyaseek Harness 本机调度',
   'option.claude': 'Claude 模式',
   'option.claude.desc': '由 Claude Agent SDK 调度',
+  'option.codex': 'Codex 模式',
+  'option.codex.desc': '由 OpenAI Codex 调度',
 } satisfies Record<string, string>
 
 /** The claudeRuntime namespace key union. */
@@ -23,4 +25,6 @@ export const en = {
   'option.native.desc': 'Driven by the Voyaseek Harness loop',
   'option.claude': 'Claude',
   'option.claude.desc': 'Driven by the Claude Agent SDK',
+  'option.codex': 'Codex',
+  'option.codex.desc': 'Driven by OpenAI Codex',
 } satisfies Record<ClaudeRuntimeKey, string>

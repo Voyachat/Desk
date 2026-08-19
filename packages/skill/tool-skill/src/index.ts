@@ -58,14 +58,31 @@ function catalogSourceEntries(
 }
 
 /** Model-facing skill catalog configuration. */
+export interface AutomaticSkillInvocationRule {
+  /** Exact skill name to inject when the rule matches. */
+  skill: string
+  /** Case-insensitive substrings; any match selects the rule. */
+  include: string[]
+  /** Case-insensitive substrings that veto an include match. */
+  exclude?: string[]
+}
+
+/** Model-facing skill catalog configuration. */
 export interface Config {
   /** Maximum normalized description length rendered in the session catalog; minimum 3. */
   catalogDescriptionMaxLength?: number
+  /** Trusted deployment rules for deterministic task-to-skill injection. */
+  autoInvoke?: AutomaticSkillInvocationRule[]
 }
 
 /** Validate and default the model-facing skill catalog configuration. */
 export const Config: z<Config> = z.object({
   catalogDescriptionMaxLength: z.number().default(DEFAULT_CATALOG_DESCRIPTION_MAX_LENGTH),
+  autoInvoke: z.array(z.object({
+    skill: z.string().required(),
+    include: z.array(z.string()).default([]),
+    exclude: z.array(z.string()).default([]),
+  })).default([]),
 })
 
 /**
@@ -77,6 +94,7 @@ export const Config: z<Config> = z.object({
 export function apply(ctx: Context, config: Config = {}): void {
   const catalogDescriptionMaxLength = config.catalogDescriptionMaxLength ?? DEFAULT_CATALOG_DESCRIPTION_MAX_LENGTH
   assertPositiveInteger('catalogDescriptionMaxLength', catalogDescriptionMaxLength, 3)
+  const automaticRules = resolveAutomaticRules(config.autoInvoke ?? [])
 
   const skillTool = defineTool({
     name: 'skill',
@@ -180,7 +198,9 @@ export function apply(ctx: Context, config: Config = {}): void {
   ): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject') return decision
-    const names = invokedSkillNames(messages)
+    const explicitNames = invokedSkillNames(messages)
+    const automaticNames = automaticallyInvokedSkillNames(messages, automaticRules)
+    const names = [...explicitNames, ...automaticNames.filter(name => !explicitNames.includes(name))]
     if (names.length === 0) return decision
     signal.throwIfAborted()
     const lookup = { cwd: agent.session.header.cwd, signal, scope: agent }
@@ -188,12 +208,16 @@ export function apply(ctx: Context, config: Config = {}): void {
     for (const name of names) {
       const skill = await ctx.skills.get(name, lookup)
       signal.throwIfAborted()
-      // Unknown names and user-disabled skills stay plain prose: the
-      // gesture was never a claim this boundary recognizes. The check sits
-      // on the loaded definition — the single lookup that produces what is
-      // actually injected.
-      if (skill === undefined || !isUserInvocable(skill)) continue
-      const source: SkillInvocationSource = { kind: 'skill-invocation', name, form: 'instructions' }
+      if (skill === undefined) continue
+      const explicit = explicitNames.includes(name) && isUserInvocable(skill)
+      const automatic = automaticNames.includes(name) && isModelInvocable(skill)
+      if (!explicit && !automatic) continue
+      const source: SkillInvocationSource = {
+        kind: 'skill-invocation',
+        name,
+        form: 'instructions',
+        ...(explicit ? {} : { trigger: 'automatic' }),
+      }
       injections.push(createUserMessage({
         content: [{ type: 'text', text: renderSkillContent(skill) }],
         source,
@@ -426,6 +450,58 @@ function invokedSkillNames(messages: readonly UserMessage[]): string[] {
         if (name !== undefined && !names.includes(name)) names.push(name)
       }
     }
+  }
+  return names
+}
+
+interface ResolvedAutomaticRule {
+  readonly skill: string
+  readonly include: readonly string[]
+  readonly exclude: readonly string[]
+}
+
+/** Validate and normalize deployment-owned automatic invocation rules once at load. */
+function resolveAutomaticRules(rules: readonly AutomaticSkillInvocationRule[]): ResolvedAutomaticRule[] {
+  return rules.map((rule, index) => {
+    if (!isSkillName(rule.skill)) {
+      throw new Error(`tool-skill: autoInvoke[${index}].skill is not a valid skill name: ${rule.skill}`)
+    }
+    const include = normalizedNeedles(`autoInvoke[${index}].include`, rule.include)
+    if (include.length === 0) {
+      throw new Error(`tool-skill: autoInvoke[${index}].include must contain at least one non-empty string`)
+    }
+    const exclude = normalizedNeedles(`autoInvoke[${index}].exclude`, rule.exclude ?? [])
+    return { skill: rule.skill, include, exclude }
+  })
+}
+
+/** Normalize one matcher list and reject empty values that would match every request. */
+function normalizedNeedles(name: string, values: readonly string[]): string[] {
+  return values.map((value, index) => {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === '') throw new Error(`tool-skill: ${name}[${index}] must not be empty`)
+    return normalized
+  })
+}
+
+/** Direct-user text selected by trusted deployment rules, deduplicated in rule order. */
+function automaticallyInvokedSkillNames(
+  messages: readonly UserMessage[],
+  rules: readonly ResolvedAutomaticRule[],
+): string[] {
+  const text = messages
+    .filter(message => (message.source as { kind?: unknown }).kind === 'user')
+    .flatMap(message => message.content)
+    .filter((block): block is Extract<UserMessage['content'][number], { type: 'text' }> => block.type === 'text')
+    .map(block => block.text)
+    .join('\n')
+    .toLowerCase()
+  if (text === '') return []
+  const names: string[] = []
+  for (const rule of rules) {
+    if (!rule.include.some(needle => text.includes(needle))) continue
+    if (rule.exclude.some(needle => text.includes(needle))) continue
+    if (!names.includes(rule.skill)) names.push(rule.skill)
   }
   return names
 }

@@ -4,7 +4,7 @@ English | [中文](document.zh.md)
 
 The document conversion seam accepts immutable named bytes plus their declared media type and returns one Markdown document per input in the same order. A result identifies the provider and engine that produced it so model-visible attribution never depends on process logs.
 
-Providers validate empty, malformed, timed-out, and oversized results before returning. The Host image fallback uses the local provider first and reaches an explicitly configured hosted vision route only when local conversion is unavailable. OCR output is text extraction, not general scene understanding.
+Providers validate empty, malformed, timed-out, and oversized results before returning. The automatic image fallback may use this seam after its hosted routes are unavailable. OCR output is text extraction, not general scene understanding.
 
 The shipped macOS provider uses the MIT-licensed `mac-ocr` Node API and its universal Apple Vision binary. It supports images and PDFs locally; Windows and Linux compositions leave the seam unprovided until another provider is mounted.
 

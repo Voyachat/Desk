@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * RuntimeSelector: the composer chip labels the current session runtime,
- * offers both drivers in a menu, calls select only for a different pick,
+ * offers the three drivers in a menu, calls select only for a different pick,
  * disables while a switch is in flight, and shows the failure line.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -45,12 +45,20 @@ describe('RuntimeSelector', () => {
     expect(chip().textContent).toContain('Claude 模式')
   })
 
-  it('selects a different runtime from the menu and not the current one', () => {
+  it('labels a codex-runtime session as Codex mode', () => {
+    setup({ current: 'codex' })
+    expect(chip().textContent).toContain('Codex 模式')
+  })
+
+  it('offers exactly native, Claude, and Codex and selects only a different runtime', () => {
     const { select } = setup({ current: '' })
     fireEvent.click(chip())
-    const claudeItem = screen.getByText('由 Claude Agent SDK 调度')
-    fireEvent.click(claudeItem)
-    expect(select).toHaveBeenCalledWith('claude')
+    expect(screen.getAllByRole('menuitem')).toHaveLength(3)
+    expect(screen.getByText('由 Voyaseek Harness 本机调度')).not.toBeNull()
+    expect(screen.getByText('由 Claude Agent SDK 调度')).not.toBeNull()
+    const codexItem = screen.getByText('由 OpenAI Codex 调度')
+    fireEvent.click(codexItem)
+    expect(select).toHaveBeenCalledWith('codex')
     // The native row is the current pick: choosing it again selects nothing.
     fireEvent.click(chip())
     const nativeItem = screen.getByText('由 Voyaseek Harness 本机调度')

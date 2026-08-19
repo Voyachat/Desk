@@ -41,6 +41,7 @@ export interface HeaderLine {
   origin?: 'subagent'
   delegationDepth: number
   agentPreset?: string
+  agentRuntime?: string
 }
 
 /**
@@ -60,6 +61,7 @@ export function toHeaderLine(header: SessionHeader): HeaderLine {
     ...header.origin !== undefined ? { origin: header.origin } : {},
     delegationDepth: header.delegationDepth ?? 0,
     ...header.agentPreset !== undefined ? { agentPreset: header.agentPreset } : {},
+    ...header.agentRuntime !== undefined ? { agentRuntime: header.agentRuntime } : {},
   }
 }
 
@@ -82,6 +84,7 @@ export function fromHeaderLine(line: HeaderLine): SessionHeader {
     ...line.origin !== undefined ? { origin: line.origin } : {},
     delegationDepth: line.delegationDepth,
     ...line.agentPreset !== undefined ? { agentPreset: line.agentPreset } : {},
+    ...line.agentRuntime !== undefined ? { agentRuntime: line.agentRuntime } : {},
   }
 }
 
@@ -104,6 +107,8 @@ function isHeaderLine(value: unknown): value is HeaderLine {
       || (value as { origin?: unknown }).origin === 'subagent')
     && ((value as { agentPreset?: unknown }).agentPreset === undefined
       || typeof (value as { agentPreset?: unknown }).agentPreset === 'string')
+    && ((value as { agentRuntime?: unknown }).agentRuntime === undefined
+      || typeof (value as { agentRuntime?: unknown }).agentRuntime === 'string')
   )
 }
 

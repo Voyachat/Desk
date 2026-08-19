@@ -245,7 +245,7 @@ describe('web e2e: agent-preset authoring is a host-side copy', () => {
     // Without a workspace the flow only stages (there is no session to land
     // in until one is connected); connect first so the gesture carries all
     // the way to a composed host session.
-    await settingsDialog().getByRole('button', { name: '关闭' }).last().click()
+    await settingsDialog().getByRole('button', { name: '返回应用' }).click()
     await connectFreshWorkspaceZh(page, scaffold.workspaceCwd)
     await page.getByRole('button', { name: '设置', exact: true }).click()
     const dialog = settingsDialog()

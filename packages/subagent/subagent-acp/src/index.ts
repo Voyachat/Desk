@@ -29,6 +29,12 @@ export interface Config {
   providerName: string
   /** The executable to spawn for each run (the child ACP agent). */
   command: string
+  /**
+   * `on-demand` defers executable errors to the first run. `when-available`
+   * probes through the subprocess provider and omits this provider when the
+   * executable is absent, so dependent tools remain hidden automatically.
+   */
+  availability?: 'on-demand' | 'when-available'
   /** Arguments passed to {@link command}. */
   args: string[]
   /**
@@ -66,6 +72,7 @@ export interface Config {
 export const Config: z<Config> = z.object({
   providerName: z.string().default('acp'),
   command: z.string().required(),
+  availability: z.union(['on-demand', 'when-available'] as const).default('on-demand'),
   args: z.array(z.string()).default([]),
   cwd: z.string(),
   permission: z.union(['allow', 'reject'] as const).default('reject'),
@@ -170,7 +177,7 @@ class AcpProvider implements SubagentProvider {
   }
 }
 
-export function apply(ctx: Context, config: Config): void {
+export async function apply(ctx: Context, config: Config): Promise<void> {
   // schemastery (Config) has already filled every defaulted field.
   const resolved = config as ResolvedConfig
   assertPositiveFinite('disposeEofGraceMs', resolved.disposeEofGraceMs)
@@ -182,8 +189,19 @@ export function apply(ctx: Context, config: Config): void {
   }
   // Interpret a relative configured cwd against the harness launch directory
   // ONCE, at load, and fail a misconfigured directory here — not per start.
-  const validated: ResolvedConfig = resolved.cwd === undefined
+  let validated: ResolvedConfig = resolved.cwd === undefined
     ? resolved
     : { ...resolved, cwd: assertUsableCwd('config cwd', resolve(resolved.cwd)) }
+  if (validated.availability === 'when-available') {
+    try {
+      validated = {
+        ...validated,
+        command: await ctx.subprocess.resolveExecutable(validated.command, validated.env),
+      }
+    } catch (error: unknown) {
+      ctx.logger.info(`subagent-acp "${validated.providerName}": executable unavailable; provider omitted (${String(error)})`)
+      return
+    }
+  }
   ctx.subagents.registerProvider(new AcpProvider(validated.providerName, ctx, validated))
 }

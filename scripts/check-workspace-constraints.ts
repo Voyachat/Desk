@@ -132,7 +132,7 @@ function workspaceManifests(): WorkspaceManifest[] {
 
 const packageFileExtras: Readonly<Record<string, readonly string[]>> = {
   // Profile bundles publish their dsh.bundle.patch layer beside the lib.
-  '@voyaseek-ai/dsh-base': ['cordis.patch.yml'],
+  '@voyaseek-ai/dsh-base': ['cordis.patch.yml', 'skills'],
   '@voyaseek-ai/dsh-web-app': ['cordis.patch.yml'],
   '@voyaseek-ai/dsh-headless': ['cordis.patch.yml'],
   '@voyaseek-ai/dsh-aistaff-cloud-conformance-bundle': ['cordis.patch.yml'],

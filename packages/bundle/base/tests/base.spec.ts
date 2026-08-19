@@ -32,6 +32,51 @@ describe('dsh-base bundle', () => {
     )
     expect(rows.length).toBeGreaterThan(50)
     expect(rows.some(row => row.id === 'agent-loop')).toBe(true)
+    expect(rows.find(row => row.id === 'llm-pi-ai')?.config).toMatchObject({
+      providers: {
+        'zhipu-vision': {
+          reasoning: 'off',
+          compat: { thinkingFormat: 'zai', supportsReasoningEffort: false },
+          models: [
+            { id: 'glm-4.6v-flash', reasoningEfforts: { off: null, high: 'high' } },
+            { id: 'glm-4.6v-flashx', reasoningEfforts: { off: null, high: 'high' } },
+            { id: 'glm-4.6v', reasoningEfforts: { off: null, high: 'high' } },
+          ],
+        },
+      },
+    })
+    expect(rows.find(row => row.id === 'image-fallback')?.config).toMatchObject({
+      local: true,
+      routes: [
+        { provider: 'zhipu-vision', model: 'glm-4.6v-flash', tier: 'free' },
+        { provider: 'zhipu-vision', model: 'glm-4.6v-flashx', tier: 'paid-low' },
+        { provider: 'zhipu-vision', model: 'glm-4.6v', tier: 'paid-quality' },
+      ],
+    })
+    const skillDirectoryExpression = (rows.find(row => row.id === 'skill-filesystem')
+      ?.config?.['bundledSkillDir'] as { __jsExpr?: string } | undefined)?.__jsExpr
+    expect(skillDirectoryExpression).toBeDefined()
+    const skillDirectory = evaluate({ process, baseUrl: new URL('../', import.meta.url).href }, skillDirectoryExpression!)
+    expect(skillDirectory).toBe(resolve(root, 'skills'))
+    expect(existsSync(resolve(skillDirectory as string, 'design-taste-frontend', 'SKILL.md'))).toBe(true)
+    expect(rows.find(row => row.id === 'tool-skill')?.config?.['autoInvoke']).toEqual([
+      expect.objectContaining({
+        skill: 'design-taste-frontend',
+        include: expect.arrayContaining(['website design', '网页设计']),
+        exclude: expect.arrayContaining(['dashboard', '管理后台']),
+      }),
+    ])
+    expect(rows.find(row => row.id === 'subagent-prime-computer-use')?.config).toMatchObject({
+      providerName: 'prime-computer-use',
+      command: 'prime-agent',
+      availability: 'when-available',
+      permission: 'reject',
+      args: expect.arrayContaining([
+        '--offline',
+        '--no-builtin-tools',
+        'find_roots,observe_ui,search_ui,expand_ui,inspect_ui,act_ui,read_text,wait_for',
+      ]),
+    })
     expect(rows.find(row => row.id === 'session-telemetry-otel')?.config?.['mode']).toEqual({
       __jsExpr: "process.env.DSH_TELEMETRY_MODE || 'DISABLED'",
     })

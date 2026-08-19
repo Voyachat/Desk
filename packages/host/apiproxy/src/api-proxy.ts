@@ -109,17 +109,15 @@ import {
   inspectApiRemoteSession,
 } from '@voyaseek-ai/dsh-api-remotes'
 import { canOpenNativePath, openNativePath, openNativeTextFile } from './native-path-opener.ts'
-import {
-  ImageFallbackError, translateImagesForTextModel,
-} from './image-fallback.ts'
-import type { ImageFallbackConfig } from './image-fallback.ts'
+import { ImageFallbackError } from '@voyaseek-ai/dsh-image-fallback'
+import type { ImageFallbackService } from '@voyaseek-ai/dsh-image-fallback'
 
 /** Page size when history is called without maxMessages. */
 const DEFAULT_MAX_MESSAGES = 50
 
 /**
  * Non-model settings namespaces intentionally served to the Web client. The
- * plugin-owned entries (`agent-loop`, `bash`, `mobile-view`,
+ * plugin-owned entries (`agent-loop`, `agent-memory`, `bash`, `mobile-view`,
  * `web-search-deepseek`) are Host settings edited by dedicated Settings
  * surfaces; a namespace absent
  * here answers `settings-not-exposed` even when its owner registered it, so
@@ -129,7 +127,7 @@ const DEFAULT_MAX_MESSAGES = 50
  * is deferred work.
  */
 const WEB_SETTINGS_NAMESPACES = [
-  'agent-loop', 'shell', 'locale', 'mobile-view', 'permission', 'ui-conversation', 'ui-theme', 'web-search-deepseek',
+  'agent-loop', 'agent-memory', 'shell', 'locale', 'mobile-view', 'permission', 'ui-conversation', 'ui-theme', 'web-search-deepseek',
 ] as const
 
 /** Provider work budget: at most 100 calls and 2,000 inspected hits. */
@@ -675,8 +673,8 @@ export interface ApiProxyDefaults {
   sessionExportCompressionLevel?: SessionLogCompressionLevel
   /** Maximum artifact size eligible for one cold blankness read. */
   coldBlankProbeMaxBytes?: number
-  /** Explicit vision route used to translate image prompts for text-only models. */
-  imageFallback?: ImageFallbackConfig
+  /** Shared vision service used to translate image prompts for text-only models. */
+  imageFallback?: Pick<ImageFallbackService, 'translate'>
   /**
    * Whether handing a path to the native opener can work at all — the
    * `hasDocument` capability the preset roster reports, and the switch
@@ -1203,7 +1201,16 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         // Incrementally folded by the session, so a per-step read costs
         // O(new events) rather than a rescan.
         const logged = agent.session.requestHeader()?.config
-        if (logged === undefined) return defaults.defaultModelSelection()
+        if (logged === undefined) {
+          const selected = defaults.defaultModelSelection()
+          const constraint = agent.modelConstraint
+          if (constraint === undefined
+            || (selected.provider === constraint.provider
+              && (constraint.models === undefined || constraint.models.includes(selected.model)))) {
+            return selected
+          }
+          return { provider: constraint.provider, model: constraint.defaultModel }
+        }
         return {
           provider: logged.provider,
           model: logged.model,
@@ -2351,7 +2358,22 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         const found = await agentFor(sessionId)
         if ('error' in found) return err(request, found.error)
         const current = selectionFor(found.agent).current
-        const { groups, failures } = await buildModelCatalog(ctx)
+        const catalog = await buildModelCatalog(ctx)
+        const constraint = found.agent.modelConstraint
+        const groups = constraint === undefined
+          ? catalog.groups
+          : catalog.groups
+              .filter(group => group.id === constraint.provider)
+              .map(group => ({
+                ...group,
+                models: constraint.models === undefined
+                  ? group.models
+                  : group.models.filter(model => constraint.models?.includes(model.id) === true),
+              }))
+              .filter(group => group.models.length > 0)
+        const failures = constraint === undefined
+          ? catalog.failures
+          : catalog.failures.filter(failure => failure.id === constraint.provider)
         const routable = routeServed(current.provider)
         return ok(request, { current: { ...current }, routable, groups, failures })
       },
@@ -2362,6 +2384,12 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         if ('error' in found) return err(request, found.error)
         return serializeImageAdmission(found.agent, async () => {
           try {
+            const constraint = found.agent.modelConstraint
+            if (constraint !== undefined
+              && (provider !== constraint.provider
+                || (constraint.models !== undefined && !constraint.models.includes(model)))) {
+              throw new Error(`Runtime "${found.agent.session.header.agentRuntime ?? 'native'}" does not support model "${provider}/${model}"`)
+            }
             const resolved = await ctx.llm.resolveCallConfig({
               provider,
               model,
@@ -2571,17 +2599,12 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
                 if (defaults.imageFallback === undefined) {
                   return err(request, {
                     code: 'attachment-error',
-                    message: `Model "${current.model}" does not support image input.`,
-                    details: { reason: 'MODEL_DOES_NOT_SUPPORT_IMAGES' },
+                    message: 'Automatic image analysis is unavailable.',
+                    details: { reason: 'IMAGE_FALLBACK_UNAVAILABLE' },
                   })
                 }
                 const displayContent = await durablePromptContent(ctx, content)
-                const translated = await translateImagesForTextModel(
-                  ctx,
-                  defaults.imageFallback,
-                  displayContent,
-                  agent.session.id,
-                )
+                const translated = await defaults.imageFallback.translate(displayContent, agent.session.id)
                 const message: UserMessage = createUserMessage({
                   content: translated.content,
                   source: {

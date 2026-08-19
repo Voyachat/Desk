@@ -19,6 +19,7 @@
 | [settings.md](settings.md) | 用户设置 seam：`SettingsNamespace` 注册、分层解析（默认值 → 组合 `base` → 用户文档）、owner scope、热提交 |
 | [credentials.md](credentials.md) | 凭据 seam：配置中的 `CredentialRef` 引用（绝不含值）、按操作解析、对 UI 安全的 `CredentialInfo`、提供方来源层 |
 | [session-query.md](session-query.md) | 逻辑记录、有界精确事件读取、关系追踪、语义筛选器/文档与全文检索结果页 |
+| [memory.md](memory.md) | 有界跨会话条目、已完成轮次自动采集、模型可见召回与可替换的 `ctx.agentMemory` Provider |
 | [feedback.md](feedback.md) | 绑定生命周期的逐消息反馈记录、乐观版本、伴随记录持久化与 Host Remote 契约 |
 | [session-title.md](session-title.md) | 持久标题快照、被引用的来源消息 seq 与异步提供方约定 |
 | [session-reference.md](session-reference.md) | 结构化跨会话引用：`SessionReferenceInput`/`Candidate`、prepared 消息上下文、稳定错误分类 |
@@ -28,6 +29,7 @@
 | [approval.md](approval.md) | 一次性用户审批 seam：`ApprovalRequest`、`ApprovalOutcome`、逐会话策略、审计事件和 answerer 约定 |
 | [attachment.md](attachment.md) | 持久图片标识与元数据、校验输入、经校验读取，以及 `AttachmentStore` seam |
 | [document.md](document.md) | 文档转换输入、有界 Markdown 结果与 `DocumentConverter` seam |
+| [image-fallback.md](image-fallback.md) | 自动图片转文字路由、可用性升级与 `ctx.imageFallback` |
 | [shell.md](shell.md) | bash 执行器 seam：`ShellExecRequest`/`Spec`、`ShellRunResult`、后台 `ShellProcess` 句柄 |
 | [subprocess.md](subprocess.md) | 子进程 seam：完全显式的 `SubprocessSpawnSpec`、基于偏移的输出读取器、不含分类的 `SubprocessOutcome`，以及受管 `DSH_*` 环境词汇 |
 | [terminal.md](terminal.md) | 持久化终端 ID、后端/会话约定、发送就绪状态、有界读取与 owner 可见快照 |

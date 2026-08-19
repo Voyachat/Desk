@@ -143,6 +143,49 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
     ],
   },
   {
+    key: 'agentMemory',
+    summary: 'Provider-neutral service consumed by context and management plugins.',
+    description: 'Provider-neutral service consumed by context and management plugins.',
+    methods: [
+      {
+        signature: 'abstract status(): AgentMemoryStatus',
+        description: 'Read current live configuration and item count.',
+        parameters: [],
+        returns: 'provider status and capacity.',
+      },
+      {
+        signature: 'abstract capture(request: CaptureMemoryRequest, options?: MemoryOperationOptions): Promise<\'stored\' | \'duplicate\' | \'disabled\'>',
+        description: 'Store one completed turn idempotently.',
+        parameters: [{ name: 'request', description: 'trusted session-derived completed-turn content.' }, { name: 'options', description: 'optional operation cancellation.' }],
+        returns: 'whether the turn was stored, already present, or disabled.',
+      },
+      {
+        signature: 'abstract recall(request: RecallMemoryRequest, options?: MemoryOperationOptions): Promise<MemoryItem[]>',
+        description: 'Recall relevant prior-session items in provider-defined rank order.',
+        parameters: [{ name: 'request', description: 'trusted session-derived query and scope.' }, { name: 'options', description: 'optional operation cancellation.' }],
+        returns: 'ordered matching items.',
+      },
+      {
+        signature: 'abstract list(options?: MemoryOperationOptions): Promise<MemoryItem[]>',
+        description: 'List stored items newest first for a local management surface.',
+        parameters: [{ name: 'options', description: 'optional operation cancellation.' }],
+        returns: 'all user-manageable items.',
+      },
+      {
+        signature: 'abstract forget(ids: readonly MemoryId[], options?: MemoryOperationOptions): Promise<number>',
+        description: 'Delete explicitly identified items.',
+        parameters: [{ name: 'ids', description: 'provider-issued identities to delete.' }, { name: 'options', description: 'optional operation cancellation.' }],
+        returns: 'number of items deleted.',
+      },
+      {
+        signature: 'abstract clear(options?: MemoryOperationOptions): Promise<number>',
+        description: 'Delete every stored item while retaining configuration.',
+        parameters: [{ name: 'options', description: 'optional operation cancellation.' }],
+        returns: 'number of items deleted.',
+      },
+    ],
+  },
+  {
     key: 'agentPresets',
     summary: 'Registry over the deployment\'s agent presets.',
     description: 'Registry over the deployment\'s agent presets.\n\nDiscovery is unmemoized: `list()` and `resolve()` re-read the roots on every call so a preset authored while the process runs is visible immediately, and a preset deleted underneath a picker disappears from the next read.',
@@ -731,6 +774,25 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Create one Goal through the remote boundary.',
         parameters: [{ name: 'agent', description: 'exact live Agent resolved from the wire identity.' }, { name: 'request', description: 'objective and optional round cap.' }],
         returns: 'the created Goal identity.',
+      },
+    ],
+  },
+  {
+    key: 'imageFallback',
+    summary: 'Automatic image-to-text fallback shared by every conversation consumer.',
+    description: 'Automatic image-to-text fallback shared by every conversation consumer.',
+    methods: [
+      {
+        signature: 'async translate(content: readonly ContentBlock[], sessionId: SessionId, signal?: AbortSignal): Promise<ImageFallbackResult>',
+        description: 'Translate image-bearing content for a text-only destination model. Hosted analysis runs only when its credential is configured; local conversion handles an absent credential or hosted failure.',
+        parameters: [{ name: 'content', description: 'durable content containing at least one image reference.' }, { name: 'sessionId', description: 'session identity passed to the hosted LLM route.' }, { name: 'signal', description: 'optional cancellation for attachment reads and provider work.' }],
+        returns: 'text-only content, original display content, and analysis attribution.',
+      },
+      {
+        signature: 'async probe(includePaid: boolean, signal?: AbortSignal, sessionId?: SessionId): Promise<{ routes: ImageFallbackProbeResult[] }>',
+        description: 'Probe configured routes with a minimal text request and update their shared health state.',
+        parameters: [{ name: 'includePaid', description: 'whether paid routes may receive a probe.' }, { name: 'signal', description: 'cancellation for provider work.' }, { name: 'sessionId', description: 'optional owning session for provider attribution.' }],
+        returns: 'route status in configured order.',
       },
     ],
   },
@@ -2663,6 +2725,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface AgentHandle {\n    agent: Agent;\n    dispose(): Promise<void>;\n}',
   },
   {
+    name: 'AgentMemoryStatus',
+    declaration: 'export interface AgentMemoryStatus {\n    readonly enabled: boolean;\n    readonly autoCapture: boolean;\n    readonly autoRecall: boolean;\n    readonly count: number;\n    readonly maxEntries: number;\n    readonly maxHits: number;\n}',
+  },
+  {
     name: 'AgentOptions',
     declaration: 'export interface AgentOptions {\n    provider?: string;\n    model?: string;\n    maxTokens?: number;\n}',
   },
@@ -2769,6 +2835,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'CancelOptions',
     declaration: 'export interface CancelOptions {\n    keepInbox?: boolean | undefined;\n}',
+  },
+  {
+    name: 'CaptureMemoryRequest',
+    declaration: 'export interface CaptureMemoryRequest {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly workspace?: string;\n    readonly userText: string;\n    readonly assistantText: string;\n}',
   },
   {
     name: 'ClientResponse',
@@ -3195,6 +3265,22 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ImageBlock {\n    type: \'image\';\n    attachment: ImageAttachmentRef;\n}',
   },
   {
+    name: 'ImageFallbackAttribution',
+    declaration: 'export interface ImageFallbackAttribution {\n    readonly provider: string;\n    readonly model: string;\n    readonly usage?: TokenUsage;\n}',
+  },
+  {
+    name: 'ImageFallbackProbeResult',
+    declaration: 'export interface ImageFallbackProbeResult {\n    provider: string;\n    model: string;\n    tier: ImageFallbackRouteConfig[\'tier\'];\n    status: \'available\' | \'cooldown\' | \'unconfigured\' | \'not-probed\';\n    retryAt?: number;\n}',
+  },
+  {
+    name: 'ImageFallbackResult',
+    declaration: 'export interface ImageFallbackResult {\n    readonly content: ContentBlock[];\n    readonly displayContent: ContentBlock[];\n    readonly attribution: ImageFallbackAttribution;\n}',
+  },
+  {
+    name: 'ImageFallbackRouteConfig',
+    declaration: 'export interface ImageFallbackRouteConfig {\n    provider: string;\n    model: string;\n    tier: \'free\' | \'paid-low\' | \'paid-quality\';\n    credentialRef?: string;\n}',
+  },
+  {
     name: 'ImageMediaType',
     declaration: 'export type ImageMediaType = \'image/png\' | \'image/jpeg\' | \'image/webp\' | \'image/gif\';',
   },
@@ -3415,6 +3501,18 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface ManualCompactAgentContext extends CompactionAgentContext {\n    runMaintenance<T>(task: (signal: AbortSignal) => Promise<T>): Promise<T>;\n}',
   },
   {
+    name: 'MemoryId',
+    declaration: 'export type MemoryId = Branded<\'MemoryId\'>;',
+  },
+  {
+    name: 'MemoryItem',
+    declaration: 'export interface MemoryItem {\n    readonly id: MemoryId;\n    readonly kind: \'conversation\';\n    readonly title: string;\n    readonly content: string;\n    readonly createdAt: number;\n    readonly updatedAt: number;\n    readonly workspace?: string;\n    readonly source: {\n        readonly sessionId: SessionId;\n        readonly turn: number;\n    };\n}',
+  },
+  {
+    name: 'MemoryOperationOptions',
+    declaration: 'export interface MemoryOperationOptions {\n    readonly signal?: AbortSignal;\n}',
+  },
+  {
     name: 'Message',
     declaration: 'export interface Message {\n    readonly id: MessageId;\n    readonly role: \'system\' | \'user\' | \'assistant\';\n    readonly content: ContentBlock[];\n    readonly source: MessageSource;\n}',
   },
@@ -3625,6 +3723,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'ReasoningEffortId',
     declaration: 'export type ReasoningEffortId = Branded<\'ReasoningEffortId\'>;',
+  },
+  {
+    name: 'RecallMemoryRequest',
+    declaration: 'export interface RecallMemoryRequest {\n    readonly query: string;\n    readonly workspace?: string;\n    readonly excludeSessionId?: SessionId;\n    readonly limit?: number;\n}',
   },
   {
     name: 'RedactedSecret',

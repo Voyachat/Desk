@@ -38,11 +38,10 @@ import css from './ChatView.module.css'
 
 const FOLLOW_THRESHOLD = 24
 
-/** Scrolling into this top zone auto-requests one older page per visit while
- *  the flow is virtualized (long sessions, where repeated manual paging is
- *  the norm); leaving the zone rearms. The prepend's anchor shift pushes the
- *  reader back out of the zone, so pages chain only while the reader keeps
- *  scrolling up. Shorter flows keep the header button as the only path. */
+/** Scrolling into this top zone auto-requests one older page per visit;
+ *  leaving the zone rearms. The prepend's anchor shift pushes the reader back
+ *  out of the zone, so pages chain only while the reader keeps scrolling up.
+ *  The header button remains an explicit retry and accessibility path. */
 const OLDER_AUTOLOAD_THRESHOLD_PX = 320
 
 /** Rows beyond this mount through the virtualizer; shorter flows render in
@@ -285,8 +284,9 @@ export function ChatView({
   // Long sessions otherwise accumulate every loaded row (markdown, KaTeX,
   // code blocks) in the DOM, which is the documented long-session crash
   // vector. The virtualizer mounts only the visible window plus overscan;
-  // prepend anchoring and estimate correction ride the library's end anchor
-  // while the manual anchorRef path below owns the plain-flex flow only.
+  // prepend anchoring and estimate correction ride the library's end anchor;
+  // the semantic anchor below also protects both paths from concurrent stream
+  // and responsive-layout growth while an older page is in flight.
   const virtualizationEnabled = rows.length > VIRTUALIZATION_THRESHOLD_ROWS
 
   // Item coordinates are list-local while scrollTop is scrollport-local; the
@@ -573,14 +573,13 @@ export function ChatView({
     if (isAtBottom) chatScroll.save(null)
     else if (position !== null) chatScroll.save(position)
     observedTopRef.current = el.scrollTop
-    // Infinite paging for virtualized flows: one older page per top-zone
-    // visit, armed again once the reader leaves the zone. The prepend's own
-    // anchor shift pushes the position out of the zone, so a settled page
-    // never refires in place; a failed/empty page stays disarmed until the
-    // reader scrolls away.
+    // Infinite paging: one older page per top-zone visit, armed again once the
+    // reader leaves the zone. The prepend's own anchor shift pushes the
+    // position out of the zone, so a settled page never refires in place; a
+    // failed/empty page stays disarmed until the reader scrolls away.
     if (el.scrollTop > OLDER_AUTOLOAD_THRESHOLD_PX) {
       olderArmedRef.current = true
-    } else if (virtualizationEnabled && hasMore && !loadingOlder && olderArmedRef.current) {
+    } else if (hasMore && !loadingOlder && olderArmedRef.current) {
       olderArmedRef.current = false
       loadOlderAnchored()
     }

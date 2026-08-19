@@ -1,7 +1,6 @@
-# Keyless replay for the read-image refusal scenario: identical to the
-# image.cordis.snapshot.yml overlay except the replay catalog leaves flash
-# text-only, so the strict read_image gate refuses and no image ever enters
-# the durable log.
+# Keyless replay for automatic text-route image fallback. The replay catalog
+# leaves flash text-only while a deterministic local converter prepares the
+# real read_image tool result without a network call.
 - id: base
   name: '@voyaseek-ai/cordis-plugin-include'
   config:
@@ -26,6 +25,12 @@
       - insert:
           - id: attachment-local
             name: '@voyaseek-ai/dsh-attachment-local'
+          - id: snapshot-document-converter
+            name: './tests/fixtures/snapshot-document-converter.ts'
+          - id: image-fallback
+            name: '@voyaseek-ai/dsh-image-fallback'
+            config:
+              local: true
           - id: llm-replay
             name: '@voyaseek-ai/dsh-llm-replay'
             config:

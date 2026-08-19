@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "lib/types" },
+  "include": ["src"],
+  "references": [
+    { "path": "../../../vendor/cosmokit" },
+    { "path": "../../../vendor/cordis" },
+    { "path": "../../../vendor/schemastery" },
+    { "path": "../../attachment/attachment" },
+    { "path": "../../credentials/credentials" },
+    { "path": "../../document/document-converter" },
+    { "path": "../llm" },
+    { "path": "../../core/session" },
+    { "path": "../../core/tools" },
+    { "path": "../../runtime-diagnostics/invariants" }
+  ]
+}

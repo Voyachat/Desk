@@ -83,6 +83,27 @@
       "decision": "采用 Electron 作为独立桌面运行时，精确锁定版本并由产品层保持 DSH 内核与 UI 组合不变"
     },
     {
+      "id": "longhorizon-harness",
+      "mode": "architecture",
+      "upstream": "https://github.com/AMAP-ML/LongHorizon-Harness.git",
+      "upstream_ref": "be2e7b42523c4f35291f1ed57b683f6c03a29cdc",
+      "license": "MIT",
+      "upstream_paths": [
+        "src/lh_harness/manager.py",
+        "src/lh_harness/auditor_agent.py",
+        "src/lh_harness/role_prompts.py",
+        "src/lh_harness/types.py"
+      ],
+      "local_paths": [
+        "packages/goal/complex-goal",
+        "packages/subagent/subagent-in-process-driver",
+        "packages/client/ui-commands"
+      ],
+      "local_changes": "Independent TypeScript/Cordis implementation: reuses existing goal, session, subagent, sandbox-policy, approval, command, and UI menu seams; no upstream Python source, file ledger, dashboard, or runtime dependency is embedded.",
+      "update_policy": "Review tagged upstream changes to Manager/Auditor/state semantics manually; never auto-copy runtime code. Re-evaluate dependency only if a stable side-effect-free protocol package appears.",
+      "decision": "Adopt the fresh Manager-Executor-Auditor role separation and fail-closed complete+clean+aligned evidence gate as architecture; implement natively as a Cordis plugin instead of depending on or forking the Python harness."
+    },
+    {
       "id": "mac-ocr",
       "mode": "dependency",
       "upstream": "https://github.com/privatenumber/mac-ocr.git",
@@ -132,6 +153,65 @@
       "decision": "采用维护中的 node-tar 解析本地插件归档，避免自写 tar 解析器，并在调用层保留更严格的不解包审计限制"
     },
     {
+      "id": "openai-codex-app-server",
+      "mode": "dependency",
+      "upstream": "https://github.com/openai/codex.git",
+      "upstream_ref": "rust-v0.148.0@3ba0f711642a888aec92a611a3f3b2211157ff89",
+      "license": "Apache-2.0",
+      "upstream_paths": [
+        "codex-rs/app-server",
+        "codex-rs/app-server-protocol"
+      ],
+      "local_paths": [
+        "packages/codex/codex-agent"
+      ],
+      "local_changes": "Pins the official @openai/codex CLI; implements a DSH AgentDriver over the documented app-server JSON-RPC protocol, with session-event mapping, DSH approval mediation, credential indirection, and process-tree ownership.",
+      "update_policy": "reviewed-exact-version",
+      "decision": "Use the official Codex app-server as the execution engine because the TypeScript SDK exposes only basic thread streaming; retain a local protocol adapter so DSH owns durable sessions, permissions, context, and UI events."
+    },
+    {
+      "id": "pi-computer-use",
+      "mode": "dependency",
+      "upstream": "https://github.com/injaneity/pi-computer-use.git",
+      "upstream_ref": "0.5.0",
+      "license": "MIT",
+      "upstream_paths": [
+        "extensions/computer-use.ts",
+        "src",
+        "native",
+        "package.json"
+      ],
+      "local_paths": [
+        "packages/bundle/base/cordis.patch.yml",
+        "apps/cli/config/agent-presets",
+        "examples/prime-computer-use"
+      ],
+      "local_changes": "External Prime Agent package with automatic executable-gated tool registration, headless mode, browser and cursor overlays disabled, a state-scoped desktop-tool allowlist, and no source copied into DSH",
+      "update_policy": "reviewed-exact-version",
+      "decision": "通过可替换的 ACP 子进程复用桌面语义操作能力并与 DSH 解耦；生产启用前仍需签名 helper、应用 allowlist、协议认证和截图治理"
+    },
+    {
+      "id": "prime-agent-acp-computer-use",
+      "mode": "dependency",
+      "upstream": "https://github.com/PrimeIntellect-ai/prime-agent.git",
+      "upstream_ref": "v0.7.3",
+      "license": "MIT",
+      "upstream_paths": [
+        "packages/coding-agent/src/modes/acp/acp-mode.ts",
+        "packages/coding-agent/src/cli/command-registry.ts"
+      ],
+      "local_paths": [
+        "packages/subagent/subagent-acp",
+        "packages/subagent/tool-subagent",
+        "packages/bundle/base/cordis.patch.yml",
+        "apps/cli/config/agent-presets",
+        "examples/prime-computer-use"
+      ],
+      "local_changes": "The existing dsh-subagent-acp provider probes the managed pinned CLI and registers only while it is available; preset tools follow provider lifecycle automatically; built-in tools, skills, templates, themes, startup network operations, and interactive permission prompts are disabled",
+      "update_policy": "reviewed-exact-version",
+      "decision": "复用 Prime Agent 的 ACP 子进程模式承载 Pi 扩展；不导入或复制其 agent loop、session、tool runtime 或 daemon"
+    },
+    {
       "id": "rusqlite",
       "mode": "dependency",
       "upstream": "https://github.com/rusqlite/rusqlite.git",
@@ -162,6 +242,42 @@
       "local_changes": "AES-256-GCM 字段加密适配；随机 96-bit nonce 与记录身份 AAD；data key 由调用方注入",
       "update_policy": "reviewed-exact-version",
       "decision": "采用 RustCrypto AEAD 保护 Supervisor SQLite 中路径和 bounded replay payload；无明文或固定密钥回退"
+    },
+    {
+      "id": "taste-skill",
+      "mode": "source",
+      "upstream": "https://github.com/leonxlnx/taste-skill.git",
+      "upstream_ref": "dfb6f9f9e93a39f673b1827c0889cc28326d1800",
+      "license": "MIT",
+      "upstream_paths": [
+        "skills/taste-skill/SKILL.md",
+        "LICENSE"
+      ],
+      "local_paths": [
+        "packages/bundle/base/skills/design-taste-frontend"
+      ],
+      "local_changes": "Verbatim skill and license packaged through the existing skill-filesystem bundled root; no additional skill loader or design-agent runtime",
+      "update_policy": "reviewed-exact-commit",
+      "decision": "直接复用固定 SHA 的前端设计 Skill；适用范围由上游 frontmatter 和正文限定，升级时重新审核实验性规则"
+    },
+    {
+      "id": "tencentdb-agent-memory",
+      "mode": "architecture",
+      "upstream": "https://github.com/TencentCloud/TencentDB-Agent-Memory.git",
+      "upstream_ref": "97f94654280b2932c35ba4806a491999ed244cc9",
+      "license": "MIT",
+      "upstream_paths": [
+        "sdk/memory-core/typescript/src/v3",
+        "MemoryCore/src/gateway"
+      ],
+      "local_paths": [
+        "packages/memory/agent-memory",
+        "packages/memory/agent-memory-settings",
+        "packages/memory/agent-memory-context"
+      ],
+      "local_changes": "只复用分层记忆与自动采集/召回思路；使用 DSH 原生身份、设置持久化和事件扩展点，未复制源码或代理层。",
+      "update_policy": "上游修复强制鉴权、严格隔离、owner 校验与写入幂等后，再评估可选远程 Provider。",
+      "decision": "登记为架构参考；当前生产默认使用有界本地 Provider，拒绝 MemoryProxy 与现有 v3 直连。"
     }
   ]
 }

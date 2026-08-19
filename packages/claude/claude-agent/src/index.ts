@@ -18,6 +18,8 @@ import type {
 } from '@anthropic-ai/claude-agent-sdk'
 import type { Agent } from '@voyaseek-ai/dsh-agent'
 import type { AgentDriverFactory } from '@voyaseek-ai/dsh-agent-loop'
+import { credentialRef } from '@voyaseek-ai/dsh-credentials'
+import { launchEnvironmentOf } from '@voyaseek-ai/dsh-launch-environment'
 import { CallId } from '@voyaseek-ai/dsh-llm'
 import { effectiveSandboxMode } from '@voyaseek-ai/dsh-sandbox-policy'
 import type { SessionEvent } from '@voyaseek-ai/dsh-session'
@@ -41,14 +43,20 @@ export type ClaudePermissionMode = Extract<PermissionMode, 'default' | 'acceptEd
 export interface Config {
   /** Runtime id matched against session headers; deployments rarely rename it. */
   readonly runtime?: string
+  /** Global LLM provider route this Anthropic-compatible endpoint serves. */
+  readonly provider?: string
   /** Model id pinned for every query; absent keeps the SDK/CLI default. */
   readonly model?: string
+  /** Models this Anthropic-compatible endpoint admits; absent accepts the provider catalog. */
+  readonly models?: string[]
   /** Claude-API-compatible endpoint base URL (`ANTHROPIC_BASE_URL`). */
   readonly baseUrl?: string
   /** Bearer token for gateway endpoints (`ANTHROPIC_AUTH_TOKEN`). */
   readonly authToken?: string
   /** API key (`ANTHROPIC_API_KEY`); gateways accept either credential field. */
   readonly apiKey?: string
+  /** Credential reference resolved for every query and exposed as `ANTHROPIC_API_KEY`. */
+  readonly apiKeyEnv?: string
   /** Explicit SDK permission posture; absent follows the session's DSH permission state. */
   readonly permissionMode?: ClaudePermissionMode
   /** Explicit Claude Code executable; absent uses the SDK-distributed CLI. */
@@ -61,10 +69,13 @@ export interface Config {
 
 export const Config: z<Config> = z.object({
   runtime: z.string().default(CLAUDE_RUNTIME),
+  provider: z.string().default(CLAUDE_PROVIDER),
   model: z.string(),
+  models: z.array(z.string()),
   baseUrl: z.string(),
   authToken: z.string(),
   apiKey: z.string(),
+  apiKeyEnv: z.string(),
   permissionMode: z.union(['default', 'acceptEdits', 'auto', 'bypassPermissions', 'plan'] as const),
   executable: z.string(),
   env: z.dict(z.string()).default({}),
@@ -74,13 +85,16 @@ export const Config: z<Config> = z.object({
 /** Validated config owned by the plugin. */
 export interface ResolvedConfig {
   readonly runtime: string
+  readonly provider: string
   readonly permissionMode?: ClaudePermissionMode
   readonly env: Record<string, string>
   readonly disposeGraceMs: number
   readonly model?: string
+  readonly models?: string[]
   readonly baseUrl?: string
   readonly authToken?: string
   readonly apiKey?: string
+  readonly apiKeyEnv?: string
   readonly executable?: string
 }
 
@@ -364,7 +378,30 @@ export function apply(ctx: Context, config: Config): void {
   if (!Number.isFinite(resolved.disposeGraceMs) || resolved.disposeGraceMs <= 0) {
     throw new Error('claude-agent: disposeGraceMs must be a positive finite number')
   }
-  const childEnv = claudeChildEnv(resolved)
+  const { model: _configuredModel, ...withoutModel } = resolved
+  const baseChildEnv = claudeChildEnv(withoutModel)
+  const childEnv = async (model: string): Promise<Record<string, string>> => {
+    const env: Record<string, string> = {
+      ...baseChildEnv,
+      ANTHROPIC_MODEL: model,
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: model,
+      ANTHROPIC_DEFAULT_SONNET_MODEL: model,
+      ANTHROPIC_DEFAULT_OPUS_MODEL: model,
+      CLAUDE_CODE_SUBAGENT_MODEL: model,
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
+    }
+    if (resolved.apiKeyEnv === undefined) return env
+    const ref = credentialRef(resolved.apiKeyEnv)
+    const credentials = ctx.get('credentials')
+    const value = credentials === undefined
+      ? launchEnvironmentOf(ctx).get(ref)?.value
+      : (await credentials.resolve(ref))?.value
+    if (value === undefined || value.length === 0) {
+      throw new Error(`claude-agent: no credential for ${ref}`)
+    }
+    env['ANTHROPIC_API_KEY'] = value
+    return env
+  }
   const cwdFallback = process.cwd()
   // Driver scopes root in an injected context so publication can reach the
   // session and agent registries through them, exactly like the default loop.
@@ -387,8 +424,7 @@ export function apply(ctx: Context, config: Config): void {
         (agent) => {
           const permissionBridge = makeCanUseTool(ctx, agent)
           return new SdkQueryEngine({
-            childEnv,
-            ...resolved.model === undefined ? {} : { model: resolved.model },
+            childEnv: baseChildEnv,
             permissionMode: () => claudePermissionMode(session.events, resolved.permissionMode),
             ...permissionBridge,
             ...resolved.executable === undefined ? {} : { executable: resolved.executable },
@@ -397,7 +433,10 @@ export function apply(ctx: Context, config: Config): void {
           })
         },
         cwd,
-        resolved.model ?? CLAUDE_PROVIDER,
+        resolved.provider,
+        resolved.model,
+        childEnv,
+        resolved.models,
       )
     },
   }

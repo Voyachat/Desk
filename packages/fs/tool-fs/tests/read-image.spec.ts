@@ -14,6 +14,7 @@ import { CodeRuntime } from '@voyaseek-ai/dsh-code-runtime'
 import type { CodeRunRequest, CodeRunResult } from '@voyaseek-ai/dsh-code-runtime'
 import { CallId, LlmAdapter, LlmRuntime } from '@voyaseek-ai/dsh-llm'
 import type { GenerateOptions, LlmModelInfo, LlmResolvedModelInfo, StreamChunk } from '@voyaseek-ai/dsh-llm'
+import { SessionId } from '@voyaseek-ai/dsh-session'
 import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
 import ToolRuntime, { RUN_CODE_NAME } from '@voyaseek-ai/dsh-tools'
 import type { Config as ToolConfig } from '@voyaseek-ai/dsh-tools'
@@ -93,6 +94,7 @@ interface SetupOptions {
   resolvedModels?: LlmModelInfo[]
   attachments?: boolean
   llm?: boolean
+  imageFallback?: boolean
   storeConfig?: { maxImageBytes?: number; maxImagePixels?: number; maxMessageImageBytes?: number }
   toolMode?: ToolConfig['mode']
 }
@@ -117,6 +119,15 @@ async function setup(options: SetupOptions = {}) {
       { provider: 'visual', id: 'legacy-model', name: 'Legacy' },
     ], options.resolvedModels))
   }
+  if (options.imageFallback === true) {
+    ctx.provide('imageFallback', {
+      translate: (content: readonly unknown[]) => Promise.resolve({
+        content: [{ type: 'text', text: '<image-analysis>Image 1: one red pixel.</image-analysis>' }],
+        displayContent: [...content],
+        attribution: { provider: 'vision-fallback', model: 'vision-free' },
+      }),
+    } as never)
+  }
   await ctx.plugin(ToolFs)
   return ctx
 }
@@ -126,6 +137,7 @@ function agentOn(model: string | undefined, provider = 'visual'): object {
   return {
     options: {},
     session: {
+      id: SessionId('read-image-session'),
       header: { cwd: dir },
       requestHeader: () => (model === undefined ? undefined : { config: { provider, model } }),
       append: () => undefined,
@@ -251,7 +263,7 @@ describe('read_image happy path', () => {
   })
 })
 
-describe('strict image-modality gate', () => {
+describe('image route admission', () => {
   it('accepts an exact visual route even when the advisory model catalog omits it', async () => {
     await writeFile(join(dir, 'red.png'), PNG_1X1)
     const ctx = await setup({
@@ -268,12 +280,13 @@ describe('strict image-modality gate', () => {
     ['a text-only model', 'text-model'],
     ['a model without declared modalities', 'legacy-model'],
     ['a model absent from the catalog', 'unknown-model'],
-  ])('refuses on %s', async (_label, model) => {
+  ])('automatically analyzes the image for %s', async (_label, model) => {
     await writeFile(join(dir, 'red.png'), PNG_1X1)
-    const ctx = await setup()
+    const ctx = await setup({ imageFallback: true })
     const result = await readImage(ctx, { file_path: 'red.png' }, agentOn(model))
-    expect(result.isError).toBe(true)
-    expect(text(result)).toContain('does not declare image input')
+    expect(result.isError).toBe(false)
+    expect(result.content.every(block => block.type === 'text')).toBe(true)
+    expect(text(result)).toContain('one red pixel')
   })
 
   it('refuses when the route cannot be resolved (no agent, or no header and no options)', async () => {
@@ -281,19 +294,20 @@ describe('strict image-modality gate', () => {
     const ctx = await setup()
     const noAgent = await readImage(ctx, { file_path: 'red.png' })
     expect(noAgent.isError).toBe(true)
-    expect(text(noAgent)).toContain('route could not be resolved')
+    expect(text(noAgent)).toContain('automatic image analysis is unavailable')
 
     const noRoute = await readImage(ctx, { file_path: 'red.png' }, agentOn(undefined))
     expect(noRoute.isError).toBe(true)
-    expect(text(noRoute)).toContain('route could not be resolved')
+    expect(text(noRoute)).toContain('automatic image analysis is unavailable')
   })
 
-  it('refuses when no llm service is mounted', async () => {
+  it('uses automatic analysis when no llm service is mounted', async () => {
     await writeFile(join(dir, 'red.png'), PNG_1X1)
-    const ctx = await setup({ llm: false })
+    const ctx = await setup({ llm: false, imageFallback: true })
     const result = await readImage(ctx, { file_path: 'red.png' }, agentOn('vision-model'))
-    expect(result.isError).toBe(true)
-    expect(text(result)).toContain('route could not be resolved')
+    expect(result.isError).toBe(false)
+    expect(result.content.every(block => block.type === 'text')).toBe(true)
+    expect(text(result)).toContain('one red pixel')
   })
 })
 

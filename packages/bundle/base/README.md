@@ -8,13 +8,23 @@ The patch gates both shell stacks by platform on its own rows: `bash-sandbox`/`t
 
 The row set and its rationale are documented inline in the patch file; the [generated composition graph](../../../apps/cli/composition.md) renders it.
 
+The base also enables the bounded local [`ctx.agentMemory`](../../memory/README.md) provider and its completed-turn capture/first-step recall consumer. The capability needs no external service or credential and remains replaceable behind its provider-neutral service.
+
+## Bundled design skill
+
+Every profile exposes the pinned [`design-taste-frontend`](skills/design-taste-frontend/SKILL.md) skill through the existing filesystem skill provider. It is a verbatim MIT-licensed adoption of `leonxlnx/taste-skill` at commit `dfb6f9f9e93a39f673b1827c0889cc28326d1800`; the adjacent license and [open-source adoption ledger](../../../.open-source/adoptions.yaml) preserve its source. No second skill loader or design-agent runtime is introduced.
+
+The skill is intended for landing pages, portfolios, marketing pages, and visual redesigns. It explicitly excludes dashboards and dense product interfaces. Trusted bilingual task rules automatically inject its full body when direct user text matches a supported web-design intent; exclusions keep dashboards, admin panels, data tables, multi-step forms, editors, native mobile, and realtime collaboration out. The slash gesture and model-facing catalog remain fallback paths. Deterministic visual acceptance remains a separate workflow concern.
+
+The same bundle probes the separately managed `prime-agent` executable without starting it. When present, the host registers the `prime-computer-use` ACP provider and the Standard, PTC, and Cordis presets expose `computer_use`; when absent, both remain out of the model's tool view. A child starts only after the model selects the task-specific tool.
+
 ## Model Experience
 
-Indirectly, through the inserted rows: this bundle selects the shipped persona-less prompt base, tool set, and DeepSeek adapter that mode bundles specialize, and contributes no model-visible text of its own.
+Indirectly, through the inserted rows: this bundle selects the shipped persona-less prompt base, tool set, and DeepSeek adapter that mode bundles specialize. It also contributes the stable `design-taste-frontend` catalog entry; the skill body becomes model-visible only when selected.
 
 #### KV Cache effect
 
-None directly; each inserted row's package owns its effect.
+The stable skill catalog entry affects the initial prompt. Loading the skill body creates a task-local context change; every other inserted row's package owns its effect.
 
 ## Known Limitations and Deferred Work
 

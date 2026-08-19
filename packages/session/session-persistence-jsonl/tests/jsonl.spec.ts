@@ -302,6 +302,21 @@ describe('JsonlSessionPersistence: durability and crash semantics', () => {
     expect(scanned.events.map(event => event.type)).toEqual(oneTurnLog().map(event => event.type))
   })
 
+  it('persists explicit and default agent runtimes through materialization, list, and load', async () => {
+    const explicit = { ...meta('codex-runtime', '/work'), agentRuntime: 'codex' }
+    const implicit = meta('default-runtime', '/work')
+    await ctx.sessionPersistence.create(explicit)
+    await ctx.sessionPersistence.create(implicit)
+    await ctx.sessionPersistence.append(explicit.id, oneTurnLog())
+    await ctx.sessionPersistence.append(implicit.id, oneTurnLog())
+
+    const listed = await ctx.sessionPersistence.list()
+    expect(listed.find(header => header.id === explicit.id)?.agentRuntime).toBe('codex')
+    expect(listed.find(header => header.id === implicit.id)).not.toHaveProperty('agentRuntime')
+    expect((await ctx.sessionPersistence.load(explicit.id)).meta.agentRuntime).toBe('codex')
+    expect((await ctx.sessionPersistence.load(implicit.id)).meta).not.toHaveProperty('agentRuntime')
+  })
+
   it('readRaw is undefined for an absent session', async () => {
     const m = meta('raw-missing', '/work')
     expect(await ctx.sessionPersistence.readRaw(m.id)).toBeUndefined()
@@ -942,8 +957,34 @@ describe('JsonlSessionPersistence: scanLog unit', () => {
     expect(scanLog(Buffer.from(log)).meta.agentPreset).toBe('minimal')
   })
 
+  it('round-trips an explicit agent runtime and omits the deployment default', () => {
+    const explicit = toHeaderLine({
+      version: 0,
+      id: SessionId('codex-runtime'),
+      createdAt: 1,
+      delegationDepth: 0,
+      agentRuntime: 'codex',
+    })
+    const implicit = toHeaderLine({
+      version: 0,
+      id: SessionId('default-runtime'),
+      createdAt: 1,
+      delegationDepth: 0,
+    })
+
+    expect(scanLog(Buffer.from(`${JSON.stringify(explicit)}\n`)).meta.agentRuntime).toBe('codex')
+    expect(implicit).not.toHaveProperty('agentRuntime')
+    expect(scanLog(Buffer.from(`${JSON.stringify(implicit)}\n`)).meta).not.toHaveProperty('agentRuntime')
+  })
+
   it('rejects a session header whose agentPreset is not a string', () => {
     const log = '{"type":"session","version":0,"id":"bad-preset","createdAt":1,"delegationDepth":0,"agentPreset":7}\n'
+
+    expect(() => scanLog(Buffer.from(log))).toThrow(/session header/)
+  })
+
+  it('rejects a session header whose agentRuntime is not a string', () => {
+    const log = '{"type":"session","version":0,"id":"bad-runtime","createdAt":1,"delegationDepth":0,"agentRuntime":7}\n'
 
     expect(() => scanLog(Buffer.from(log))).toThrow(/session header/)
   })

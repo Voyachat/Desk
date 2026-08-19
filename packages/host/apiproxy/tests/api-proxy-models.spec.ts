@@ -18,7 +18,9 @@ import type {
 } from '@voyaseek-ai/dsh-llm'
 import SessionStore from '@voyaseek-ai/dsh-session'
 import type { SessionId } from '@voyaseek-ai/dsh-session'
+import ImageFallbackService from '@voyaseek-ai/dsh-image-fallback'
 import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
+import ToolRuntime from '@voyaseek-ai/dsh-tools'
 import UserQuestionService from '@voyaseek-ai/dsh-user-questions'
 import type { RpcRequest } from '@voyaseek-ai/dsh-host-apiproxy/api/rpc'
 import { RpcId } from '@voyaseek-ai/dsh-host-apiproxy/api/rpc'
@@ -86,6 +88,7 @@ async function harness(logged?: {
   await ctx.plugin(SessionStore)
   await ctx.plugin(SystemPrompt, { persona: '' })
   await ctx.plugin(LlmRuntime)
+  await ctx.plugin(ToolRuntime)
   await ctx.plugin(UserQuestionService)
   await ctx.plugin(AgentRegistry)
   ctx.llm.registerAdapter(['deepseek-official'], new CatalogAdapter('DeepSeek', [
@@ -162,11 +165,12 @@ describe('Web session model selection', () => {
       documents: [{ name: 'receipt.png', markdown: '| Item | Price |\n| --- | --- |\n| Tea | 8 |' }],
     }))
     ctx.provide('documentConverter', { convert } as never)
+    await ctx.plugin(ImageFallbackService, { local: true, maxTokens: 512 })
     const followup = vi.fn()
     Object.assign(agent, { followup })
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
-      imageFallback: { local: true, maxTokens: 512 },
+      imageFallback: ctx.imageFallback,
       cwd: '/tmp',
     })
 
@@ -179,7 +183,7 @@ describe('Web session model selection', () => {
     expect(response.result.ok).toBe(true)
     expect(convert).toHaveBeenCalledWith([expect.objectContaining({
       name: 'receipt.png', mediaType: 'image/png', data: Uint8Array.of(1),
-    })])
+    })], undefined)
     const message = followup.mock.calls[0]?.[0] as UserMessage
     expect(message.content).toEqual([
       { type: 'text', text: '[Image 1: receipt.png]' },
@@ -281,9 +285,14 @@ describe('Web session model selection', () => {
     }('Vision', []))
     const followup = vi.fn()
     Object.assign(agent, { followup })
+    await ctx.plugin(ImageFallbackService, {
+      local: false,
+      routes: [{ provider: 'vision', model: 'eyes', tier: 'free' }],
+      maxTokens: 512,
+    })
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
-      imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 512 },
+      imageFallback: ctx.imageFallback,
       cwd: '/tmp',
     })
 
@@ -348,9 +357,14 @@ describe('Web session model selection', () => {
     }('Vision', []))
     const followup = vi.fn()
     Object.assign(agent, { followup })
+    await ctx.plugin(ImageFallbackService, {
+      local: false,
+      routes: [{ provider: 'vision', model: 'eyes', tier: 'free' }],
+      maxTokens: 8,
+    })
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
-      imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 8 },
+      imageFallback: ctx.imageFallback,
       cwd: '/tmp',
     })
 
@@ -387,9 +401,14 @@ describe('Web session model selection', () => {
     }('Vision', []))
     const followup = vi.fn()
     Object.assign(agent, { followup })
+    await ctx.plugin(ImageFallbackService, {
+      local: false,
+      routes: [{ provider: 'vision', model: 'eyes', tier: 'free' }],
+      maxTokens: 8,
+    })
     const api = createApiProxy(ctx, {
       defaultModelSelection: () => ({ provider: 'text-only', model: 'plain' }),
-      imageFallback: { provider: 'vision', model: 'eyes', maxTokens: 8 },
+      imageFallback: ctx.imageFallback,
       cwd: '/tmp',
     })
 
@@ -517,6 +536,42 @@ describe('Web session model selection', () => {
         message: 'adapter returned invalid or duplicate model metadata for provider "duplicate"',
       },
     ])
+    await ctx.fiber.dispose()
+  })
+
+  it('filters and defaults the model catalog to an alternative runtime protocol subset', async () => {
+    const { ctx, agent, sessionId } = await harness()
+    Object.assign(agent, {
+      modelConstraint: {
+        provider: 'deepseek-official',
+        defaultModel: 'deepseek-reasoner',
+        models: ['deepseek-reasoner'],
+      },
+    })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'broken', model: 'unusable-global-default' }),
+      cwd: '/tmp',
+    })
+
+    const catalog = expectValue(await api.sessions.models(request({ sessionId })))
+    expect(catalog.current).toEqual({ provider: 'deepseek-official', model: 'deepseek-reasoner' })
+    expect(catalog.groups).toEqual([{
+      id: 'deepseek-official',
+      name: 'DeepSeek',
+      models: [{
+        id: 'deepseek-reasoner',
+        name: 'DeepSeek Reasoner',
+        description: 'Reasoning model',
+        reasoning: REASONING,
+      }],
+    }])
+    expect(catalog.failures).toEqual([])
+    expect((await api.sessions.selectModel(request({
+      sessionId, provider: 'deepseek-official', model: 'deepseek-chat',
+    }))).result).toMatchObject({ ok: false, error: { code: 'model-unavailable' } })
+    expect((await api.sessions.selectModel(request({
+      sessionId, provider: 'broken', model: 'unusable-global-default',
+    }))).result).toMatchObject({ ok: false, error: { code: 'model-unavailable' } })
     await ctx.fiber.dispose()
   })
 

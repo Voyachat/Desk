@@ -1,5 +1,5 @@
-// Web e2e scenarios: the settings surface — the modal shell (trigger, nav,
-// section switching, both close paths), the Appearance preference row (the
+// Web e2e scenarios: the full-frame settings shell (trigger, sidebar nav,
+// section switching, both return paths), the Appearance preference row (the
 // real theme gesture — click 深色 and the whole cascade runs: ThemeRuntime preference -> Host settings
 // -> theme/change -> ui-layout's presenter -> body attribute -> alias token +
 // browser theme-color metadata)
@@ -15,6 +15,7 @@ import { chromium } from 'playwright'
 import { afterAll, beforeAll, describe, expect, it, onTestFailed } from 'vitest'
 import { join } from 'node:path'
 import { SessionId } from '@voyaseek-ai/dsh-session'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
 import {
   acknowledgeReloadConnectionLoss, assertFixtureInventory, captureStableAria, compareOrRefreshGolden,
   launchWebScaffold, watchConsole, webSnapshotMode, type WebScaffold,
@@ -27,7 +28,7 @@ const PLUGINS_EXPECTED = join(SNAPSHOT_DIR, 'plugins.expected.md')
 const PLUGIN_ROW_SELECTOR = '[data-plugin-entry$="ui-settings"]'
 const MODE = webSnapshotMode()
 
-describe('web e2e: settings modal and General preferences', () => {
+describe('web e2e: settings view and General preferences', () => {
   let scaffold: WebScaffold
   let browser: Browser
   let page: Page
@@ -50,7 +51,7 @@ describe('web e2e: settings modal and General preferences', () => {
     await scaffold?.close()
   })
 
-  it('opens the settings dialog, switches sections, and closes by every path', async () => {
+  it('opens the settings view, switches sections, and returns by every path', async () => {
     onTestFailed(() => saveFailureShot(page, 'web-e2e-settings-shell'))
     const trigger = page.getByRole('button', { name: '设置', exact: true })
     expect(await trigger.getAttribute('aria-haspopup')).toBe('dialog')
@@ -88,7 +89,7 @@ describe('web e2e: settings modal and General preferences', () => {
     await expect.poll(() => openRequests, { timeout: 5_000 }).toBe(1)
     await expect.poll(() => openDocument.isEnabled(), { timeout: 5_000 }).toBe(true)
     await page.unroute('**/api/settings.openDocument')
-    // Golden of the freshly opened dialog (default zh, General active).
+    // Golden of the freshly opened view (default zh, General active).
     const snapshot = await captureStableAria(page, '[role="dialog"]', scaffold.workspaceCwd)
     await compareOrRefreshGolden(DIALOG_EXPECTED, snapshot, MODE)
     // Section switch: aria-current moves (the Models page itself has its own scenario file).
@@ -119,14 +120,54 @@ describe('web e2e: settings modal and General preferences', () => {
       scaffold.workspaceCwd,
     )
     await compareOrRefreshGolden(PLUGINS_EXPECTED, pluginsSnapshot, MODE)
-    // Close path 1: Escape.
+    // Return path 1: Escape.
     await page.keyboard.press('Escape')
     await expect.poll(() => page.getByRole('dialog', { name: '设置' }).count(), { timeout: 5_000 }).toBe(0)
     expect(await trigger.getAttribute('aria-expanded')).toBe('false')
-    // Close path 2: the header close button (focus lands there on open).
+    // Return path 2: the sidebar control (focus lands there on open).
     await trigger.click()
-    await page.getByRole('dialog', { name: '设置' }).getByRole('button', { name: '关闭' }).click()
+    await page.getByRole('dialog', { name: '设置' }).getByRole('button', { name: '返回应用' }).click()
     await expect.poll(() => page.getByRole('dialog', { name: '设置' }).count(), { timeout: 5_000 }).toBe(0)
+    expect(tripwire.pageErrors).toEqual([])
+  }, 60_000)
+
+  it('manages long-term memory through the rewritten full-frame settings shell', async () => {
+    onTestFailed(() => saveFailureShot(page, 'web-e2e-settings-memory'))
+    await scaffold.ctx.settings.mutate(settingsNamespace('agent-memory'), [{
+      op: 'set',
+      path: ['entries', 'conversation-settings-fixture'],
+      value: {
+        id: 'conversation-settings-fixture',
+        kind: 'conversation',
+        title: '验证饮料偏好',
+        content: '用户：我的验证饮料是 lapsang-fixture。\n助手：已记住。',
+        createdAt: 1,
+        updatedAt: 1,
+        workspace: scaffold.workspaceCwd,
+        source: { sessionId: 'settings-memory-session', turn: 1 },
+      },
+    }])
+
+    await page.getByRole('button', { name: '设置', exact: true }).click()
+    const settings = page.getByRole('dialog', { name: '设置' })
+    await settings.getByRole('button', { name: '长期记忆', exact: true }).click()
+    await settings.getByRole('heading', { name: '长期记忆', exact: true }).waitFor({ timeout: 10_000 })
+    await settings.getByText('验证饮料偏好', { exact: true }).waitFor({ timeout: 10_000 })
+    await settings.getByPlaceholder('搜索记忆').fill('lapsang')
+    expect(await settings.getByText(/lapsang-fixture/).count()).toBe(1)
+
+    const enabled = settings.getByRole('checkbox', { name: '启用长期记忆' })
+    await enabled.click()
+    await expect.poll(() => enabled.isChecked(), { timeout: 5_000 }).toBe(false)
+    await enabled.click()
+    await expect.poll(() => enabled.isChecked(), { timeout: 5_000 }).toBe(true)
+
+    await settings.getByRole('button', { name: '删除', exact: true }).click()
+    const confirmation = page.getByRole('dialog', { name: '删除这条记忆？' })
+    await confirmation.getByRole('checkbox').click()
+    await confirmation.getByRole('button', { name: '确认删除' }).click()
+    await settings.getByText('还没有长期记忆。完成一次对话后会自动保存。', { exact: true }).waitFor({ timeout: 10_000 })
+    await page.keyboard.press('Escape')
     expect(tripwire.pageErrors).toEqual([])
   }, 60_000)
 

@@ -13,6 +13,7 @@ import type { GoalsApi } from './goals.ts'
 import type { SettingsApi } from './settings.ts'
 import type { CredentialsApi } from './credentials.ts'
 import type { LlmApi } from './llm.ts'
+import type { MemoryApi } from './memory.ts'
 import type { SubagentsApi } from './subagents.ts'
 import type { RpcResponse } from './rpc.ts'
 
@@ -74,6 +75,9 @@ export interface RpcMethodMap {
   'llm.providers': LlmApi['providers']
   'llm.models': LlmApi['models']
   'llm.discoverModels': LlmApi['discoverModels']
+  'memory.list': MemoryApi['list']
+  'memory.forget': MemoryApi['forget']
+  'memory.clear': MemoryApi['clear']
 }
 
 /** Business request payload of method K (reaches through the RpcRequest narrow form to payload). */

@@ -35,6 +35,7 @@ export function toHeaderLine(header) {
         ...header.origin !== undefined ? { origin: header.origin } : {},
         delegationDepth: header.delegationDepth ?? 0,
         ...header.agentPreset !== undefined ? { agentPreset: header.agentPreset } : {},
+        ...header.agentRuntime !== undefined ? { agentRuntime: header.agentRuntime } : {},
     };
 }
 /**
@@ -56,6 +57,7 @@ export function fromHeaderLine(line) {
         ...line.origin !== undefined ? { origin: line.origin } : {},
         delegationDepth: line.delegationDepth,
         ...line.agentPreset !== undefined ? { agentPreset: line.agentPreset } : {},
+        ...line.agentRuntime !== undefined ? { agentRuntime: line.agentRuntime } : {},
     };
 }
 /** Type guard: a parsed first line is a well-formed session header. */
@@ -75,7 +77,9 @@ function isHeaderLine(value) {
         && (value.origin === undefined
             || value.origin === 'subagent')
         && (value.agentPreset === undefined
-            || typeof value.agentPreset === 'string'));
+            || typeof value.agentPreset === 'string')
+        && (value.agentRuntime === undefined
+            || typeof value.agentRuntime === 'string'));
 }
 /**
  * Encode an arbitrary string as a single safe path segment, injectively over ALL JS (UTF-16)

@@ -26,6 +26,7 @@ ACP advertises no start-time capabilities because this process cannot enforce th
 |---|---|---|
 | `providerName` | `acp` | Registry name on `ctx.subagents`. |
 | `command` | required | Executable spawned for each run. |
+| `availability` | `on-demand` | `on-demand` defers executable resolution to spawn; `when-available` probes through `ctx.subprocess` at load and omits the provider when the command is absent. |
 | `args` | `[]` | Command arguments. |
 | `cwd` | parent session cwd | Working-directory override for the child process and its ACP session; must be non-empty, a relative value resolves against the harness launch directory at load, and the result must name a directory the harness can enter. |
 | `permission` | `reject` | Auto-answer permission requests by rejecting or choosing the first `allow_once` or `allow_always` option. |
@@ -58,6 +59,8 @@ ACP advertises no start-time capabilities because this process cannot enforce th
 ## Process boundary
 
 The child spawns through the [`dsh-subprocess`](../../subprocess/subprocess/README.md) seam: credential-shaped ambient variables and ambient `DSH_*` names are removed by the shared scrub, then explicit `config.env` values merge after it (an intended `DEEPSEEK_API_KEY` survives, and a `DSH_*` deployment fact such as `DSH_PERMISSION_MODE` reaches the child the same way — the scrub drops only its stale ambient namesake), stderr is inherited to the parent's own stream, and disposal applies this plugin's EOF window before the subprocess-owned SIGTERM→SIGKILL escalation and whole-tree join. The ACP wire is the real serialization boundary; same-process subagent values are not defensively cloned.
+
+With `availability: when-available`, executable discovery uses the same subprocess provider and effective environment as execution. A successful probe pins the resolved executable path into later runs; a failed probe logs one omission and registers no provider, so lifecycle-bound tools remain absent instead of failing on use.
 
 The package has no default export. Cordis loader unwrapping would otherwise hide the named `inject` metadata; see [postmortem 0001](../../../docs/postmortem/0001-acp-default-export-drops-inject.md).
 

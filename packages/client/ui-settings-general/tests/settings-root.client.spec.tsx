@@ -109,7 +109,7 @@ describe('SettingsPanel chrome seats', () => {
     expect(screen.getByRole('dialog', { name: 'Settings Title' })).toBeTruthy()
   })
 
-  it('names the close button through the visually-hidden close seat text', () => {
+  it('names the visible return control through the close seat text', () => {
     mount()
     openPanel()
     const close = screen.getByRole('button', { name: 'Close' })
@@ -126,19 +126,18 @@ describe('SettingsPanel chrome seats', () => {
 })
 
 describe('SettingsPanel close paths', () => {
-  it('closes via the header button', () => {
+  it('returns via the sidebar control', () => {
     mount()
     openPanel()
     fireEvent.click(screen.getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  it('closes via a mask click', () => {
+  it('renders as a full-frame view without a dismissing mask', () => {
     mount()
     openPanel()
     const dialog = screen.getByRole('dialog')
-    fireEvent.click(dialog.parentElement!.firstElementChild!)
-    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(dialog.parentElement?.children).toHaveLength(1)
   })
 
   it('closes via document-level Escape and unhooks the listener with the panel', () => {
@@ -154,7 +153,7 @@ describe('SettingsPanel close paths', () => {
     expect(screen.getByRole('dialog')).toBeTruthy()
   })
 
-  it('lands focus on the close button when the dialog opens', () => {
+  it('lands focus on the return control when the settings view opens', () => {
     mount()
     openPanel()
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Close' }))

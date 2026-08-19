@@ -2,12 +2,8 @@
  * The model-facing `read_image` tool: reads a PNG/JPEG/WebP/GIF file, durably
  * commits its bytes through the attachment service (the same lifecycle as a
  * user-uploaded image), and returns an image block so the image enters model
- * context from the next request onward.
- *
- * The route gate is deliberately stricter than the host upload preflight: a
- * tool result enters durable session history, so emitting an image on a route
- * that cannot carry it would break that route's continuation. Unknown
- * capability therefore refuses instead of relying on the adapter guard.
+ * context from the next request onward. Text-only routes receive the shared
+ * automatic image analysis instead of the raw image block.
  * @module @voyaseek-ai/dsh-tool-fs/src/read-image
  */
 
@@ -15,6 +11,7 @@ import { basename, extname } from 'node:path'
 import type { Context } from '@voyaseek-ai/cordis'
 import { AttachmentError, AttachmentId } from '@voyaseek-ai/dsh-attachment'
 import type { ImageAttachmentRef, ImageMediaType } from '@voyaseek-ai/dsh-attachment'
+import type {} from '@voyaseek-ai/dsh-image-fallback'
 import { createUserMessage } from '@voyaseek-ai/dsh-llm'
 import type { ContentBlock } from '@voyaseek-ai/dsh-llm'
 import { defineTool } from '@voyaseek-ai/dsh-tools'
@@ -42,6 +39,11 @@ export interface ImageReadValue {
     height: number
     name?: string
   }
+  analysis?: {
+    text: string
+    provider: string
+    model: string
+  }
 }
 
 /**
@@ -54,25 +56,26 @@ export function imageMediaTypeForPath(filePath: string): ImageMediaType | undefi
 }
 
 /**
- * Enforce the strict image-capability gate for the calling route. Resolves the
- * session's latest routed provider/model (request header config, then agent
- * options) and requires the exact resolved route to declare `image` input explicitly.
+ * Decide whether the calling route can receive the raw image. A text-only or
+ * unresolved route is accepted when the shared automatic image fallback exists.
  * @param ctx - the plugin context used to resolve the optional `llm` service.
  * @param exec - the tool-execution context supplying the calling agent.
  * @param requestedPath - the raw, not-yet-resolved path rendered in refusal messages.
+ * @returns whether the selected route should receive the native image block.
  */
-export async function assertImageCapableRoute(ctx: Context, exec: ToolExecution, requestedPath: string): Promise<void> {
+export async function routeAcceptsNativeImage(ctx: Context, exec: ToolExecution, requestedPath: string): Promise<boolean> {
   const routed = exec.agent?.session.requestHeader()?.config
   const provider = routed?.provider ?? exec.agent?.options.provider
   const model = routed?.model ?? exec.agent?.options.model
   const llm = ctx.get('llm')
   if (provider === undefined || model === undefined || llm === undefined) {
-    throw new Error(`cannot read "${requestedPath}" as an image: the current model route could not be resolved`)
+    if (ctx.get('imageFallback') !== undefined) return false
+    throw new Error(`cannot read "${requestedPath}" as an image: automatic image analysis is unavailable`)
   }
   const active = await llm.resolveModelInfo(provider, model, exec.signal)
-  if (active.inputModalities === undefined || !active.inputModalities.includes('image')) {
-    throw new Error(`cannot read "${requestedPath}" as an image: model "${model}" does not declare image input; switch to an image-capable model to read images`)
-  }
+  if (active.inputModalities?.includes('image') === true) return true
+  if (ctx.get('imageFallback') !== undefined) return false
+  throw new Error(`cannot read "${requestedPath}" as an image: automatic image analysis is unavailable`)
 }
 
 /**
@@ -112,6 +115,7 @@ ${image.mediaType} image, ${image.width}x${image.height} px, ${image.bytes} byte
  * @returns the two content blocks used by native and nested dispatches.
  */
 function imageReadContent(value: ImageReadValue): ContentBlock[] {
+  if (value.analysis !== undefined) return [{ type: 'text', text: value.analysis.text }]
   return [
     { type: 'text', text: formatImageReadOutput(value.path, value.image) },
     { type: 'image', attachment: imageRefFromValue(value.image) },
@@ -125,12 +129,12 @@ function imageReadContent(value: ImageReadValue): ContentBlock[] {
  * store is mounted. Execution still re-checks `ctx.get('attachments')` for
  * direct callers and gates on the calling route's declared image input.
  * @param ctx - the registration scope; execution uses its `fs` service plus
- *   the optional `attachments`/`llm` services.
+ *   the optional `attachments`/`llm` services and shared image fallback.
  */
 export function applyReadImageTool(ctx: Context): void {
   ctx.tools.register(defineTool({
     name: 'read_image',
-    description: 'Read a PNG/JPEG/WebP/GIF file and return the image itself. Requires the current model to accept image input.',
+    description: 'Read a PNG/JPEG/WebP/GIF file. Text-only models receive automatic image analysis; image-capable models receive the image itself.',
     parameters: {
       file_path: { type: 'string', required: true, description: 'Path to the image file, resolved by the filesystem backend.' },
     },
@@ -151,6 +155,15 @@ export function applyReadImageTool(ctx: Context): void {
               width: { type: 'integer', required: true },
               height: { type: 'integer', required: true },
               name: { type: 'string' },
+            },
+          },
+          analysis: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              text: { type: 'string', required: true },
+              provider: { type: 'string', required: true },
+              model: { type: 'string', required: true },
             },
           },
         },
@@ -176,7 +189,7 @@ export function applyReadImageTool(ctx: Context): void {
       if (!attachments.imageLimits.mediaTypes.includes(mediaType)) {
         throw new Error(`cannot read "${args.file_path}": ${mediaType} images are not accepted by this deployment`)
       }
-      await assertImageCapableRoute(ctx, exec, args.file_path)
+      const nativeImage = await routeAcceptsNativeImage(ctx, exec, args.file_path)
 
       const { target, info } = await resolveRegularReadTarget(ctx, exec, args.file_path)
 
@@ -208,6 +221,22 @@ export function applyReadImageTool(ctx: Context): void {
           height: ref.height,
           ...ref.name === undefined ? {} : { name: ref.name },
         },
+      }
+      if (!nativeImage) {
+        const fallback = ctx.get('imageFallback')
+        const sessionId = exec.agent?.session.id
+        if (fallback === undefined || sessionId === undefined) {
+          throw new Error(`cannot read "${args.file_path}" as an image: automatic image analysis is unavailable`)
+        }
+        const translated = await fallback.translate(imageReadContent(value), sessionId, exec.signal)
+        value.analysis = {
+          text: translated.content
+            .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
+            .map(block => block.text)
+            .join('\n'),
+          provider: translated.attribution.provider,
+          model: translated.attribution.model,
+        }
       }
       if (exec.parent !== undefined) {
         exec.deferContext(createUserMessage({

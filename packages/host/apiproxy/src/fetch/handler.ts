@@ -64,6 +64,7 @@ import {
   credentialsDescribeRequestSchema, credentialsSetRequestSchema, credentialsUnsetRequestSchema,
 } from '../api/credentials.schema.ts'
 import { llmDiscoverModelsRequestSchema, llmModelsRequestSchema, llmProvidersRequestSchema } from '../api/llm.schema.ts'
+import { memoryClearRequestSchema, memoryForgetRequestSchema, memoryListRequestSchema } from '../api/memory.schema.ts'
 import {
   subagentHistoryRequestSchema,
   subagentInterruptRequestSchema,
@@ -140,6 +141,9 @@ const UNARY_ROUTES: UnaryRoutes = {
   'llm.providers': { schema: llmProvidersRequestSchema, invoke: (api, r) => api.llm.providers(r) },
   'llm.models': { schema: llmModelsRequestSchema, invoke: (api, r) => api.llm.models(r) },
   'llm.discoverModels': { schema: llmDiscoverModelsRequestSchema, invoke: (api, r, signal) => api.llm.discoverModels(r, signal) },
+  'memory.list': { schema: memoryListRequestSchema, invoke: (api, r) => api.memory.list(r) },
+  'memory.forget': { schema: memoryForgetRequestSchema, invoke: (api, r) => api.memory.forget(r) },
+  'memory.clear': { schema: memoryClearRequestSchema, invoke: (api, r) => api.memory.clear(r) },
 }
 
 /** Route lookup that narrows an arbitrary path segment to a map key (single cast point for the string→key refinement). */

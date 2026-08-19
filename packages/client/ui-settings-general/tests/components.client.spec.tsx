@@ -37,7 +37,7 @@ describe('chrome content', () => {
     render(<HeaderContent {...kit} t={t} />)
     render(<CloseLabel {...kit} t={t} />)
     expect(screen.getByText('Settings')).toBeTruthy()
-    expect(screen.getByText('Close')).toBeTruthy()
+    expect(screen.getByText('Back to app')).toBeTruthy()
   })
 })
 

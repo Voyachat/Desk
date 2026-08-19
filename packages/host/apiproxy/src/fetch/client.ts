@@ -61,6 +61,7 @@ import {
   credentialsDescribeValueSchema, credentialsSetValueSchema, credentialsUnsetValueSchema,
 } from '../api/credentials.schema.ts'
 import { llmDiscoverModelsValueSchema, llmModelsValueSchema, llmProvidersValueSchema } from '../api/llm.schema.ts'
+import { memoryClearValueSchema, memoryForgetValueSchema, memoryListValueSchema } from '../api/memory.schema.ts'
 import {
   subagentHistoryValueSchema,
   subagentInterruptValueSchema,
@@ -161,6 +162,11 @@ export interface IApiClient {
     models(payload: RequestPayload<'llm.models'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'llm.models'>>>
     discoverModels(payload: RequestPayload<'llm.discoverModels'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'llm.discoverModels'>>>
   }
+  memory: {
+    list(payload: RequestPayload<'memory.list'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.list'>>>
+    forget(payload: RequestPayload<'memory.forget'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.forget'>>>
+    clear(payload: RequestPayload<'memory.clear'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.clear'>>>
+  }
   /** client-response passthrough (rpcId is a backfill of the server-request's id — never minted here). */
   respond(message: ClientResponse, signal?: AbortSignal): Promise<RpcReceipt>
 }
@@ -222,6 +228,9 @@ const UNARY_VALUE_SCHEMAS: { [K in keyof RpcMethodMap]: z.ZodType<Wire<ResponseV
   'llm.providers': llmProvidersValueSchema,
   'llm.models': llmModelsValueSchema,
   'llm.discoverModels': llmDiscoverModelsValueSchema,
+  'memory.list': memoryListValueSchema,
+  'memory.forget': memoryForgetValueSchema,
+  'memory.clear': memoryClearValueSchema,
 }
 
 /** Default timeout for bounded unary calls (rpc-compare 2026-07-19: a hung host must not leave callers pending forever). */
@@ -498,6 +507,12 @@ export abstract class AbstractApiClient implements IApiClient {
     providers: (payload, signal) => this.callUnary('llm.providers', payload, signal),
     models: (payload, signal) => this.callUnary('llm.models', payload, signal),
     discoverModels: (payload, signal) => this.callUnary('llm.discoverModels', payload, signal),
+  }
+
+  readonly memory: IApiClient['memory'] = {
+    list: (payload, signal) => this.callUnary('memory.list', payload, signal),
+    forget: (payload, signal) => this.callUnary('memory.forget', payload, signal),
+    clear: (payload, signal) => this.callUnary('memory.clear', payload, signal),
   }
 
   readonly events: IApiClient['events'] = {

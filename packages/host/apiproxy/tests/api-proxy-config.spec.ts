@@ -350,6 +350,9 @@ describe('settings domain', () => {
     ctx.settings.register(settingsNamespace('agent-loop'), z.object({
       maxParallelToolCalls: z.number().default(10),
     }))
+    ctx.settings.register(settingsNamespace('agent-memory'), z.object({
+      enabled: z.boolean().default(true),
+    }))
     ctx.settings.register(settingsNamespace('mobile-view'), z.object({
       enabled: z.boolean().default(false),
       port: z.number().default(3081),
@@ -362,7 +365,7 @@ describe('settings domain', () => {
     const value = expectOk(await api.settings.describe(request({})))
     expect(value.namespaces.map(view => view.ns)).toEqual([
       'llm-deepseek', 'permission', 'ui-theme', 'locale', 'ui-conversation',
-      'shell', 'agent-loop', 'mobile-view', 'web-search-deepseek',
+      'shell', 'agent-loop', 'agent-memory', 'mobile-view', 'web-search-deepseek',
     ])
     const permission = expectOk(await api.settings.mutate(request({
       ns: 'permission',

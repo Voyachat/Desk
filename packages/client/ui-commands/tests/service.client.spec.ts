@@ -229,6 +229,7 @@ describe('candidates', () => {
       { name: 'export', description: 'host export' },
       { name: 'feedback', description: 'host feedback' },
       { name: 'goal', description: 'host goal' },
+      { name: 'goal-complex', description: 'host complex goal', input: { hint: '<objective>' } },
       { name: 'permission', description: 'host permission' },
       { name: 'plan', description: 'host plan' },
       { name: 'workflow-retry', description: 'host workflow retry' },
@@ -242,6 +243,7 @@ describe('candidates', () => {
       { name: 'export', label: '导出', description: '将此会话日志下载为 ZIP 压缩包' },
       { name: 'feedback', label: '反馈', description: '记录关于此会话的反馈' },
       { name: 'goal', label: '目标', description: '设置或查看长时任务的目标' },
+      { name: 'goal-complex', label: '复杂任务目标', description: '分阶段执行并独立验证复杂任务目标' },
       { name: 'permission', label: '权限', description: '切换权限预设（沙箱模式与审批策略）' },
       { name: 'plan', label: '计划', description: '进入或退出计划模式' },
       { name: 'workflow-retry', label: '重试工作流', description: '从已记录的源调用重新启动中断或失败的工作流' },
@@ -255,11 +257,16 @@ describe('candidates', () => {
       { name: 'export', label: 'Export', description: 'Download this Session log as a ZIP archive' },
       { name: 'feedback', label: 'Feedback', description: 'Record feedback about this session' },
       { name: 'goal', label: 'Goal', description: 'Set or view the goal for a long-running task' },
+      { name: 'goal-complex', label: 'Complex task goal', description: 'Execute a complex objective in stages with independent verification' },
       { name: 'permission', label: 'Permission', description: 'Switch the permission preset (sandbox mode + approval policy)' },
       { name: 'plan', label: 'Plan', description: 'Enter or leave plan mode' },
       { name: 'workflow-retry', label: 'Retry workflow', description: 'Restart an interrupted or failed workflow from its logged source call' },
       { name: 'third-party', label: undefined, description: 'Host-owned fallback' },
     ])
+
+    const outcome = menuPick(source, 'goal-complex', proj('s1'))
+    if (outcome === undefined || outcome === 'handled' || !('claim' in outcome)) throw new Error('expected complex goal claim')
+    expect(outcome.claim).toMatchObject({ token: '/goal-complex ', hint: '<objective>' })
   })
 
   it('matches case-insensitive subsequences and ranks prefixes, boundaries, adjacency, gaps, then source order', async () => {

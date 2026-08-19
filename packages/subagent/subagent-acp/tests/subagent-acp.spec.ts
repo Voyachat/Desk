@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
 import Loader from '@voyaseek-ai/cordis-plugin-loader'
 import { chmodSync, existsSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
@@ -140,6 +140,47 @@ describe('child env layering (through the subprocess seam)', () => {
     await run.dispose()
     const text = result.output.filter(b => b.type === 'text').map(b => (b as { text: string }).text).join('')
     expect(text).toBe('managed')
+    await ctx.fiber.dispose()
+  })
+})
+
+describe('automatic executable availability', () => {
+  it('omits the provider when an optional executable is unavailable', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SubagentRuntime)
+    await ctx.plugin(LocalSubprocessRuntime)
+    vi.spyOn(ctx.subprocess, 'resolveExecutable').mockRejectedValueOnce(new Error('prime-agent missing'))
+
+    await ctx.plugin(acp, {
+      providerName: 'prime-computer-use',
+      command: 'prime-agent',
+      availability: 'when-available',
+      args: [],
+      permission: 'reject',
+      env: {},
+    })
+
+    expect(ctx.subagents.getProvider('prime-computer-use')).toBeUndefined()
+    await ctx.fiber.dispose()
+  })
+
+  it('registers the provider with the subprocess-resolved executable when available', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SubagentRuntime)
+    await ctx.plugin(LocalSubprocessRuntime)
+    const resolveExecutable = vi.spyOn(ctx.subprocess, 'resolveExecutable').mockResolvedValueOnce(process.execPath)
+
+    await ctx.plugin(acp, {
+      providerName: 'prime-computer-use',
+      command: 'prime-agent',
+      availability: 'when-available',
+      args: [mockServer],
+      permission: 'reject',
+      env: {},
+    })
+
+    expect(resolveExecutable).toHaveBeenCalledWith('prime-agent', {})
+    expect(ctx.subagents.getProvider('prime-computer-use')).toBeDefined()
     await ctx.fiber.dispose()
   })
 })

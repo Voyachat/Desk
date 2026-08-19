@@ -72,6 +72,8 @@
       "@voyaseek-ai/dsh-cordis-host-runner/types": ["./packages/extensions/cordis-host-runner/src/types.ts"],
       "@voyaseek-ai/dsh-goal/types": ["./packages/goal/goal/src/types.ts"],
       "@voyaseek-ai/dsh-goal/client": ["./packages/goal/goal/src/client.ts"],
+      "@voyaseek-ai/dsh-tool-goal": ["./packages/goal/tool-goal/src/index.ts"],
+      "@voyaseek-ai/dsh-complex-goal": ["./packages/goal/complex-goal/src/index.ts"],
       "@voyaseek-ai/dsh-llm/types": ["./packages/llm/llm/src/types.ts"],
       "@voyaseek-ai/dsh-llm/brand": ["./packages/llm/llm/src/brand.ts"],
       "@voyaseek-ai/dsh-llm-retry/types": ["./packages/llm/llm-retry/src/types.ts"],
@@ -227,6 +229,7 @@
       "@voyaseek-ai/dsh-client-ui-settings-general": ["./packages/client/ui-settings-general/src"],
       "@voyaseek-ai/dsh-client-ui-settings-models": ["./packages/client/ui-settings-models/src"],
       "@voyaseek-ai/dsh-client-ui-settings-mobile-view": ["./packages/client/ui-settings-mobile-view/src"],
+      "@voyaseek-ai/dsh-client-ui-settings-memory": ["./packages/client/ui-settings-memory/src"],
       "@voyaseek-ai/dsh-client-ui-settings-plugin-inventory": ["./packages/client/ui-settings-plugin-inventory/src"],
       "@voyaseek-ai/dsh-client-locale": ["./packages/client/locale/src"],
       "@voyaseek-ai/dsh-client-web": ["./packages/client/web/src"],
@@ -248,6 +251,7 @@
         "./packages/lsp/*/src",
         "./packages/skill/*/src",
         "./packages/compaction/*/src",
+        "./packages/memory/*/src",
         "./packages/context/*/src",
         "./packages/goal/*/src",
         "./packages/feedback/*/src",
@@ -290,6 +294,7 @@
       // dsh-claude-runtime-ui / ui-runtime split) resolve explicitly instead
       // of relying on the generic wildcard's dir-name matching.
       "@voyaseek-ai/dsh-claude-agent": ["./packages/claude/claude-agent/src"],
+      "@voyaseek-ai/dsh-codex-agent": ["./packages/codex/codex-agent/src"],
       "@voyaseek-ai/dsh-claude-runtime-ui": ["./packages/claude/ui-runtime/src"]
     }
   }

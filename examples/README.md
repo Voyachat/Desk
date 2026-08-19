@@ -8,6 +8,10 @@ Runnable demonstrations of the main Voyaseek Harness interfaces and extension po
 
 Optional overlays that connect supported third-party memory servers through the generic MCP client. See the [memory example reference](mcp-memory/README.md).
 
+## prime-computer-use
+
+Automatic desktop capability backed by a separately installed Prime Agent `v0.7.3` ACP child running `@injaneity/pi-computer-use@0.5.0`. DSH keeps its own agent loop, probes availability at boot, and exposes one bounded delegation tool only while the executable exists. See the [computer-use example reference](prime-computer-use/README.md) for installation side effects, autonomous selection, verification, and production prerequisites.
+
 ## headless-agent
 
 A non-interactive agent that accepts one task, runs it, and emits a selected machine-readable or human-readable output format. See the [headless example reference](headless-agent/README.md).

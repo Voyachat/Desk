@@ -17,6 +17,7 @@ import type {
 } from '@voyaseek-ai/dsh-terminal'
 import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
 import ToolRuntime from '@voyaseek-ai/dsh-tools'
+import { PERSISTENT_BASH_PROMPT } from '@voyaseek-ai/dsh-terminal-bash/src/sanitize.ts'
 import * as ToolBashPersistent from '@voyaseek-ai/dsh-tool-bash-persistent'
 
 const contexts: Context[] = []
@@ -107,6 +108,7 @@ class StubPtySession implements TerminalBackendSession {
   closed: string[] = []
   mode: StubMode
   sends = 0
+  setupText = ''
   pendingText = ''
   historyTruncated = false
 
@@ -117,6 +119,7 @@ class StubPtySession implements TerminalBackendSession {
   startSend(request: TerminalSendRequest): TerminalSendOperation {
     this.sends += 1
     if (request.text.startsWith('stty -echo')) {
+      this.setupText = request.text
       if (this.mode === 'init-exit') {
         this.statusValue = { kind: 'exited', exitCode: 1, signal: null }
         return this.operation(Promise.resolve(this.result('', 'session_exit')))
@@ -315,6 +318,7 @@ describe('tool-bash-persistent', () => {
     expect(text(await call(ctx, owner, 'echo two'))).toBe('hello from stub')
     expect(stub.sessions).toHaveLength(1)
     expect(stub.sessions[0]?.sends).toBe(3)
+    expect(stub.sessions[0]?.setupText).toBe(`stty -echo; PS1=$'${PERSISTENT_BASH_PROMPT}'`)
 
     const ownerWithoutCwd = agent(ctx, undefined)
     expect(text(await call(ctx, ownerWithoutCwd, 'pwd'))).toBe('hello from stub')

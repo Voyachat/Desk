@@ -8,6 +8,10 @@
 
 通过通用 MCP 客户端连接受支持第三方记忆服务器的可选 overlay。详见[记忆示例参考](mcp-memory/README.md)。
 
+## prime-computer-use
+
+由单独安装的 Prime Agent `v0.7.3` ACP 子进程自动提供桌面能力，并由它运行 `@injaneity/pi-computer-use@0.5.0`。DSH 保留自己的 agent loop，在启动时探测可用性，并且只在可执行文件存在时暴露一个受限委派工具。安装副作用、自主选择、验证方法和生产前置条件详见 [computer-use 示例参考](prime-computer-use/README.md)。
+
 ## headless-agent
 
 非交互式 agent（智能体）：接受一项任务并运行，然后以选定的机器可读或人类可读格式输出结果。详见[无头示例参考](headless-agent/README.md)。

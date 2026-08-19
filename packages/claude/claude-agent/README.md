@@ -17,6 +17,9 @@ for claude sessions. The driver:
 
 - owns the turn/step boundaries and the inbox exactly like the default loop,
   so the session log stays the source of truth;
+- assembles the same scoped system prompt and dynamic context as the native
+  loop, runs `agent/pre-step` and `agent/request`, and records the exact
+  provider/model/system snapshot in `request/header` before each SDK query;
 - runs one SDK `query()` per turn under the session cwd, mapping SDK messages
   onto durable session events: `system/init` records a `claude-agent/runtime`
   event (the SDK conversation id plus the model), assistant text/thinking/tool
@@ -44,10 +47,13 @@ The approval panel offers a remembered action only when Claude's entire suggesti
 | key | default | meaning |
 | --- | --- | --- |
 | `runtime` | `claude` | session-header runtime this factory serves |
+| `provider` | `claude-agent` | global model-provider route served by this Anthropic-compatible endpoint |
 | `model` | absent | `ANTHROPIC_MODEL` overlay for the SDK child |
+| `models` | absent | exact model ids admitted by this endpoint; also filters the session model picker |
 | `baseUrl` | absent | `ANTHROPIC_BASE_URL` overlay (compat gateways) |
 | `authToken` | absent | `ANTHROPIC_AUTH_TOKEN` overlay |
 | `apiKey` | absent | `ANTHROPIC_API_KEY` overlay |
+| `apiKeyEnv` | absent | credential reference resolved per query and exposed as `ANTHROPIC_API_KEY` |
 | `permissionMode` | session permission state | explicit SDK permission mode (`default`, `acceptEdits`, `auto`, `plan`, `bypassPermissions`) |
 | `executable` | SDK-resolved | explicit `claude` CLI path (`pathToClaudeCodeExecutable`) |
 | `env` | `{}` | extra child-env entries layered over the scrubbed parent env |
@@ -55,9 +61,16 @@ The approval panel offers a remembered action only when Claude's entire suggesti
 
 ## Model Experience
 
-- **Prompt**: the user's prompt text for the turn goes to Claude Code
-  verbatim; the DSH system prompt and DSH tool schemas do not participate —
-  Claude Code applies its own prompt and built-in tools.
+- **Prompt and context**: the DSH system prompt is the SDK custom system
+  prompt; dynamic contexts are logged user-role snapshots and pass through
+  `agent/pre-step`. Claude Code still owns its built-in tools; DSH tool schemas
+  are not presented as Claude tools.
+- **Model**: the session's global selection passes through `agent/request` and
+  becomes the SDK model for that exact query. A runtime endpoint admits only
+  its configured provider/model subset; an incompatible global default falls
+  back to the runtime default instead of being silently sent elsewhere.
+- **Attachments**: this text bridge rejects non-text input explicitly; it never
+  drops an image while pretending the turn succeeded.
 - **Tokens**: usage accounting is the SDK's; DSH records no token counts for
   claude turns in v1.
 - **KV cache**: DSH never builds model requests for this driver; the SDK owns

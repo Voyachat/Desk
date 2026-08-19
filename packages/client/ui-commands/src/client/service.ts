@@ -70,6 +70,7 @@ const BUILTIN_COMMAND_COPY: Partial<Record<string, { label: CommandKey; descript
   export: { label: 'catalog.export.label', description: 'catalog.export.description' },
   feedback: { label: 'catalog.feedback.label', description: 'catalog.feedback.description' },
   goal: { label: 'catalog.goal.label', description: 'catalog.goal.description' },
+  'goal-complex': { label: 'catalog.goal-complex.label', description: 'catalog.goal-complex.description' },
   permission: { label: 'catalog.permission.label', description: 'catalog.permission.description' },
   plan: { label: 'catalog.plan.label', description: 'catalog.plan.description' },
   'workflow-retry': { label: 'catalog.workflow-retry.label', description: 'catalog.workflow-retry.description' },

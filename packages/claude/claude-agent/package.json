@@ -37,12 +37,15 @@
   "peerDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
     "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-launch-environment": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
     "@voyaseek-ai/dsh-scope": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-subprocess": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@voyaseek-ai/dsh-user-approval": "workspace:^",
     "@voyaseek-ai/dsh-user-questions": "workspace:^"
   },
@@ -54,13 +57,16 @@
     "@voyaseek-ai/cordis": "workspace:^",
     "@voyaseek-ai/dsh-agent": "workspace:^",
     "@voyaseek-ai/dsh-agent-loop": "workspace:^",
+    "@voyaseek-ai/dsh-credentials": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-launch-environment": "workspace:^",
     "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
     "@voyaseek-ai/dsh-scope": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-subprocess": "workspace:^",
     "@voyaseek-ai/dsh-subprocess-local": "workspace:^",
+    "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@voyaseek-ai/dsh-user-approval": "workspace:^",
     "@voyaseek-ai/dsh-user-questions": "workspace:^"
   }

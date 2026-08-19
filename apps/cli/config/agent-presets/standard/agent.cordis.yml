@@ -218,6 +218,15 @@
         enableRunInBackground: false
         maxDepth: provider-managed
 
+    - id: tool-computer-use
+      name: '@voyaseek-ai/dsh-tool-subagent'
+      config:
+        provider: prime-computer-use
+        toolName: computer_use
+        description: Use semantic desktop accessibility operations when a task requires observing or interacting with installed GUI applications. Prefer native DSH file, shell, and web tools when no desktop UI is needed.
+        enableRunInBackground: false
+        maxDepth: provider-managed
+
     - id: workflow-worker-thread
       name: '@voyaseek-ai/dsh-workflow-worker-thread'
       config:

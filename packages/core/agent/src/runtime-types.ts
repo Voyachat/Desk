@@ -30,6 +30,16 @@ export interface AgentOptions {
   maxTokens?: number
 }
 
+/** Provider/model subset an alternative runtime can faithfully serve. */
+export interface AgentModelConstraint {
+  /** Only provider route accepted by the runtime protocol endpoint. */
+  readonly provider: string
+  /** Runtime fallback when the global default is outside this subset. */
+  readonly defaultModel: string
+  /** Exact admitted model ids; absent means every model on the provider route. */
+  readonly models?: readonly string[]
+}
+
 /** Options for {@link Agent.cancel}. */
 export interface CancelOptions {
   /**
@@ -66,6 +76,8 @@ export interface Agent {
   readonly id: SessionId
   /** The provider route and model this agent's requests use. */
   readonly options: AgentOptions
+  /** Optional model subset imposed by an alternative runtime protocol. */
+  readonly modelConstraint?: AgentModelConstraint
   /** The live session this agent drives; its log is the durable source of truth. */
   readonly session: Session
   /** The agent-owned projection of durable pending work. */

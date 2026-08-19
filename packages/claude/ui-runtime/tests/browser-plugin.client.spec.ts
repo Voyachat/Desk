@@ -105,10 +105,10 @@ describe('claude-runtime-ui browser apply', () => {
 
     // Switching connects the owning workspace under the pick and opens the
     // landed session (it differs from the one the pick was made under).
-    injected.select('claude')
+    injected.select('codex')
     await Promise.resolve()
     await Promise.resolve()
-    expect(b.connectWorkspace).toHaveBeenCalledWith('w1', { agentRuntime: 'claude' })
+    expect(b.connectWorkspace).toHaveBeenCalledWith('w1', { agentRuntime: 'codex' })
     expect(b.open).toHaveBeenCalledWith('s-next')
 
     await fiber.dispose()

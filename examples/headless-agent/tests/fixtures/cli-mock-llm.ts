@@ -33,6 +33,38 @@ class CliMockAdapter extends LlmAdapter {
       yield { type: 'finish', reason: { kind: 'error', failure: { code: 'SERVER', message: 'CLI mock provider failed' } } }
       return
     }
+    if (process.env.DSH_CLI_EXPECT_AUTO_DESIGN_SKILL === '1') {
+      const injectionCount = options.messages.flatMap(message => message.content).filter(block =>
+        block.type === 'text' && block.text.includes('<skill_content name="design-taste-frontend">'),
+      ).length
+      const reply = injectionCount === 1
+        ? 'AUTOMATIC_DESIGN_SKILL_INJECTED_ONCE'
+        : `AUTOMATIC_DESIGN_SKILL_INJECTION_COUNT_${injectionCount}`
+      yield { type: 'block-start', index: 0, blockType: 'text' }
+      yield { type: 'text-delta', index: 0, text: reply }
+      yield { type: 'block-end', index: 0, block: { type: 'text', text: reply } }
+      yield { type: 'usage', usage: { inputTokens: 7, outputTokens: 2 } }
+      yield { type: 'finish', reason: { kind: 'stop' } }
+      return
+    }
+    if (process.env.DSH_CLI_MEMORY_MODE !== undefined) {
+      const recalled = options.messages.flatMap(message => message.content).some(block =>
+        block.type === 'text'
+        && block.text.includes('以下是来自其他会话的长期记忆')
+        && block.text.includes('lapsang-fixture'),
+      )
+      const reply = process.env.DSH_CLI_MEMORY_MODE === 'capture'
+        ? '已记住验证饮料 lapsang-fixture。'
+        : recalled
+          ? 'MEMORY_RECALLED_lapsang-fixture'
+          : 'MEMORY_RECALL_MISSING'
+      yield { type: 'block-start', index: 0, blockType: 'text' }
+      yield { type: 'text-delta', index: 0, text: reply }
+      yield { type: 'block-end', index: 0, block: { type: 'text', text: reply } }
+      yield { type: 'usage', usage: { inputTokens: 7, outputTokens: 2 } }
+      yield { type: 'finish', reason: { kind: 'stop' } }
+      return
+    }
     const toolResult = options.messages.at(-1)?.content.find(block => block.type === 'tool-result')
     if (toolResult === undefined) {
       const args = JSON.stringify({ command: 'printf CLI_TOOL_ROUND_TRIP', description: 'Prove the CLI tool round trip.' })

@@ -189,9 +189,9 @@ const SCENARIOS: Scenario[] = [
     posixOnly: true,
   },
   // Authored keyless replays through the assembled app: the replay catalog
-  // declares flash image-capable (success) or text-only (refusal), and the
-  // real read_image tool executes against the workspace fixture and the real
-  // attachment store. Both boot the same composed header (the tool registers
+  // declares flash image-capable (native image) or text-only (automatic local
+  // analysis), and the real read_image tool executes against the workspace
+  // fixture and attachment store. Both boot the same composed header (the tool registers
   // with the attachment store, independent of route), so they share one class.
   {
     name: 'read-image',
@@ -209,7 +209,9 @@ const SCENARIOS: Scenario[] = [
     name: 'read-image-text-route',
     hasModelTurn: true,
     recorded: false,
-    headerClass: 'image',
+    pinsHeader: true,
+    headerClass: 'image-fallback',
+    systemPromptSource: 'text-turn',
     configPath: IMAGE_TEXT_ROUTE_CONFIG,
   },
   {

@@ -570,6 +570,38 @@ export interface ToolResultPruneConfig {
 
 来源：[`packages/compaction/compaction-tool-result-pruner/src/types.ts:4`](../packages/compaction/compaction-tool-result-pruner/src/types.ts)
 
+<a id="voyaseek-aidsh-complex-goal"></a>
+
+## `@voyaseek-ai/dsh-complex-goal`
+
+需要：`agents` · `commands` · `goals` · `sessions` · `shell` · `subagents` · `tools` · `sandboxPolicy` · `approval` · `systemPrompt`
+
+```ts config-catalog
+/** Deployment policy for independently verified complex tasks. */
+export interface Config {
+  /** Ordered commands that must all pass before completion is certifiable. */
+  verificationGates?: VerificationGateConfig[]
+  /** Default timeout for a verification command. */
+  verificationTimeoutMs?: number
+  /** Maximum stdout or stderr bytes persisted for each command. */
+  verificationOutputMaxBytes?: number
+  /** Total wall-clock lifetime retained across pause and process restart. */
+  maxDurationMs?: number
+}
+
+/** One trusted deployment command used as a deterministic completion gate. */
+export interface VerificationGateConfig {
+  /** Stable identifier rendered in durable evidence. */
+  id: string
+  /** Exact command; model output can never replace or extend it. */
+  command: string
+  /** Per-command timeout override. */
+  timeoutMs?: number
+}
+```
+
+来源：[`packages/goal/complex-goal/src/index.ts:86`](../packages/goal/complex-goal/src/index.ts)
+
 <a id="voyaseek-aidsh-cordis-host-runner"></a>
 
 ## `@voyaseek-ai/dsh-cordis-host-runner`

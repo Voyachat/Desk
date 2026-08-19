@@ -1,0 +1,36 @@
+{
+  "name": "@voyaseek-ai/dsh-agent-memory-settings",
+  "description": "Settings-configured local structured-memory provider using private SQLite storage",
+  "version": "0.1.0-rc.5",
+  "publishConfig": { "access": "public" },
+  "repository": { "type": "git", "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git", "directory": "packages/memory/agent-memory-settings" },
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/types/index.d.ts",
+  "exports": {
+    ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
+    "./invariant": { "types": "./lib/types/invariant.d.ts", "default": "./lib/invariant.js" },
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": ["lib/index.js", "lib/invariant.js", "lib/types/**/*.d.ts"],
+  "license": "MIT",
+  "dependencies": { "@voyaseek-ai/schemastery": "workspace:^" },
+  "peerDependencies": {
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-agent-memory": "workspace:^",
+    "@voyaseek-ai/dsh-home-paths": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^"
+  },
+  "devDependencies": {
+    "@voyaseek-ai/cordis": "workspace:^",
+    "@voyaseek-ai/dsh-agent-memory": "workspace:^",
+    "@voyaseek-ai/dsh-home-paths": "workspace:^",
+    "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-session": "workspace:^",
+    "@voyaseek-ai/dsh-settings": "workspace:^",
+    "@voyaseek-ai/dsh-settings-file": "workspace:^"
+  }
+}

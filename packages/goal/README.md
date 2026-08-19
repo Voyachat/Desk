@@ -10,5 +10,6 @@ Durable objective state for an agent session, owned independently of the model-f
 | [`goal-round-driver/`](goal-round-driver/README.md) | Same-session goal continuation | — |
 | [`tool-goal/`](tool-goal/README.md) | Model-facing goal tools | — |
 | [`command-goal/`](command-goal/README.md) | Human-facing goal command | — |
+| [`complex-goal/`](complex-goal/README.md) | Semantic complex-task mode with deterministic and independent verification | — |
 
 The subsystem reference — goal identity, lifecycle snapshots, activation, change records — is [docs/subsystems/goal.md](../../docs/subsystems/goal.md).

@@ -21,7 +21,9 @@ import type {
   TerminalWaitReason,
 } from '@voyaseek-ai/dsh-terminal'
 import type { ResolvedConfig } from './config.ts'
-import { CONTROLLED_PROMPT, TerminalSanitizer } from './sanitize.ts'
+import { CONTROLLED_PROMPTS, TerminalSanitizer } from './sanitize.ts'
+
+const MAX_CONTROLLED_PROMPT_LENGTH = Math.max(...CONTROLLED_PROMPTS.map(prompt => prompt.length))
 
 function utf8Tail(text: string, maxBytes: number): { text: string; truncated: boolean } {
   if (Buffer.byteLength(text) <= maxBytes) return { text, truncated: false }
@@ -391,10 +393,12 @@ export class LocalPtySession implements TerminalBackendSession {
       this.lastOutputAt = Date.now()
     }
     if (this.promptSeen && sanitized.promptTail !== undefined) {
-      const remaining = Math.max(0, CONTROLLED_PROMPT.length + 1 - this.promptTail.length)
+      const remaining = Math.max(0, MAX_CONTROLLED_PROMPT_LENGTH - this.promptTail.length)
       this.promptTail += sanitized.promptTail.slice(0, remaining)
-      if (sanitized.promptTail.length > remaining) this.promptTail = `${CONTROLLED_PROMPT}\0`
-      this.promptTextSeen = this.promptTail === CONTROLLED_PROMPT
+      if (sanitized.promptTail.length > remaining) {
+        this.promptTail = `${this.promptTail.slice(0, MAX_CONTROLLED_PROMPT_LENGTH)}\0`
+      }
+      this.promptTextSeen = CONTROLLED_PROMPTS.some(prompt => this.promptTail === prompt)
     }
   }
 

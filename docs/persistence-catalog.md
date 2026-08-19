@@ -262,6 +262,29 @@ Source: [`packages/core/session/src/types.ts:282`](../packages/core/session/src/
 
 Source: [`packages/claude/claude-agent/src/types.ts:18`](../packages/claude/claude-agent/src/types.ts)
 
+### `codex-agent/*`
+
+<a id="codex-agentruntime--log-only"></a>
+
+#### `codex-agent/runtime` — log-only
+
+```ts persistence-catalog
+/**
+ * The persistent Codex thread bound to this DSH session. A rebuilt driver
+ * resumes this exact thread before accepting its next turn.
+ */
+'codex-agent/runtime': {
+  /** Codex app-server thread identity. */
+  threadId: string
+  /** Effective model when configured or reported by app-server. */
+  model?: string
+  /** Effective app-server model-provider id when configured or reported. */
+  modelProvider?: string
+}
+```
+
+Source: [`packages/codex/codex-agent/src/types.ts:11`](../packages/codex/codex-agent/src/types.ts)
+
 ### `command/*`
 
 <a id="commanddone--log-only"></a>
@@ -416,6 +439,22 @@ Types: [ContentBlock](subsystems/core.md) · [TokenUsage](subsystems/llm-streami
 
 Source: [`packages/compaction/compaction/src/types.ts:33`](../packages/compaction/compaction/src/types.ts)
 
+### `complex-goal/*`
+
+<a id="complex-goalchange--log-only"></a>
+
+#### `complex-goal/change` — log-only
+
+```ts persistence-catalog
+/**
+ * Complete state after one independently verified complex-goal transition.
+ * @param payload - versioned operation and complete post-transition snapshot.
+ */
+'complex-goal/change': ComplexGoalChange
+```
+
+Source: [`packages/goal/complex-goal/src/domain.ts:29`](../packages/goal/complex-goal/src/domain.ts)
+
 ### `feedback/*`
 
 <a id="feedbackrecord--log-only"></a>
@@ -537,7 +576,7 @@ Source: [`packages/llm/llm-retry/src/types.ts:11`](../packages/llm/llm-retry/src
 'permission/preset': { preset: string }
 ```
 
-Source: [`packages/interaction/permission-presets/src/index.ts:50`](../packages/interaction/permission-presets/src/index.ts)
+Source: [`packages/interaction/permission-presets/src/index.ts:51`](../packages/interaction/permission-presets/src/index.ts)
 
 ### `plan/*`
 

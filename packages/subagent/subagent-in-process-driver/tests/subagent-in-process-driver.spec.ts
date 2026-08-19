@@ -1,6 +1,6 @@
 import { CallId, createUserMessage } from '@voyaseek-ai/dsh-llm'
 import { describe, expect, it } from 'vitest'
-import { Context } from '@voyaseek-ai/cordis'
+import { Context, FiberState } from '@voyaseek-ai/cordis'
 import { type Agent, type AgentOptions } from '@voyaseek-ai/dsh-agent'
 import { SessionId } from '@voyaseek-ai/dsh-session'
 import AgentLoop from '@voyaseek-ai/dsh-agent-loop'
@@ -65,6 +65,59 @@ describe('startInProcessRun', () => {
     await run.dispose()
     await run.dispose()
     expect(ctx.agents.get(run.id)).toBeUndefined()
+  })
+
+  it('applies provider setup before publication and the first child request', async () => {
+    const { ctx, parent, adapter } = await setup([textResponse('driver answer')])
+    let setupFinished = false
+    let setupFinishedAtPublication: boolean | undefined
+    ctx.on('agent/created', ({ agent }) => {
+      if (agent.session.header.parentSession === parent.id) setupFinishedAtPublication = setupFinished
+    })
+
+    const run = await startInProcessRun(request(parent), {
+      setup(childCtx) {
+        childCtx.systemPrompt.section({
+          name: 'provider:test-setup',
+          order: 10,
+          text: 'PROVIDER_SETUP_MARKER',
+        })
+        setupFinished = true
+      },
+    })
+
+    await expect(run.result).resolves.toMatchObject({ stopReason: 'completed' })
+    expect(setupFinished).toBe(true)
+    expect(setupFinishedAtPublication).toBe(true)
+    expect(adapter.requests[0]?.system).toContain('PROVIDER_SETUP_MARKER')
+    await run.dispose()
+  })
+
+  it('rolls back unpublished child creation when provider setup throws', async () => {
+    const { ctx, parent } = await setup([])
+    const beforeAgents = ctx.agents.list().length
+    const beforeSessions = ctx.sessions.list().length
+    const published: string[] = []
+    let childCtx: Context | undefined
+    ctx.on('session/created', () => { published.push('session/created') })
+    ctx.on('agent/created', () => { published.push('agent/created') })
+
+    await expect(startInProcessRun(request(parent), {
+      setup(scopedCtx) {
+        childCtx = scopedCtx
+        scopedCtx.systemPrompt.section({
+          name: 'provider:failed-setup',
+          order: 10,
+          text: 'MUST_ROLL_BACK',
+        })
+        throw new Error('provider setup failed')
+      },
+    })).rejects.toThrow('provider setup failed')
+
+    expect(childCtx?.fiber.state).toBe(FiberState.DISPOSED)
+    expect(ctx.agents.list()).toHaveLength(beforeAgents)
+    expect(ctx.sessions.list()).toHaveLength(beforeSessions)
+    expect(published).toEqual([])
   })
 
   it('uses explicit child model selectors when the parent has none and preserves its cwd', async () => {

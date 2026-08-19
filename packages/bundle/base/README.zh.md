@@ -8,13 +8,23 @@ patch 在自身上按平台门控两个 shell 栈：`bash-sandbox`/`tool-bash` �
 
 行集合及其设计依据以行内注释写在 patch 文件里；[生成的组合图](../../../apps/cli/composition.md)负责渲染它。
 
+Base 还会启用有界本地 [`ctx.agentMemory`](../../memory/README.md) Provider，以及采集已完成轮次、在第一步召回的 Consumer。该能力无需外部服务或凭据，并可在 Provider 中立服务后替换。
+
+## 内置设计 Skill
+
+每个 profile 都通过现有 filesystem skill provider 暴露固定版本的 [`design-taste-frontend`](skills/design-taste-frontend/SKILL.md) Skill。它逐字采用 MIT 许可的 `leonxlnx/taste-skill` 提交 `dfb6f9f9e93a39f673b1827c0889cc28326d1800`；相邻 LICENSE 与[开源采用登记](../../../.open-source/adoptions.yaml)保留其来源。这里不增加第二套 Skill loader 或设计 Agent 运行时。
+
+该 Skill 适用于 landing page、作品集、营销页面和视觉重设计，并明确排除 dashboard 与信息密集型产品界面。部署方可信的双语任务规则会在直接用户文本匹配网页设计意图时自动注入完整正文；排除规则会过滤 dashboard、管理后台、数据表格、多步骤表单、编辑器、原生移动端与实时协作。slash 手势和模型可见目录继续作为兜底路径。确定性视觉验收仍由独立 workflow 负责。
+
+同一个 bundle 会探测单独受管的 `prime-agent` 可执行文件，但不会启动它。存在时，宿主注册 `prime-computer-use` ACP provider，标准模式、PTC 模式与 Cordis 模式暴露 `computer_use`；不存在时，两者都不会进入模型工具视图。只有模型选择这个任务专属工具后才会启动子进程。
+
 ## 模型体验
 
-通过插入的行间接产生影响：该组合包选定了随发行版交付的无 persona 提示词基座、工具集合与 DeepSeek 适配器，供各模式组合包进一步特化；它自身不贡献任何模型可见文本。
+通过插入的行间接产生影响：该组合包选定了随发行版交付的无 persona 提示词基座、工具集合与 DeepSeek 适配器，供各模式组合包进一步特化。它还贡献稳定的 `design-taste-frontend` 目录项；Skill 正文只在被选择后对模型可见。
 
 #### KV Cache 影响
 
-无直接影响；每条插入行的影响由其所属的包负责。
+稳定的 Skill 目录项会影响初始提示词。加载 Skill 正文会形成任务级上下文变化；其他插入行的影响由其所属包负责。
 
 ## 已知限制与暂缓事项
 

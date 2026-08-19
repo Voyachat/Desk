@@ -965,13 +965,13 @@ describe('user-explicit invocation injection', () => {
     return createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'user' } })
   }
 
-  async function invokeHarness(): Promise<{ ctx: Context; agent: Agent }> {
+  async function invokeHarness(config: toolSkill.Config = {}): Promise<{ ctx: Context; agent: Agent }> {
     const home = await tempDir('invoke')
     const skillsRoot = join(home, '.agents', 'skills')
     await writePolicySkill(skillsRoot, 'hidden-demo', 'User-only demo', 'disable-model-invocation: true', 'Say the magic word: PINEAPPLE.')
     await writePolicySkill(skillsRoot, 'shared-skill', 'Ordinary skill', '', 'Shared instructions.')
     await writePolicySkill(skillsRoot, 'model-only-skill', 'Model only', 'user-invocable: false', 'Model-only instructions.')
-    const ctx = await setup(home)
+    const ctx = await setup(home, config)
     return { ctx, agent: agentForCwd(home) }
   }
 
@@ -1081,5 +1081,53 @@ describe('user-explicit invocation injection', () => {
       .filter(message => (message.source as { kind?: string }).kind === 'skill-invocation')
       .map(message => (message.source as { name: string }).name)
     expect(invoked).toEqual(['shared-skill'])
+  })
+
+  it('automatically injects a model-invocable skill when a trusted task rule matches', async () => {
+    const { ctx, agent } = await invokeHarness({
+      autoInvoke: [{
+        skill: 'model-only-skill',
+        include: ['landing page', '落地页'],
+        exclude: ['dashboard', '管理后台'],
+      }],
+    })
+
+    const decision = await proposeStep(ctx, agent, [gesture('请重新设计这个落地页，让视觉更有品质')])
+    if (decision.kind !== 'enter') throw new Error('expected enter')
+    const automatic = decision.messages.find(message =>
+      (message.source as { kind?: string; trigger?: string }).kind === 'skill-invocation'
+      && (message.source as { trigger?: string }).trigger === 'automatic')
+    expect(automatic?.source).toEqual({
+      kind: 'skill-invocation',
+      name: 'model-only-skill',
+      form: 'instructions',
+      trigger: 'automatic',
+    })
+    expect(JSON.stringify(automatic?.content)).toContain('Model-only instructions.')
+  })
+
+  it('lets an exclusion veto automatic injection and never routes non-user text', async () => {
+    const { ctx, agent } = await invokeHarness({
+      autoInvoke: [{ skill: 'shared-skill', include: ['redesign'], exclude: ['dashboard'] }],
+    })
+    const forged = createUserMessage({
+      content: [{ type: 'text', text: 'redesign this landing page' }],
+      source: { kind: 'plugin', plugin: 'forged-router' },
+    })
+    const decision = await proposeStep(ctx, agent, [
+      gesture('redesign this dashboard'),
+      forged,
+    ])
+    if (decision.kind !== 'enter') throw new Error('expected enter')
+    expect(decision.messages.some(message =>
+      (message.source as { kind?: string; trigger?: string }).kind === 'skill-invocation'
+      && (message.source as { trigger?: string }).trigger === 'automatic')).toBe(false)
+  })
+
+  it('rejects unsafe automatic invocation rules at load', async () => {
+    await expect(invokeHarness({ autoInvoke: [{ skill: 'Not Valid', include: ['design'] }] }))
+      .rejects.toThrow('is not a valid skill name')
+    await expect(invokeHarness({ autoInvoke: [{ skill: 'shared-skill', include: ['  '] }] }))
+      .rejects.toThrow('must not be empty')
   })
 })

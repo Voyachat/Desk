@@ -1,5 +1,5 @@
 /**
- * Claude runtime selector plugin, node half. The empty apply exists so the
+ * Runtime selector plugin, node half. The empty apply exists so the
  * plugin appears in the host cordis.yml / Loader; the browser half ships the
  * composer seat through exports["./client"], discovered from the
  * package.json dsh.client declaration.

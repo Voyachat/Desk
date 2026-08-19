@@ -137,31 +137,27 @@ export function isUserInvocable(skill: Pick<SkillSummary, 'invocation'>): boolea
   return skill.invocation.userInvocable
 }
 
-/**
- * Durable source for the context message a user-explicit skill invocation
- * injects: the user's own words ride a plain user message, and the rendered
- * skill body follows as injected `instructions`-form context carrying this
- * source, so transcript consumers present the injection from metadata
- * instead of re-parsing the model-facing text.
- */
+/** Durable source for a skill body injected at a request boundary. */
 export interface SkillInvocationSource {
   readonly kind: 'skill-invocation'
-  /** Invoked skill name, validated user-invocable at the injecting boundary. */
+  /** Invoked skill name, validated against the applicable invocation policy. */
   readonly name: string
   /** Injected skill bodies are instructions for the model to follow. */
   readonly form: 'instructions'
+  /** Omitted for a user-explicit gesture; automatic rules record their trigger. */
+  readonly trigger?: 'automatic'
 }
 
 declare module '@voyaseek-ai/dsh-llm' {
   interface MessageSourceMap {
-    /** A user-explicit skill invocation injected by the host. */
+    /** A user-explicit or automatically matched skill invocation injected by the host. */
     'skill-invocation': SkillInvocationSource
   }
 }
 
 /**
  * Render one loaded skill for the model. The output is shared verbatim by the
- * `skill` tool result and the user-explicit invocation injection, so the model
+ * `skill` tool result and host invocation injection, so the model
  * sees one canonical `<skill_content>` shape on both paths. The name rides an
  * escaped attribute; the body is embedded verbatim (skills are trusted local
  * content, and user-supplied invocation text stays outside this wrapper).

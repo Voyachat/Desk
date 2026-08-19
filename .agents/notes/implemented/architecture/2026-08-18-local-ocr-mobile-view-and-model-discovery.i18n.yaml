@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-18-local-ocr-mobile-view-and-model-discovery.md
-2026-08-18-local-ocr-mobile-view-and-model-discovery.md: 37f703bcd4165c90b151b36e431dafb0e01d43d0
-2026-08-18-local-ocr-mobile-view-and-model-discovery.zh.md: 05b2f74a73ba74fd9652b8b41c5744adf073b400
+2026-08-18-local-ocr-mobile-view-and-model-discovery.md: 3e7872db671b0170bbe20e50664ddbaf7427d2ff
+2026-08-18-local-ocr-mobile-view-and-model-discovery.zh.md: 82ec1fd1306b64bee1873eaaa8cadb56e3542f75

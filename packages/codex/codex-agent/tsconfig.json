@@ -1,0 +1,28 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types",
+    "tsBuildInfoFile": "lib/types/.tsbuildinfo"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "references": [
+    { "path": "../../../vendor/cordis" },
+    { "path": "../../../vendor/schemastery" },
+    { "path": "../../core/agent" },
+    { "path": "../../core/agent-loop" },
+    { "path": "../../credentials/credentials" },
+    { "path": "../../core/scope" },
+    { "path": "../../core/session" },
+    { "path": "../../core/system-prompt" },
+    { "path": "../../llm/llm" },
+    { "path": "../../sandbox/sandbox-policy" },
+    { "path": "../../sdk/protocol" },
+    { "path": "../../subprocess/subprocess" },
+    { "path": "../../util/timeout" },
+    { "path": "../../interaction/user-approval" },
+    { "path": "../../runtime-diagnostics/invariants" }
+  ]
+}

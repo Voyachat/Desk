@@ -22,10 +22,15 @@ describe('model credentials', () => {
       'QWEN_API_KEY=legacy-value',
       'export DASHSCOPE_API_KEY=preferred-value # comment',
     ].join('\n'))
+    writeSecret(home, 'zhipu.env', [
+      'ZHIPUAI_API_KEY=zhipu-value',
+      'IGNORED_ZHIPU_KEY=ignored-value',
+    ].join('\n'))
 
     expect(loadModelCredentials(home)).toEqual({
       GEMINI_API_KEY: 'gemini-value',
       DASHSCOPE_API_KEY: 'preferred-value',
+      ZHIPUAI_API_KEY: 'zhipu-value',
     })
   })
 

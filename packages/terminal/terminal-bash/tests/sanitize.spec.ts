@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeTerminalText, TerminalSanitizer } from '@voyaseek-ai/dsh-terminal-bash/src/sanitize.ts'
+import {
+  normalizeTerminalText,
+  PERSISTENT_BASH_PROMPT,
+  TerminalSanitizer,
+} from '@voyaseek-ai/dsh-terminal-bash/src/sanitize.ts'
 
 describe('TerminalSanitizer', () => {
+  it('pins the private persistent Bash prompt', () => {
+    expect(PERSISTENT_BASH_PROMPT).toBe('__DSH_PERSISTENT_BASH_PROMPT__ ')
+  })
+
   it('removes split CSI and owned OSC prompt markers', () => {
     const sanitizer = new TerminalSanitizer(64)
     expect(sanitizer.push('red\x1b[3')).toEqual({ text: 'red', prompt: false })

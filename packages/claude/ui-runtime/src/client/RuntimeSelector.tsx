@@ -1,6 +1,7 @@
 /**
  * The composer runtime-selector chip: labels the agent driver the current
- * session runs under (Native = DSH loop, Claude = Claude Agent SDK) and
+ * session runs under (Native = DSH loop, Claude = Claude Agent SDK, Codex =
+ * OpenAI Codex) and
  * switches by connecting the session workspace under the chosen runtime —
  * a session never changes its own runtime, so the switch lands on a session
  * minted under the pick (a matching blank one is reused) and opens it.
@@ -8,7 +9,13 @@
 
 import { useState } from 'react'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@voyaseek-ai/dsh-client-ui-slots'
-import { IconChevronDownOutline14, IconCodeOutline16, IconSparkle16, Menu } from '@voyaseek-ai/dsh-client-ui-primitives'
+import {
+  IconAgentPresetOutline16,
+  IconChevronDownOutline14,
+  IconCodeOutline16,
+  IconSparkle16,
+  Menu,
+} from '@voyaseek-ai/dsh-client-ui-primitives'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.left seat and
 // its InputZone owner share).
 import type {} from '@voyaseek-ai/dsh-client-ui-conversation/client'
@@ -19,6 +26,8 @@ import css from './RuntimeSelector.module.css'
 const NATIVE_RUNTIME = ''
 /** The runtime id the Claude Agent SDK driver registers under. */
 const CLAUDE_RUNTIME = 'claude'
+/** The runtime id the OpenAI Codex driver registers under. */
+const CODEX_RUNTIME = 'codex'
 
 /** Full component props: runtime share (owner zone + standard kit), injected face, locale seat. */
 export type RuntimeSelectorProps =
@@ -27,15 +36,18 @@ export type RuntimeSelectorProps =
 /**
  * Render the runtime chip for the current session.
  * @param props - composed slot props.
- * @returns the chip with its two-mode menu.
+ * @returns the chip with its three-mode menu.
  */
 export function RuntimeSelector({ select, useRuntimeSelector, t }: RuntimeSelectorProps) {
   const state = useRuntimeSelector(snapshot => snapshot)
   const [open, setOpen] = useState(false)
 
-  const isClaude = state.current === CLAUDE_RUNTIME
-  const label = isClaude ? t('option.claude') : t('option.native')
-  const Icon = isClaude ? IconSparkle16 : IconCodeOutline16
+  const runtime = state.current === CLAUDE_RUNTIME
+    ? { label: t('option.claude'), Icon: IconSparkle16 }
+    : state.current === CODEX_RUNTIME
+      ? { label: t('option.codex'), Icon: IconAgentPresetOutline16 }
+      : { label: t('option.native'), Icon: IconCodeOutline16 }
+  const { label, Icon } = runtime
 
   return (
     <span className={css.wrap}>
@@ -58,6 +70,15 @@ export function RuntimeSelector({ select, useRuntimeSelector, t }: RuntimeSelect
               <span className={css.item}>
                 <span className={css.itemName}>{t('option.claude')}</span>
                 <span className={css.itemDesc}>{t('option.claude.desc')}</span>
+              </span>
+            ),
+          },
+          {
+            id: CODEX_RUNTIME,
+            label: (
+              <span className={css.item}>
+                <span className={css.itemName}>{t('option.codex')}</span>
+                <span className={css.itemDesc}>{t('option.codex.desc')}</span>
               </span>
             ),
           },

@@ -1,10 +1,10 @@
 /**
- * Settings shell root: the sidebar-foot trigger row plus the centered modal
- * panel (figma 501:29947, 1080x700) with the section nav rail. The shell is
+ * Settings shell root: the sidebar-foot trigger row plus the full-frame
+ * settings view with its section sidebar. The shell is
  * a pure composition face — every piece of text (trigger label, panel title,
- * close label, sections) arrives from registrants through slots; accessible
+ * return label, sections) arrives from registrants through slots; accessible
  * names resolve to that content (trigger: its own text; dialog:
- * aria-labelledby the title node; close: visually-hidden slot text). Modal
+ * aria-labelledby the title node; return: its visible slot text). View
  * open state and the active section id are component-local viewing state;
  * the onboarding coordinator mounts exactly one ordered registrant while the
  * sessions-derived empty-Hero fact is active. Visible dialog chrome belongs
@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import clsx from 'clsx'
 import {
-  IconAgentPresetOutline16, IconCloseOutline16, IconDataOutline16,
+  IconAgentPresetOutline16, IconChevronLeftOutline14, IconDataOutline16,
   IconPersonalizationOutline16, IconSettingsOutline16,
 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import type { SettingsRootComponentProps, SettingsSectionRow } from './shell-contract.ts'
@@ -36,9 +36,9 @@ type PanelProps = {
 }
 
 /**
- * The modal layer: full-viewport mask + centered panel. Close paths: the
- * header button, a mask click, and document-level Escape (mounted only while
- * open, so the listener lifetime is the panel's).
+ * The full-frame settings view. Return paths are the sidebar control and
+ * document-level Escape (mounted only while open, so the listener lifetime
+ * is the view's).
  */
 function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelProps) {
   // Entries can unmount underneath the requested id, so the render-time
@@ -60,7 +60,6 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
 
   return (
     <div className={css.overlay} role="presentation">
-      <div className={css.mask} aria-hidden="true" onClick={onClose} />
       <div className={css.panel} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <nav className={css.nav}>
           <div className={css.navTitle} id={titleId}>{renderSlot('settings.header', {})}</div>
@@ -83,8 +82,8 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
           <div className={css.header}>
             <div className={css.actions}>{renderSlot('settings.action', {})}</div>
             <button ref={closeButton} type="button" className={css.close} onClick={onClose}>
-              <IconCloseOutline16 size={14} />
-              <span className={css.hiddenLabel}>{renderSlot('settings.close', {})}</span>
+              <IconChevronLeftOutline14 size={16} />
+              <span>{renderSlot('settings.close', {})}</span>
             </button>
           </div>
           <div className={css.options}>

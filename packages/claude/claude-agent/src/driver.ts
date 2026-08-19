@@ -14,13 +14,17 @@ import type {
   AgentStatus,
   CancelOptions,
   InboxTarget,
+  PreStepDecision,
 } from '@voyaseek-ai/dsh-agent'
-import { Inbox, agentEvents, type AgentEventDispatch } from '@voyaseek-ai/dsh-agent'
-import type { AgentDriver } from '@voyaseek-ai/dsh-agent-loop'
+import { Inbox, agentEvents, assembleContextFor, type AgentEventDispatch } from '@voyaseek-ai/dsh-agent'
+import { RuntimeContextProjection, type AgentDriver } from '@voyaseek-ai/dsh-agent-loop'
 import { errorChain } from '@voyaseek-ai/dsh-llm'
-import type { LlmFailure, UserMessage } from '@voyaseek-ai/dsh-llm'
+import type { LlmCallConfig, LlmFailure, UserMessage } from '@voyaseek-ai/dsh-llm'
 import { createScope, type Scope } from '@voyaseek-ai/dsh-scope'
-import type { Session, SessionId, TurnEndReason } from '@voyaseek-ai/dsh-session'
+import type { EpochHeader, Session, SessionId, TurnEndReason } from '@voyaseek-ai/dsh-session'
+import { canonicalHeader, headerEquals } from '@voyaseek-ai/dsh-session'
+import { joinContextSections, renderContextSections, renderPrompt } from '@voyaseek-ai/dsh-system-prompt'
+import type { PromptAssembly } from '@voyaseek-ai/dsh-system-prompt'
 import type { SdkQueryEngine } from './engine.ts'
 import { SdkEventRecorder } from './mapping.ts'
 import type {} from './types.ts'
@@ -39,7 +43,10 @@ export function promptText(messages: readonly UserMessage[]): string {
   const parts: string[] = []
   for (const message of messages) {
     for (const block of message.content) {
-      if (block.type === 'text') parts.push(block.text)
+      if (block.type !== 'text') {
+        throw new Error(`claude-agent: input block "${block.type}" is not supported by the Claude SDK text prompt bridge`)
+      }
+      parts.push(block.text)
     }
   }
   return parts.join('\n\n')
@@ -76,6 +83,9 @@ export class ClaudeSdkAgent implements AgentDriver {
   private phase: Phase = { kind: 'idle' }
   private activityDone: Promise<void> = Promise.resolve()
   private claudeSessionId: string | undefined
+  private requestHeaderLogged = false
+  private readonly runtimeContext: RuntimeContextProjection
+  readonly modelConstraint
 
   /**
    * Bind one driver to its session.
@@ -85,7 +95,9 @@ export class ClaudeSdkAgent implements AgentDriver {
    * @param session - the prepared session this driver owns.
    * @param engineFactory - builds the query engine once the agent exists, so the approval bridge can cite it.
    * @param cwd - workspace handed to every SDK child.
-   * @param modelLabel - model name stamped on assistant provenance.
+   * @param runtimeProvider - only provider route this Claude endpoint can serve.
+   * @param defaultModel - deployment model used before a global selection exists.
+   * @param childEnv - resolves credentials and endpoint variables for the selected model on each turn.
    */
   constructor(
     driverCtx: Context,
@@ -94,7 +106,10 @@ export class ClaudeSdkAgent implements AgentDriver {
     public readonly session: Session,
     engineFactory: (agent: ClaudeSdkAgent) => SdkQueryEngine,
     private readonly cwd: string,
-    private readonly modelLabel: string,
+    private readonly runtimeProvider: string,
+    private readonly defaultModel: string | undefined = runtimeProvider,
+    private readonly childEnv: (model: string) => Promise<Record<string, string> | undefined> = async () => undefined,
+    admittedModels?: readonly string[],
   ) {
     this.dispatch = agentEvents(driverCtx, this)
     this.scope = createScope(driverCtx, this)
@@ -106,6 +121,12 @@ export class ClaudeSdkAgent implements AgentDriver {
     })
     this.claudeSessionId = restoreClaudeSessionId(session)
     this.engine = engineFactory(this)
+    this.runtimeContext = new RuntimeContextProjection(this.ctx, session)
+    this.modelConstraint = {
+      provider: runtimeProvider,
+      defaultModel: defaultModel ?? runtimeProvider,
+      ...admittedModels === undefined ? {} : { models: [...admittedModels] },
+    }
   }
 
   get status(): AgentStatus {
@@ -199,6 +220,28 @@ export class ClaudeSdkAgent implements AgentDriver {
     return this.session.events.findLast(event => event.type === 'turn/start')?.data.turn ?? 0
   }
 
+  /** Rebuild the next request proposal from durable state and current defaults. */
+  private requestProposal(): LlmCallConfig {
+    const persisted = this.session.requestHeader()?.config
+    if (persisted !== undefined) return persisted
+    return {
+      provider: this.options.provider ?? this.runtimeProvider,
+      model: this.options.model ?? this.defaultModel ?? '',
+      ...this.options.maxTokens === undefined ? {} : { maxTokens: this.options.maxTokens },
+    }
+  }
+
+  /** Log the exact non-history request envelope handed to the SDK. */
+  private logRequestHeader(header: EpochHeader): void {
+    const baseline = this.session.requestHeader()
+    if (!this.requestHeaderLogged) {
+      this.session.append('request/header', { header, reason: baseline === undefined ? 'initial' : 'resume' })
+      this.requestHeaderLogged = true
+    } else if (baseline === undefined || !headerEquals(baseline, header)) {
+      this.session.append('request/header', { header, reason: 'change' })
+    }
+  }
+
   /** Run one claimed-prompt turn through exactly one SDK query. */
   private async runOneTurn(abort: AbortController): Promise<void> {
     const turn = this.lastTurn() + 1
@@ -207,26 +250,67 @@ export class ClaudeSdkAgent implements AgentDriver {
     let stepOpen = false
     try {
       const claimed = this.inbox.claim('next-turn', turn)
-      const prompt = promptText(claimed)
-      if (prompt.trim().length === 0) {
+      const step = 1
+      const systemPromptService = this.ctx.get('systemPrompt')
+      const assembly: PromptAssembly = systemPromptService === undefined
+        ? { sections: [], contexts: [], tools: [], variables: {} }
+        : await systemPromptService.assemble(assembleContextFor(this, abort.signal))
+      const sections = renderContextSections(assembly)
+      const context = this.runtimeContext.project(joinContextSections(sections), sections)
+      const decision = await this.dispatch.waterfall(
+        'agent/pre-step',
+        { messages: claimed, turn, step, signal: abort.signal },
+        (): Promise<PreStepDecision> => Promise.resolve({
+          kind: 'enter',
+          messages: context === undefined ? claimed : [...claimed, context],
+        }),
+      )
+      abort.signal.throwIfAborted()
+      if (decision.kind === 'reject') {
         reason = { kind: 'completed' }
       } else {
-        const step = 1
+        const prompt = promptText(decision.messages)
+        if (prompt.trim().length === 0) {
+          reason = { kind: 'completed' }
+          this.session.append('turn/end', { turn, reason })
+          return
+        }
         this.session.append('step/start', { turn, step })
         stepOpen = true
-        for (const message of claimed) {
+        for (const message of decision.messages) {
           this.session.append('user/message', message, { surfaceOp: 'append' })
         }
-        const recorder = new SdkEventRecorder(this.session, turn, step, this.modelLabel, (claudeSessionId, model) => {
+        const config = await this.dispatch.waterfall(
+          'agent/request',
+          { turn, step, signal: abort.signal },
+          () => Promise.resolve(this.requestProposal()),
+        )
+        abort.signal.throwIfAborted()
+        if (!config.provider || !config.model) {
+          throw new Error(`agent "${this.id}" has no provider/model for Claude mode`)
+        }
+        if (config.provider !== this.runtimeProvider) {
+          throw new Error(`claude-agent: provider "${config.provider}" is not served by this runtime; expected "${this.runtimeProvider}"`)
+        }
+        if (this.modelConstraint.models !== undefined && !this.modelConstraint.models.includes(config.model)) {
+          throw new Error(`claude-agent: model "${config.model}" is not served by this Anthropic-compatible endpoint`)
+        }
+        const systemPrompt = renderPrompt(assembly)
+        this.logRequestHeader(canonicalHeader({ config, ...systemPrompt.length === 0 ? {} : { system: systemPrompt } }))
+        const recorder = new SdkEventRecorder(this.session, turn, step, config.model, (claudeSessionId, model) => {
           this.claudeSessionId = claudeSessionId
           this.session.append('claude-agent/runtime', {
             claudeSessionId,
             ...model === undefined ? {} : { model },
           })
         })
+        const childEnv = await this.childEnv(config.model)
         const outcome = await this.engine.run({
           prompt,
           cwd: this.cwd,
+          model: config.model,
+          ...systemPrompt.length === 0 ? {} : { systemPrompt },
+          ...childEnv === undefined ? {} : { childEnv },
           ...this.claudeSessionId === undefined ? {} : { resume: this.claudeSessionId },
           signal: abort.signal,
           onMessage: (message) => { recorder.apply(message) },

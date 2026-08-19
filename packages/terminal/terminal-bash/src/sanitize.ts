@@ -8,6 +8,12 @@ export const PROMPT_MARKER_PREFIX = '133;D;'
 /** Exact printable prompt emitted after the private marker. */
 export const CONTROLLED_PROMPT = 'dsh> '
 
+/** Private prompt selected by the persistent Bash consumer after startup. */
+export const PERSISTENT_BASH_PROMPT = '__DSH_PERSISTENT_BASH_PROMPT__ '
+
+/** Exact printable prompts that can prove controlled-shell readiness. */
+export const CONTROLLED_PROMPTS = [CONTROLLED_PROMPT, PERSISTENT_BASH_PROMPT] as const
+
 /** One sanitized chunk plus whether it contained the owned prompt marker. */
 export interface SanitizedChunk {
   text: string

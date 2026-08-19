@@ -121,6 +121,7 @@ describe('ClaudeSdkAgent', () => {
     expect(sdk.captured[0]!.prompt).toBe('do the task')
     expect(sdk.captured[0]!.options.cwd).toBe('/tmp/claude-work')
     expect(sdk.captured[0]!.options.resume).toBeUndefined()
+    expect(sdk.captured[0]!.options.settingSources).toEqual([])
 
     expect(eventTypes(session)).toEqual([
       'agent/inbox/spliced',
@@ -128,6 +129,7 @@ describe('ClaudeSdkAgent', () => {
       'agent/inbox/spliced',
       'step/start',
       'user/message',
+      'request/header',
       'claude-agent/runtime',
       'assistant/message',
       'step/end',

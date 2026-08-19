@@ -162,7 +162,51 @@ export interface Config {
 
 Depends on: [`AgentOptions`](subsystems/core.md) · [`SessionId`](subsystems/core.md)
 
-Source: [`packages/core/agent-loop/src/index.ts:258`](../packages/core/agent-loop/src/index.ts)
+Source: [`packages/core/agent-loop/src/index.ts:259`](../packages/core/agent-loop/src/index.ts)
+
+<a id="voyaseek-aidsh-agent-memory-context"></a>
+
+## `@voyaseek-ai/dsh-agent-memory-context`
+
+Requires: `agents` · `agentMemory`
+
+```ts config-catalog
+/** Recall rendering budget. */
+export interface Config {
+  /** Unicode code-point budget for the complete injected recall block. */
+  maxRecallChars?: number
+}
+```
+
+Source: [`packages/memory/agent-memory-context/src/index.ts:21`](../packages/memory/agent-memory-context/src/index.ts)
+
+<a id="voyaseek-aidsh-agent-memory-settings"></a>
+
+## `@voyaseek-ai/dsh-agent-memory-settings`
+
+Requires: `settings`
+
+```ts config-catalog
+/** Live local-provider configuration. */
+export interface Config {
+  /** Whether both automatic paths are active. */
+  enabled?: boolean
+  /** Whether completed turns are captured. */
+  autoCapture?: boolean
+  /** Whether relevant prior turns are recalled. */
+  autoRecall?: boolean
+  /** Maximum stored items before oldest-first eviction. */
+  maxEntries?: number
+  /** Maximum hits returned by one recall. */
+  maxHits?: number
+  /** Unicode code-point budget for one item body. */
+  maxContentChars?: number
+  /** Unicode code-point budget for one item title. */
+  maxTitleChars?: number
+}
+```
+
+Source: [`packages/memory/agent-memory-settings/src/index.ts:26`](../packages/memory/agent-memory-settings/src/index.ts)
 
 <a id="voyaseek-aidsh-agent-presets"></a>
 
@@ -398,14 +442,20 @@ Requires: `agentLoop` · `subprocess`
 export interface Config {
   /** Runtime id matched against session headers; deployments rarely rename it. */
   readonly runtime?: string
+  /** Global LLM provider route this Anthropic-compatible endpoint serves. */
+  readonly provider?: string
   /** Model id pinned for every query; absent keeps the SDK/CLI default. */
   readonly model?: string
+  /** Models this Anthropic-compatible endpoint admits; absent accepts the provider catalog. */
+  readonly models?: string[]
   /** Claude-API-compatible endpoint base URL (`ANTHROPIC_BASE_URL`). */
   readonly baseUrl?: string
   /** Bearer token for gateway endpoints (`ANTHROPIC_AUTH_TOKEN`). */
   readonly authToken?: string
   /** API key (`ANTHROPIC_API_KEY`); gateways accept either credential field. */
   readonly apiKey?: string
+  /** Credential reference resolved for every query and exposed as `ANTHROPIC_API_KEY`. */
+  readonly apiKeyEnv?: string
   /** Explicit SDK permission posture; absent follows the session's DSH permission state. */
   readonly permissionMode?: ClaudePermissionMode
   /** Explicit Claude Code executable; absent uses the SDK-distributed CLI. */
@@ -422,7 +472,7 @@ export type ClaudePermissionMode = Extract<PermissionMode, 'default' | 'acceptEd
 
 Depends on: `PermissionMode` (`@anthropic-ai/claude-agent-sdk`)
 
-Source: [`packages/claude/claude-agent/src/index.ts:41`](../packages/claude/claude-agent/src/index.ts)
+Source: [`packages/claude/claude-agent/src/index.ts:43`](../packages/claude/claude-agent/src/index.ts)
 
 <a id="voyaseek-aidsh-client-connection"></a>
 
@@ -502,6 +552,40 @@ export interface Config {
 
 Source: [`packages/code-runtime/code-runtime-worker-thread/src/index.ts:25`](../packages/code-runtime/code-runtime-worker-thread/src/index.ts)
 
+<a id="voyaseek-aidsh-codex-agent"></a>
+
+## `@voyaseek-ai/dsh-codex-agent`
+
+Requires: `agentLoop` · `subprocess` · `systemPrompt`
+
+```ts config-catalog
+/** Deployment configuration for the Codex runtime. */
+export interface Config {
+  /** Runtime id matched against session headers. */
+  readonly runtime?: string
+  /** Codex model-provider id, also used by `agent/request` as its default route. */
+  readonly provider?: string
+  /** Default Codex model; a per-session AgentOptions model wins when present. */
+  readonly model: string
+  /** Exact models the configured Responses endpoint admits. */
+  readonly models?: string[]
+  /** Responses-compatible provider base URL configured for the app-server process. */
+  readonly baseUrl?: string
+  /** Credential reference resolved immediately before every Codex process starts. */
+  readonly apiKeyEnv?: string
+  /** Explicit environment layered over the credential-scrubbed parent environment. */
+  readonly env?: Record<string, string>
+  /** Executable replacing `codex` while retaining `app-server --stdio`. */
+  readonly executable?: string
+  /** Complete argv override for deployments and deterministic tests. */
+  readonly argv?: string[]
+  /** Process-tree termination grace in milliseconds. */
+  readonly disposeGraceMs?: number
+}
+```
+
+Source: [`packages/codex/codex-agent/src/index.ts:25`](../packages/codex/codex-agent/src/index.ts)
+
 <a id="voyaseek-aidsh-compaction-basic"></a>
 
 ## `@voyaseek-ai/dsh-compaction-basic`
@@ -567,6 +651,38 @@ export interface ToolResultPruneConfig {
 ```
 
 Source: [`packages/compaction/compaction-tool-result-pruner/src/types.ts:4`](../packages/compaction/compaction-tool-result-pruner/src/types.ts)
+
+<a id="voyaseek-aidsh-complex-goal"></a>
+
+## `@voyaseek-ai/dsh-complex-goal`
+
+Requires: `agents` · `commands` · `goals` · `sessions` · `shell` · `subagents` · `tools` · `sandboxPolicy` · `approval` · `systemPrompt`
+
+```ts config-catalog
+/** Deployment policy for independently verified complex tasks. */
+export interface Config {
+  /** Ordered commands that must all pass before completion is certifiable. */
+  verificationGates?: VerificationGateConfig[]
+  /** Default timeout for a verification command. */
+  verificationTimeoutMs?: number
+  /** Maximum stdout or stderr bytes persisted for each command. */
+  verificationOutputMaxBytes?: number
+  /** Total wall-clock lifetime retained across pause and process restart. */
+  maxDurationMs?: number
+}
+
+/** One trusted deployment command used as a deterministic completion gate. */
+export interface VerificationGateConfig {
+  /** Stable identifier rendered in durable evidence. */
+  id: string
+  /** Exact command; model output can never replace or extend it. */
+  command: string
+  /** Per-command timeout override. */
+  timeoutMs?: number
+}
+```
+
+Source: [`packages/goal/complex-goal/src/index.ts:86`](../packages/goal/complex-goal/src/index.ts)
 
 <a id="voyaseek-aidsh-cordis-host-runner"></a>
 
@@ -788,7 +904,7 @@ Source: [`packages/hooks/hooks-codex/src/index.ts:44`](../packages/hooks/hooks-c
 
 ## `@voyaseek-ai/dsh-host-apiproxy`
 
-Requires: `agentDefaultModel` · `agents` · `attachments` · `directoryPicker` · `llm` · `sessions` · `subagents` · `sessionQuery` · `tools` · `userQuestions` · `workspaceRegistry`
+Requires: `agentDefaultModel` · `agents` · `attachments` · `directoryPicker` · `imageFallback` · `llm` · `sessions` · `subagents` · `sessionQuery` · `tools` · `userQuestions` · `workspaceRegistry`
 
 ```ts config-catalog
 /** Gateway plugin configuration. */
@@ -813,25 +929,10 @@ export interface Config {
    * @default 1024
    */
   coldBlankProbeMaxBytes?: number
-  /**
-   * Explicit image-capable route used to describe images before a text-only
-   * session model receives the prompt. Omission preserves strict refusal and
-   * never sends image data to another provider implicitly.
-   */
-  imageFallback?: false | {
-    /** Prefer the mounted local document converter. @default true */
-    local?: boolean
-    /** Optional hosted provider route used only when local conversion is unavailable. */
-    provider?: string
-    /** Exact image-capable model on the optional hosted route. */
-    model?: string
-    /** Maximum output tokens for one image-analysis call. @default 4096 */
-    maxTokens?: number
-  }
 }
 ```
 
-Source: [`packages/host/apiproxy/src/index.ts:45`](../packages/host/apiproxy/src/index.ts)
+Source: [`packages/host/apiproxy/src/index.ts:42`](../packages/host/apiproxy/src/index.ts)
 
 <a id="voyaseek-aidsh-host-directory-picker-browse"></a>
 
@@ -878,6 +979,38 @@ export interface Config {
 ```
 
 Source: [`packages/host/webserver/src/index.ts:45`](../packages/host/webserver/src/index.ts)
+
+<a id="voyaseek-aidsh-image-fallback"></a>
+
+## `@voyaseek-ai/dsh-image-fallback`
+
+Requires: `attachments` · `llm` · `tools`
+
+```ts config-catalog
+/** Validated image fallback configuration. */
+export interface Config {
+  /** Use the mounted local document converter when hosted analysis is unavailable. @default true */
+  local?: boolean
+  /** Hosted vision routes in failover order, normally free before paid. */
+  routes?: ImageFallbackRouteConfig[]
+  /** Maximum output tokens for one hosted image-analysis request. @default 4096 */
+  maxTokens?: number
+}
+
+/** One ordered hosted vision route. */
+export interface ImageFallbackRouteConfig {
+  /** Registered LLM provider route. */
+  provider: string
+  /** Exact image-capable model id. */
+  model: string
+  /** Current cost class used only for ordered routing and status presentation. */
+  tier: 'free' | 'paid-low' | 'paid-quality'
+  /** Credential reference whose configured state enables this route. */
+  credentialRef?: string
+}
+```
+
+Source: [`packages/llm/image-fallback/src/index.ts:32`](../packages/llm/image-fallback/src/index.ts)
 
 <a id="voyaseek-aidsh-invariants"></a>
 
@@ -1963,7 +2096,7 @@ export interface Config {
 }
 ```
 
-Source: [`packages/skill/skill/src/index.ts:279`](../packages/skill/skill/src/index.ts)
+Source: [`packages/skill/skill/src/index.ts:275`](../packages/skill/skill/src/index.ts)
 
 <a id="voyaseek-aidsh-skill-filesystem"></a>
 
@@ -2138,6 +2271,12 @@ export interface Config {
   providerName: string
   /** The executable to spawn for each run (the child ACP agent). */
   command: string
+  /**
+   * `on-demand` defers executable errors to the first run. `when-available`
+   * probes through the subprocess provider and omits this provider when the
+   * executable is absent, so dependent tools remain hidden automatically.
+   */
+  availability?: 'on-demand' | 'when-available'
   /** Arguments passed to {@link command}. */
   args: string[]
   /**
@@ -2547,7 +2686,7 @@ export interface Config {
 }
 ```
 
-Source: [`packages/goal/tool-goal/src/index.ts:26`](../packages/goal/tool-goal/src/index.ts)
+Source: [`packages/goal/tool-goal/src/index.ts:28`](../packages/goal/tool-goal/src/index.ts)
 
 <a id="voyaseek-aidsh-tool-jobs"></a>
 
@@ -2716,10 +2855,22 @@ Requires: `agents` · `tools` · `skills`
 export interface Config {
   /** Maximum normalized description length rendered in the session catalog; minimum 3. */
   catalogDescriptionMaxLength?: number
+  /** Trusted deployment rules for deterministic task-to-skill injection. */
+  autoInvoke?: AutomaticSkillInvocationRule[]
+}
+
+/** Model-facing skill catalog configuration. */
+export interface AutomaticSkillInvocationRule {
+  /** Exact skill name to inject when the rule matches. */
+  skill: string
+  /** Case-insensitive substrings; any match selects the rule. */
+  include: string[]
+  /** Case-insensitive substrings that veto an include match. */
+  exclude?: string[]
 }
 ```
 
-Source: [`packages/skill/tool-skill/src/index.ts:61`](../packages/skill/tool-skill/src/index.ts)
+Source: [`packages/skill/tool-skill/src/index.ts:71`](../packages/skill/tool-skill/src/index.ts)
 
 <a id="voyaseek-aidsh-tool-str-replace-editor"></a>
 
@@ -2755,6 +2906,11 @@ export interface Config {
    * a distinct name.
    */
   toolName?: string
+  /**
+   * Optional task-specific model-facing description. Lifecycle guidance is
+   * still appended from the configured provider and background policy.
+   */
+  description?: string
   /**
    * Expose `run_in_background` (default true). Disabled instances omit the
    * parameter and reject forced background calls.
@@ -3199,6 +3355,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@voyaseek-ai/dsh-client-ui-plan` ([`packages/client/ui-plan/src/index.ts`](../packages/client/ui-plan/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings` ([`packages/client/ui-settings/src/index.ts`](../packages/client/ui-settings/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-general` ([`packages/client/ui-settings-general/src/index.ts`](../packages/client/ui-settings-general/src/index.ts))
+- `@voyaseek-ai/dsh-client-ui-settings-memory` ([`packages/client/ui-settings-memory/src/index.ts`](../packages/client/ui-settings-memory/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-mobile-view` ([`packages/client/ui-settings-mobile-view/src/index.ts`](../packages/client/ui-settings-mobile-view/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-models` ([`packages/client/ui-settings-models/src/index.ts`](../packages/client/ui-settings-models/src/index.ts))
 - `@voyaseek-ai/dsh-client-ui-settings-plugin-inventory` ([`packages/client/ui-settings-plugin-inventory/src/index.ts`](../packages/client/ui-settings-plugin-inventory/src/index.ts))
@@ -3247,6 +3404,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 
 Abstract service classes — a deployment loads a concrete implementation package instead ([capability seams](../.agents/notes/implemented/architecture/2026-06-13-capability-seams.md)).
 
+- `@voyaseek-ai/dsh-agent-memory` — abstract `AgentMemory` ([`packages/memory/agent-memory/src/index.ts`](../packages/memory/agent-memory/src/index.ts))
 - `@voyaseek-ai/dsh-attachment` — abstract `AttachmentStore` ([`packages/attachment/attachment/src/index.ts`](../packages/attachment/attachment/src/index.ts))
 - `@voyaseek-ai/dsh-code-runtime` — abstract `CodeRuntime` ([`packages/code-runtime/code-runtime/src/index.ts`](../packages/code-runtime/code-runtime/src/index.ts))
 - `@voyaseek-ai/dsh-compaction` — abstract `CompactionEngine` ([`packages/compaction/compaction/src/index.ts`](../packages/compaction/compaction/src/index.ts))

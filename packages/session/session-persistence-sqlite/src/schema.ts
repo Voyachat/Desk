@@ -17,7 +17,7 @@ import type { SessionEvent, SessionId, SessionHeader, SurfaceOp } from '@voyasee
  * layout; orthogonal to a session's own `version` (which versions the EVENT
  * vocabulary, stored per session in the `sessions` row).
  */
-export const SCHEMA_VERSION = 15
+export const SCHEMA_VERSION = 16
 
 /** SQLite application id protecting unrelated databases from persistence writes. */
 export const SESSION_PERSISTENCE_SQLITE_APPLICATION_ID = 0x44534850
@@ -43,6 +43,7 @@ export interface SessionRow {
   revision: number
   delegation_depth: number | null
   agent_preset: string | null
+  agent_runtime: string | null
 }
 
 /** An `events` table row: one `SessionEvent` mapped 1:1 (`data` is JSON text). */
@@ -128,7 +129,8 @@ function configureDatabase(db: DatabaseSync, path: string, journalMode: JournalM
         seed_length      INTEGER,
         origin           TEXT,
         delegation_depth INTEGER,
-        agent_preset    TEXT,
+        agent_preset     TEXT,
+        agent_runtime    TEXT,
         incarnation      TEXT NOT NULL,
         revision         INTEGER NOT NULL
       ) STRICT;
@@ -190,6 +192,7 @@ export function rowToMeta(row: SessionRow): SessionHeader {
     ...row.origin !== null ? { origin: row.origin } : {},
     ...row.delegation_depth !== null ? { delegationDepth: row.delegation_depth } : {},
     ...row.agent_preset !== null ? { agentPreset: row.agent_preset } : {},
+    ...row.agent_runtime !== null ? { agentRuntime: row.agent_runtime } : {},
   }
 }
 

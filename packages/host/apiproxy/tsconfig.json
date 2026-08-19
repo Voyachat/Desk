@@ -33,7 +33,7 @@
       "path": "../../attachment/attachment"
     },
     {
-      "path": "../../document/document-converter"
+      "path": "../../llm/image-fallback"
     },
     {
       "path": "../../llm/llm"

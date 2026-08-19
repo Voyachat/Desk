@@ -1,7 +1,8 @@
-import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
+import { copyFile, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:http'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { delimiter, dirname, join } from 'node:path'
+import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import {
   normalizeSessionLog,
@@ -13,7 +14,8 @@ import {
   type HarvestedLog,
   type NormalizeContext,
 } from '@voyaseek-ai/dsh-acp-snapshot'
-import { LOADER_SMOKE_TEST_TIMEOUT_MS, runLoaderSmoke } from '@voyaseek-ai/dsh-loader-smoke'
+import { LOADER_SMOKE_TEST_TIMEOUT_MS, resolveExampleLaunch, runLoaderSmoke } from '@voyaseek-ai/dsh-loader-smoke'
+import { execa } from 'execa'
 import {
   decompressZstdFrame,
   scanZstdFrames,
@@ -57,6 +59,7 @@ const deepseekDefaultsConfigPath = fileURLToPath(new URL('./fixtures/deepseek-de
 const headlessOverlayPath = fileURLToPath(new URL('./fixtures/headless-profile.cordis.yml', import.meta.url))
 const headlessSessionExpected = join(snapshotsDir, 'headless-profile', 'session.expected.jsonl')
 const headlessFailureExpected = join(snapshotsDir, 'headless-profile', 'stderr.expected.txt')
+const memoryRecallExpected = join(snapshotsDir, 'memory-recall', 'summary.expected.txt')
 const cliMockLlmPluginPath = fileURLToPath(new URL('./fixtures/cli-mock-llm.ts', import.meta.url))
 const refreshing = process.env.DSH_SNAPSHOT === 'refresh'
 
@@ -249,6 +252,92 @@ describe('headless stream-json snapshots', () => {
     })
 
     expect(result.stdout).toBe('CLI tool round trip complete: CLI_TOOL_ROUND_TRIP\n')
+    expect(result.stderr).toBe('')
+  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+
+  it('captures one completed turn and recalls it in an independent product session', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'headless-snapshot-memory-'))
+    const home = join(cwd, '.voyaseek')
+    const run = async (mode: 'capture' | 'recall', task: string): Promise<string> => {
+      const launch = resolveExampleLaunch({
+        srcBin: dshBinScript,
+        configArgs: ['--profile', 'headless', '--patch', headlessOverlayPath, task],
+        tsconfigPath,
+        env: {
+          VOYASEEK_HOME: home,
+          DSH_AGENTS_HOME: join(cwd, '.agents'),
+          DSH_PERMISSION_MODE: 'danger-full-access',
+          DSH_TELEMETRY_DISABLED: '1',
+          DSH_CLI_MEMORY_MODE: mode,
+          NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
+        },
+      })
+      const result = await execa(launch.command, launch.args, {
+        cwd,
+        env: launch.env,
+        input: '',
+        timeout: 30_000,
+        reject: false,
+        stripFinalNewline: false,
+      })
+      if (result.exitCode !== 0) throw new Error(`memory ${mode} run failed: ${result.stderr}`)
+      return result.stdout
+    }
+    try {
+      await prepareCliMockFixture(cwd)
+      const first = await run('capture', '请记住我的验证饮料是 lapsang-fixture。')
+      const second = await run('recall', '我的验证饮料是什么？')
+      const logs = await persistedLogs(cwd, join(home, 'sessions'))
+      expect(logs).toHaveLength(2)
+      const recallEvent = logs.flatMap(log => parseJsonl(log.content)).find((record) => {
+        if (record.type !== 'user/message' || record.data === null || typeof record.data !== 'object') return false
+        const source = (record.data as JsonObject).source
+        return source !== null && typeof source === 'object' && (source as JsonObject).form === 'recall'
+      })
+      expect(recallEvent).toBeDefined()
+      const source = recallEvent?.data !== null && typeof recallEvent?.data === 'object'
+        ? (recallEvent.data as JsonObject).source
+        : undefined
+      const attribution = source !== null && typeof source === 'object'
+        ? {
+          kind: (source as JsonObject).kind,
+          plugin: (source as JsonObject).plugin,
+          form: (source as JsonObject).form,
+        }
+        : source
+      const summary = [
+        `capture: ${first.trim()}`,
+        `recall: ${second.trim()}`,
+        `source: ${JSON.stringify(attribution)}`,
+        '',
+      ].join('\n')
+      if (refreshing) {
+        await mkdir(dirname(memoryRecallExpected), { recursive: true })
+        await writeFile(memoryRecallExpected, summary)
+      }
+      expect(summary).toBe(await readFile(memoryRecallExpected, 'utf8'))
+    } finally {
+      await rm(cwd, { recursive: true, force: true })
+    }
+  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+
+  it('automatically injects the shipped design skill from task intent', async () => {
+    const result = await runLoaderSmoke({
+      label: 'product automatic design skill snapshot',
+      tempDirPrefix: 'headless-snapshot-auto-design-',
+      binScript: dshBinScript,
+      configPath: headlessOverlayPath,
+      binArgs: ['--profile', 'headless', '--patch', headlessOverlayPath, 'Redesign this website landing page.'],
+      tsconfigPath,
+      env: {
+        DSH_CLI_EXPECT_AUTO_DESIGN_SKILL: '1',
+        DSH_TELEMETRY_DISABLED: '1',
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
+      },
+      prepare: prepareCliMockFixture,
+    })
+
+    expect(result.stdout).toBe('AUTOMATIC_DESIGN_SKILL_INJECTED_ONCE\n')
     expect(result.stderr).toBe('')
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 

@@ -532,9 +532,12 @@ describe('web e2e: long Chat scroll contract', () => {
         await composer.fill(LIVE_TEXT_PROMPT)
         await world.page.getByRole('button', { name: 'Send message', exact: true }).click()
         await world.page.getByText(LIVE_TEXT_FIRST, { exact: false }).last().waitFor({ timeout: 15_000 })
+        // The tail page remains below the virtualizer threshold even though
+        // individual replies are long; reaching its top must still page.
+        expect(await world.page.locator('[data-chat-virtual-body]').count()).toBe(0)
         await wheelToHistoryStart(world.page)
         const beforeRows = await loadedFlowRows(world.page)
-        await world.page.getByRole('button', { name: 'Load earlier', exact: true }).click()
+        // No button action: entering the top zone starts the request.
         await expect.poll(() => held, { timeout: 10_000 }).toBe(true)
 
         await wheelTranscript(world.page, 420)

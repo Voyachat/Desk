@@ -1618,14 +1618,30 @@ describe('ChatView', () => {
     expect(h.loadOlder).toHaveBeenCalledTimes(2)
   })
 
-  it('keeps the header button as the only paging path below the virtualization threshold', () => {
-    const h = makeHarness({ nodes: [user(1, 'q'), assistant(2, 'a')], hasMore: true })
+  it('auto-requests older pages below the virtualization threshold without stealing a streaming reader', () => {
+    const h = makeHarness({
+      nodes: [user(1, 'q'), assistant(2, 'a')],
+      hasMore: true,
+      running: true,
+    })
     const view = render(<h.ChatView {...h.props} />)
     const scroller = view.container.querySelector('[class*="scroll"]') as HTMLDivElement
     installScrollMetrics(scroller, 2_000, 300)
     readerScroll(scroller, 200)
+    expect(h.loadOlder).toHaveBeenCalledTimes(1)
+    expect(scroller.scrollTop).toBe(200)
+
+    // Stream growth while an older-page request is in flight does not reclaim
+    // bottom-follow from a reader who is inspecting history.
+    act(() => { h.set({ partial: { turn: 1, step: 2, blocks: [{ kind: 'text', text: 'streaming' }] } }) })
+    expect(scroller.scrollTop).toBe(200)
+
+    // The visit remains disarmed until the reader leaves the top zone.
     readerScroll(scroller, 100)
-    expect(h.loadOlder).not.toHaveBeenCalled()
+    expect(h.loadOlder).toHaveBeenCalledTimes(1)
+    readerScroll(scroller, 500)
+    readerScroll(scroller, 100)
+    expect(h.loadOlder).toHaveBeenCalledTimes(2)
   })
 
   it('keeps the reader parked while an auto-loaded page prepends into a virtualized flow', () => {

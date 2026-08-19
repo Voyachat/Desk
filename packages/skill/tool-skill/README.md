@@ -16,6 +16,12 @@ The catalog is omitted when no model-invocable skills are initially available, a
 
 `catalogDescriptionMaxLength` controls normalized catalog descriptions; rendering XML-escapes them. Its default is `500` and values must be integers of at least `3`, which reserves room for a truncation ellipsis. The [skill catalog hot-refresh Agent Note](../../../.agents/notes/implemented/feature/2026-07-27-skill-catalog-hot-refresh.md) owns the durable initial catalog and replacement lifecycle.
 
+## Automatic invocation
+
+`autoInvoke` is a trusted deployment-owned list of `{ skill, include, exclude? }` rules. Matching is case-insensitive over direct user text: any `include` substring selects the rule, while any `exclude` substring vetoes it. Empty matchers and invalid skill names fail plugin load. Project instructions, tool results, catalog messages, and other injected text cannot trigger a rule.
+
+A match loads the current scoped skill definition at `agent/pre-step`, requires it to remain model-invocable, and appends the canonical rendered body as a durable `skill-invocation` instructions message with `trigger: automatic`. Multiple matching rules deduplicate by skill name. User-explicit invocation takes precedence when both paths select the same skill.
+
 ## Tool: `skill`
 
 | Arg | Type | Notes |
@@ -145,11 +151,11 @@ Only a failing call adds these retained tokens.
 
 Append-only; newly visible content follows the reusable request prefix and does not invalidate existing KV-cache entries.
 
-### User-explicit invocation injection
+### Invocation injection
 
 #### What the model sees
 
-A whitespace-bounded `/name` token anywhere in a claimed user message, naming a user-invocable skill in the workspace catalog, injects that skill's full `<skill_content>` rendering (the exact result-template shape above) as a `user`-role instructions context appended after every other injection of that step — background first, the material to act on last. Only direct user input is scanned, the check runs on the loaded definition, and unknown or user-disabled names stay ordinary prose. This is the sole entry point for `disable-model-invocation` skills, which the catalog and the `skill` tool never expose; the catalog's closing sentence tells the model to follow the injected block instead of re-loading it.
+A whitespace-bounded `/name` token anywhere in a claimed user message, naming a user-invocable skill in the workspace catalog, injects that skill's full `<skill_content>` rendering. A trusted automatic rule may inject the same canonical body when direct user text matches and the skill remains model-invocable; its durable source adds `trigger: automatic`. Both paths append after every other injection of that step, scan no foreign source, and deduplicate the selected name. Explicit invocation wins when both match. The slash path remains the sole entry point for `disable-model-invocation` skills.
 
 #### Token effect
 
@@ -167,3 +173,4 @@ Append-only; the injection lands after the reusable request prefix inside the st
 - **Loading is one-shot text** — there is no partial, streaming, or cached-content handle when a remote provider is slow or a skill body is large.
 - **Catalog replacement is whole-list** — one changed name or description appends every currently visible summary; this keeps stale-name retirement explicit but costs tokens proportional to the catalog.
 - **Bodies are not versioned** — body-only edits do not change the catalog digest or notify the model; a later tool call reads the current provider content while earlier tool results remain historical facts.
+- **Automatic routing uses bounded substring rules, not semantic classification** — deployment owners must keep include/exclude lists narrow and tested; ambiguous requests still rely on the model-facing catalog.

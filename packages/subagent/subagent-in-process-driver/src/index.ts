@@ -68,6 +68,12 @@ function toStopReason(reason: TurnEndReason | undefined): SubagentStopReason {
 export interface InProcessRunOptions {
   /** Completed-turn seed for fork, or undefined for a fresh spawn. */
   readonly seed?: SessionEvent[]
+  /**
+   * Provider-owned synchronous composition inside the unpublished child scope.
+   * Runs after shared child composition and before the structured-output runtime.
+   * A throw rolls the complete agent-creation transaction back.
+   */
+  readonly setup?: (childCtx: Context) => void
 }
 
 /** Error used when cancellation wins before the child publication boundary. */
@@ -123,6 +129,7 @@ export async function startInProcessRun(
       persona: request.persona,
       toolFilter: request.toolFilter,
     })
+    options.setup?.(childCtx)
     if (request.outputSchema !== undefined) {
       structured = attachStructuredRuntime(childCtx, request.outputSchema)
     }

@@ -31,6 +31,7 @@ import { DEFAULT_MAX_PARALLEL_TOOL_CALLS } from './constants.ts'
 import type { AgentDriver, AgentDriverFactory } from './driver.ts'
 
 export type { AgentDriver, AgentDriverFactory, CreateDriverInput } from './driver.ts'
+export { RuntimeContextProjection } from './runtime-context.ts'
 
 /** Fiber states that cannot own or serve a new lifecycle. */
 const INACTIVE_STATES: ReadonlySet<FiberState> = new Set([

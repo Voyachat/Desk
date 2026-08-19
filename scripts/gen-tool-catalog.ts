@@ -12,11 +12,14 @@ import { Context } from '@voyaseek-ai/cordis'
 import type { ToolSchema } from '@voyaseek-ai/dsh-llm'
 import AgentRegistry from '@voyaseek-ai/dsh-agent'
 import type { Agent } from '@voyaseek-ai/dsh-agent'
+import CommandRuntime from '@voyaseek-ai/dsh-commands'
 import { createScope } from '@voyaseek-ai/dsh-scope'
 import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
 import SessionProjectionRegistry from '@voyaseek-ai/dsh-session-projection'
 import SqliteSessionQueryEngine from '@voyaseek-ai/dsh-session-query-sqlite'
 import GoalService from '@voyaseek-ai/dsh-goal'
+import * as ComplexGoal from '@voyaseek-ai/dsh-complex-goal'
+import SandboxPolicyService from '@voyaseek-ai/dsh-sandbox-policy'
 import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
 import ToolRuntime, { type Config as ToolsConfig } from '@voyaseek-ai/dsh-tools'
 import LocalBashExecutor from '@voyaseek-ai/dsh-bash-local'
@@ -65,6 +68,7 @@ import * as ToolWeb from '@voyaseek-ai/dsh-tool-web'
 import VmWorkflowEngine from '@voyaseek-ai/dsh-workflow-worker-thread'
 import * as ToolRalph from '@voyaseek-ai/dsh-tool-ralph'
 import * as ToolWorkflow from '@voyaseek-ai/dsh-tool-workflow'
+import ApprovalService from '@voyaseek-ai/dsh-user-approval'
 import { githubSlug } from './verify-md-links.ts'
 
 /** Attachment seam marker that makes the attachments-conditional `read_image` schema harvestable. */
@@ -135,14 +139,14 @@ async function mountCatalogChildScope(
 }
 
 /**
- * Tool package plus its hand-maintained boot recipe. The caller mounts the
+ * Schema-producing package plus its hand-maintained boot recipe. The caller mounts the
  * prompt and registry; each recipe supplies only package-specific seams and
  * config, while `dir` participates in the completeness check.
  */
 export interface ToolPackage {
   /** The npm package name, used as the catalog section heading. */
   pkg: string
-  /** The `packages/<group>/<dir>` leaf name — matched by the completeness guard. */
+  /** The `packages/<group>/<dir>` leaf name; `tool-*` names are matched by the completeness guard. */
   dir: string
   /**
    * Repo-relative implementation source linked per harvested tool. Packages
@@ -179,9 +183,9 @@ export interface ToolPackage {
 }
 
 /**
- * The boot manifest: every shipped tool package (a `tool-*` leaf under
- * `packages/`). Ordered by package name (the render order); the completeness
- * guard proves it is exhaustive against the on-disk glob.
+ * The boot manifest: every shipped `tool-*` package plus explicit mixed-entry
+ * plugins that register model tools. Ordered by package name (the render order);
+ * the completeness guard proves the conventional tool packages are exhaustive.
  */
 const TOOL_PACKAGES: ToolPackage[] = [
   {
@@ -367,6 +371,34 @@ const TOOL_PACKAGES: ToolPackage[] = [
     },
     note:
       'The six terminal tools are opt-in and complement one-shot shell/filesystem tools. `terminal_send(run_in_background: true)` registers with `ctx.jobs`; TUI, named key sequences, BEL, resize, auto-start, and cross-agent sharing are absent from the schema.',
+  },
+  {
+    pkg: '@voyaseek-ai/dsh-complex-goal',
+    dir: 'complex-goal',
+    source: 'packages/goal/complex-goal/src/index.ts',
+    requires: [
+      'ctx.tools', 'ctx.agents', 'ctx.commands', 'ctx.goals', 'ctx.sessions', 'ctx.shell',
+      'ctx.subagents', 'ctx.sandboxPolicy', 'ctx.approval', 'ctx.systemPrompt',
+      'a calling root Agent in a direct-human turn',
+    ],
+    writes: [
+      'tool/call', 'goal/change', 'complex-goal/change',
+      'Manager, Executor, and Auditor child session events', 'tool/result',
+    ],
+    async mount(ctx) {
+      await ctx.plugin(SessionStore)
+      await ctx.plugin(AgentRegistry)
+      await ctx.plugin(CommandRuntime)
+      await ctx.plugin(GoalService)
+      await ctx.plugin(LocalSubprocessRuntime)
+      await ctx.plugin(LocalBashExecutor)
+      await ctx.plugin(SubagentRuntime)
+      await ctx.plugin(SandboxPolicyService)
+      await ctx.plugin(ApprovalService)
+      await ctx.plugin(ComplexGoal)
+    },
+    note:
+      'The model selects complex_goal from task semantics in any language; execution requires direct-human root authority. Deployment-owned verification commands, when configured, must report filesystem read-only sandbox execution and all pass before completion.',
   },
   {
     pkg: '@voyaseek-ai/dsh-tool-goal',
@@ -580,7 +612,7 @@ const TOOL_PACKAGES: ToolPackage[] = [
   },
 ]
 
-/** One package's contribution to the catalog: its schemas plus attribution. */
+/** One schema-producing package's contribution to the catalog plus attribution. */
 interface CatalogPackage {
   pkg: string
   sources: Readonly<Record<string, string>>
@@ -592,7 +624,7 @@ interface CatalogPackage {
   note?: string
 }
 
-/** The whole catalog: one entry per booted tool package, in manifest order. */
+/** The whole catalog: one entry per booted schema-producing package, in manifest order. */
 export type ToolCatalog = CatalogPackage[]
 
 /**
@@ -718,9 +750,9 @@ export function render(catalog: ToolCatalog): string {
     '',
     'Every model-facing tool a shipped plugin contributes to `ctx.tools`: the `name`, `description`, and JSON-Schema `parameters` the model receives via the system-prompt assembly. It complements the [subsystem pages](subsystems/core.md) (the types plus each page\'s generated Cordis API region) — this page is the *tools* the agent is offered.',
     '',
-    'This file is GENERATED and verified fresh by `pnpm run verify-tool-catalog` (part of `doc-sync`) — do not edit it by hand. Unlike the cordis catalog (a pure source-AST pass), this generator BOOTS each tool plugin on a real context and reads `ctx.tools.schemas()`, because a tool schema is not statically knowable (runtime-spread enums, concatenated descriptions, config-driven names, raw-JSON-Schema MCP tools). A completeness guard globs `packages/*/tool-*` and fails if any package is missing from the generator\'s boot manifest, so a new tool cannot be silently undocumented. See [the tool-schema-catalog Agent Note](../.agents/notes/implemented/process/2026-07-02-tool-schema-catalog.md).',
+    'This file is GENERATED and verified fresh by `pnpm run verify-tool-catalog` (part of `doc-sync`) — do not edit it by hand. Unlike the cordis catalog (a pure source-AST pass), this generator BOOTS each schema-producing plugin on a real context and reads `ctx.tools.schemas()`, because a tool schema is not statically knowable (runtime-spread enums, concatenated descriptions, config-driven names, raw-JSON-Schema MCP tools). A completeness guard globs `packages/*/tool-*` and fails if any conventional tool package is missing from the generator\'s boot manifest; mixed-entry plugins that also register a tool are listed explicitly. See [the tool-schema-catalog Agent Note](../.agents/notes/implemented/process/2026-07-02-tool-schema-catalog.md).',
     '',
-    'Scope: shipped product tools under `packages/*/tool-*`, each booted with its DEFAULT config, except where a Config field is REQUIRED with no default — there the generator must choose, and the per-package note records which branch this page shows. The registered tool NAME can be a load-time config (e.g. `tool-subagent`\'s `toolName`), so a deployment may expose a package under a different or additional name — a per-package note records those shipped aliases where they exist. The `examples/` demo tools (e.g. `echo`) are excluded, matching the cordis catalog\'s packages-only scope.',
+    'Scope: shipped product tools in the boot manifest, with `packages/*/tool-*` covered exhaustively and mixed-entry plugins listed explicitly. Each package boots with its DEFAULT config, except where a Config field is REQUIRED with no default — there the generator must choose, and the per-package note records which branch this page shows. The registered tool NAME can be a load-time config (e.g. `tool-subagent`\'s `toolName`), so a deployment may expose a package under a different or additional name — a per-package note records those shipped aliases where they exist. The `examples/` demo tools (e.g. `echo`) are excluded, matching the cordis catalog\'s packages-only scope.',
     '',
     '## Tool Package Map',
     '',

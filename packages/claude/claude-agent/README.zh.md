@@ -9,6 +9,7 @@ DSH 会话的 Claude Agent SDK 驱动：以 `claude` runtime 创建的会话由 
 `agent-loop` 提供按会话 runtime 标识的驱动工厂注册表。本包为 `claude` runtime 注册工厂；`AgentLoop` 在创建或恢复时读取 `session.header.agentRuntime`，并为 Claude 会话构建 `ClaudeSdkAgent`。该驱动：
 
 - 与默认循环一样拥有 turn／step 边界和 inbox，因此会话日志仍是事实来源；
+- 组装与本机循环相同的作用域系统提示词和动态上下文，执行 `agent/pre-step` 与 `agent/request`，并在每次 SDK query 前把实际 provider／model／system 快照记录到 `request/header`；
 - 在会话 cwd 中每轮运行一次 SDK `query()`，并将 SDK 消息映射到持久会话事件：`system/init` 记录 `claude-agent/runtime` 事件（SDK 会话 id 与模型），assistant 文本／思考／工具块折叠为 `assistant/message` 和 `tool/call`，SDK 工具结果折叠为通过 `sourceEventSeqs` 关联调用的 `tool/result`；
 - 跨轮次把已记录的 SDK 会话 id 作为 `resume` 传入，并在重启后从日志恢复该 id；
 - 通过 `dsh-subprocess` 和清理后的父环境启动 Claude Code CLI，因此 SDK 子进程只继承预期的 `ANTHROPIC_*` endpoint 与凭据。
@@ -26,10 +27,13 @@ SDK `canUseTool` hook 承载两类不同交互。`AskUserQuestion` 委托给 hos
 | key | 默认值 | 含义 |
 | --- | --- | --- |
 | `runtime` | `claude` | 此工厂服务的 session header runtime |
+| `provider` | `claude-agent` | 此 Anthropic 兼容 endpoint 服务的全局模型 provider route |
 | `model` | 未设置 | SDK 子进程的 `ANTHROPIC_MODEL` 覆盖 |
+| `models` | 未设置 | endpoint 明确支持的模型 id，同时过滤该会话的模型选择器 |
 | `baseUrl` | 未设置 | `ANTHROPIC_BASE_URL` 覆盖（兼容 gateway） |
 | `authToken` | 未设置 | `ANTHROPIC_AUTH_TOKEN` 覆盖 |
 | `apiKey` | 未设置 | `ANTHROPIC_API_KEY` 覆盖 |
+| `apiKeyEnv` | 未设置 | 每次 query 解引用并作为 `ANTHROPIC_API_KEY` 注入的凭据名称 |
 | `permissionMode` | 会话权限状态 | 显式 SDK 权限模式（`default`、`acceptEdits`、`auto`、`plan`、`bypassPermissions`） |
 | `executable` | SDK 解析 | 显式 Claude CLI 路径（`pathToClaudeCodeExecutable`） |
 | `env` | `{}` | 叠加到清理后父环境的子进程环境项 |
@@ -37,7 +41,9 @@ SDK `canUseTool` hook 承载两类不同交互。`AskUserQuestion` 委托给 hos
 
 ## 模型体验
 
-- **提示词**：本轮用户提示文本原样交给 Claude Code；DSH 系统提示词和 DSH 工具 schema 不参与，Claude Code 使用自己的提示词与内置工具。
+- **提示词与上下文**：DSH 系统提示词作为 SDK 自定义系统提示词；动态上下文作为有日志记录的 user-role 快照，并经过 `agent/pre-step`。Claude Code 仍拥有自己的内置工具，DSH 工具 schema 不会冒充 Claude 工具。
+- **模型**：会话全局选择经过 `agent/request`，成为该次 query 的真实 SDK model。Runtime endpoint 只接纳配置的 provider／model 子集；全局默认不兼容时回退到 Runtime 默认，而不是静默发往错误 endpoint。
+- **附件**：当前文本桥会明确拒绝非文本输入，绝不会丢掉图片却报告成功。
 - **Tokens**：用量记账由 SDK 拥有；v1 中 DSH 不记录 Claude 轮次的 token 数量。
 - **KV cache**：DSH 不为该驱动构建模型请求；SDK 在 `~/.claude` 下拥有自己的会话缓存。
 

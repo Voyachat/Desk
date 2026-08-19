@@ -32,6 +32,7 @@ export interface HeaderLine {
     origin?: 'subagent';
     delegationDepth: number;
     agentPreset?: string;
+    agentRuntime?: string;
 }
 /**
  * Build the header line object from a {@link SessionHeader}.

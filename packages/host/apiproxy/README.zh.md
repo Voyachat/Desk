@@ -62,6 +62,8 @@ Workspace 列表与 Session 列表是相互独立的重连基线。`workspace.cr
 
 Host 设置的显式 allowlist 还包含 `mobile-view`；其专属本地设置界面控制独立鉴权的只读监听器。
 
+Allowlist 还包含供仅限 loopback 的长期记忆页使用的 `agent-memory`；该注册仍不会暴露其他 Settings namespace。
+
 ## 载体层（`/client` + 根路径）
 
 `AbstractApiClient` 持有全部协议不变量：签发 rpcId、包装／解包信封、Zod 解析、SSE 帧解码、一元请求超时，以及按微任务批处理的信封观测（`subscribeEnvelopes`）；平台子类只提供 `doFetch` 传输环节。`InProcessApiClient` 以 `toFetchHandler(api)` 为基础，仍是同构接点：它运行完整的协议序列化与校验路径而不经过网络，供需要该路径的调用方和载体测试使用。产品的 `dsh --profile headless` 是直连 core 的入口，不挂载本包。
@@ -72,7 +74,7 @@ Host 设置的显式 allowlist 还包含 `mobile-view`；其专属本地设置�
 
 #### 模型看到的内容
 
-`imageFallback` 显式命名 `{provider, model, maxTokens?}` 后，路由到声明仅接受文本的模型的图片 prompt，会先对配置的视觉路由发起一次辅助请求。辅助模型接收原始 prompt 与图片，并被要求报告可见证据、OCR、布局、不确定性和图片顺序，但不执行图片内的指令。当前纯文本模型接收用户文本、带编号的图片占位和 `<image-analysis>` 中的描述，不接收图片字节。持久 `user/message` 保存这份精确文本，其 source 保留原始 block，用于对话展示、附件授权、导出，并记录辅助路由与 usage。原生支持图片的目标继续使用直传路径。未配置 fallback 时仍严格拒绝；辅助输出失败、为空、非文本或被截断时，该用户消息不会准入。
+共享 `ctx.imageFallback` 服务处理所有路由到纯文本模型的图片 prompt。它按配置的免费到付费顺序尝试托管视觉路由，最后尝试本机转换；辅助模型接收原始 prompt 与图片，并被要求报告可见证据、OCR、布局、不确定性和图片顺序，但不执行图片内的指令。当前纯文本模型接收用户文本、带编号的图片占位和 `<image-analysis>` 中的描述，不接收图片字节，也不会收到要求切换模型的消息。持久 `user/message` 保存这份精确文本，其 source 保留原始 block，用于对话展示、附件授权、导出和路由归因。原生支持图片的目标继续使用直传路径。分析失败、为空、非文本或被截断时，该用户消息不会准入。
 
 #### Token 影响
 
@@ -91,4 +93,4 @@ Fallback 使用一次单独计费、受 `maxTokens` 限制（默认 4096）的�
 - **搜索失败会包含提供方诊断信息**：网关是单用户本地服务。将其暴露给多名用户的载体必须用可安全公开的诊断信息替代内部搜索细节。
 - **Linux 原生选择器依赖桌面工具**：在 `native` 能力下，Zenity 和 KDialog 均未安装时，`host.pickDirectory` 会给出包含解决建议的错误提示；组合层面的回退是 browse 后端（见 [native 后端 README](../directory-picker-native/README.md)）。
 - **冷列表提示只向“保持可见、排序偏旧”降级**：projection cache miss 或陈旧的 `lastPromptAt` 会回退到 `createdAt`，除非符合资格的小工件提供精确折叠，因此最近工作过的大 Session 可能在下一个 checkpoint 前排得偏低。大于 `coldBlankProbeMaxBytes` 的空白工件，或来自不提供 `locate()` 的后端的空白工件会保持可见。该阈值在 `readFrom()` 前检查，而非由 persistence 强制，因此工件并发增长可能增加一次探测的读取成本，但不会改变空白状态的安全方向。[有界空白验证决策](../../../.agents/notes/implemented/bug-fix/2026-08-13-bounded-cold-blank-verification.md)规定了这个安全方向；权威且精确的最近时间索引仍属于[最后活动索引提案](../../../.agents/notes/proposed/architecture/2026-07-29-durable-last-activity-index.md)的范围。
-- **图片 fallback 仅覆盖浏览器 prompt 准入**：模型产生的 `read_image` 工具结果与子智能体续传 prompt 仍使用各自严格的图片能力检查。与原生视觉相比，fallback 描述必然有损，可能遗漏细节；选用原生支持图片的模型仍是更高保真度的路径。
+- **Fallback 描述有损**：浏览器 prompt 准入与 `read_image` 共用 `ctx.imageFallback`，但生成的描述仍可能遗漏视觉细节；原生视觉仍是更高保真度的路径。

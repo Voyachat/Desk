@@ -98,9 +98,6 @@
     # shares. The base layer's agent-default-model service owns the default model.
     - id: api-gateway
       name: '@voyaseek-ai/dsh-host-apiproxy'
-      config:
-        imageFallback:
-          local: true
 
     - id: cordis-host-runner
       name: '@voyaseek-ai/dsh-cordis-host-runner'
@@ -205,6 +202,9 @@
     - id: ui-settings-mobile-view
       name: '@voyaseek-ai/dsh-client-ui-settings-mobile-view'
 
+    - id: ui-settings-memory
+      name: '@voyaseek-ai/dsh-client-ui-settings-memory'
+
     - id: ui-settings-plugin-inventory
       name: '@voyaseek-ai/dsh-client-ui-settings-plugin-inventory'
 
@@ -280,9 +280,8 @@
     - id: ui-plan
       name: '@voyaseek-ai/dsh-client-ui-plan'
 
-    # Runtime selector: the composer chip choosing the agent driver a session
-    # runs under (DSH loop or the Claude Agent SDK driver), paired with the
-    # host-plane dsh-claude-agent row in the runtime composition.
+    # Runtime selector: each conversation is permanently Native, Claude, or
+    # Codex; selecting another runtime opens a matching blank conversation.
     - id: claude-runtime-ui
       name: '@voyaseek-ai/dsh-claude-runtime-ui'
 
@@ -293,6 +292,24 @@
     # claude-runtime-ui composer chip directly above.
     - id: claude-agent
       name: '@voyaseek-ai/dsh-claude-agent'
+      config:
+        provider: dashscope
+        model: qwen3.8-max
+        models: [qwen3.8-max, deepseek-v4-flash]
+        baseUrl: https://dashscope.aliyuncs.com/apps/anthropic
+        apiKeyEnv: DASHSCOPE_API_KEY
+
+    # Codex app-server driver over DashScope's Responses-compatible endpoint.
+    # The same global DashScope model selection and credential reference are
+    # resolved again for each turn; API-key values never enter session logs.
+    - id: codex-agent
+      name: '@voyaseek-ai/dsh-codex-agent'
+      config:
+        provider: dashscope
+        model: qwen3.8-max
+        models: [qwen3.8-max, deepseek-v4-flash]
+        baseUrl: https://dashscope.aliyuncs.com/compatible-mode/v1
+        apiKeyEnv: DASHSCOPE_API_KEY
 
     - id: ui-user-questions
       name: '@voyaseek-ai/dsh-client-ui-user-questions'

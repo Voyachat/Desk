@@ -52,7 +52,7 @@
     "@voyaseek-ai/dsh-brand": "workspace:^",
     "@voyaseek-ai/dsh-commands": "workspace:^",
     "@voyaseek-ai/dsh-credentials": "workspace:^",
-    "@voyaseek-ai/dsh-document-converter": "workspace:^",
+    "@voyaseek-ai/dsh-image-fallback": "workspace:^",
     "@voyaseek-ai/dsh-goal": "workspace:^",
     "@voyaseek-ai/dsh-host-directory-picker": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",

@@ -1,6 +1,5 @@
-# Text-route image overlay: the attachment store registers read_image, but the
-# strict execution gate refuses on a route that does not declare image input,
-# so a text-only deployment keeps its durable history text-clean. The app
+# Text-route image overlay: the attachment store registers read_image and the
+# shared fallback converts its durable image result for a text-only route. The app
 # config is restated to re-pin `deepseek-v4-flash` (base ships pro; the
 # authored fixture and the pinned header class are flash), because a config
 # patch replaces the whole app config.
@@ -25,3 +24,9 @@
       - insert:
           - id: attachment-local
             name: '@voyaseek-ai/dsh-attachment-local'
+          - id: snapshot-document-converter
+            name: './tests/fixtures/snapshot-document-converter.ts'
+          - id: image-fallback
+            name: '@voyaseek-ai/dsh-image-fallback'
+            config:
+              local: true

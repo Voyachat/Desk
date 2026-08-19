@@ -78,6 +78,23 @@
     - id: settings
       name: '@voyaseek-ai/dsh-settings-file'
 
+    # Default local cross-session memory. Settings owns only live controls;
+    # structured items and the crash-recoverable extraction outbox live in a
+    # private SQLite database under the harness home.
+    - id: agent-memory
+      name: '@voyaseek-ai/dsh-agent-memory-settings'
+      config:
+        enabled: true
+        autoCapture: true
+        autoRecall: true
+        maxEntries: 2000
+        maxHits: 5
+        maxContentChars: 2000
+        maxTitleChars: 120
+        eventTtlDays: 30
+        maintenanceBatchSize: 4
+        maintenanceMaxAttempts: 5
+
     # Credential sources: inherited environment over the managed
     # `$VOYASEEK_HOME/.credentials.yaml`, with project and user `.env` fallbacks.
     # Adapters resolve references per request; the Models page writes only the
@@ -85,15 +102,64 @@
     - id: credentials
       name: '@voyaseek-ai/dsh-credentials-local'
 
-    # The pi-ai multi-provider twin, mounted dormant: zero routes (and no extra
-    # models in the picker) until a `llm-pi-ai:` settings section supplies provider
-    # profiles — then those routes register live, keys resolving per request
-    # through their apiKeyEnv references, and drop again when the section empties.
-    # Supplying those profiles is exactly what the web Models page does. Which
-    # adapters exist is composition; which providers run is the user's settings
-    # document.
+    # The pi-ai multi-provider twin includes one shipped Zhipu vision route used
+    # by automatic image fallback. Its credential is still resolved per request,
+    # and user settings can add or override other provider profiles.
     - id: llm-pi-ai
       name: '@voyaseek-ai/dsh-llm-pi-ai'
+      config:
+        providers:
+          zhipu-vision:
+            apiKeyEnv: ZHIPUAI_API_KEY
+            displayName: Zhipu GLM Vision
+            api: openai-completions
+            baseURL: https://open.bigmodel.cn/api/paas/v4
+            defaultInput: [text, image]
+            defaultContextWindow: 131072
+            defaultMaxTokens: 32768
+            reasoning: 'off'
+            compat:
+              thinkingFormat: zai
+              supportsReasoningEffort: false
+            models:
+              - id: glm-4.6v-flash
+                name: GLM-4.6V-Flash
+                reasoningEfforts:
+                  'off':
+                  high: high
+              - id: glm-4.6v-flashx
+                name: GLM-4.6V-FlashX
+                reasoningEfforts:
+                  'off':
+                  high: high
+              - id: glm-4.6v
+                name: GLM-4.6V
+                reasoningEfforts:
+                  'off':
+                  high: high
+
+    # Every prompt and image-reading tool shares this route order. Hosted
+    # analysis runs silently only when ZHIPUAI_API_KEY is configured; transient
+    # free-route failures may advance to paid tiers, then local OCR remains the
+    # final offline fallback. The ping tool probes only free routes by default.
+    - id: image-fallback
+      name: '@voyaseek-ai/dsh-image-fallback'
+      config:
+        local: true
+        maxTokens: 4096
+        routes:
+          - provider: zhipu-vision
+            model: glm-4.6v-flash
+            tier: free
+            credentialRef: ZHIPUAI_API_KEY
+          - provider: zhipu-vision
+            model: glm-4.6v-flashx
+            tier: paid-low
+            credentialRef: ZHIPUAI_API_KEY
+          - provider: zhipu-vision
+            model: glm-4.6v
+            tier: paid-quality
+            credentialRef: ZHIPUAI_API_KEY
 
     - id: session-persistence-jsonl
       name: '@voyaseek-ai/dsh-session-persistence-jsonl'
@@ -240,11 +306,21 @@
       config:
         maxBytes: 65536
 
+    - id: agent-memory-context
+      name: '@voyaseek-ai/dsh-agent-memory-context'
+      config:
+        maxRecallChars: 6000
+
     - id: skill
       name: '@voyaseek-ai/dsh-skill'
 
     - id: skill-filesystem
       name: '@voyaseek-ai/dsh-skill-filesystem'
+      config:
+        # Resolve the bundle-owned skill root through the installed package, not
+        # through a source checkout or a machine-specific path.
+        bundledSkillDir: !!js >-
+          process.getBuiltinModule('node:path').join(process.getBuiltinModule('node:path').dirname(process.getBuiltinModule('node:module').createRequire(baseUrl).resolve('@voyaseek-ai/dsh-base/package.json')), 'skills')
 
     - id: skill-badge
       name: '@voyaseek-ai/dsh-skill-badge'
@@ -252,6 +328,11 @@
 
     - id: tool-skill
       name: '@voyaseek-ai/dsh-tool-skill'
+      config:
+        autoInvoke:
+          - skill: design-taste-frontend
+            include: [landing page, marketing page, portfolio site, website redesign, web redesign, website design, web design, visual redesign, homepage design, frontend aesthetics, 落地页, 营销页, 作品集网站, 网页设计, 网站设计, 网站改版, 网页改版, 页面设计, 视觉重设计, 首页设计, 前端美化, 提升前端美感, 提升网页美感]
+            exclude: [dashboard, admin panel, data table, multi-step form, code editor, native mobile, realtime collaboration, 数据看板, 管理后台, 数据表格, 多步骤表单, 代码编辑器, 原生移动端, 实时协作]
 
     - id: tool-plugin-discovery
       name: '@voyaseek-ai/dsh-tool-plugin-discovery'
@@ -275,6 +356,9 @@
 
     - id: command-goal
       name: '@voyaseek-ai/dsh-command-goal'
+
+    - id: complex-goal
+      name: '@voyaseek-ai/dsh-complex-goal'
 
     - id: plan-mode
       name: '@voyaseek-ai/dsh-plan-mode'
@@ -315,6 +399,34 @@
       name: '@voyaseek-ai/dsh-subagent-fork-in-process'
       config:
         providerName: fork
+
+    # Prime Agent remains an optional external ACP runtime. The provider exists
+    # only when the managed installation is on PATH; its dependent tool then
+    # follows that lifecycle automatically and ordinary tasks start no child.
+    - id: subagent-prime-computer-use
+      name: '@voyaseek-ai/dsh-subagent-acp'
+      config:
+        providerName: prime-computer-use
+        command: prime-agent
+        availability: when-available
+        args:
+          - --mode
+          - acp
+          - --offline
+          - --no-extensions
+          - --extension
+          - npm:@injaneity/pi-computer-use@0.5.0
+          - --no-builtin-tools
+          - --no-skills
+          - --no-prompt-templates
+          - --no-themes
+          - --tools
+          - find_roots,observe_ui,search_ui,expand_ui,inspect_ui,act_ui,read_text,wait_for
+        permission: reject
+        env:
+          PI_COMPUTER_USE_HEADLESS: '1'
+          PI_COMPUTER_USE_BROWSER_USE: '0'
+          PI_COMPUTER_USE_CURSOR_OVERLAY: '0'
 
     # Continuable background children are selected per delegation tool. The
     # separately loaded follow-up tool registers the one global `send_message`.

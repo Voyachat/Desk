@@ -251,6 +251,12 @@ function buildProfilePatch(countryCode: string): string {
           - id: qwen3.7-flash
             name: Qwen 3.7 Flash
             input: [text, image]
+          - id: qwen3.8-max
+            name: Qwen 3.8 Max
+          - id: kimi/kimi-k3
+            name: Kimi K3
+          - id: deepseek-v4-flash
+            name: DeepSeek V4 Flash
 
 - id: api-gateway
   config:

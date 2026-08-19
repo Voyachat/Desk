@@ -38,12 +38,15 @@ const EXPECTED_TOOLS = [
   'create_goal',
   'edit',
   'exit_plan_mode',
+  'find_dsh_plugin',
   'get_goal',
   'interrupt_agent',
   'job_kill',
   'job_list',
   'job_output',
   'list_agents',
+  'modelscope_search',
+  'ping_image_fallback',
   'ralph',
   'read',
   'read_image',
@@ -65,6 +68,7 @@ const EXPECTED_TOOLS = [
  * dependency.
  */
 const RIPGREP_TOOLS = ['glob', 'grep']
+const GLOBAL_TOOLS = ['find_dsh_plugin', 'modelscope_search', 'ping_image_fallback']
 
 let scaffold: WebScaffold | undefined
 
@@ -78,10 +82,10 @@ it('assembles the shipped Web catalog, file-reference guidance, and confined acc
   const ctx = scaffold.ctx
   // The catalog belongs to an AGENT, not to the process: every model-facing row
   // now lives in a preset mounted under one session's scope, so the global
-  // layer holds nothing and a caller must name the agent to see anything. This
-  // composes from the deployment default — what a session that names no preset
-  // gets — which is the shape this test has always been about.
-  expect(ctx.tools.schemas().map(schema => schema.name)).toEqual([])
+  // layer holds only deployment diagnostics and discovery; a caller must name
+  // the agent to see the actionable preset tools. This composes from the
+  // deployment default — what a session that names no preset gets.
+  expect(ctx.tools.schemas().map(schema => schema.name).sort()).toEqual(GLOBAL_TOOLS)
   const handle = await ctx.agents.create({
     sessionId: SessionId('shipped-composition'),
     setup: agentCtx => ctx.agentPresets.mount(agentCtx).then(() => undefined),

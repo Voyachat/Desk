@@ -105,6 +105,17 @@ describe('dsh-tool-subagent', () => {
     expect(schema!.description).toContain('job_output')
   })
 
+  it('uses a task-specific description while preserving lifecycle guidance', async () => {
+    const ctx = await setup({
+      provider: 'mock',
+      toolName: 'computer_use',
+      description: 'Observe and operate desktop application interfaces.',
+    })
+    const schema = ctx.tools.schemas().find(candidate => candidate.name === 'computer_use')
+    expect(schema?.description).toContain('Observe and operate desktop application interfaces.')
+    expect(schema?.description).toContain('job_output')
+  })
+
   it('omits run_in_background entirely when the instance disables it (schema and capability never disagree)', async () => {
     const ctx = await setup({ provider: 'mock', enableRunInBackground: false })
     const schema = ctx.tools.schemas().find(s => s.name === 'subagent')

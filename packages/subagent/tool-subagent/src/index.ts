@@ -35,6 +35,11 @@ export interface Config {
    */
   toolName?: string
   /**
+   * Optional task-specific model-facing description. Lifecycle guidance is
+   * still appended from the configured provider and background policy.
+   */
+  description?: string
+  /**
    * Expose `run_in_background` (default true). Disabled instances omit the
    * parameter and reject forced background calls.
    */
@@ -81,6 +86,7 @@ export interface Config {
 export const Config: z<Config> = z.object({
   provider: z.string().required(),
   toolName: z.string().default('subagent'),
+  description: z.string(),
   enableRunInBackground: z.boolean().default(true),
   backgroundMode: z.union(['one-shot', 'continuable'] as const).default('one-shot'),
   // Prevent Schemastery from materializing omitted agentOptions as `{}`.
@@ -275,6 +281,8 @@ export function apply(ctx: Context, config: Config): void {
   const backgroundEnabled = config.enableRunInBackground !== false
   const continuable = (config.backgroundMode ?? 'one-shot') === 'continuable'
   const toolName = config.toolName ?? 'subagent'
+  const configuredDescription = config.description?.trim()
+  if (configuredDescription === '') throw new Error('tool-subagent: description must not be empty')
   // Mirror provider lifecycle because sibling load order and HMR replacement
   // can change provider availability while this fiber remains active.
   let disposeTool: (() => void) | undefined
@@ -296,7 +304,7 @@ export function apply(ctx: Context, config: Config): void {
     }
     disposeTool = ctx.tools.register(defineTool({
       name: toolName,
-      description: wording.description + (backgroundEnabled
+      description: (configuredDescription ?? wording.description) + (backgroundEnabled
         // The completion notice is the continuation service's own behavior, not
         // a separately installed capability, so this promise holds whenever the
         // continuable background path is reachable at all.

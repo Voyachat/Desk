@@ -50,6 +50,7 @@ export { REGION_BEGIN, REGION_END }
  * errors, so the partition can never silently drift from the service API.
  */
 export const SERVICE_PAGE: Record<string, string> = {
+  agentMemory: 'memory.md',
   agentLoop: 'core.md',
   agentDefaultModel: 'core.md',
   agentPresets: 'core.md',
@@ -67,6 +68,7 @@ export const SERVICE_PAGE: Record<string, string> = {
   credentials: 'credentials.md',
   directoryPicker: 'workspace.md',
   documentConverter: 'document.md',
+  imageFallback: 'image-fallback.md',
   dynamicCordisRunner: 'extensions.md',
   e2b: 'subprocess.md',
   fs: 'filesystem.md',
@@ -227,6 +229,7 @@ export const EVENT_WALK_EXEMPTIONS: Record<string, string> = {
  */
 export const LINK_MAP: Readonly<Record<string, string>> = {
   Agent: 'core.md',
+  AgentMemoryStatus: 'memory.md',
   AgentCancelCause: 'core.md',
   AgentDriverFactory: 'core.md',
   AgentFactory: 'core.md',
@@ -240,6 +243,11 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   InboxItem: 'core.md',
   InboxPlacement: 'core.md',
   MessageId: 'llm-streaming.md',
+  CaptureMemoryRequest: 'memory.md',
+  MemoryId: 'memory.md',
+  MemoryItem: 'memory.md',
+  MemoryOperationOptions: 'memory.md',
+  RecallMemoryRequest: 'memory.md',
   ResumeAgentOptions: 'core.md',
   SettleReason: 'core.md',
   AdapterRegistrationHandle: 'llm-streaming.md',
@@ -298,6 +306,8 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   StoredImageAttachment: 'attachment.md',
   DocumentConversionInput: 'document.md',
   DocumentConversionResult: 'document.md',
+  ImageFallbackProbeResult: 'image-fallback.md',
+  ImageFallbackResult: 'image-fallback.md',
   ShellExecRequest: 'shell.md',
   ShellExecSpec: 'shell.md',
   ShellProcess: 'shell.md',

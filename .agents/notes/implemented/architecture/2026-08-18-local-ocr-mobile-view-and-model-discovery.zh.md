@@ -10,7 +10,7 @@ Status: implemented
 
 ## Decision
 
-`ctx.documentConverter` 是由 Host 图片降级链路消费的 provider-neutral 文档转 Markdown seam。随附的 Darwin provider 依赖 `mac-ocr@1.1.1`，通过其 Node API 把字节交给通用 Swift 二进制，并按输入顺序和 PDF 页序返回有界文本。基础 bundle 在 Darwin 之外禁用该 provider。纯文本路由优先使用本机转换；可选托管视觉路由只在 provider 不可用时回退，不会在本机 OCR 失败后隐式替换它。
+`ctx.documentConverter` 是由自动图片 fallback 消费的 provider-neutral 文档转 Markdown seam。随附的 Darwin provider 依赖 `mac-ocr@1.1.1`，通过其 Node API 把字节交给通用 Swift 二进制，并按输入顺序和 PDF 页序返回有界文本。基础 bundle 在 Darwin 之外禁用该 provider。后续[自动图片 fallback 路由决策](2026-08-19-automatic-image-fallback-routing.md)负责托管与本机的顺序。
 
 `mobile-view` 注册本机 `/mobile-view` 页面和两个使用 Bearer 认证的 JSON 读取接口。配置 `remoteHost` 时，它会启动第二个只提供这三条路由的 HTTP listener。listener 绑定前必须取得凭据，且不会暴露主 Web server、命令、工具、文件、上传、下载、cookie 或写方法。token 只保留在页面内存和请求 header 中。
 

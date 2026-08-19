@@ -17,9 +17,9 @@
       - img
       - text: 远程查看
   - button "打开配置文件"
-  - button "关闭":
+  - button "返回应用":
     - img
-    - text: 关闭
+    - text: 返回应用
   - text: Agent 预设 对此后新建的会话生效。运行中的会话保持它开始时的预设。
   - button "标准模式":
     - text: 标准模式

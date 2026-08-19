@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-19-pinned-design-skill-and-acp-computer-use.md
+2026-08-19-pinned-design-skill-and-acp-computer-use.md: 2bcec4a3f91c163048b39edc9913929c1c1c6eb6
+2026-08-19-pinned-design-skill-and-acp-computer-use.zh.md: 0a3b3a9708bf9b309499c901ab6ed32abbcc4302

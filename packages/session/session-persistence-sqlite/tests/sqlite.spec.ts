@@ -174,6 +174,7 @@ describe('rowToMeta', () => {
       revision: 1,
       delegation_depth: null,
       agent_preset: null,
+      agent_runtime: null,
     })).toMatchObject({ id: 'with-origin', origin: 'subagent' })
   })
 
@@ -190,6 +191,7 @@ describe('rowToMeta', () => {
       revision: 1,
       delegation_depth: null,
       agent_preset: null,
+      agent_runtime: null,
     })).toThrow('stored session createdAt must be a non-negative safe integer')
   })
 
@@ -208,7 +210,35 @@ describe('rowToMeta', () => {
       revision: 1,
       delegation_depth: null,
       agent_preset: 'minimal',
+      agent_runtime: null,
     })).toMatchObject({ agentPreset: 'minimal' })
+  })
+
+  it('restores an explicit agent runtime and omits the deployment default', () => {
+    const base = {
+      version: 0,
+      created_at: 1,
+      cwd: null,
+      parent_session: null,
+      seed_length: null,
+      origin: null,
+      revision: 1,
+      delegation_depth: null,
+      agent_preset: null,
+    }
+
+    expect(rowToMeta({
+      ...base,
+      id: 'codex-runtime',
+      incarnation: 'codex-runtime',
+      agent_runtime: 'codex',
+    })).toMatchObject({ agentRuntime: 'codex' })
+    expect(rowToMeta({
+      ...base,
+      id: 'default-runtime',
+      incarnation: 'default-runtime',
+      agent_runtime: null,
+    })).not.toHaveProperty('agentRuntime')
   })
 })
 
@@ -253,6 +283,26 @@ describe('SqliteSessionPersistence: durability and crash semantics', () => {
     const { ctx, dispose } = await backend()
     expect(ctx.sessionPersistence.locate(meta('sqlite-location'))).toBeUndefined()
     await dispose()
+  })
+
+  it('persists explicit and default agent runtimes across a database reopen', async () => {
+    const path = await freshDbPath()
+    const explicit = { ...meta('codex-runtime', '/work'), agentRuntime: 'codex' }
+    const implicit = meta('default-runtime', '/work')
+    const first = await backend(path)
+    await first.ctx.sessionPersistence.create(explicit)
+    await first.ctx.sessionPersistence.create(implicit)
+    await first.ctx.sessionPersistence.append(explicit.id, oneTurnLog())
+    await first.ctx.sessionPersistence.append(implicit.id, oneTurnLog())
+    await first.dispose()
+
+    const second = await backend(path)
+    const listed = await second.ctx.sessionPersistence.list()
+    expect(listed.find(header => header.id === explicit.id)?.agentRuntime).toBe('codex')
+    expect(listed.find(header => header.id === implicit.id)).not.toHaveProperty('agentRuntime')
+    expect((await second.ctx.sessionPersistence.load(explicit.id)).meta.agentRuntime).toBe('codex')
+    expect((await second.ctx.sessionPersistence.load(implicit.id)).meta).not.toHaveProperty('agentRuntime')
+    await second.dispose()
   })
 
   it('an interrupted turn (rows after the last turn/end) is PRESERVED and closed during load', async () => {
@@ -659,7 +709,7 @@ describe('SqliteSessionPersistence: durability and crash semantics', () => {
   })
 
   it('exposes the schema version constant', () => {
-    expect(SCHEMA_VERSION).toBe(15)
+    expect(SCHEMA_VERSION).toBe(16)
   })
 
   it('keeps the revision stable for an empty repair hook', async () => {

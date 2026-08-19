@@ -23,6 +23,12 @@ export interface ClaudeQueryInput {
   prompt: string
   /** Workspace the SDK child runs in. */
   cwd: string
+  /** Model selected for this exact turn. */
+  model?: string
+  /** Harness-wide system prompt assembled for this agent and turn. */
+  systemPrompt?: string
+  /** Complete child environment resolved for this exact turn. */
+  childEnv?: Record<string, string>
   /** SDK conversation id to resume, when the session already has one. */
   resume?: string
   /** Cancels the query and its child process tree. */
@@ -43,7 +49,7 @@ export interface ClaudeQueryOutcome {
 export interface ClaudeEngineConfig {
   /** Complete child environment, credentials already layered. */
   childEnv: Record<string, string>
-  /** Model id handed to the SDK, when the deployment pins one. */
+  /** Model id handed to the SDK when a turn does not override it. */
   model?: string
   /** Resolve the SDK permission posture from current session state before each query. */
   permissionMode: () => PermissionMode
@@ -91,9 +97,16 @@ export class SdkQueryEngine {
     const options: Options = {
       abortController: controller,
       cwd: input.cwd,
-      env: { ...this.config.childEnv },
+      // Deployment settings, selected model, and DSH permissions are the
+      // authority for this embedded runtime. User/project Claude settings
+      // must not replace its endpoint, credentials, tools, or permission mode.
+      settingSources: [],
+      env: { ...(input.childEnv ?? this.config.childEnv) },
       ...input.resume === undefined ? {} : { resume: input.resume },
-      ...this.config.model === undefined ? {} : { model: this.config.model },
+      ...(input.model ?? this.config.model) === undefined ? {} : { model: input.model ?? this.config.model },
+      ...input.systemPrompt === undefined || input.systemPrompt.length === 0
+        ? {}
+        : { systemPrompt: input.systemPrompt },
       permissionMode,
       ...permissionMode === 'bypassPermissions'
         ? { allowDangerouslySkipPermissions: true }
@@ -134,13 +147,17 @@ export class SdkQueryEngine {
         // Swallows close-after-completion races: the stream already drained,
         // and a late close failure cannot change the produced outcome.
       }
-      if (child !== undefined && child.pid > 0 && controller.signal.aborted) {
+      if (child !== undefined && child.pid > 0) {
+        // A query is one process in this driver. Closing the SDK iterator does
+        // not guarantee every CLI descendant has left before the next turn or
+        // driver disposal, so the shared subprocess owner converges the whole
+        // tree after both successful and aborted queries.
         child.terminate()
         try {
           await child.waitForExit()
         } catch {
-          // Swallows termination-wait failures after an abort: the abort
-          // reason already propagates through the rejected iterator.
+          // Swallows termination-wait failures after the stream already
+          // produced its authoritative outcome or error.
         }
       }
     }

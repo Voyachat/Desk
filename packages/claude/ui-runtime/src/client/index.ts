@@ -1,8 +1,8 @@
 /**
- * Claude runtime selector plugin, browser half: occupies the composer
+ * Runtime selector plugin, browser half: occupies the composer
  * `conversation.input.left` seat with a chip labeling the agent driver the
- * current session runs under — Native (the DSH loop) or Claude (the Claude
- * Agent SDK driver mounted by dsh-claude-agent).
+ * current session runs under — Native (the DSH loop), Claude (the Claude
+ * Agent SDK driver), or Codex (the OpenAI Codex driver).
  *
  * A session never changes its own runtime: its history was produced under
  * the driver it was created with, and the host refuses to rebuild it under

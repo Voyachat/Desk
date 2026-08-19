@@ -1,6 +1,6 @@
 {
   "name": "@voyaseek-ai/dsh-claude-runtime-ui",
-  "description": "Composer runtime selector: pick the agent driver (DSH loop or Claude Agent SDK) a session runs under",
+  "description": "Composer runtime selector: pick the Native, Claude, or Codex agent driver a session runs under",
   "version": "0.1.0-rc.5",
   "publishConfig": {
     "access": "public"

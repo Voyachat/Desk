@@ -8,6 +8,7 @@ const MAX_SECRET_FILE_BYTES = 64 * 1024
 const GEMINI_KEY = 'GEMINI_API_KEY'
 const DASHSCOPE_KEY = 'DASHSCOPE_API_KEY'
 const QWEN_KEY = 'QWEN_API_KEY'
+const ZHIPUAI_KEY = 'ZHIPUAI_API_KEY'
 
 /**
  * Load the model credentials shared with Codex from a user's home directory.
@@ -20,6 +21,7 @@ export function loadModelCredentials(homePath: string): NodeJS.ProcessEnv {
   const secretsDirectory = join(homePath, '.codex', 'secrets')
   const gemini = readDotenvFile(join(secretsDirectory, 'gemini.env'))
   const qwen = readDotenvFile(join(secretsDirectory, 'qwen.env'))
+  const zhipu = readDotenvFile(join(secretsDirectory, 'zhipu.env'))
   const environment: NodeJS.ProcessEnv = {}
 
   const geminiValue = gemini?.get(GEMINI_KEY)
@@ -32,6 +34,11 @@ export function loadModelCredentials(homePath: string): NodeJS.ProcessEnv {
     : qwenValue
   if (effectiveQwenValue !== undefined && effectiveQwenValue.length > 0) {
     environment[DASHSCOPE_KEY] = effectiveQwenValue
+  }
+
+  const zhipuaiValue = zhipu?.get(ZHIPUAI_KEY)
+  if (zhipuaiValue !== undefined && zhipuaiValue.length > 0) {
+    environment[ZHIPUAI_KEY] = zhipuaiValue
   }
 
   return environment

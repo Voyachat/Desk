@@ -17,9 +17,9 @@
       - img
       - text: 远程查看
   - button "打开配置文件"
-  - button "关闭":
+  - button "返回应用":
     - img
-    - text: 关闭
+    - text: 返回应用
   - heading "插件" [level=2]
   - paragraph: 配置和查看本部署已安装的插件。
   - tablist "插件视图":

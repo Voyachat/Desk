@@ -22,10 +22,19 @@
       "path": "../../core/agent-loop"
     },
     {
+      "path": "../../credentials/credentials"
+    },
+    {
+      "path": "../../util/launch-environment"
+    },
+    {
       "path": "../../core/scope"
     },
     {
       "path": "../../core/session"
+    },
+    {
+      "path": "../../core/system-prompt"
     },
     {
       "path": "../../sandbox/sandbox-policy"

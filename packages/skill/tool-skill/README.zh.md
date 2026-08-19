@@ -16,6 +16,12 @@
 
 `catalogDescriptionMaxLength` 控制规范化后的目录描述，渲染时会对其执行 XML 转义。其默认值是 `500`，且必须是不小于 `3` 的整数，以便为截断省略号保留空间。[skill 目录热刷新 Agent Note](../../../.agents/notes/implemented/feature/2026-07-27-skill-catalog-hot-refresh.md) 负责定义持久初始目录和替换目录的生命周期。
 
+## 自动调用
+
+`autoInvoke` 是部署方可信配置中的 `{ skill, include, exclude? }` 规则列表。匹配只对直接用户文本执行且不区分大小写：任一 `include` 子串命中即选中规则，任一 `exclude` 子串命中则否决。空匹配项和无效 Skill 名称会使插件加载失败。项目指令、工具结果、目录消息和其他注入文本都不能触发规则。
+
+命中后，插件在 `agent/pre-step` 加载当前作用域下的 Skill 定义，确认其仍可由模型调用，再把规范渲染正文追加为持久的 `skill-invocation` 指令消息，并记录 `trigger: automatic`。多个规则按 Skill 名称去重；同一个 Skill 同时被显式调用与自动规则选中时，显式调用优先。
+
 ## 工具：`skill`
 
 | 参数 | 类型 | 说明 |
@@ -160,6 +166,8 @@ Load referenced resources only as needed.
 仅追加；注入落在该步骤的消息批次中、可重用请求前缀之后，不会使现有 KV Cache 条目失效。
 
 ## 已知限制与暂缓事项
+
+- **自动路由使用有边界的子串规则，而不是语义分类**：部署方必须保持 include/exclude 列表窄且经过测试；含糊请求仍由面向模型的目录处理。
 
 - **目录省略 `whenToUse`、来源和提供方元数据**：路由只基于名称和有长度上限的描述；`whenToUse` 仍是提供方元数据，加载后的包装层也不渲染它。
 - **已加载指令正文没有大小上限**：提供方可返回足以占用大量下一步上下文的 skill；只有目录描述会被截断。

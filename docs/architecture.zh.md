@@ -100,6 +100,8 @@ turn/end
 
 **模型可见即已记录。** 抵达模型请求的一切都必须能从日志重建，并由一项运行时不变量断言这一点。因此，新增一项模型可见输入就需要新增一个会话事件：扩展 `SessionEventMap` 并从日志渲染。
 
+跨会话记忆是独立的 Provider seam。默认 Consumer 从 `session/event` 采集已完成轮次，并通过 `agent/pre-step` 召回；召回历史以插件来源的 `user/message` 进入，因此沿用同一套持久投影，而不建立第二份模型上下文存储。存储与用户管理属于 `ctx.agentMemory`，不属于会话日志或 agent loop。
+
 ## 能力 seam
 
 一个 **seam** 是一项可替换能力，包含三种角色：声明接口的 **Service Definition**、实现它的 **Service Provider**，以及使用它的 **Consumer**（通常是面向模型的工具）。一个包可以合并承担多个角色，但单一角色本身不是 seam；添加一项能力意味着把三者一并设计（[能力图](capability-seams.md)）。
@@ -124,6 +126,7 @@ seam 正是替换一个提供方就能改变整个产品的原因。文件系统
 | 限制所启动的进程 | 使用 `ctx.sandbox` 后端；消费方在启动进程前包装 argv |
 | 拦截请求、工具或轮次 | 使用相应的 `agent/*` 或 `tools/*` 事件；`agent/turn-stopping` 会停止轮次 |
 | 添加模型可见上下文 | 调用 `agent.inject()`；它会落到下一次获准的请求中 |
+| 添加或替换跨会话记忆 | 注册一个 `ctx.agentMemory` Provider；自动采集与召回仍然消费 Session 和 Agent 事件 |
 | 添加 UI 或编辑器集成 | 驱动 `ctx.agents` 并从 `session/event` 渲染 |
 | 添加 Web Client Chat 节点 | 注册 `ConversationNodeDefinition` + keyed renderer |
 | 添加持久会话状态 | 扩展 `SessionEventMap`；从日志渲染和回放 |

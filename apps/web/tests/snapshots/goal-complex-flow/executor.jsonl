@@ -1,0 +1,6 @@
+{"type":"session","version":0,"id":"53333333-3333-4333-8333-333333333333","createdAt":1787100002000,"cwd":"{{cwd}}","parentSession":"51111111-1111-4111-8111-111111111111"}
+{"type":"assistant/chunk","seq":0,"time":1787100002001,"data":{"turn":1,"step":1,"chunk":{"type":"block-start","index":0,"blockType":"tool-call"}}}
+{"type":"assistant/chunk","seq":1,"time":1787100002002,"data":{"turn":1,"step":1,"chunk":{"type":"tool-call-delta","index":0,"id":"executor-false-complete","name":"structured_output","argumentsDelta":"{\"status\":\"complete\",\"summary\":\"The deliverable is complete.\",\"evidence\":[\"Claimed deliverable.txt exists.\"],\"blocker\":\"\"}"}}}
+{"type":"assistant/chunk","seq":2,"time":1787100002003,"data":{"turn":1,"step":1,"chunk":{"type":"block-end","index":0,"block":{"type":"tool-call","id":"executor-false-complete","name":"structured_output","arguments":"{\"status\":\"complete\",\"summary\":\"The deliverable is complete.\",\"evidence\":[\"Claimed deliverable.txt exists.\"],\"blocker\":\"\"}"}}}}
+{"type":"assistant/chunk","seq":3,"time":1787100002004,"data":{"turn":1,"step":1,"chunk":{"type":"usage","usage":{"inputTokens":45,"outputTokens":12}}}}
+{"type":"assistant/chunk","seq":4,"time":1787100002005,"data":{"turn":1,"step":1,"chunk":{"type":"finish","reason":{"kind":"tool-calls"}}}}

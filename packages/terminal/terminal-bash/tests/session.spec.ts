@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { PassThrough } from 'node:stream'
 import { LocalPtySession } from '@voyaseek-ai/dsh-terminal-bash/src/session.ts'
+import { PERSISTENT_BASH_PROMPT } from '@voyaseek-ai/dsh-terminal-bash/src/sanitize.ts'
 import type { ResolvedConfig } from '@voyaseek-ai/dsh-terminal-bash/src/config.ts'
 import type { TerminalSendOperation, TerminalSessionStatus, TerminalSignal } from '@voyaseek-ai/dsh-terminal'
 import type {
@@ -148,6 +149,21 @@ async function initialize(session: LocalPtySession, terminal: FakeTerminal): Pro
 }
 
 describe('LocalPtySession readiness and output', () => {
+  it('settles on the private persistent Bash prompt without the silence fallback', async () => {
+    vi.useFakeTimers()
+    const terminal = new FakeTerminal()
+    const session = new LocalPtySession(terminal, config({ idleSilenceMs: 3_000, timeoutMs: 5_000 }))
+    await initialize(session, terminal)
+
+    const operation = session.startSend({ text: 'pwd', submit: true })
+    await Promise.resolve()
+    await Promise.resolve()
+    terminal.emitData(`\x1b]133;D;0\x07${PERSISTENT_BASH_PROMPT}`)
+    await vi.advanceTimersByTimeAsync(10)
+
+    await expect(operation.done).resolves.toMatchObject({ waitReason: 'stdin_read' })
+  })
+
   it('lets queued terminal output run before the first post-write readiness poll', async () => {
     vi.useFakeTimers()
     const terminal = new FakeTerminal()
