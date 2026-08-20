@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-aistaff-local-capability-conformance",
   "description": "Test-only local capability interaction, native selection, Supervisor, and Material sink composition",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

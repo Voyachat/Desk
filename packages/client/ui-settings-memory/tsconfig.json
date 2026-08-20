@@ -10,7 +10,7 @@
     { "path": "../ui-slots" },
     { "path": "../locale" },
     { "path": "../ui-primitives" },
-    { "path": "../web-react" },
+    { "path": "../ui-renderer" },
     { "path": "../../api/remotes/tsconfig.client.json" },
     { "path": "../../memory/agent-memory" },
     { "path": "../../runtime-diagnostics/invariants" }

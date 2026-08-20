@@ -15,7 +15,7 @@ export const LOCALE_IDS = ['zh', 'en'] as const
 export type LocaleId = typeof LOCALE_IDS[number]
 
 /** Product fallback used until an explicit or browser-derived preference is persisted. */
-export const FALLBACK_LOCALE: LocaleId = 'zh'
+export const FALLBACK_LOCALE: LocaleId = 'en'
 
 /** Durable locale section shared by the Host schema and the browser scope. */
 export interface LocaleSettings {

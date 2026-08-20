@@ -1,0 +1,55 @@
+- dialog "Settings":
+  - navigation:
+    - text: Settings
+    - button "General":
+      - img
+      - text: General
+    - button "Models":
+      - img
+      - text: Models
+    - button "Plugins":
+      - img
+      - text: Plugins
+    - button "Agent presets":
+      - img
+      - text: Agent presets
+    - button "Memory":
+      - img
+      - text: Memory
+    - button "Remote View":
+      - img
+      - text: Remote View
+  - button "Open configuration file"
+  - button "Back to app":
+    - img
+    - text: Back to app
+  - text: Agent preset Applies to sessions you start from now on. Running sessions keep the preset they began with.
+  - button "Standard mode":
+    - text: Standard mode
+    - img
+  - text: Permissions Set defaults for new sessions; existing sessions do not change Global default New sessions use this permission when no project override exists
+  - button "Agent approval":
+    - text: Agent approval
+    - img
+  - text: Language
+  - button "English":
+    - text: English
+    - img
+  - text: Appearance
+  - button "Light":
+    - img
+    - text: Light
+  - button "Dark":
+    - img
+    - text: Dark
+  - button "System" [pressed]:
+    - img
+    - text: System
+  - text: Enter behavior while busy Busy only; Cmd/Ctrl+Enter uses the other behavior
+  - button "Queue":
+    - text: Queue
+    - img
+  - text: Reasoning display Inline shows each thinking step as its own row, expanded while it streams
+  - button "Fold into activity":
+    - text: Fold into activity
+    - img

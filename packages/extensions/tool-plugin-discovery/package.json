@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-tool-plugin-discovery",
   "description": "Read-only model-facing discovery over the curated DSH plugin directory",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },

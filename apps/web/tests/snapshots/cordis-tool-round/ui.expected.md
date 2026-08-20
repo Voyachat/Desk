@@ -69,10 +69,18 @@
   - img
   - img
   - text: Context injection cordis-host-runner
-- button "Processed 1 steps" [expanded]:
+- paragraph: The Cordis Plugin is running.
+- button "Copy":
   - img
-  - text: Processed 1 steps
-- img
+- button "Good response":
+  - img
+- button "Bad response":
+  - img
+- button "Branch into a new conversation":
+  - img
+- text: {{clock}} Ran for {{duration}} Use only Cordis tools. Call cordis_stop with pluginId "snap-1". After it succeeds, reply exactly CORDIS_UI_DONE and stop. {{clock}}
+- button "Copy":
+  - img- img
 - text: Stop Cordis Plugin snap-1
 - button "Inspect"
 - text: Dynamic Plugin snap-1 is stopped; its definition and versions remain.
@@ -85,14 +93,7 @@
   - img
 - button "Branch into a new conversation":
   - img
-- text: {{clock}} Ran for {{duration}} Use only Cordis tools. Call cordis_stop with pluginId "snap-1". After it succeeds, reply exactly CORDIS_UI_DONE and stop. {{clock}}
-- button "Copy":
-  - img
-- status: The model request failedRetry. If this continues, expand the diagnostics and contact support.
-- group: Diagnostics
-- button "Back to bottom":
-  - img
-- textbox "Message the agent"
+- text: {{clock}} Ran for {{duration}}- textbox "Message the agent"
 - button "Commands":
   - img
 - 'button "Access mode, current: Workspace Write"': Workspace Write
@@ -105,4 +106,4 @@
   - img
 - button "0% of context used"
 - button "Send message" [disabled]
-- text: 3 turns · 7 steps LLM {{duration}} · Tool call {{duration}} Cache hit 77% Input 66.5K tok · Output 318 tok
+- text: 3 turns · 7 steps LLM {{duration}} · Tool call {{duration}} Cache hit 77% Input 66.5K tok · Output 321 tok

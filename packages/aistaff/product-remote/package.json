@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-aistaff-product-remote",
   "description": "Strict Typert Remote bridge between the Aistaff Host projection and Client port",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

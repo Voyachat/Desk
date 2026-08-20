@@ -55,6 +55,38 @@ describe('web e2e: AI employee product flow', () => {
 
     const sessions = page.getByRole('tree', { name: 'Sessions' })
     await sessions.waitFor({ timeout: 30_000 })
+
+    const heroBrand = page.locator('[data-slot="conversation.hero.brand.mark"]')
+    const sidebarMark = page.locator('[data-slot="sidebar.brand.mark"]')
+    const sidebarName = page.locator('[data-slot="sidebar.brand.name"]')
+    const lightMark = heroBrand.locator('img[src="/voyaseek-mark-light.png"]')
+    const darkMark = heroBrand.locator('img[src="/voyaseek-mark-dark.png"]')
+    const lightWordmark = sidebarName.locator('img[src="/voyaseek-wordmark-light.png"]')
+    const darkWordmark = sidebarName.locator('img[src="/voyaseek-wordmark-dark.png"]')
+    await lightMark.waitFor({ timeout: 15_000 })
+    expect(await darkMark.count()).toBe(1)
+    expect(await sidebarMark.locator('img[src="/voyaseek-mark-light.png"]').count()).toBe(1)
+    expect(await sidebarMark.locator('img[src="/voyaseek-mark-dark.png"]').count()).toBe(1)
+    expect(await lightWordmark.count()).toBe(1)
+    expect(await darkWordmark.count()).toBe(1)
+    expect(await heroBrand.locator('svg').count()).toBe(0)
+
+    await page.evaluate(() => { document.body.removeAttribute('data-ds-dark-theme') })
+    expect(await Promise.all([
+      lightMark.evaluate(node => getComputedStyle(node).display),
+      darkMark.evaluate(node => getComputedStyle(node).display),
+      lightWordmark.evaluate(node => getComputedStyle(node).display),
+      darkWordmark.evaluate(node => getComputedStyle(node).display),
+    ])).toEqual(['block', 'none', 'block', 'none'])
+    await page.evaluate(() => { document.body.setAttribute('data-ds-dark-theme', '') })
+    expect(await Promise.all([
+      lightMark.evaluate(node => getComputedStyle(node).display),
+      darkMark.evaluate(node => getComputedStyle(node).display),
+      lightWordmark.evaluate(node => getComputedStyle(node).display),
+      darkWordmark.evaluate(node => getComputedStyle(node).display),
+    ])).toEqual(['none', 'block', 'none', 'block'])
+    await page.evaluate(() => { document.body.removeAttribute('data-ds-dark-theme') })
+
     await page.getByRole('button', { name: '打开 AI 员工工作台' }).click()
 
     const dialog = page.getByRole('dialog', { name: 'AI 员工' })

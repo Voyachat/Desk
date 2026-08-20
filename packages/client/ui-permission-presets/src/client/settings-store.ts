@@ -1,7 +1,8 @@
 /**
- * Permission default-settings controller. The host descriptor supplies the
- * current value and the dynamic preset enum; writes target only
- * `defaultPreset` and carry the descriptor revision.
+ * Permission default-settings controller. The permission descriptor comes
+ * from the shared describe mirror; writes target the global or per-workspace
+ * preset, carry the descriptor revision, and fold their answer back into the
+ * mirror.
  */
 
 import type {
@@ -10,9 +11,10 @@ import type {
 import {
   createSnapshotStore, type SnapshotStore,
 } from '@voyaseek-ai/dsh-client-runtime/client'
-import {
-  nodeAtPath, rehydrateSchema, type SchemaNode,
-} from '@voyaseek-ai/dsh-client-schema-form'
+import type {
+  SchemaNode, SettingsDescribeFace, SettingsSchemaService,
+} from '@voyaseek-ai/dsh-client-ui-settings/client'
+
 /** Permission's settings namespace on the host wire. */
 export const PERMISSION_SETTINGS_NS = 'permission'
 
@@ -44,12 +46,16 @@ interface ConstChoice {
   meta?: { description?: unknown }
 }
 
+/** Settings mutation operations accepted by the wire. */
+type SettingsOps = Parameters<Pick<IApiClient, 'settings'>['settings']['mutate']>[0]['ops']
+
 /**
  * Read the dynamic preset enum encoded by the host's `defaultPreset` schema.
  * @param view - permission namespace descriptor.
- * @returns current value and selectable options.
+ * @param schema - settings-owned schema operations.
+ * @returns current global value, per-workspace values, and selectable options.
  */
-export function permissionDefaultOf(view: SettingsNamespaceView): {
+export function permissionDefaultOf(view: SettingsNamespaceView, schema: SettingsSchemaService): {
   currentValue: string
   workspaceValues: Record<string, string>
   options: PermissionDefaultOption[]
@@ -66,7 +72,7 @@ export function permissionDefaultOf(view: SettingsNamespaceView): {
     if (typeof preset !== 'string') throw new Error(`permission settings has an invalid project preset for ${path}`)
     workspaceValues[path] = preset
   }
-  const node = nodeAtPath(rehydrateSchema(view.schema), ['defaultPreset'])
+  const node = schema.nodeAtPath(schema.rehydrate(view.schema), ['defaultPreset'])
   if (node === undefined) throw new Error('permission settings schema has no defaultPreset field')
   const rawChoices = node.type === 'union'
     ? (node.list as SchemaNode[] | undefined) ?? []
@@ -89,7 +95,7 @@ export function permissionDefaultOf(view: SettingsNamespaceView): {
   return { currentValue: value, workspaceValues, options }
 }
 
-/** Controller joining Settings reads, writes, and pushed invalidations. */
+/** Controller deriving the row from the shared mirror and writing through it. */
 export class PermissionPresetSettingsController {
   /** Row snapshot consumed through a bound selector hook. */
   readonly store: SnapshotStore<PermissionSettingsState> = createSnapshotStore({
@@ -102,43 +108,34 @@ export class PermissionPresetSettingsController {
     revision: 0,
   })
 
-  private generation = 0
-  private view: SettingsNamespaceView | undefined
-
-  /** @param api - Settings wire face. */
-  constructor(private readonly api: Pick<IApiClient, 'settings'>) {}
+  private following: (() => void) | undefined
+  private saving = false
+  private disposed = false
 
   /**
-   * Refresh the permission descriptor. Latest request wins.
-   * @returns nothing; {@link store} carries success or failure.
+   * @param describeFace - the shared mirror's read/fold face.
+   * @param api - settings wire face for mutations.
+   * @param schema - settings-owned schema operations.
+   */
+  constructor(
+    private readonly describeFace: SettingsDescribeFace,
+    private readonly api: Pick<IApiClient, 'settings'>,
+    private readonly schema: SettingsSchemaService,
+  ) {}
+
+  /**
+   * Begin following the mirror and reflect its current answer.
+   * @returns settlement once the snapshot reflects the mirror.
    */
   async load(): Promise<void> {
-    const generation = ++this.generation
+    if (this.disposed) return
+    this.following ??= this.describeFace.subscribe(() => { this.derive() })
     this.store.update((state) => {
       state.status = 'loading'
       state.error = null
     })
-    try {
-      const response = await this.api.settings.describe({})
-      if (!response.result.ok) throw new Error(response.result.error.message)
-      if (generation !== this.generation) return
-      const view = response.result.value.namespaces.find(entry => entry.ns === PERMISSION_SETTINGS_NS)
-      if (view === undefined) {
-        this.view = undefined
-        this.store.update((state) => {
-          state.status = 'unavailable'
-          state.writable = false
-          state.currentValue = ''
-          state.workspaceValues = {}
-          state.options = []
-        })
-        return
-      }
-      this.accept(view, response.result.value.writable)
-    } catch (error) {
-      if (generation !== this.generation) return
-      this.fail(error)
-    }
+    await this.describeFace.ensure()
+    this.derive()
   }
 
   /**
@@ -163,14 +160,20 @@ export class PermissionPresetSettingsController {
       : { op: 'set', path: ['workspacePresets', path], value: preset }])
   }
 
+  /** Stop following the mirror; later publishes leave the snapshot alone. */
+  dispose(): void {
+    this.disposed = true
+    this.following?.()
+    this.following = undefined
+  }
+
   /** Execute one revision-guarded settings mutation. */
-  private async write(
-    ops: Parameters<Pick<IApiClient, 'settings'>['settings']['mutate']>[0]['ops'],
-  ): Promise<void> {
-    const view = this.view
+  private async write(ops: SettingsOps): Promise<void> {
     const state = this.store.getSnapshot()
-    if (view === undefined || !state.writable) return
-    const generation = ++this.generation
+    const view = this.describeFace.getSnapshot().view?.namespaces
+      .find(entry => entry.ns === PERMISSION_SETTINGS_NS)
+    if (view === undefined || !state.writable || this.saving || this.disposed) return
+    this.saving = true
     this.store.update((draft) => {
       draft.status = 'saving'
       draft.error = null
@@ -181,32 +184,57 @@ export class PermissionPresetSettingsController {
         ops,
         expectedRevision: view.revision,
       })
-      if (generation !== this.generation) return
+      this.saving = false
+      if (this.disposed) return
       if (!response.result.ok) throw new Error(response.result.error.message)
-      this.accept(response.result.value, true)
+      this.describeFace.acceptView(response.result.value)
     } catch (error) {
-      if (generation !== this.generation) return
+      this.saving = false
+      if (this.disposed) return
       this.fail(error)
     }
   }
 
-  /** Stop in-flight responses from publishing after plugin disposal. */
-  dispose(): void {
-    this.generation += 1
-    this.view = undefined
+  private derive(): void {
+    if (this.disposed || this.saving) return
+    const mirrored = this.describeFace.getSnapshot()
+    if (mirrored.status === 'unavailable') {
+      this.unavailable()
+      return
+    }
+    if (mirrored.view === undefined) {
+      if (mirrored.error !== null) this.fail(new Error(mirrored.error))
+      return
+    }
+    const view = mirrored.view.namespaces.find(entry => entry.ns === PERMISSION_SETTINGS_NS)
+    if (view === undefined) {
+      this.unavailable()
+      return
+    }
+    try {
+      const resolved = permissionDefaultOf(view, this.schema)
+      this.store.update((state) => {
+        state.status = 'ready'
+        state.error = null
+        state.writable = mirrored.view?.writable ?? false
+        state.currentValue = resolved.currentValue
+        state.workspaceValues = resolved.workspaceValues
+        state.options = resolved.options
+        state.revision = view.revision
+      })
+    } catch (error) {
+      this.fail(error)
+    }
   }
 
-  private accept(view: SettingsNamespaceView, writable: boolean): void {
-    const resolved = permissionDefaultOf(view)
-    this.view = view
+  private unavailable(): void {
     this.store.update((state) => {
-      state.status = 'ready'
+      state.status = 'unavailable'
       state.error = null
-      state.writable = writable
-      state.currentValue = resolved.currentValue
-      state.workspaceValues = resolved.workspaceValues
-      state.options = resolved.options
-      state.revision = view.revision
+      state.writable = false
+      state.currentValue = ''
+      state.workspaceValues = {}
+      state.options = []
     })
   }
 
@@ -216,13 +244,4 @@ export class PermissionPresetSettingsController {
       state.error = error instanceof Error ? error.message : String(error)
     })
   }
-}
-
-/**
- * Refetch only after the row has opened once.
- * @param controller - permission settings controller.
- */
-export function refreshPermissionIfLoaded(controller: PermissionPresetSettingsController): void {
-  if (controller.store.getSnapshot().status === 'idle') return
-  void controller.load()
 }

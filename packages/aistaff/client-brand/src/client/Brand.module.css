@@ -1,0 +1,41 @@
+.mark,
+.wordmark {
+  display: inline-grid;
+  flex: none;
+  overflow: hidden;
+  vertical-align: middle;
+}
+
+.wordmark {
+  align-items: center;
+}
+
+.mark img,
+.wordmark img {
+  grid-area: 1 / 1;
+  display: block;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mark img {
+  width: 100%;
+}
+
+.mark .dark,
+.wordmark .dark {
+  display: none;
+}
+
+:global(body[data-ds-dark-theme]) .mark .light,
+:global(body[data-ds-dark-theme]) .wordmark .light {
+  display: none;
+}
+
+:global(body[data-ds-dark-theme]) .mark .dark,
+:global(body[data-ds-dark-theme]) .wordmark .dark {
+  display: block;
+}

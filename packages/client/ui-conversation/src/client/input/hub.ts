@@ -8,10 +8,8 @@
  * bail events) and owns the default-sink choreography: every session is a
  * real host entity, so the sink is one unconditional prompt path.
  */
-import type {
-  ClientContext, ISessions, SessionBinding, SessionFace, SessionId,
-} from '@voyaseek-ai/dsh-client-runtime/client'
-import type { InputTriggerController } from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
+import type { ClientContext, ISessions, SessionBinding, SessionFace, SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
+import type { InputTriggerController, SubmitImageAttachment, SubmitOutcome } from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
 import type { TranslateNS } from '@voyaseek-ai/dsh-client-locale/client'
 import { queueReadFaceOf } from '../contract/queue-read-face.ts'
 import type {
@@ -33,7 +31,9 @@ interface ConversationAttachmentFace {
     text: string,
     imageIds: readonly DraftAttachmentId[],
     mode: InputSubmitMode,
-  ): Promise<void>
+    signal?: AbortSignal,
+  ): Promise<SubmitOutcome>
+  serializeDraftImages(imageIds: readonly DraftAttachmentId[]): Promise<readonly SubmitImageAttachment[]>
   releaseDraftImage(id: DraftAttachmentId): void
   /** Browser-owned draft descriptors for the optimistic echo (blob previews). */
   draftImages(ids: readonly DraftAttachmentId[]): readonly { readonly id: DraftAttachmentId; readonly previewUrl: string }[]
@@ -82,8 +82,22 @@ export class InputHub implements SessionInputResolver {
       inputTriggers: () => this.controller(actx),
       popup: () => this.popup(actx),
       queue: queueReadFaceOf(session),
-      defaultSink: (text, imageIds, mode) => { this.sink(session, text, imageIds, mode) },
+      defaultSink: (text, imageIds, mode, signal) => this.sink(session, text, imageIds, mode, signal),
       steerQueue: () => { void this.steerQueue(session, shell) },
+      commandImages: {
+        serialize: ids => this.conversation().serializeDraftImages(ids),
+        // Asymmetric with serialize on purpose: release settles AFTER the
+        // submit RPC, where session teardown may already have unloaded the
+        // conversation service (the same tolerance as the scope disposer
+        // above); leaked preview URLs then die with the document.
+        release: (ids) => {
+          const conversation = this.rootCtx.get('conversation') as ConversationAttachmentFace | undefined
+          for (const imageId of ids) conversation?.releaseDraftImage(imageId)
+        },
+        unsupportedNotice: token => this.t('command.imagesUnsupported', {
+          command: token.trim().replace(/^\//u, ''),
+        }),
+      },
     })
     this.shells.set(id, shell)
     // The one teardown axis: listeners, shell, and map entries all ride the
@@ -97,7 +111,7 @@ export class InputHub implements SessionInputResolver {
         actx.on('slash/input-consume-token', req =>
           shell.consumeToken(req.guard) ? true : undefined),
         actx.on('slash/input-insert-text', req =>
-          shell.insertText(req.text, req.span) ? true : undefined),
+          shell.insertText(req.text, req.span, req.continue === true) ? true : undefined),
       ]
       return () => {
         for (const off of offs) off()
@@ -161,12 +175,12 @@ export class InputHub implements SessionInputResolver {
     text: string,
     imageIds: readonly DraftAttachmentId[],
     mode: InputSubmitMode,
-  ): void {
-    if (text === '' && imageIds.length === 0) return
+    signal: AbortSignal,
+  ): Promise<SubmitOutcome> {
+    if (text === '' && imageIds.length === 0) return Promise.resolve({ kind: 'success' })
     const shell = this.shells.get(session.sessionId)
-    if (shell === undefined) return
+    if (shell === undefined) return this.conversation().sendSession(session, text, imageIds, mode, signal)
     const conversation = this.conversation()
-    // Commit, not an editable clear: undo must not resurrect sent content.
     shell.commitSend(imageIds)
     const imageBlocks: readonly unknown[] = conversation.draftImages(imageIds)
       .map(image => ({ type: 'image', previewUrl: image.previewUrl }))
@@ -174,18 +188,25 @@ export class InputHub implements SessionInputResolver {
     const sendId = `pending-${++this.sendSeq}`
     const send: PendingSend = { sendId, content, imageIds }
     shell.stagePendingSend(send)
-    void conversation.sendSession(session, text, imageIds, mode).then(
-      () => { shell.settlePendingSend(sendId) },
-      () => {
-        if (this.shells.get(session.sessionId) === shell) {
-          const retracted = shell.retractPendingSend(sendId)
-          shell.restoreImages(retracted)
-          if (shell.snapshot.draft === '') shell.setDraft(text)
-          return
-        }
+    return conversation.sendSession(session, text, imageIds, mode, signal).then((outcome) => {
+      if (outcome.kind === 'success') {
+        shell.settlePendingSend(sendId)
+      } else if (this.shells.get(session.sessionId) === shell) {
+        const retracted = shell.retractPendingSend(sendId)
+        shell.restoreImages(retracted)
+        if (shell.snapshot.draft === '') shell.setDraft(text)
+      }
+      return outcome
+    }, (error: unknown) => {
+      if (this.shells.get(session.sessionId) === shell) {
+        const retracted = shell.retractPendingSend(sendId)
+        shell.restoreImages(retracted)
+        if (shell.snapshot.draft === '') shell.setDraft(text)
+      } else {
         for (const id of imageIds) conversation.releaseDraftImage(id)
-      },
-    )
+      }
+      throw error
+    })
   }
 
   /**

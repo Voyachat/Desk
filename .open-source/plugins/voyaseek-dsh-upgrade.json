@@ -366,18 +366,47 @@
       "mutates": false
     },
     {
-      "id": "sync-upstream",
+      "id": "import-release-snapshots",
       "phase": "sync",
-      "title": "Apply only reviewed upstream changes in an isolated branch or worktree",
+      "title": "Create immutable raw and explicitly selected rebrand-epoch snapshots",
+      "run": [
+        "bash",
+        "-lc",
+        "if ! test -n \"$DSH_PREVIOUS_TAG\"; then echo \"DSH_PREVIOUS_TAG must name the previous adopted release tag\" >&2; exit 2; fi\ncase \"$DSH_REBRAND_EPOCH_MODE\" in\n  current-script-hash) exec pnpm run import:dsh-release -- --checkout \"{checkout}\" --previous-tag \"$DSH_PREVIOUS_TAG\" --previous-commit \"{base_ref}\" --tag \"{target}\" --current-rebrand-epoch --apply ;;\n  recorded-chain) exec pnpm run import:dsh-release -- --checkout \"{checkout}\" --previous-tag \"$DSH_PREVIOUS_TAG\" --previous-commit \"{base_ref}\" --tag \"{target}\" --recorded-rebrand-epoch --apply ;;\n  *) echo \"DSH_REBRAND_EPOCH_MODE must be current-script-hash or recorded-chain\" >&2; exit 2 ;;\nesac"
+      ],
       "mutates": true,
-      "note": "Preserve product-owned packages and plugins; for vendored Cordis, follow vendor/README.md and treat its manifest and local-modification log as authoritative. Do not make the product depend on the external checkout path."
+      "note": "This Importer is the only authoritative DSH release-sync entry. Before execution set DSH_PREVIOUS_TAG to the previous adopted tag and set DSH_REBRAND_EPOCH_MODE explicitly to current-script-hash or recorded-chain. {base_ref} supplies the exact previous commit and {target} supplies the target tag. Never run rebrand --apply as a parallel sync path."
+    },
+    {
+      "id": "verify-release-snapshots",
+      "phase": "sync",
+      "title": "Verify the imported raw and rebranded snapshot chain",
+      "run": [
+        "bash",
+        "-lc",
+        "if ! test -n \"$DSH_PREVIOUS_TAG\"; then echo \"DSH_PREVIOUS_TAG must name the previous adopted release tag\" >&2; exit 2; fi\ncase \"$DSH_REBRAND_EPOCH_MODE\" in\n  current-script-hash) exec pnpm run import:dsh-release -- --checkout \"{checkout}\" --previous-tag \"$DSH_PREVIOUS_TAG\" --previous-commit \"{base_ref}\" --tag \"{target}\" --current-rebrand-epoch --check ;;\n  recorded-chain) exec pnpm run import:dsh-release -- --checkout \"{checkout}\" --previous-tag \"$DSH_PREVIOUS_TAG\" --previous-commit \"{base_ref}\" --tag \"{target}\" --recorded-rebrand-epoch --check ;;\n  *) echo \"DSH_REBRAND_EPOCH_MODE must be current-script-hash or recorded-chain\" >&2; exit 2 ;;\nesac"
+      ],
+      "mutates": false,
+      "note": "Use the same DSH_PREVIOUS_TAG and DSH_REBRAND_EPOCH_MODE values as import-release-snapshots. This check must pass before merging the rebranded snapshot."
+    },
+    {
+      "id": "forward-merge-rebranded-snapshot",
+      "phase": "sync",
+      "title": "Forward-merge the verified rebranded snapshot into the isolated upgrade branch",
+      "run": [
+        "bash",
+        "-lc",
+        "if ! test -n \"$DSH_REBRANDED_SNAPSHOT_REF\"; then echo \"DSH_REBRANDED_SNAPSHOT_REF must name the immutable rebranded snapshot selected above\" >&2; exit 2; fi; exec git -C \"{root}\" merge --no-commit --no-ff \"$DSH_REBRANDED_SNAPSHOT_REF\""
+      ],
+      "mutates": true,
+      "note": "Set DSH_REBRANDED_SNAPSHOT_REF to the exact immutable rebranded snapshot tag produced for the selected epoch. Resolve conflicts only in the isolated upgrade worktree. Do not merge the official checkout or raw upstream tag directly, and do not depend on the external checkout path."
     },
     {
       "id": "adapt-plugins",
       "phase": "adapt",
       "title": "Reconcile Voyaseek behavior at existing plugin and deployment seams",
       "mutates": true,
-      "note": "Keep product behavior, remote contributions, presets, and desktop assembly in their existing plugin or app owners. Modify DSH or Cordis core only when an extension point cannot preserve the required behavior, and record every retained vendor divergence in vendor/README.md."
+      "note": "Run only after forward-merge-rebranded-snapshot. Reconcile product behavior at existing plugin and deployment seams. Modify DSH or Cordis core only when an extension point cannot preserve the required behavior; register every retained product-neutral DSH delta in .open-source/dsh-retained-core-deltas.json and every retained Cordis divergence in vendor/README.md."
     },
     {
       "id": "rescope-vendor",
@@ -391,19 +420,6 @@
       ],
       "mutates": true,
       "note": "Run this step when the upstream range refreshes vendor files; scripts/rescope-vendor.ts remains the executable owner of the mapping."
-    },
-    {
-      "id": "rebrand-product",
-      "phase": "brand",
-      "title": "Reapply the maintained Voyaseek product-brand mapping",
-      "run": [
-        "pnpm",
-        "run",
-        "rebrand",
-        "--apply"
-      ],
-      "mutates": true,
-      "note": "scripts/rebrand.ts protects upstream provenance, legal attribution, the adoption ledger, generated lockfiles, and API-vendor identifiers."
     },
     {
       "id": "refresh-dependencies",
@@ -489,11 +505,69 @@
       "note": "A DSH or Cordis foundation refresh is repository-wide; retain focused failure-path tests during implementation and run this integration build once before packaging."
     },
     {
+      "id": "verify-runtime-closure",
+      "phase": "verify",
+      "title": "Verify assembled runtime dependency closure",
+      "run": [
+        "pnpm",
+        "run",
+        "verify-runtime-closure"
+      ],
+      "mutates": false
+    },
+    {
+      "id": "verify-keyless-snapshots",
+      "phase": "verify",
+      "title": "Run the complete keyless snapshot suite",
+      "run": [
+        "pnpm",
+        "run",
+        "test:snapshot"
+      ],
+      "mutates": false,
+      "note": "This is the full replay suite, not a focused substitute and not a real-provider call."
+    },
+    {
+      "id": "verify-product-web-smoke",
+      "phase": "verify",
+      "title": "Run the Voyaseek product Web smoke scenarios",
+      "run": [
+        "env",
+        "DSH_SNAPSHOT=replay",
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "--config",
+        "vitest.web.config.ts",
+        "apps/web/tests/settings-chrome.e2e.ts",
+        "apps/web/tests/workflow-run.e2e.ts",
+        "apps/web/tests/command-image-envelope.snapshot.ts",
+        "apps/web/tests/aistaff-product.e2e.ts"
+      ],
+      "mutates": false
+    },
+    {
+      "id": "verify-product-electron-smoke",
+      "phase": "verify",
+      "title": "Run the Voyaseek Electron shell and staged-runtime smoke tests",
+      "run": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "apps/aistaff-desktop/tests",
+        "apps/aistaff-desktop-runtime/tests"
+      ],
+      "mutates": false,
+      "note": "This verifies the Electron shell, profile, readiness, runtime path, startup policy, and staging behavior without packaging a DMG."
+    },
+    {
       "id": "record-baseline",
       "phase": "record",
       "title": "Replace the verified adoption baseline and current-difference facts",
       "mutates": true,
-      "note": "Update the existing deepseek-harness ledger row only after verification. If Cordis changed, update vendor/README.md versions, exact commits, and the exhaustive local-modification log in the same change. Git history owns iteration history; do not append duplicate ledger rows."
+      "note": "Mandatory adoption gate: do not execute this step unless verify-release-snapshots, verify-codemods, verify-rebrand-state, verify-rescope-state, verify-vendored-links, verify-build, verify-runtime-closure, verify-keyless-snapshots, verify-product-web-smoke, and verify-product-electron-smoke immediately above have all passed for the same target. Every retained product-neutral DSH delta must already be registered or retired in .open-source/dsh-retained-core-deltas.json, the sole detailed delta ledger. If Cordis changed, update vendor/README.md versions, exact commits, and its exhaustive local-modification log in the same change. Git history owns iteration history; do not append duplicate adoption rows."
     },
     {
       "id": "package-dmg",

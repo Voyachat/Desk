@@ -13,6 +13,9 @@
     - button "Agent 预设":
       - img
       - text: Agent 预设
+    - button "长期记忆":
+      - img
+      - text: 长期记忆
     - button "远程查看":
       - img
       - text: 远程查看

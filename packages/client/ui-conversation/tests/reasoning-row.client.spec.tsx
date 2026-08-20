@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
 import { zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/zh.ts'
-import { AssistantMarkdown } from '../src/client/chat/AssistantMarkdown.tsx'
+import { AssistantMarkdown, type AssistantMarkdownProps } from '../src/client/chat/AssistantMarkdown.tsx'
 import { zh } from '../src/client/locales.ts'
 
 let nextAnimationFrameId = 1
@@ -37,11 +37,13 @@ afterEach(() => {
 })
 
 const t = makeTranslate(zh, commonZh)
+const renderMessageImages: AssistantMarkdownProps['renderMessageImages'] = () => null
 
 describe('ReasoningRow', () => {
   it('expands by default while streaming and folds back to the summary when the stream settles', () => {
     const view = render(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nNewest reasoning tokens' }]}
         streaming
@@ -53,6 +55,7 @@ describe('ReasoningRow', () => {
 
     view.rerender(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nNewest reasoning tokens\n' }]}
         streaming={false}
@@ -65,6 +68,7 @@ describe('ReasoningRow', () => {
   it('keeps a manual expansion after the stream settles', () => {
     const view = render(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nCheck persistence' }]}
         streaming={false}
@@ -75,6 +79,7 @@ describe('ReasoningRow', () => {
 
     view.rerender(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nCheck persistence\n' }]}
         streaming={false}
@@ -86,6 +91,7 @@ describe('ReasoningRow', () => {
   it('follows the latest streaming line, scrolls to its end, then restores the settled first line', () => {
     const view = render(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nNewest reasoning tokens' }]}
         streaming
@@ -102,6 +108,7 @@ describe('ReasoningRow', () => {
 
     view.rerender(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nNewest reasoning tokens keep arriving' }]}
         streaming
@@ -116,6 +123,7 @@ describe('ReasoningRow', () => {
 
     view.rerender(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nNewest reasoning tokens keep arriving\n' }]}
         streaming={false}
@@ -131,6 +139,7 @@ describe('ReasoningRow', () => {
   it('expands from either Think or the reasoning summary', () => {
     const view = render(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nCheck persistence' }]}
         streaming={false}
@@ -149,6 +158,7 @@ describe('ReasoningRow', () => {
   it('expanded Think drops the inline summary and renders plain prose, no IN card', () => {
     const view = render(
       <AssistantMarkdown
+        renderMessageImages={renderMessageImages}
         t={t}
         blocks={[{ kind: 'reasoning', text: 'Inspect the session\nCheck persistence' }]}
         streaming={false}

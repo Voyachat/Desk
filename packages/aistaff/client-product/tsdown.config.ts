@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises'
 import { basename, dirname, resolve } from 'node:path'
 import { transform } from 'lightningcss'
 import type { UserConfig } from 'tsdown'
-import { CLIENT_EXTERNALS, clientBundle } from '../../client/tsdown.client.ts'
+import { clientBundle, clientExternalSpecifiers } from '../../client/tsdown.client.ts'
 
 const PACKAGE_ID = '@voyaseek-ai/dsh-aistaff-client-product'
+const CLIENT_EXTERNALS = clientExternalSpecifiers(PACKAGE_ID)
 const CSS_PREFIX = '\0aistaff-cloud-css:'
 const CSS_SUFFIX = '.mjs'
 const cssFiles = new Map<string, string>()
@@ -31,13 +32,15 @@ const cloudClient: UserConfig = {
   dts: false,
   sourcemap: true,
   clean: false,
-  external: [...CLIENT_EXTERNALS],
   define: {
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV ?? 'production'),
     'import.meta.env.MODE': JSON.stringify(process.env.NODE_ENV ?? 'production'),
     'import.meta.env': JSON.stringify({ MODE: process.env.NODE_ENV ?? 'production' }),
   },
-  noExternal: (id: string) => (CLIENT_EXTERNALS.includes(id) ? undefined : true),
+  deps: {
+    neverBundle: (id: string) => CLIENT_EXTERNALS.has(id),
+    alwaysBundle: (id: string) => !CLIENT_EXTERNALS.has(id),
+  },
   plugins: [{
     name: 'aistaff-cloud-css-modules-inline',
     resolveId(source: string, importer: string | undefined) {

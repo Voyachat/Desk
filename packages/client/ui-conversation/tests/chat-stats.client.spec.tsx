@@ -8,7 +8,7 @@ import type {
   AssistantMessageNode, ConversationSnapshot, SessionId, ToolResultNode,
 } from '@voyaseek-ai/dsh-client-runtime/client'
 import { EMPTY_CONVERSATION_VIEWS } from '@voyaseek-ai/dsh-client-runtime/client'
-import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-test-runtime'
 import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
 import { en as commonEn } from '@voyaseek-ai/dsh-client-locale/src/locales/en.ts'
 import { zh as commonZh } from '@voyaseek-ai/dsh-client-locale/src/locales/zh.ts'

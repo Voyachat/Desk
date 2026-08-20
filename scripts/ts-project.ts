@@ -11,7 +11,10 @@ interface ProjectGraph {
   options: ts.CompilerOptions
 }
 
-/** The aggregate compiler programs a repository-wide semantic gate may seed. */
+/**
+ * A compiler face: the two aggregates a repository-wide semantic gate may seed.
+ * The root solution is never one of them.
+ */
 export type CompilerFace = 'host' | 'client'
 
 /** TypeScript config host shared by repository scripts. */
@@ -27,7 +30,7 @@ export const repositoryConfigHost: ts.ParseConfigFileHost = {
 }
 
 /**
- * Parse the host aggregate tsconfig and flatten all referenced projects into one
+ * Parse one face aggregate tsconfig and flatten all referenced projects into one
  * semantic graph. Never seed the root solution: flattening host+client into one
  * program collides the cordis Context merges.
  */

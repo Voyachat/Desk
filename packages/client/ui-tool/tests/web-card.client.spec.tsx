@@ -17,7 +17,7 @@ import type {
   ConversationSnapshot, RunningToolCall, SessionId, SessionListState, ToolResultNode, WorkspaceListState,
 } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { ToolResultView } from '@voyaseek-ai/dsh-api-remotes/client'
-import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-test-runtime'
 import type { SelectionTarget } from '@voyaseek-ai/dsh-client-ui-conversation/client'
 import type { ToolCallOwnerProps } from '@voyaseek-ai/dsh-client-ui-tool/client'
 import { IconGlobeOutline14 } from '@voyaseek-ai/dsh-client-ui-primitives'

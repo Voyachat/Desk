@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-acp",
   "description": "Automation-only Agent Client Protocol server for driving Voyaseek Harness agents over JSON-RPC stdio",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -36,13 +36,16 @@
     "@voyaseek-ai/schemastery": "workspace:^"
   },
   "peerDependencies": {
+    "@voyaseek-ai/dsh-attachment": "workspace:^",
     "@voyaseek-ai/dsh-agent": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-user-approval": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
+    "@voyaseek-ai/dsh-attachment": "workspace:^",
     "@voyaseek-ai/dsh-agent": "workspace:^",
     "@voyaseek-ai/dsh-agent-loop": "workspace:^",
     "@voyaseek-ai/dsh-agent-loop-testkit": "workspace:^",

@@ -1,6 +1,6 @@
 // Boots the shipped Web composition over the built dist this lane already uses
 // and asserts what that composition produces: the model-visible tool catalog
-// and file-reference guidance plus the sandbox/approval knobs it ships with.
+// and file-reference guidance plus its retry, sandbox, and approval defaults.
 // No browser and no model call — these are composition facts, and the browser
 // scenarios in this lane cover the surface itself.
 import { readFileSync } from 'node:fs'
@@ -11,6 +11,7 @@ import { CallId, createUserMessage } from '@voyaseek-ai/dsh-llm'
 import { RpcId } from '@voyaseek-ai/dsh-host-apiproxy'
 import { canonicalPath, writableRoots } from '@voyaseek-ai/dsh-sandbox'
 import { SessionId } from '@voyaseek-ai/dsh-session'
+import { settingsNamespace } from '@voyaseek-ai/dsh-settings'
 // Empty type imports carry the tools/sandboxPolicy/approval Context merges.
 import type {} from '@voyaseek-ai/dsh-tools'
 import type {} from '@voyaseek-ai/dsh-sandbox-policy'
@@ -108,9 +109,66 @@ it('mounts the Claude and Codex conversation runtimes in the shipped Web composi
   expect(child?.events.at(-2)?.type).toBe('agent/runtime/switched')
 }, 120_000)
 
-it('assembles the shipped Web catalog, file-reference guidance, and confined access default', async () => {
-  scaffold = await launchWebScaffold()
+it('assembles the shipped Web catalog, file-reference guidance, retry policy, and confined access default', async () => {
+  scaffold = await launchWebScaffold({ deepSeekMissingCredential: true })
   const ctx = scaffold.ctx
+  expect(ctx.llm.providerRetryPolicy('deepseek-official')).toMatchInlineSnapshot(`
+    {
+      "initialDelayMs": 500,
+      "jitterRatio": 0.1,
+      "maxDelayMs": 10000,
+      "maxRetries": 5,
+      "mode": "normal",
+      "retryableCodes": [
+        "EMPTY_RESPONSE",
+        "RATE_LIMIT",
+        "SERVER",
+        "TIMEOUT",
+        "TRANSPORT",
+      ],
+    }
+  `)
+  await ctx.settings.update(settingsNamespace('llm-deepseek'), {
+    retryPolicy: { mode: 'always', maxRetries: 5 },
+  })
+  expect(ctx.llm.providerRetryPolicy('deepseek-official')).toMatchInlineSnapshot(`
+    {
+      "initialDelayMs": 500,
+      "jitterRatio": 0.1,
+      "maxDelayMs": 10000,
+      "mode": "always",
+    }
+  `)
+  await ctx.settings.update(settingsNamespace('llm-pi-ai'), {
+    providers: {
+      openai: {},
+      anthropic: { retryPolicy: { mode: 'always' } },
+    },
+  })
+  expect(ctx.llm.providerRetryPolicy('openai')).toMatchInlineSnapshot(`
+    {
+      "initialDelayMs": 500,
+      "jitterRatio": 0.1,
+      "maxDelayMs": 10000,
+      "maxRetries": 5,
+      "mode": "normal",
+      "retryableCodes": [
+        "EMPTY_RESPONSE",
+        "RATE_LIMIT",
+        "SERVER",
+        "TIMEOUT",
+        "TRANSPORT",
+      ],
+    }
+  `)
+  expect(ctx.llm.providerRetryPolicy('anthropic')).toMatchInlineSnapshot(`
+    {
+      "initialDelayMs": 500,
+      "jitterRatio": 0.1,
+      "maxDelayMs": 10000,
+      "mode": "always",
+    }
+  `)
   // The catalog belongs to an AGENT, not to the process: every model-facing row
   // now lives in a preset mounted under one session's scope, so the global
   // layer holds only deployment diagnostics and discovery; a caller must name

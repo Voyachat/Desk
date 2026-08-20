@@ -6,7 +6,7 @@
  */
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-test-runtime'
 import { createSnapshotStore } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { TodoProjectionItem } from '@voyaseek-ai/dsh-tool-todo/client'
 import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'

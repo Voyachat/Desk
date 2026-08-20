@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-tool",
   "description": "Client Tool call-tree renderer and keyed per-tool presentation slot",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -32,6 +32,7 @@
   "dsh": {
     "client": {
       "inject": [
+        "@voyaseek-ai/dsh-client-connection",
         "@voyaseek-ai/dsh-client-runtime",
         "@voyaseek-ai/dsh-client-locale",
         "@voyaseek-ai/dsh-client-ui-conversation"
@@ -50,13 +51,11 @@
   "peerDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/dsh-invariants": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
@@ -68,7 +67,6 @@
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
-    "@voyaseek-ai/dsh-client-web-react": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@testing-library/react": "^16.1.0",
     "@types/react": "~18.3.1",

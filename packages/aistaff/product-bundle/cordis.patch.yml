@@ -49,5 +49,10 @@
       config:
         defaultLocale: zh
 
+    # Product-owned Voyaseek occupants shadow the generic distribution brand
+    # without changing the upstream sidebar or conversation slot declarations.
+    - id: aistaff-client-brand
+      name: '@voyaseek-ai/dsh-aistaff-client-brand'
+
     - id: aistaff-client-product
       name: '@voyaseek-ai/dsh-aistaff-client-product'

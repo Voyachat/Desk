@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-aistaff-local-capability",
   "description": "Renderer-safe local capability service definition and Host coordinator",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

@@ -1,21 +1,39 @@
 {
   "name": "@voyaseek-ai/dsh-agent-memory-settings",
   "description": "Settings-configured local structured-memory provider using private SQLite storage",
-  "version": "0.1.0-rc.5",
-  "publishConfig": { "access": "public" },
-  "repository": { "type": "git", "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git", "directory": "packages/memory/agent-memory-settings" },
+  "version": "0.1.0-rc.8",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voyaseek-ai/voyaseek-harness.git",
+    "directory": "packages/memory/agent-memory-settings"
+  },
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/types/index.d.ts",
   "exports": {
-    ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
-    "./invariant": { "types": "./lib/types/invariant.d.ts", "default": "./lib/invariant.js" },
+    ".": {
+      "types": "./lib/types/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./invariant": {
+      "types": "./lib/types/invariant.d.ts",
+      "default": "./lib/invariant.js"
+    },
     "./src/*": "./src/*",
     "./package.json": "./package.json"
   },
-  "files": ["lib/index.js", "lib/invariant.js", "lib/types/**/*.d.ts"],
+  "files": [
+    "lib/index.js",
+    "lib/invariant.js",
+    "lib/types/**/*.d.ts"
+  ],
   "license": "MIT",
-  "dependencies": { "@voyaseek-ai/schemastery": "workspace:^" },
+  "dependencies": {
+    "@voyaseek-ai/schemastery": "workspace:^"
+  },
   "peerDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
     "@voyaseek-ai/dsh-agent-memory": "workspace:^",

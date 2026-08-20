@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-sdk-client",
   "description": "TypeScript client SDK for driving a Voyaseek Harness runtime subprocess over stdio JSON-RPC: the VoyaseekHarness high-level turns API and the lower-level HarnessClient",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },

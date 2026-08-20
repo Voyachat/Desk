@@ -793,6 +793,11 @@ select.input {
   color: var(--dsw-alias-label-tertiary);
   font-size: 13px;
   text-align: center;
+
+.candidateActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 6px;
 }
 
 .candidateList {

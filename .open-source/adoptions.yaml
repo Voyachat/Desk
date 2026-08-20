@@ -73,7 +73,7 @@
       "id": "deepseek-harness",
       "mode": "source",
       "upstream": "https://github.com/deepseek-ai/deepseek-harness.git",
-      "upstream_ref": "47f943859bef60e4160492346772ded9b24f765a",
+      "upstream_ref": "141eb6fef83422698aef7a981029e843e8161534",
       "license": "MIT",
       "upstream_paths": [
         "."
@@ -81,9 +81,9 @@
       "local_paths": [
         "."
       ],
-      "local_changes": "AiDesktop product docs, Electron app, and isolated packages/aistaff plugin layer added; DSH api/remotes mounts the Aistaff Remote contributions and the Client bundler admits the Renderer-safe employee-experience leaf; build outputs and secrets excluded",
-      "update_policy": "stable-release",
-      "decision": "代码级 Git 树比对将 /Users/baron/projects/DsAgent 隔离复制的源码基线固定到上游 0.1.0-rc.5 发布树；Aistaff 通过独立插件岛接入"
+      "local_changes": "Voyaseek product branding, Electron shell, isolated packages/aistaff plugins, and immutable DSH release snapshot/import machinery; .open-source/dsh-retained-core-deltas.json is the sole detailed ledger for retained product-neutral DSH deltas",
+      "update_policy": "Execute .open-source/plugins/voyaseek-dsh-upgrade.json for each stable release and advance this row only after its record-baseline prerequisites pass and every retained core delta is registered or retired in the referenced ledger",
+      "decision": "采用 DSH 0.1.0-rc.8 精确源码树；升级入口、验证门禁和 adoption 顺序由 voyaseek-dsh-upgrade 工作流定义，retained core delta 细节仅由 dsh-retained-core-deltas.json 定义"
     },
     {
       "id": "dsh-find-plugin",

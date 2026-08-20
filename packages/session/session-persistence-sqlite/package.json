@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-session-persistence-sqlite",
-  "description": "SQLite durable session persistence backend for the Voyaseek Harness",
-  "version": "0.1.0-rc.5",
+  "description": "SQLite durable session persistence with physical chunk-row packing",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -28,11 +28,13 @@
   "files": [
     "lib/index.js",
     "lib/invariant.js",
+    "resources/sql/**/*.sql",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
   "peerDependencies": {
     "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-session-persistence": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^"
@@ -41,9 +43,13 @@
     "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {
+    "@voyaseek-ai/cordis-plugin-include": "workspace:^",
+    "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-session-persistence": "workspace:^",
-    "@voyaseek-ai/cordis": "workspace:^"
+    "@voyaseek-ai/cordis": "workspace:^",
+    "typescript": "^6.0.3"
   }
 }

@@ -206,6 +206,7 @@ describe('dsh-tool-workflow', () => {
     const pending = ctx.commands.execute(
       parent,
       '/workflow-retry orphaned',
+      [],
       new AbortController().signal,
     )
     await vi.waitFor(() => { expect(engine.requests).toHaveLength(1) })

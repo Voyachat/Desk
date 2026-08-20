@@ -2,7 +2,7 @@
 
 import type { ClientContext } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { ConnectionHandle } from '@voyaseek-ai/dsh-api-remotes/client'
-import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
+import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@voyaseek-ai/dsh-client-ui-settings/client'
 import type {} from '@voyaseek-ai/dsh-client-locale/client'
 import { MemorySettingsSection, type MemorySettingsSectionInjected } from './MemorySettingsSection.tsx'

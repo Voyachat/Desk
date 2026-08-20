@@ -4,7 +4,8 @@
 // tool-call renderer and its recursive root/subcall composition. Consecutive
 // internal-execution Nodes (tool calls, thinking, mid-turn narration of a
 // Turn that closed with a final answer) fold into one ActivityFold row, so
-// the flow reads like the conversation, not the execution log.
+// the flow reads like the conversation, not the execution log. A Host
+// open-path refusal from the injected opener is an in-page dialog here.
 //
 // Scroll: when nested under `[data-conversation-scroll]` (active conversation
 // column), that host is the scrollport and this view is flow content; when
@@ -26,8 +27,8 @@ import { Fragment, useCallback, useEffect, useLayoutEffect, useMemo, useRef, use
 import type { ReactNode } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import type { ConversationTimelineSnapshot } from '@voyaseek-ai/dsh-client-runtime/client'
-import { IconChevronDownOutline14 } from '@voyaseek-ai/dsh-client-ui-primitives'
-import type { ChatViewSlotProps } from '../contract/slots.ts'
+import { Button, IconChevronDownOutline14, Modal } from '@voyaseek-ai/dsh-client-ui-primitives'
+import type { ChatViewSlotProps, RenderMessageImages } from '../contract/slots.ts'
 import { collectFoldFacts, groupChatFlow, partialHasReasoning, partialHasVisibleProse } from './activity-fold.ts'
 import type { ChatFlowRow } from './activity-fold.ts'
 import { ActivityFold } from './ActivityFold.tsx'
@@ -145,6 +146,17 @@ function scrollPosition(list: HTMLElement, scrollport: HTMLElement): ChatScrollP
   }
 }
 
+/** Host/OS refusal text for the file-open dialog; empty throws keep a locale fallback. */
+function openFailureMessage(error: unknown, fallback: string): string {
+  const message = error instanceof Error ? error.message : String(error)
+  return message === '' ? fallback : message
+}
+
+/** ProducedFiles opens the session workspace as `.`. */
+function isFolderOpenPath(path: string): boolean {
+  return path === '.'
+}
+
 function runningTurnStartTime(timeline: ConversationTimelineSnapshot): number | null {
   let latest: number | null = null
   for (const turn of timeline.turns.values()) {
@@ -216,10 +228,48 @@ export function ChatView({
   const hasMore = useSession(s => s.hasMore)
   const loadingOlder = useSession(s => s.loadingOlder)
   const selectedCallId = useStore(s => s.selection?.callId)
+  const [fileOpenError, setFileOpenError] = useState<{ path: string; message: string } | null>(null)
+  const [fileOpenBusy, setFileOpenBusy] = useState(false)
+  // Close/retry must ignore a settlement that started before the latest
+  // gesture; otherwise a cancelled in-flight refusal reopens the dialog.
+  const fileOpenRequest = useRef(0)
+
+  const requestOpenFile = useCallback((path: string) => {
+    const id = ++fileOpenRequest.current
+    setFileOpenBusy(true)
+    void openFile(path).then(
+      () => {
+        if (id !== fileOpenRequest.current) return
+        setFileOpenError(null)
+        setFileOpenBusy(false)
+      },
+      (error: unknown) => {
+        if (id !== fileOpenRequest.current) return
+        setFileOpenError({
+          path,
+          message: openFailureMessage(
+            error,
+            t(isFolderOpenPath(path) ? 'fileOpen.folderUnknown' : 'fileOpen.unknown'),
+          ),
+        })
+        setFileOpenBusy(false)
+      },
+    )
+  }, [openFile, t])
+
+  const closeFileOpenError = useCallback(() => {
+    fileOpenRequest.current += 1
+    setFileOpenError(null)
+    setFileOpenBusy(false)
+  }, [])
 
   const pendingSteering = useMemo(
     () => inbox.filter(item => item.placement === 'steering'),
     [inbox],
+  )
+  const renderMessageImages = useCallback<RenderMessageImages>(
+    owner => renderSlot('conversation.message.images', { ...owner, loadImage }),
+    [loadImage, renderSlot],
   )
   const runningTurnStart = useMemo(() => runningTurnStartTime(timeline), [timeline])
 
@@ -345,10 +395,10 @@ export function ChatView({
       useSession={useSession}
       selectedCallId={selectedCallId}
       cwd={cwd}
-      openFile={openFile}
+      openFile={requestOpenFile}
       inspectCall={inspectCall}
       forkAt={forkAt}
-      loadImage={loadImage}
+      renderMessageImages={renderMessageImages}
       fileMentions={fileMentions}
       renderSlot={renderSlot}
       t={t}
@@ -769,7 +819,12 @@ export function ChatView({
             <PendingSendBubble key={send.sendId} content={send.content} t={t} />
           ))}
           {pendingSteering.map(item => (
-            <PendingSteeringBubble key={item.id} content={item.content} loadImage={loadImage} t={t} />
+            <PendingSteeringBubble
+              key={item.id}
+              content={item.content}
+              renderMessageImages={renderMessageImages}
+              t={t}
+            />
           ))}
         </div>
         {!atBottom && (
@@ -789,6 +844,44 @@ export function ChatView({
           </div>
         )}
       </div>
+      {fileOpenError !== null && (
+        <FileOpenErrorDialog
+          path={fileOpenError.path}
+          message={fileOpenError.message}
+          busy={fileOpenBusy}
+          onClose={closeFileOpenError}
+          onRetry={() => { requestOpenFile(fileOpenError.path) }}
+          t={t}
+        />
+      )}
     </div>
+  )
+}
+
+/** In-page Host open-path refusal: the wire reason plus a retry of the same path. */
+function FileOpenErrorDialog({
+  path, message, busy, onClose, onRetry, t,
+}: {
+  path: string
+  message: string
+  busy: boolean
+  onClose: () => void
+  onRetry: () => void
+  t: ChatViewSlotProps['t']
+}) {
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      closeLabel={t('close')}
+      title={t(isFolderOpenPath(path) ? 'fileOpen.folderTitle' : 'fileOpen.title')}
+      description={message}
+      footer={(
+        <>
+          <Button variant="outline" className={css.modalAction} onClick={onClose}>{t('cancel')}</Button>
+          <Button variant="primary" className={css.modalAction} disabled={busy} onClick={onRetry}>{t('retry')}</Button>
+        </>
+      )}
+    />
   )
 }

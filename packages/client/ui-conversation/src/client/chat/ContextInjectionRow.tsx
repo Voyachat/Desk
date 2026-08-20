@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import type { ContextMessageNode } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { DisclosureRow, IconBrowseOutline16 } from '@voyaseek-ai/dsh-client-ui-primitives'
+import { ReferenceIcon } from '../reference/ReferenceIcon.tsx'
 import { contextBody } from './ContextBody.tsx'
 import css from './ContextInjectionRow.module.css'
 
@@ -45,7 +46,9 @@ export function ContextInjectionRow({ content, source, provenance, form, t, acti
   return (
     <DisclosureRow
       className={`${css.root}${memory ? ` ${css.memory}` : ''}`}
-      icon={<IconBrowseOutline16 size={14} />}
+      icon={provenance.role === 'recall'
+        ? <span data-context-recall-icon><ReferenceIcon kind="session" /></span>
+        : <IconBrowseOutline16 size={14} />}
       chevronClassName={css.chevron}
       title={t(memory ? 'message.memory.recalled' : provenance.role === 'recall' ? 'message.contextRecall' : 'message.contextInjection')}
       collapsedContent={provenance.label === null && actions === undefined ? undefined : (

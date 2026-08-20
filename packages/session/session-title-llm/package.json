@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-session-title-llm",
   "description": "Shared LLM generation policy for Voyaseek Harness session-title providers",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },

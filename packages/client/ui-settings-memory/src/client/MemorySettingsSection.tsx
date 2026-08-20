@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { Button, RiskConfirmation } from '@voyaseek-ai/dsh-client-ui-primitives'
-import type { SnapshotSelectorHook } from '@voyaseek-ai/dsh-client-web-react'
+import type { SnapshotSelectorHook } from '@voyaseek-ai/dsh-client-ui-slots'
 import type { PropsRuntime } from '@voyaseek-ai/dsh-client-ui-slots'
 import type { MemorySettingsKey } from './locales.ts'
 import type { MemoryEntryView, MemorySettingsState, MemorySettingsStore } from './store.ts'

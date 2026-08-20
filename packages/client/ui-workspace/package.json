@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-workspace",
   "description": "Workspace picker plugin: one WorkspacePicker registered into the sidebar and empty-state workspace slots",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -32,6 +32,7 @@
   "dsh": {
     "client": {
       "inject": [
+        "@voyaseek-ai/dsh-client-connection",
         "@voyaseek-ai/dsh-client-locale",
         "@voyaseek-ai/dsh-client-runtime",
         "@voyaseek-ai/dsh-client-ui-conversation",
@@ -49,15 +50,16 @@
     "clsx": "^2.0.0"
   },
   "peerDependencies": {
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
+    "@voyaseek-ai/dsh-client-ui-sidebar": "workspace:^"
   },
   "devDependencies": {
+    "@voyaseek-ai/dsh-client-connection": "workspace:^",
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",

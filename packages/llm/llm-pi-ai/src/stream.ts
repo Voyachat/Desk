@@ -47,10 +47,14 @@ function classifyPiAiError(message: string): string {
   // unactivated-model spelling with a 400 "Access denied"/"access_denied"
   // body and the other with "The product is not activated" — one account
   // fact, two wordings.
-  if (/\b(?:product|model)\b[^\r\n]{0,80}\b(?:is not activated|has not been activated|is not enabled for (?:this|your) account)\b/i.test(message)
-    || /\baccess[ _-]denied\b/i.test(message)) {
+  const inactiveModel = /\b(?:product|model)\b[^\r\n]{0,80}\b(?:is not activated|has not been activated)\b/i.test(message)
+    || /\b(?:product|model)\b[^\r\n]{0,80}\bis not enabled for (?:this|your) account\b/i.test(message)
+  if (inactiveModel || /\baccess[ _-]denied\b/i.test(message)) {
     return 'MODEL_ACCESS_DENIED'
   }
+  // A rejected request body (gateway or provider size cap): resending the
+  // same request cannot succeed, so it is invalid, not transient.
+  if (/\b413\b|failed to buffer the request body:\s*length limit exceeded|payload too large|request body too large/i.test(message)) return 'INVALID_REQUEST'
   if (/\b400\b|invalid.?request/i.test(message)) return 'INVALID_REQUEST'
   if (/\b5\d\d\b/.test(message)) return 'SERVER'
   if (/\btime(?:d)?\s*out\b|timeout/i.test(message)) return 'TIMEOUT'

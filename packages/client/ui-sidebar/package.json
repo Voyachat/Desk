@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-sidebar",
   "description": "Sidebar plugin: session multi-level tree, search, grouping, state dots",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -50,11 +50,9 @@
   "peerDependencies": {
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/dsh-client-ui-layout": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/dsh-client-locale": "workspace:^",

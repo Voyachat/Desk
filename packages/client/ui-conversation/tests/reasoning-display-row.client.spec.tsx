@@ -1,11 +1,10 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { bindSnapshotSelector } from '@voyaseek-ai/dsh-client-web-react'
 import {
   createSnapshotStore, type SessionListState, type WorkspaceListState,
 } from '@voyaseek-ai/dsh-client-runtime/client'
-import { makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
+import { bindSnapshotSelector, makeTranslate } from '@voyaseek-ai/dsh-client-test-runtime'
 import { ReasoningDisplayRow } from '../src/client/settings/ReasoningDisplayRow.tsx'
 import type { ReasoningDisplayRowProps } from '../src/client/settings/ReasoningDisplayRow.tsx'
 import { ConversationDisplayPolicy } from '../src/client/chat/display-policy.ts'

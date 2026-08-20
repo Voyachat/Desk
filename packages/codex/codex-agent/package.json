@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-codex-agent",
   "description": "Codex app-server driver: sessions whose runtime is 'codex' use a durable Codex thread",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },

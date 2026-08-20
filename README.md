@@ -33,3 +33,7 @@ pnpm run dev:aistaff
 ```
 
 The development command starts AiDesktop from the repository source with the isolated development profile.
+
+## Contributing and license
+
+Follow [AGENTS.md](AGENTS.md) for repository rules and [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidance. This repository is licensed under the [MIT License](LICENSE); third-party dependencies and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-aistaff-product-projection",
   "description": "Deterministic in-memory Host projection for the Aistaff UI acceptance fixture",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

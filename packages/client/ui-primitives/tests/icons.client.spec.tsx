@@ -55,43 +55,27 @@ describe('ic_ds_ icon set', () => {
 })
 
 describe('FishLogo', () => {
-  it('renders the monochrome Voyaseek mark pair at the requested square size', () => {
+  it('renders the upstream fish path in currentColor at the native ratio', () => {
     const { container } = render(<primitives.FishLogo />)
-    const imgs = container.querySelectorAll('img')
-    expect(imgs).toHaveLength(2)
-    const srcs = [...imgs].map(img => img.getAttribute('src'))
-    expect(srcs).toEqual(['/voyaseek-mark-light.png', '/voyaseek-mark-dark.png'])
-    const wrapper = container.firstElementChild as HTMLElement
-    expect(wrapper.style.width).toBe('24px')
-    expect(wrapper.style.height).toBe('24px')
-    expect(wrapper.getAttribute('aria-hidden')).toBe('true')
-    for (const img of imgs) {
-      expect(img.getAttribute('alt')).toBe('')
-      expect(img.getAttribute('draggable')).toBe('false')
-    }
-    expect(container.querySelector('svg')).toBeNull()
-  })
-
-  it('forwards size and className to the mark wrapper', () => {
-    const { container } = render(<primitives.FishLogo size={34} className="x" />)
-    const wrapper = container.firstElementChild as HTMLElement
-    expect(wrapper.style.width).toBe('34px')
-    expect(wrapper.style.height).toBe('34px')
-    expect(wrapper.classList.contains('x')).toBe(true)
+    const svg = container.querySelector('svg')!
+    expect(svg.getAttribute('width')).toBe('24')
+    expect(Number(svg.getAttribute('height'))).toBeCloseTo(17.66, 1)
+    expect(svg.getAttribute('viewBox')).toBe('0 0 23.16 17.04')
+    expect(container.querySelectorAll('path')).toHaveLength(1)
+    expect(container.innerHTML).toContain('currentColor')
+    expect(container.querySelector('img')).toBeNull()
   })
 })
 
 describe('BrandWordmark', () => {
-  it('stacks the theme pair in a fixed 11:3 container', () => {
-    const { container } = render(<primitives.BrandWordmark />)
-    const wrapper = container.firstElementChild as HTMLElement
-    const imgs = container.querySelectorAll('img')
-    expect(wrapper.style.width).toBe('88px')
-    expect(wrapper.style.height).toBe('24px')
-    expect([...imgs].map(img => img.getAttribute('src'))).toEqual([
-      '/voyaseek-wordmark-light.png',
-      '/voyaseek-wordmark-dark.png',
-    ])
-    expect(wrapper.getAttribute('aria-hidden')).toBe('true')
+  it('can render the upstream artwork with or without its leading mark', () => {
+    const view = render(<primitives.BrandWordmark />)
+    const svg = view.container.querySelector('svg')!
+    expect(svg.getAttribute('width')).toBe('182')
+    expect(svg.getAttribute('viewBox')).toBe('0 0 182 24')
+
+    view.rerender(<primitives.BrandWordmark includeMark={false} />)
+    expect(svg.getAttribute('width')).toBe('156')
+    expect(svg.getAttribute('viewBox')).toBe('26 0 156 24')
   })
 })

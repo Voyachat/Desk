@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-aistaff-supervisor-control-process",
   "description": "Host SupervisorControl provider over the authenticated AiDesktop Rust sidecar process",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

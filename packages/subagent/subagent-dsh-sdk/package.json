@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-subagent-dsh-sdk",
   "description": "Out-of-process SDK subagent backend: drives a child Voyaseek Harness runtime subprocess over stdio JSON-RPC through the TypeScript SDK client",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },

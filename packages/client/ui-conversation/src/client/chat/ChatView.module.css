@@ -105,11 +105,11 @@
   white-space: nowrap;
   background: linear-gradient(
     90deg,
-    var(--dsw-static-deepseek-500) 0%,
-    var(--dsw-static-deepseek-500) 40%,
-    var(--dsw-static-deepseek-200) 50%,
-    var(--dsw-static-deepseek-500) 60%,
-    var(--dsw-static-deepseek-500) 100%
+    var(--dsw-static-voyaseek-500) 0%,
+    var(--dsw-static-voyaseek-500) 40%,
+    var(--dsw-static-voyaseek-200) 50%,
+    var(--dsw-static-voyaseek-500) 60%,
+    var(--dsw-static-voyaseek-500) 100%
   );
   background-position: 100% 0;
   background-size: 250% 100%;
@@ -218,4 +218,9 @@
 
 .toBottom:hover {
   background: var(--dsw-alias-button-floating-hover);
+}
+
+/* Host open-path refusal: same dialog family as the workspace folder error. */
+.modalAction {
+  min-width: 72px;
 }

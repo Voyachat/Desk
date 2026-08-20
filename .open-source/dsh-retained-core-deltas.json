@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "id": "voyaseek-dsh-retained-core-deltas",
+  "authority": "This file is the sole detailed ledger for product-neutral DSH deltas retained after an upstream release merge. The deepseek-harness adoption row and upgrade workflow may reference this file but must not duplicate its entries.",
+  "upstream": "https://github.com/deepseek-ai/deepseek-harness.git",
+  "current_upstream_baseline": "dsh-v0.1.0-rc.8@141eb6fef83422698aef7a981029e843e8161534",
+  "deltas": [
+    {
+      "id": "source-plane-generated-sibling-cleanup",
+      "classification": "merge-hygiene-invariant",
+      "owner": "DSH release integration",
+      "paths": [
+        "apps/**/src/**",
+        "packages/**/src/**",
+        "vendor/**/src/**"
+      ],
+      "upstream_baseline": "dsh-v0.1.0-rc.8@141eb6fef83422698aef7a981029e843e8161534",
+      "behavior_obligation": "The source plane must not retain generated .js, .js.map, .d.ts, or .d.ts.map siblings for an owning .ts or .tsx source file; module resolution must reach the TypeScript source rather than stale generated output.",
+      "upstream_issue_or_entry": "unfiled",
+      "verification_commands": [
+        "node --input-type=module -e \"import { existsSync, globSync } from 'node:fs'; const files=globSync('{apps,packages,vendor}/**/src/**/*.{js,js.map,d.ts,d.ts.map}').filter(file=>{const base=file.replace(/(?:\\.d\\.ts\\.map|\\.d\\.ts|\\.js\\.map|\\.js)$/,''); return existsSync(base+'.ts')||existsSync(base+'.tsx')}); if(files.length){console.error(files.join('\\n')); process.exit(1)}\"",
+        "pnpm run build"
+      ],
+      "retire_when": "The upstream release tree and the repository build both preserve this invariant without merge-time cleanup, and an executed repository gate rejects same-name generated source siblings.",
+      "status": "retained"
+    },
+    {
+      "id": "code-mode-single-image-context",
+      "classification": "upstream-integration-fix",
+      "owner": "@voyaseek-ai/dsh-tool-fs",
+      "paths": [
+        "packages/fs/tool-fs/src/read-image.ts"
+      ],
+      "upstream_baseline": "dsh-v0.1.0-rc.8@141eb6fef83422698aef7a981029e843e8161534",
+      "behavior_obligation": "read_image must not enqueue a second model-visible image context when the generic Code Mode bridge already forwards the tool image; each read produces one image context injection.",
+      "upstream_issue_or_entry": "unfiled",
+      "verification_commands": [
+        "pnpm exec vitest run packages/fs/tool-fs/tests/read-image.spec.ts",
+        "DSH_SNAPSHOT=replay pnpm exec vitest run --config vitest.snapshot.config.ts examples/acp-agent/tests/acp.snapshot.ts -t code-mode-read-image"
+      ],
+      "retire_when": "Upstream read_image delegates exclusively to the generic Code Mode image bridge and upstream tests plus an assembled snapshot prove exactly one model-visible image context.",
+      "status": "retained"
+    },
+    {
+      "id": "locale-unsupported-browser-fallback-en",
+      "classification": "upstream-behavior-alignment",
+      "owner": "@voyaseek-ai/dsh-client-locale",
+      "paths": [
+        "packages/client/locale/src/locale-settings.ts",
+        "packages/client/locale/tests/host.client.spec.ts"
+      ],
+      "upstream_baseline": "dsh-v0.1.0-rc.8@141eb6fef83422698aef7a981029e843e8161534",
+      "behavior_obligation": "When neither an explicit locale nor a supported browser language exists, Client and Host model-language context must use English as the rc.8 fallback while supported browser language detection still wins.",
+      "upstream_issue_or_entry": "unfiled",
+      "verification_commands": [
+        "pnpm exec vitest run packages/client/locale/tests",
+        "DSH_SNAPSHOT=replay pnpm exec vitest run --config vitest.web.config.ts apps/web/tests/settings-chrome.e2e.ts"
+      ],
+      "retire_when": "The next adopted upstream baseline implements and tests the same English fallback for unsupported browser languages and Host model-language context without a local diff.",
+      "status": "retained"
+    },
+    {
+      "id": "subprocess-strip-voyaseek-home",
+      "classification": "security-isolation-fix",
+      "owner": "@voyaseek-ai/dsh-subprocess",
+      "paths": [
+        "packages/subprocess/subprocess/src/index.ts",
+        "packages/subprocess/subprocess/tests/service.spec.ts"
+      ],
+      "upstream_baseline": "dsh-v0.1.0-rc.8@141eb6fef83422698aef7a981029e843e8161534",
+      "behavior_obligation": "Inherited subprocess environments must remove VOYASEEK_HOME case-insensitively together with DSH-owned and credential-shaped variables, while an explicitly supplied child env may intentionally restore a value.",
+      "upstream_issue_or_entry": "unfiled",
+      "verification_commands": [
+        "pnpm exec vitest run packages/subprocess/subprocess/tests/service.spec.ts",
+        "DSH_SNAPSHOT=replay pnpm exec vitest run --config vitest.snapshot.config.ts apps/cli/tests/web-browser-open.snapshot.ts"
+      ],
+      "retire_when": "Upstream exposes a product-home environment scrub extension or adopts equivalent case-insensitive sanitization and explicit-child-env semantics with tests.",
+      "status": "retained"
+    },
+    {
+      "id": "client-package-dependency-classification",
+      "classification": "package-metadata-alignment",
+      "owner": "DSH Client package manifests",
+      "paths": [
+        "packages/client/locale/package.json",
+        "packages/client/ui-conversation/package.json",
+        "packages/client/ui-deliverables/package.json",
+        "packages/client/ui-settings-memory/package.json",
+        "packages/client/ui-settings-mobile-view/package.json",
+        "pnpm-lock.yaml"
+      ],
+      "upstream_baseline": "dsh-v0.1.0-rc.8@141eb6fef83422698aef7a981029e843e8161534",
+      "behavior_obligation": "Statically linked Client inputs remain devDependencies, peer-installed DSH relationships remain peerDependencies plus devDependencies, and neither category leaks into runtime dependencies.",
+      "upstream_issue_or_entry": "unfiled",
+      "verification_commands": [
+        "pnpm run verify-client-packages"
+      ],
+      "retire_when": "The adopted upstream manifests satisfy verify-client-packages without local dependency-classification changes.",
+      "status": "retained"
+    },
+    {
+      "id": "rebrand-ignore-tracked-deleted-paths",
+      "classification": "upgrade-tooling-fix",
+      "owner": "Voyaseek rebrand importer tooling",
+      "paths": [
+        "scripts/rebrand.ts",
+        "scripts/rebrand.spec.ts"
+      ],
+      "upstream_baseline": "dsh-v0.1.0-rc.8@141eb6fef83422698aef7a981029e843e8161534",
+      "behavior_obligation": "The rebrand scan must skip a tracked path that is deleted from the worktree instead of failing with ENOENT, while still checking every existing tracked non-excluded file and remaining idempotent.",
+      "upstream_issue_or_entry": "unfiled",
+      "verification_commands": [
+        "pnpm exec vitest run scripts/rebrand.spec.ts",
+        "pnpm run rebrand -- --check"
+      ],
+      "retire_when": "The release importer no longer runs rebrand against a worktree that may contain tracked deletions, or the maintained rebrand implementation provides equivalent missing-path handling with regression coverage.",
+      "status": "retained"
+    }
+  ]
+}

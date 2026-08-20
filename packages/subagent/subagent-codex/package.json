@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-subagent-codex",
   "description": "One-shot Codex subagent provider over the official app-server protocol",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -28,13 +28,18 @@
   "files": [
     "lib/index.js",
     "lib/invariant.js",
+    "cordis.patch.yml",
     "lib/types/**/*.d.ts"
   ],
   "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
   "peerDependencies": {
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
-    "@voyaseek-ai/dsh-sdk-protocol": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-subagent": "workspace:^",
     "@voyaseek-ai/dsh-subprocess": "workspace:^",
@@ -42,7 +47,9 @@
     "@voyaseek-ai/cordis": "workspace:^"
   },
   "dependencies": {
-    "@voyaseek-ai/schemastery": "workspace:^"
+    "@voyaseek-ai/dsh-sdk-protocol": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^",
+    "@openai/codex": "0.147.0"
   },
   "devDependencies": {
     "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
@@ -50,13 +57,11 @@
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-loader-smoke": "workspace:^",
-    "@voyaseek-ai/dsh-sdk-protocol": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-subagent": "workspace:^",
     "@voyaseek-ai/dsh-subprocess": "workspace:^",
     "@voyaseek-ai/dsh-subprocess-local": "workspace:^",
     "@voyaseek-ai/dsh-timeout": "workspace:^",
-    "@openai/codex": "0.147.0",
     "@voyaseek-ai/cordis": "workspace:^"
   }
 }

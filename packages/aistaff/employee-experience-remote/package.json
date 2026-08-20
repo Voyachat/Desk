@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-aistaff-employee-experience-remote",
   "description": "Strict Host-to-Renderer Typert Remote for the Aistaff Employee Experience object layer",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

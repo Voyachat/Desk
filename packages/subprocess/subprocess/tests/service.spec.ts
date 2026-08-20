@@ -75,9 +75,11 @@ describe('SubprocessRuntime seam', () => {
     await expect(ctx.plugin(SecondService)).rejects.toThrow(/service "subprocess" has been registered/)
   })
 
-  it('scrubbedParentEnv drops credential-shaped and DSH_ names (case-insensitively) but keeps PATH', () => {
+  it('scrubbedParentEnv drops credentials and managed Harness names case-insensitively but keeps PATH', () => {
     process.env.DSH_SCRUB_PROBE = 'stale'
     process.env.dsh_scrub_probe_lower = 'stale'
+    process.env.VOYASEEK_HOME = '/private/voyaseek'
+    process.env.voyaseek_home = '/private/voyaseek-lower'
     process.env.SCRUB_PROBE_TOKEN = 'secret'
     process.env.SCRUB_PROBE_PASSWORD = 'secret'
     process.env.SCRUB_PROBE_PLAIN = 'visible'
@@ -85,6 +87,8 @@ describe('SubprocessRuntime seam', () => {
       const env = scrubbedParentEnv()
       expect(env.DSH_SCRUB_PROBE).toBeUndefined()
       expect(env.dsh_scrub_probe_lower).toBeUndefined()
+      expect(env.VOYASEEK_HOME).toBeUndefined()
+      expect(env.voyaseek_home).toBeUndefined()
       expect(env.SCRUB_PROBE_TOKEN).toBeUndefined()
       expect(env.SCRUB_PROBE_PASSWORD).toBeUndefined()
       expect(env.SCRUB_PROBE_PLAIN).toBe('visible')
@@ -92,6 +96,8 @@ describe('SubprocessRuntime seam', () => {
     } finally {
       delete process.env.DSH_SCRUB_PROBE
       delete process.env.dsh_scrub_probe_lower
+      delete process.env.VOYASEEK_HOME
+      delete process.env.voyaseek_home
       delete process.env.SCRUB_PROBE_TOKEN
       delete process.env.SCRUB_PROBE_PASSWORD
       delete process.env.SCRUB_PROBE_PLAIN

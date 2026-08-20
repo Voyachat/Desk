@@ -351,6 +351,20 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
     return candidate.id.toLocaleLowerCase().includes(normalizedQuery)
       || candidate.name?.toLocaleLowerCase().includes(normalizedQuery) === true
   })
+  const allCandidatesPicked = visibleCandidates.length > 0
+    && visibleCandidates.every(candidate => picked.has(candidate.id))
+
+  const toggleAllCandidates = (): void => {
+    setPicked((current) => {
+      const next = new Set(current)
+      if (visibleCandidates.every(candidate => current.has(candidate.id))) {
+        for (const candidate of visibleCandidates) next.delete(candidate.id)
+      } else {
+        for (const candidate of visibleCandidates) next.add(candidate.id)
+      }
+      return next
+    })
+  }
 
   // A route the adapter already describes answers without an endpoint; only a
   // draft with neither has nothing to ask about.
@@ -627,6 +641,11 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
             placeholder={t('fetchSearchPlaceholder')}
             onChange={(event) => { setQuery(event.target.value) }}
           />
+        </div>
+        <div className={styles['candidateActions']}>
+          <Button variant="ghost" size="sm" disabled={visibleCandidates.length === 0} onClick={toggleAllCandidates}>
+            {t(allCandidatesPicked ? 'fetchDeselectAll' : 'fetchSelectAll')}
+          </Button>
         </div>
         {visibleCandidates.length === 0
           ? <p className={styles['candidateEmpty']}>{t('fetchNoMatches')}</p>

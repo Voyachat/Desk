@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-client-ui-commands",
   "description": "Client command surface: global directory cache, '/' source, three command UI kinds, popupSelect registry",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "publishConfig": {
     "access": "public"
   },
@@ -54,13 +54,10 @@
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-conversation": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-primitives": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-input-trigger": "workspace:^",
-    "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-commands": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",

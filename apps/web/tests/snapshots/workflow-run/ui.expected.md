@@ -5,18 +5,13 @@
   - img
   - img
   - text: Context injection @voyaseek-ai/dsh-system-prompt
-- button "Processed 1 steps":
+- button "Processed Completed workflow · {{duration}} · 1 steps":
   - img
   - img
-  - text: Processed 1 steps
-- button "snapshot-flow 1 member Succeeded" [expanded]:
+  - text: Processed Completed workflow · {{duration}} · 1 steps
+- button "snapshot-flow 1 member Succeeded":
   - img
   - text: snapshot-flow 1 member Succeeded
-- button "Inspect call"
-- button "Run 1 member Succeeded 1" [expanded]:
-  - img
-  - text: Run 1 member Succeeded 1
-- text: Reply with exactly the word WF_CHILD_OK and not… Succeeded
 - button "Think The workflow returned successfully with the reply \"WF_CHILD_OK\". Now I need to reply with exactly \"WORKFLOW_DONE\" and stop.":
   - img
   - img

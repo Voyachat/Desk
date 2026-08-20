@@ -1,7 +1,7 @@
 {
   "name": "@voyaseek-ai/dsh-aistaff-cloud-conformance-bundle",
   "description": "Test-only deterministic Aistaff Cloud Employee Experience composition",
-  "version": "0.1.0-rc.5",
+  "version": "0.1.0-rc.8",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
