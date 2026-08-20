@@ -12,6 +12,10 @@ The AiStaff product import brought eleven `packages/aistaff/*` packages that mer
 
 `CordisCatalogPolicy.excludedPackages` names manifest packages omitted from the projection. `projectCordisCatalog` applies the same filtered package set to semantic analysis and exported-declaration indexing, so excluded services, events, signature links, and runtime type declarations cannot affect generated harness artifacts. The [repository policy](../../../../scripts/gen-cordis-catalog.ts) lists the eleven product packages and names each of their twelve Context keys in `SERVICE_WALK_EXEMPTIONS`; the independent declaration scan still reads every Context merge and therefore remains fail-closed for declared but unrendered keys. `AgentDriverFactory`, the harness-owned agent driver type, is linked to the [core subsystem page](../../../../docs/subsystems/core.md).
 
+## Alternatives considered
+
+**Classify the product services in the harness Cordis catalog.** That would publish product APIs in documentation that does not own them and make every product service change regenerate the public harness catalog.
+
 ## Consequences
 
 - The harness catalog documents harness APIs; product service APIs remain in their owning package READMEs under [`packages/aistaff`](../../../../packages/aistaff).

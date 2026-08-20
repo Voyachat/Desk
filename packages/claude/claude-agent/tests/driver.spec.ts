@@ -76,11 +76,12 @@ async function makeDriver(
   canUseTool?: CanUseTool,
   permissionSettings?: () => Settings['permissions'] | undefined,
   runtime = 'claude',
+  recordedRuntime: string | undefined = runtime,
 ): Promise<{ ctx: Context; session: Session; driver: ClaudeSdkAgent; sdk: FakeSdk }> {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
   const session = ctx.sessions.create(SessionId('claude-session'), {
-    meta: { cwd: '/tmp/claude-work', agentRuntime: runtime },
+    meta: { cwd: '/tmp/claude-work', ...recordedRuntime === undefined ? {} : { agentRuntime: recordedRuntime } },
   })
   const sdk = new FakeSdk()
   const driver = new ClaudeSdkAgent(
@@ -88,6 +89,7 @@ async function makeDriver(
     session.id,
     {},
     session,
+    runtime,
     () => new SdkQueryEngine({
       childEnv: { PATH: '/usr/bin' },
       permissionMode,
@@ -178,6 +180,7 @@ describe('ClaudeSdkAgent', () => {
       undefined,
       undefined,
       'claude-custom',
+      undefined,
     )
     session.append('user/message', createUserMessage({
       content: [{ type: 'text', text: 'custom runtime history' }], source: { kind: 'user' },
@@ -279,6 +282,7 @@ describe('ClaudeSdkAgent', () => {
       session.id,
       {},
       session,
+      'claude',
       () => new SdkQueryEngine({
         childEnv: { PATH: '/usr/bin' },
         permissionMode: () => 'bypassPermissions',

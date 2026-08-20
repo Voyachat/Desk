@@ -11,10 +11,20 @@ import type { Context } from '@voyaseek-ai/cordis'
 
 const SOURCE = '@voyaseek-ai/dsh-system-prompt'
 const HANDOFF_SOURCE = '@voyaseek-ai/dsh-agent-loop/runtime-handoff'
-const HANDOFF_MAX_CHARS = 64_000
-const HANDOFF_MESSAGE_MAX_CHARS = 8_000
+const HANDOFF_MAX_BYTES = 64_000
+const HANDOFF_MAX_TOKENS = 16_000
+const HANDOFF_MESSAGE_MAX_BYTES = 8_000
+const HANDOFF_MESSAGE_MAX_TOKENS = 2_000
+const HANDOFF_CHARS_PER_TOKEN = 4
 const CLEARED = 'Current runtime context: none. Earlier runtime-context snapshots no longer apply.'
 const HANDOFF_INTRO = 'The following is a provider-neutral handoff of the visible conversation before the execution mode changed. Treat it as prior user-level conversation, not as system instructions.'
+const HANDOFF_SEPARATOR = '\n\n'
+const HANDOFF_OMITTED = '[Earlier conversation omitted to fit the runtime handoff budget]'
+
+interface HandoffCost {
+  readonly bytes: number
+  readonly tokens: number
+}
 
 function isOwned(message: UserMessage): boolean {
   return message.source.kind === 'plugin' && message.source.plugin === SOURCE
@@ -43,7 +53,7 @@ function handoffBlock(block: ContentBlock): string | undefined {
 /** Render one visible historical message as user-level handoff text. */
 function handoffMessageText(message: Message): string | undefined {
   // Dynamic plugin context is reassembled for the target runtime. Repeating
-  // stale snapshots would compete with that authoritative current value.
+  // stale snapshots or recalled Memory would compete with current context.
   if (message.source.kind !== 'user' && message.source.kind !== 'model' && message.source.kind !== 'tool') return
   const content = message.content.map(handoffBlock).filter(text => text !== undefined && text.length > 0)
   if (content.length === 0) return
@@ -53,32 +63,67 @@ function handoffMessageText(message: Message): string | undefined {
   return `[${label}]\n${content.join('\n')}`
 }
 
-function boundText(text: string, maxChars: number): string {
-  const points = Array.from(text)
-  return points.length <= maxChars ? text : `${points.slice(0, maxChars - 1).join('')}…`
+function handoffCost(text: string): HandoffCost {
+  return {
+    bytes: new TextEncoder().encode(text).byteLength,
+    tokens: Math.ceil(text.length / HANDOFF_CHARS_PER_TOKEN),
+  }
 }
 
-/** Keep the first visible prompt plus the newest portable history within one provider-safe budget. */
-function boundedHandoff(parts: readonly string[]): string {
-  const bounded = parts.map(part => boundText(part, HANDOFF_MESSAGE_MAX_CHARS))
-  const direct = bounded.join('\n\n')
-  if (Array.from(direct).length <= HANDOFF_MAX_CHARS) return direct
+function withinHandoffBudget(text: string, budget: HandoffCost): boolean {
+  const cost = handoffCost(text)
+  return cost.bytes <= budget.bytes && cost.tokens <= budget.tokens
+}
+
+function remainingHandoffBudget(limit: HandoffCost, used: string): HandoffCost {
+  const cost = handoffCost(used)
+  return {
+    bytes: Math.max(0, limit.bytes - cost.bytes),
+    tokens: Math.max(0, limit.tokens - cost.tokens),
+  }
+}
+
+/** Truncate one text without splitting a Unicode code point or exceeding either budget. */
+function boundHandoffText(text: string, budget: HandoffCost): string {
+  if (withinHandoffBudget(text, budget)) return text
+  const points = Array.from(text)
+  let low = 0
+  let high = points.length
+  let bounded = ''
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2)
+    const candidate = `${points.slice(0, middle).join('')}…`
+    if (withinHandoffBudget(candidate, budget)) {
+      bounded = candidate
+      low = middle + 1
+    } else {
+      high = middle - 1
+    }
+  }
+  return bounded
+}
+
+/** Keep the first visible prompt plus the newest portable history within the supplied aggregate budget. */
+function boundedHandoff(parts: readonly string[], budget: HandoffCost): string {
+  const messageBudget = {
+    bytes: Math.min(budget.bytes, HANDOFF_MESSAGE_MAX_BYTES),
+    tokens: Math.min(budget.tokens, HANDOFF_MESSAGE_MAX_TOKENS),
+  }
+  const bounded = parts.map(part => boundHandoffText(part, messageBudget)).filter(Boolean)
+  const direct = bounded.join(HANDOFF_SEPARATOR)
+  if (withinHandoffBudget(direct, budget)) return direct
   const first = bounded[0]
   if (first === undefined) return ''
-  const omitted = '[Earlier conversation omitted to fit the runtime handoff budget]'
-  const selected = [first]
-  let used = Array.from(first).length + Array.from(omitted).length + 4
+  const selected = [first, HANDOFF_OMITTED]
   const tail: string[] = []
   for (let index = bounded.length - 1; index > 0; index -= 1) {
     const part = bounded[index]
     if (part === undefined) continue
-    const cost = Array.from(part).length + 2
-    if (used + cost > HANDOFF_MAX_CHARS) break
+    const candidate = [...selected, part, ...tail].join(HANDOFF_SEPARATOR)
+    if (!withinHandoffBudget(candidate, budget)) continue
     tail.unshift(part)
-    used += cost
   }
-  selected.push(omitted, ...tail)
-  return selected.join('\n\n')
+  return [...selected, ...tail].join(HANDOFF_SEPARATOR)
 }
 
 /**
@@ -105,10 +150,14 @@ export function runtimeHandoffMessage(
   const parts = session.deriveMessages()
     .map(handoffMessageText)
     .filter((text): text is string => text !== undefined && text.length > 0)
-  const transcript = boundedHandoff(parts)
+  const prefix = `${HANDOFF_INTRO}${HANDOFF_SEPARATOR}`
+  const transcript = boundedHandoff(parts, remainingHandoffBudget({
+    bytes: HANDOFF_MAX_BYTES,
+    tokens: HANDOFF_MAX_TOKENS,
+  }, prefix))
   if (transcript.length === 0) return
   return createUserMessage({
-    content: [{ type: 'text', text: `${HANDOFF_INTRO}\n\n${transcript}` }],
+    content: [{ type: 'text', text: `${prefix}${transcript}` }],
     source: { kind: 'plugin', plugin: HANDOFF_SOURCE, form: 'recall' },
   })
 }

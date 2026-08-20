@@ -83,12 +83,28 @@ export class CodexAgent implements AgentDriver {
   private readonly serverRequest: CodexServerRequestHandler
   private readonly runtimeContext: RuntimeContextProjection
 
-  /** Bind one unpublished driver to its prepared session. */
+  /**
+   * Bind one unpublished driver to its prepared session.
+   * @param driverCtx - context the driver's scope and event dispatch root in.
+   * @param id - the shared agent/session identity.
+   * @param options - per-agent options recorded on the published agent.
+   * @param session - the prepared session this driver owns.
+   * @param runtimeId - configured runtime id this driver matches in switch events.
+   * @param engine - app-server process and protocol owner.
+   * @param resolveTurnConfig - resolves the provider process configuration for each turn.
+   * @param cwd - workspace handed to every app-server process.
+   * @param configuredProvider - default provider route served by this driver.
+   * @param configuredModel - deployment model used before a global selection exists.
+   * @param makeServerRequest - builds the approval bridge once the agent exists.
+   * @param admittedModels - optional model ids accepted on the configured provider.
+   * @param admittedRoutes - optional additional provider/model routes accepted by this driver.
+   */
   constructor(
     driverCtx: Context,
     public readonly id: SessionId,
     public readonly options: AgentOptions,
     public readonly session: Session,
+    private readonly runtimeId: string,
     private readonly engine: CodexAppServerEngine,
     private readonly resolveTurnConfig: (request: LlmCallConfig) => Promise<CodexTurnConfig>,
     private readonly cwd: string,
@@ -201,7 +217,7 @@ export class CodexAgent implements AgentDriver {
     const context = this.runtimeContext.project(joinContextSections(sections), sections)
     const handoff = runtimeHandoffMessage(
       this.session,
-      this.session.header.agentRuntime ?? 'codex',
+      this.runtimeId,
       'codex-agent/runtime',
     )
     const messages = [

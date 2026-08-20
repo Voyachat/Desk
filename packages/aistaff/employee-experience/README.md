@@ -8,7 +8,7 @@ The package deliberately has no Cloud transport, checkpoint, authentication cred
 
 ## Surface
 
-```ts
+```text
 import {
   EmployeeExperienceObjectLayer,
   type EmployeeExperienceSnapshot,
@@ -31,7 +31,7 @@ abstract class ProviderBase extends EmployeeExperienceObjectLayer {
 
 ## Model Experience
 
-None, as this package holds a Renderer business projection and contributes no prompt, model message, session event, or tool schema.
+None, as this package holds a Renderer business projection and contributes no prompt, model message, Session event, or tool schema.
 
 #### KV Cache effect
 

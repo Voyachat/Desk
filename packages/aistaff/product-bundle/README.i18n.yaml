@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/aistaff/product-bundle/README.md
-README.md: 3b2a0cdd6f6f6f0e0ed83204793851c3d6cbb7eb
-README.zh.md: 2b09ad9ff61550f384ddc5b32b7aefa689ec59f3
+README.md: fb115d8c3ddeb9d2711f07b92ad42f88f64a723e
+README.zh.md: 83ee2a4809e3a9760e405a19c4f253e33120202e

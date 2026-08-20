@@ -248,6 +248,7 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   MemoryItem: 'memory.md',
   MemoryMaintainer: 'memory.md',
   MemoryMaintenanceOptions: 'memory.md',
+  MemoryMaintenanceReceiptId: 'memory.md',
   MemoryMaintenanceResult: 'memory.md',
   MemoryOperationOptions: 'memory.md',
   RecallMemoryRequest: 'memory.md',

@@ -11,6 +11,9 @@ interface ProjectGraph {
   options: ts.CompilerOptions
 }
 
+/** The aggregate compiler programs a repository-wide semantic gate may seed. */
+export type CompilerFace = 'host' | 'client'
+
 /** TypeScript config host shared by repository scripts. */
 export const repositoryConfigHost: ts.ParseConfigFileHost = {
   useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
@@ -28,8 +31,8 @@ export const repositoryConfigHost: ts.ParseConfigFileHost = {
  * semantic graph. Never seed the root solution: flattening host+client into one
  * program collides the cordis Context merges.
  */
-function loadProjectGraph(projectRoot: string): ProjectGraph {
-  const rootConfigPath = resolve(projectRoot, 'tsconfig.host.json')
+function loadProjectGraph(projectRoot: string, face: CompilerFace): ProjectGraph {
+  const rootConfigPath = resolve(projectRoot, `tsconfig.${face}.json`)
   const rootConfig = parseConfig(rootConfigPath)
   const rootNames = new Set<string>()
   const visited = new Set<string>()
@@ -81,8 +84,12 @@ export class TypeScriptProject {
   /** The checker shared by every semantic query in this project. */
   readonly checker: ts.TypeChecker
 
-  constructor(private readonly projectRoot: string) {
-    const graph = loadProjectGraph(projectRoot)
+  /**
+   * @param projectRoot - repository root the program is seeded and reported from.
+   * @param face - compiler aggregate to flatten without merging Host and Client declarations.
+   */
+  constructor(readonly projectRoot: string, face: CompilerFace = 'host') {
+    const graph = loadProjectGraph(projectRoot, face)
     this.program = ts.createProgram(graph.rootNames, semanticCompilerOptions(graph.options))
     this.checker = this.program.getTypeChecker()
   }

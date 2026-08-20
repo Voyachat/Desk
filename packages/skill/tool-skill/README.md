@@ -71,7 +71,7 @@ The initial durable catalog is appended after the existing reusable prefix. Dyna
 
 #### What the model sees
 
-The model sees the generated [`skill` schema](../../../docs/tool-catalog.md#deepseek-aidsh-tool-skill).
+The model sees the generated [`skill` schema](../../../docs/tool-catalog.md#voyaseek-aidsh-tool-skill).
 
 #### Token effect
 

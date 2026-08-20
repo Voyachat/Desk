@@ -10,7 +10,7 @@
 
 ## 决策
 
-所属 Session 日志仍是唯一持久任务权威。Version-3 `complex-goal/change` 快照增加冻结的任务工作区与有界重试状态。存在 session persistence 时，插件轮询廉价 revision，只检查发生变化的冷日志，并通过 `ctx.agents.resume()` 与 `Agent.runMaintenance()` 调和 planning、executing、auditing 或 paused 目标。live Agent registry 在单进程内阻止重复激活。自动失败会提交带指数退避的 `retry` 转换；连续尝试达到配置上限后阻塞 goal。blocked goal 不会自动恢复。恢复的 executing 或 auditing 阶段仍会在另一个 Executor 前执行确定性验证与只读 Auditor，因此重试调度不会削弱现有的未知副作用规则。
+所属 Session 日志仍是唯一持久任务权威。Version-3 `complex-goal/change` 快照增加冻结的任务工作区与有界重试状态。存在 session persistence 时，插件轮询廉价 revision，只检查发生变化的冷日志，并通过 `ctx.agents.resume()` 与 `Agent.runMaintenance()` 调和 planning、executing、auditing 或 paused 目标。live Agent registry 在单进程内阻止重复激活。只有 maintenance 已领取 idle claim 且 paused checkpoint 仍是当前 goal revision 时，自动失败才会提交带指数退避的 `retry` 转换；被拒绝的 claim 或已被另一个 owner 取代的 checkpoint 不会消耗尝试次数。连续尝试达到配置上限后阻塞 goal。blocked goal 不会自动恢复。恢复的 executing 或 auditing 阶段仍会在另一个 Executor 前执行确定性验证与只读 Auditor，因此重试调度不会削弱现有的未知副作用规则。
 
 工作区隔离在创建 goal 前解析。`auto` 只为干净源目录创建 detached Git worktree，否则持久记录明确的共享工作区原因；`required` 则失败。现有 in-process subagent driver 增加窄的 provider-owned `cwd` 选项，让私有 Executor 与 Auditor 使用冻结的任务目录，而不改变父 Session。所有 gate 与 Auditor 接受完成后，可信宿主代码针对冻结 commit 生成有界 binary diff，并只在 `git apply --check` 通过后应用。源 HEAD 移动或冲突会阻止完成并保留 worktree。reverse-apply 校验使 patch 已应用但完成事件尚未写入时的崩溃恢复保持幂等。
 

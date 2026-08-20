@@ -8,14 +8,15 @@ Provider 在一次操作中接受多个输入，并保持输入和页面顺序�
 
 ## 模型体验
 
-间接影响。Host 图片降级会为纯文本模型加入每张图片对应的 OCR Markdown 章节。
+间接影响，由 Host 图像回退决定是否把 OCR Markdown 加入文本模型请求。
 
 #### KV Cache 影响
 
-本机 Markdown 会替换受影响请求后缀中的图片块。
+OCR Markdown 会在相应请求后缀中替换图像块。
 
 ## 已知限制与延后工作
 
 - 这个 provider 只支持 macOS 10.15 及以上版本；Windows 与 Linux 发行物需要另一个 `ctx.documentConverter` provider。
+- 可选的 `mac-ocr` runtime 在首次转换时加载；省略 optional dependencies 的安装仍可组装该 provider，但在安装该 runtime 前转换会以 `FAILED` 失败。
 - OCR 保留识别出的文字与页面顺序，但不能替代对场景或物体的通用视觉推理。
 - 输入与完整 Markdown 都会在内存中缓冲，并受调用方和 provider 限制。

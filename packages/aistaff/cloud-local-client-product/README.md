@@ -10,19 +10,11 @@ The browser build inlines the selected production source and CSS while preservin
 
 ## Model Experience
 
-### Strict V2 workbench composition
-
-#### What the model sees
-
-Nothing directly. The wrapper only registers Renderer UI over existing Employee Experience and Local Capability projections.
-
-#### Token effect
-
-None. This package contributes no prompt, tool schema, or model input.
+None, as this browser composition renders existing projections and contributes no prompt, model message, Session event, or tool schema.
 
 #### KV Cache effect
 
-None. Client composition does not alter model requests.
+None; the package does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 

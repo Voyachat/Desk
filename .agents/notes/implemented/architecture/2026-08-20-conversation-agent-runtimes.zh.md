@@ -14,7 +14,7 @@ Status: implemented
 
 每个对话在 `SessionHeader.agentRuntime` 中选择且只选择一种 Runtime：字段缺省表示本机 DSH 循环，`claude` 表示 Claude Agent SDK 驱动，`codex` 表示官方 Codex app-server 驱动。该 header 对当前会话不可变，并由 JSONL 与 SQLite 持久化。从空白会话选择其他模式时，在同一 Workspace 打开或复用匹配的空白会话。从所保留的已完成历史切换时，创建并打开一个由 header 选择目标 Runtime 的子 fork；源会话保持不变。未提供目标 Runtime 的普通 fork 仍继承源 Runtime。
 
-跨 Runtime fork 会把 `agent/runtime/switched` 追加到构造种子中。替代驱动仅在自身 Runtime 事件位于该标记之后时接受提供方续接 id；因此经过其他 Runtime 的工作后再切回时，会启动新的提供方 thread，而不会恢复已经陈旧的隐藏历史。该替代 Runtime 的新首轮会增加一条 user 级 `recall` 消息，其中包含所保留的 user、assistant 与工具 transcript 文本。它会排除提供方私有推理与陈旧插件上下文，用占位文本表示早先图片，并继续单独接收新组装的全局上下文。UI 会瞬时提示：在对话内切换可能降低执行效果。
+跨 Runtime fork 会把 `agent/runtime/switched` 追加到构造种子中。替代驱动使用 factory 配置的 Runtime id 匹配该标记，并仅在自身 Runtime 事件位于该标记之后时接受提供方续接 id；因此自定义 Runtime id 可正常工作，经过其他 Runtime 的工作后再切回时也会启动新的提供方 thread，而不会恢复已经陈旧的隐藏历史。该替代 Runtime 的新首轮会增加一条 user 级 `recall` 消息，其中只包含所保留的 user、assistant 与工具 transcript 文本。它会排除提供方私有推理、动态 Memory recall 与其他陈旧插件上下文，用占位文本表示早先图片，并继续单独接收新组装的全局上下文。完整 recall 包括引言在内，按每个 token 四个 UTF-16 code unit 的固定估算限制为 16,000 token，并限制为 64,000 个 UTF-8 字节。UI 会瞬时提示：在对话内切换可能降低执行效果。
 
 三种 Runtime 都仍是 DSH agent。它们接收同一份持久 Session、cwd、全局权限事件、凭据引用、组装后的系统提示词、Runtime 上下文投影、`agent/pre-step` 与 `agent/request` 模型选择 waterfall。每个替代驱动在调用 SDK 前，把实际 provider、model、系统提示词和上下文记录进 Session。凭据每轮解析，只进入清理后的子进程环境。Claude 的嵌入式 query 不读取用户或项目的 Claude settings；Codex 接收显式的 Responses provider 配置。它们的子进程树都由 `dsh-subprocess` 拥有并等待退出。
 
@@ -25,7 +25,7 @@ Claude 与 Codex 保留各自的内置工具 Runtime，同时 DSH 拥有权限�
 ## 后果
 
 - Runtime 选择器提供三个独立选项，其标签始终来自当前对话 header。
-- 用户可以从已有对话选择其他 Runtime 而不丢失可见历史，但提供方私有 thread 状态、工具状态、审批、推理和 cache 不会转移；系统不承诺执行效果完全一致。
+- 用户可以从已有对话选择其他 Runtime 而不丢失有界的可见历史，但动态 Memory recall、提供方私有 thread 状态、工具状态、审批、推理和 cache 不会转移；系统不承诺执行效果完全一致。
 - 重启、列表、恢复与 fork 都保留 Runtime 身份；未知 Runtime 会在会话创建或恢复时明确失败。
 - 全局 AI 配置与上下文在 Host 接缝共享；provider 专属的执行、续接 id、工具和流式输出仍由各驱动拥有。
 - 全局模型选择不能再显示成功却被 Claude 或 Codex 忽略；不受支持的协议／模型组合会被隐藏或拒绝。

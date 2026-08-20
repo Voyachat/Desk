@@ -8,11 +8,11 @@ Use it as the final bundle in an AiDesktop profile. Removing this layer restores
 
 ## Model Experience
 
-None, as this package only composes Host and Client plugins and contributes no prompt section, model message, or tool schema.
+None, as this package only composes Host and Client plugins whose owners declare their model-visible behavior.
 
 #### KV Cache effect
 
-None; this bundle adds no model-visible data.
+None directly; the composed runtime owners determine any model-request cache effect.
 
 ## Known Limitations and Deferred Work
 

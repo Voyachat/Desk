@@ -12,6 +12,7 @@ import type { Context } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
 import AgentMemory, {
   MemoryId,
+  MemoryMaintenanceReceiptId,
   type AgentMemoryStatus,
   type CaptureMemoryRequest,
   type MemoryItem,
@@ -19,6 +20,7 @@ import AgentMemory, {
   type MemoryMaintainer,
   type MemoryMaintenanceOptions,
   type MemoryMaintenanceChange,
+  type MemoryMaintenanceOutcome,
   type MemoryMaintenanceResult,
   type MemoryMutation,
   type MemoryOperationOptions,
@@ -34,7 +36,7 @@ import { SessionId } from '@voyaseek-ai/dsh-session'
 export const AGENT_MEMORY_SETTINGS_NAMESPACE = 'agent-memory'
 const namespace = settingsNamespace(AGENT_MEMORY_SETTINGS_NAMESPACE)
 const APPLICATION_ID = 0x4453484d
-const SCHEMA_VERSION = 3
+const SCHEMA_VERSION = 4
 const MEMORY_KINDS = ['preference', 'fact', 'constraint', 'event'] as const
 const DATABASE_TABLES = new Set(['memories', 'capture_outbox', 'capture_receipts'])
 
@@ -100,6 +102,11 @@ interface OutboxRow {
   capture_key: string
   payload: string
   attempts: number
+}
+
+interface ReceiptRow {
+  capture_key: string
+  outcome: string
 }
 
 const positiveInteger = z.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER)
@@ -195,6 +202,11 @@ function publicItem(row: MemoryRow): MemoryItem {
 
 const DATABASE_MIGRATIONS: Readonly<Record<number, (db: DatabaseSync) => void>> = {
   2: db => db.exec("UPDATE capture_outbox SET payload = json_remove(payload, '$.assistantText')"),
+  3: db => db.exec(`
+    ALTER TABLE capture_receipts ADD COLUMN outcome TEXT;
+    ALTER TABLE capture_receipts ADD COLUMN delivered_at INTEGER;
+    UPDATE capture_receipts SET delivered_at = processed_at;
+  `),
 }
 
 function migrateDatabase(db: DatabaseSync, actual: string, version: number): void {
@@ -280,7 +292,9 @@ function createDatabase(path: string): DatabaseSync {
       ) STRICT;
       CREATE TABLE IF NOT EXISTS capture_receipts (
         capture_key TEXT PRIMARY KEY,
-        processed_at INTEGER NOT NULL
+        processed_at INTEGER NOT NULL,
+        outcome TEXT,
+        delivered_at INTEGER
       ) STRICT;
       CREATE INDEX IF NOT EXISTS capture_receipts_processed ON capture_receipts(processed_at DESC);
       PRAGMA user_version = ${String(SCHEMA_VERSION)};
@@ -368,7 +382,7 @@ export class SettingsAgentMemory extends AgentMemory {
       ) as unknown as OutboxRow[]
       let processed = 0
       let failed = 0
-      const outcomes: MemoryMaintenanceResult['outcomes'][number][] = []
+      const failedOutcomes: MemoryMaintenanceOutcome[] = []
       for (const row of rows) {
         abortIfRequested(options?.signal)
         const capture = JSON.parse(row.payload) as CaptureMemoryRequest
@@ -376,13 +390,7 @@ export class SettingsAgentMemory extends AgentMemory {
         try {
           const mutations = await maintainer({ capture, candidates }, options)
           abortIfRequested(options?.signal)
-          const changes = this.applyMutations(row.capture_key, capture, candidates, mutations, config)
-          outcomes.push({
-            sessionId: capture.sessionId,
-            turn: capture.turn,
-            status: changes.length === 0 ? 'unchanged' : 'changed',
-            changes,
-          })
+          this.applyMutations(row.capture_key, capture, candidates, mutations, config)
           processed += 1
         } catch (error) {
           if (options?.signal?.aborted === true) throw options.signal.reason
@@ -390,11 +398,32 @@ export class SettingsAgentMemory extends AgentMemory {
           const delay = Math.min(60_000, 1_000 * (2 ** Math.min(attempts - 1, 6)))
           this.db.prepare('UPDATE capture_outbox SET attempts = ?, next_attempt_at = ?, last_error = ? WHERE capture_key = ?')
             .run(attempts, Date.now() + delay, bounded(String(error), 500), row.capture_key)
-          outcomes.push({ sessionId: capture.sessionId, turn: capture.turn, status: 'failed', changes: [] })
+          failedOutcomes.push({ sessionId: capture.sessionId, turn: capture.turn, status: 'failed', changes: [] })
           failed += 1
         }
       }
+      const outcomes = [
+        ...this.pendingReceipts(options?.sessionId, config.maintenanceBatchSize),
+        ...failedOutcomes,
+      ]
       return { processed, failed, pending: this.pendingCount(), outcomes }
+    })
+  }
+
+  override acknowledgeMaintenance(
+    receiptIds: readonly MemoryMaintenanceReceiptId[],
+    options?: MemoryOperationOptions,
+  ): Promise<number> {
+    return this.serialized(() => {
+      abortIfRequested(options?.signal)
+      const ids = [...new Set(receiptIds)]
+      if (ids.length === 0) return Promise.resolve(0)
+      const placeholders = ids.map(() => '?').join(', ')
+      const result = this.db.prepare(`
+        UPDATE capture_receipts SET delivered_at = ?
+        WHERE delivered_at IS NULL AND capture_key IN (${placeholders})
+      `).run(Date.now(), ...ids)
+      return Promise.resolve(Number(result.changes))
     })
   }
 
@@ -507,7 +536,7 @@ export class SettingsAgentMemory extends AgentMemory {
     candidates: readonly MemoryItem[],
     mutations: readonly MemoryMutation[],
     config: MemorySettings,
-  ): MemoryMaintenanceChange[] {
+  ): MemoryMaintenanceOutcome {
     const deletable = new Set(candidates.map(item => item.id))
     const changes: MemoryMaintenanceChange[] = []
     this.db.exec('BEGIN IMMEDIATE')
@@ -542,15 +571,27 @@ export class SettingsAgentMemory extends AgentMemory {
         }
       }
       this.prune(config.maxEntries)
-      this.db.prepare('INSERT INTO capture_receipts (capture_key, processed_at) VALUES (?, ?)').run(captureKey, Date.now())
+      const outcome: MemoryMaintenanceOutcome = {
+        receiptId: MemoryMaintenanceReceiptId(captureKey),
+        sessionId: capture.sessionId,
+        turn: capture.turn,
+        status: changes.length === 0 ? 'unchanged' : 'changed',
+        changes,
+      }
+      this.db.prepare(`
+        INSERT INTO capture_receipts (capture_key, processed_at, outcome, delivered_at)
+        VALUES (?, ?, ?, NULL)
+      `).run(captureKey, Date.now(), JSON.stringify(outcome))
       this.db.prepare('DELETE FROM capture_outbox WHERE capture_key = ?').run(captureKey)
       this.db.prepare(`
         DELETE FROM capture_receipts WHERE capture_key IN (
-          SELECT capture_key FROM capture_receipts ORDER BY processed_at DESC LIMIT -1 OFFSET ?
+          SELECT capture_key FROM capture_receipts
+          WHERE delivered_at IS NOT NULL
+          ORDER BY processed_at DESC LIMIT -1 OFFSET ?
         )
       `).run(config.maxEntries * 10)
       this.db.exec('COMMIT')
-      return changes
+      return outcome
     } catch (error) {
       this.db.exec('ROLLBACK')
       throw error
@@ -602,6 +643,19 @@ export class SettingsAgentMemory extends AgentMemory {
 
   private deleteExpired(now: number): void {
     this.db.prepare('DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at <= ?').run(now)
+  }
+
+  private pendingReceipts(sessionId: SessionId | undefined, limit: number): MemoryMaintenanceOutcome[] {
+    const rows = this.db.prepare(`
+      SELECT capture_key, outcome FROM capture_receipts
+      WHERE outcome IS NOT NULL AND delivered_at IS NULL
+        AND (? IS NULL OR json_extract(outcome, '$.sessionId') = ?)
+      ORDER BY processed_at LIMIT ?
+    `).all(sessionId ?? null, sessionId ?? null, limit) as unknown as ReceiptRow[]
+    return rows.map(row => {
+      const outcome = JSON.parse(row.outcome) as Omit<MemoryMaintenanceOutcome, 'receiptId' | 'sessionId'> & { sessionId: string }
+      return { ...outcome, receiptId: MemoryMaintenanceReceiptId(row.capture_key), sessionId: SessionId(outcome.sessionId) }
+    })
   }
 
   private pendingCount(): number {

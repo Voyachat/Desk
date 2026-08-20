@@ -10,8 +10,12 @@ Supervisor Receipts are authoritative for settlement. Only `succeeded` registrat
 
 ## Model Experience
 
-None. `capability_only` executes in the Cloud employee runtime; this package does not add DSH model messages, tools, or Session Events.
+None, as this local authorization service contributes no DSH prompt, model message, Session event, or tool schema.
 
-## Known limitations
+#### KV Cache effect
 
-Production composition must inject the authoritative Cloud interaction resolver, trusted native selector, admitted device identity, and production Supervisor Control provider. The conformance package is explicitly test-only and must not be mounted by a production bundle.
+None; the service does not assemble or send model requests.
+
+## Known Limitations and Deferred Work
+
+- **Production composition** — production bundles must inject the authoritative Cloud interaction resolver, trusted native selector, admitted device identity, and production Supervisor Control provider. The conformance package is explicitly test-only and must not be mounted by a production bundle.

@@ -11,52 +11,17 @@ Voyaseek Harness is a plugin-based agent harness on vendored Cordis: **everythin
 ## Repository layout
 
 ```
-vendor/      Vendored Cordis source — manifest + sync procedure in vendor/README.md
-packages/    @voyaseek-ai/dsh-<pkg> workspaces at packages/<group>/<pkg>/
-  core/        product API spine: session, system-prompt, tools, agent, agent-loop
-  api/         Remote BFF assembly and Typert RPC gateway
-  typert/      type graph generator, loader, and runtime registry
-  llm/         LLM capability: Service Definition/Consumer + DeepSeek providers
-  e2b/         E2B POC: sandbox + FS/subprocess adapters
-  shell/        bash capability: Service Definition + local/pwsh providers + shell Consumers
-  subprocess/  subprocess capability + local process-tree provider
-  terminal/         persistent sessions
-  fs/          filesystem capability + policy
-  lsp/         language-server capability
-  skill/       skill provider registry + local impl + catalog/loader tool
-  web/         web capability: Service Definition + search/fetch providers + tool Consumer
-  compaction/     compaction capability + basic provider
-  context/     request-context plugins
-  subagent/    subagent capability: Service Definition + providers + delegation Consumers
-  bundle/      installable dsh --profile patch-layer bundles
-  workflow/    workflow capability + worker-thread provider + tool Consumer
-  todo/        todo_write tool
-  plan/        plan mode as logged state
-  preset/      per-session agent composition from preset cordis.yml files
-  guard/       loop-hygiene + tool-timeout plugins
-  self-modification/  the agent inspects/mounts its own plugins
-  hooks/       Claude Code/Codex hook bridges + wire-protocol library
-  session/     durable session data: persistence, projection, titles, telemetry
-  identity/    anonymous identity
-  settings/    user-settings capability + file provider
-  credentials/ credential-reference capability + env/.env provider
-  acp/         automation-only Agent Client Protocol server
-  interaction/ approval/interaction capabilities, permission, commands, ask-user
-  boot/        shared app-bin glue
-  sdk/         JSON-RPC protocol, server, and TypeScript client
-  examples/    demo bundles (agent-spine + CLI/ACP/JSON-RPC bins)
-  support/     dev/test infrastructure
-  util/        zero-dependency utilities
-python/      Python SDK and bundled runtime (see python/README.md)
-native/      @voyaseek-ai/node-addon-landlock-run source of record (see native/README.md)
-examples/    Runnable cordis.yml leaves over packages/examples bundles (see examples/AGENTS.md)
-.agents/     Agent workflows and Agent Notes (`notes/`)
-docs/        architecture, generated catalogs, postmortems, cookbook (see docs/AGENTS.md)
-scripts/     repo gates and generators
-website/     VitePress projection of selected bilingual docs/ sources
+vendor/    pinned Cordis sources; see vendor/README.md
+packages/  @voyaseek-ai/dsh-* workspaces; groups and owners in packages/README.md
+apps/      assembled product and acceptance applications
+python/    Python SDK and bundled runtime
+native/    @voyaseek-ai/node-addon-landlock-run source
+examples/  runnable Cordis compositions; see examples/AGENTS.md
+.agents/   Agent workflows, skills, and Agent Notes
+docs/      architecture, generated references, postmortems, and cookbook
+scripts/   repository gates and generators
+website/   VitePress projection of selected bilingual docs
 ```
-
-Package groups: [packages/README.md](packages/README.md).
 
 ## Commands
 
@@ -83,15 +48,15 @@ pnpm run demo:acp       # ACP automation server (needs DEEPSEEK_API_KEY)
 
 ### Host sandbox failures
 
-When required `gh`, `pnpm`, build, test, or generator commands fail because the agent sandbox blocks credentials, network, IPC, file watching, or nested `sandbox-exec`, retry unchanged with the narrowest host escalation before diagnosing authentication or project failure. Require sandbox evidence; never bypass genuine test failures or the product sandbox under test.
+When sandbox restrictions block a required command, retry it unchanged with the narrowest host escalation before diagnosing the project. Require sandbox evidence; never bypass a genuine failure or the product sandbox under test.
 
 ### Run relevant checks locally
 
-Run checks before pushes via [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/SKILL.md); report only commands run. After `gh stack sync`, validate immediately; do not merge before checks pass.
+Before a push, follow [dsh-pre-push-checks](.agents/skills/dsh-pre-push-checks/SKILL.md) and report the commands run. Validate immediately after `gh stack sync`; do not merge before checks pass.
 
 - Match evidence to the surface: focused tests for behavior, snapshots for model or user output, `doc-sync` for docs, build/hygiene and built smokes for published paths, and real-API e2e for provider behavior.
-- During a batch of product fixes, validate each change only with the smallest owning-package unit, type, component, and directly required negative tests. Accumulate repository-wide build, assembled Web/Desktop Runtime, packaging, and artifact checks, then run them once immediately before the next user-authorized package build; do not repeat those integration checks after every independent fix. Security, permission, durable-data, and irreversible-side-effect changes still require immediate focused failure-path evidence. Packaging remains explicitly user-authorized and this project produces only the DMG unless the user asks for another artifact.
-- Never default to the full suite or repeat a passing check for commit or push. CI owns exhaustive coverage and the platform matrix; rehearse all locally only by explicit request, for CI diagnosis, or for an irreducibly repository-wide change.
+- During product-fix batches, run the smallest owning-package and failure-path checks per change, then run repository-wide build, assembled Runtime, packaging, and artifact checks once before an authorized package build. Security, permission, durable-data, and irreversible-side-effect changes require immediate focused failure evidence. Packaging requires explicit authorization and produces only the DMG unless requested otherwise.
+- Do not repeat passing checks for a commit or push. CI owns exhaustive coverage and the platform matrix; run them locally only by request, for CI diagnosis, or for an irreducibly repository-wide change.
 - `test:coverage`, not `test`, is the CI coverage gate ([why](docs/testing.md)).
 
 ## Secrets / .env
@@ -123,6 +88,7 @@ Real-API tests and demos read `DEEPSEEK_API_KEY`, optional `DEEPSEEK_BASE_URL`, 
 - **Prefer symmetry for parallel values**; unexplained asymmetry usually signals a missed extraction.
 - **Tests describe behavior, not correctness.** Change obsolete behavior with its tests; explain why in the PR.
 - **Non-trivial changes MUST include an Agent Note in the same PR;** only mechanical/local edits are exempt ([scope](.agents/notes/README.md#when-to-write-one)). Archived notes are frozen: never edit or treat them as current authority ([archive policy](.agents/notes/README.md#archiving-and-deletion)).
+- **Project design documents stay outside release source.** Store plans, upgrade reviews, and implementation designs under `/Users/baron/projects/文档/AIdesktopDoc/` and add each file to that directory's `README.md` index. Do not copy or symlink them into this repository, website inputs, Forge resources, or package files. Runtime contracts, public documentation, and required Agent Notes remain with their code owners in this repository.
 - **Testing policy** — [docs/testing.md](docs/testing.md). Every non-trivial model- or product-user-visible behavior change adds or updates a keyless snapshot through a real runnable example in the same PR; package tests, e2e-only assertions, and mock-only fixtures do not substitute for the assembled application transcript. Fixtures must replay on macOS/Linux; fix fixtures, not normalizers.
 - **A tool's UI render intent is part of its design**, decided up front (`generic`/`terminal`/`diff`, `locations`); presentation methods are pure functions of `args` ([cookbook](docs/cookbook/adding-a-tool.md)).
 - **Plan unit, e2e, and snapshot coverage** for capability seams, lifecycle paths, and transcript output; include missing snapshot-harness support in the same change.

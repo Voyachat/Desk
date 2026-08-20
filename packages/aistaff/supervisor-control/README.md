@@ -10,7 +10,7 @@ The package is a Service Definition, not a filesystem implementation or transpor
 
 ## Surface
 
-```ts
+```text
 const hello = await ctx.aistaffSupervisorControl.hello()
 const result = await ctx.aistaffSupervisorControl.readCapability({
   operation_id,
@@ -32,19 +32,11 @@ An uncertain call fails with `SupervisorControlError` code `OUTCOME_UNKNOWN`, th
 
 ## Model Experience
 
-### Supervisor control seam
-
-#### What the model sees
-
-Nothing directly. A provider or Consumer must append any admitted read content to the owning DSH Session before a later model request can include it.
-
-#### Token effect
-
-None. This package contributes no prompt, tool schema, or Session event.
+None, as this privileged Host control service contributes no DSH prompt, model message, Session event, or tool schema.
 
 #### KV Cache effect
 
-None. The control seam does not alter model requests.
+None; a consumer owns any later admission of returned content into a model request.
 
 ## Known Limitations and Deferred Work
 

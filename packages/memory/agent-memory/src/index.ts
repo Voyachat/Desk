@@ -20,6 +20,18 @@ export function MemoryId(value: string): MemoryId {
   return value as MemoryId
 }
 
+/** Stable provider-issued identity for one committed maintenance receipt. */
+export type MemoryMaintenanceReceiptId = Branded<'MemoryMaintenanceReceiptId'>
+
+/**
+ * Brand a provider-issued maintenance receipt identity.
+ * @param value - opaque validated identifier.
+ * @returns branded maintenance receipt identity.
+ */
+export function MemoryMaintenanceReceiptId(value: string): MemoryMaintenanceReceiptId {
+  return value as MemoryMaintenanceReceiptId
+}
+
 /** Durable memory classes visible to users and the model. */
 export type MemoryKind = 'preference' | 'fact' | 'constraint' | 'event'
 
@@ -136,6 +148,8 @@ export interface MemoryMaintenanceChange {
 
 /** Commit outcome for one captured turn. */
 export interface MemoryMaintenanceOutcome {
+  /** Durable delivery identity for a committed changed or unchanged outcome. */
+  readonly receiptId?: MemoryMaintenanceReceiptId
   readonly sessionId: SessionId
   readonly turn: number
   readonly status: 'changed' | 'unchanged' | 'failed'
@@ -174,6 +188,7 @@ declare module '@voyaseek-ai/dsh-session/types' {
      * The event is informational: it changes neither model history nor session reconstruction.
      */
     'agent-memory/maintenance': {
+      receiptId?: MemoryMaintenanceReceiptId
       turn: number
       status: MemoryMaintenanceOutcome['status']
       changes: readonly MemoryMaintenanceChange[]
@@ -214,6 +229,22 @@ export abstract class AgentMemory extends Service {
     maintainer: MemoryMaintainer,
     options?: MemoryMaintenanceOptions,
   ): Promise<MemoryMaintenanceResult>
+
+  /**
+   * Mark committed maintenance receipts delivered after their Session events flush.
+   * Providers that return `receiptId` from {@link maintain} must override this method.
+   * @param receiptIds - exact provider-issued receipt identities.
+   * @param options - optional cancellation.
+   * @returns number newly acknowledged.
+   */
+  acknowledgeMaintenance(
+    receiptIds: readonly MemoryMaintenanceReceiptId[],
+    options?: MemoryOperationOptions,
+  ): Promise<number> {
+    void receiptIds
+    void options
+    return Promise.reject(new Error('agent-memory provider does not support durable maintenance receipts'))
+  }
 
   /**
    * Store or replace one explicit structured memory.

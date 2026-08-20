@@ -7,3 +7,15 @@ This package is a `test_only` deterministic composition for the Cloud-owned `loc
 The Cloud local conformance bridge uses the in-memory Supervisor from `@voyaseek-ai/dsh-aistaff-supervisor-control/testing`. It does not launch or validate the Rust sidecar. The current real Rust production provider keeps file read and directory listing disabled, so this bundle must never appear in a production profile or be treated as evidence that production local reads are enabled.
 
 The browser scaffold collects both Remote client modules through the complete dependency list. No production bundle, `supervisor-process`, Fixture client entry, or automatic service fallback belongs in this composition.
+
+## Model Experience
+
+None, as this test-only bundle composes conformance fixtures and contributes no prompt, model message, Session event, or tool schema.
+
+#### KV Cache effect
+
+None; the bundle does not assemble or send model requests.
+
+## Known Limitations and Deferred Work
+
+- **Test-only local path** — the composition uses fixture selectors and an in-memory Supervisor provider; it neither launches nor validates the production Rust sidecar.

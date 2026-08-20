@@ -8,8 +8,12 @@
 
 ## 模型体验
 
-本组合不引入任何模型输入、工具 schema、token 或 KV Cache 内容。
+无，因为该 Host provider 只发布 Employee Experience 适配器，不贡献提示词、模型消息、会话事件或工具 schema。
+
+#### KV Cache 影响
+
+无；该 provider 不组装或发送模型请求。
 
 ## 已知限制与待办事项
 
-在 Aistaff 正式发布所固定的 Client Gateway 产物，且经身份验证的传输通道所有者提供 `AistaffClientGatewayInputs` 之前，生产环境组装将保持有意不可用状态。
+- **部署输入尚不可用** —— 在固定 Client Gateway 产物和已认证 transport owner 提供 `AistaffClientGatewayInputs` 之前，生产组合保持不可用。

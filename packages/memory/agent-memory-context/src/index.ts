@@ -195,12 +195,21 @@ export function apply(ctx: Context, config: Config): void {
       for (const outcome of result.outcomes) {
         const session = ctx.sessions.get(outcome.sessionId)
         if (session === undefined) continue
-        session.append('agent-memory/maintenance', {
-          turn: outcome.turn,
-          status: outcome.status,
-          changes: outcome.changes,
-        })
+        const recorded = outcome.receiptId !== undefined
+          && session.events.some(event => event.type === 'agent-memory/maintenance'
+            && event.data.receiptId === outcome.receiptId)
+        if (!recorded) {
+          session.append('agent-memory/maintenance', {
+            ...outcome.receiptId === undefined ? {} : { receiptId: outcome.receiptId },
+            turn: outcome.turn,
+            status: outcome.status,
+            changes: outcome.changes,
+          })
+        }
         await ctx.sessions.flush(session)
+        if (outcome.receiptId !== undefined) {
+          await ctx.agentMemory.acknowledgeMaintenance([outcome.receiptId], { signal })
+        }
       }
       if (result.failed > 0) ctx.logger.warn(`agent-memory maintenance left ${String(result.failed)} capture(s) for bounded retry`)
     } catch (error) {

@@ -6,11 +6,11 @@ This package owns the JSON-compatible employee, task, approval, receipt, event, 
 
 ## Model Experience
 
-None. The package contributes no prompt section, model message, or tool schema.
+None, as this package exports product data contracts and contributes no prompt, model message, Session event, or tool schema.
 
 #### KV Cache effect
 
-None; no exported value reaches a model request.
+None; exported types do not reach model requests at runtime.
 
 ## Known Limitations and Deferred Work
 

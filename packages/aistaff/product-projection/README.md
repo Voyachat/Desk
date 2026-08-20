@@ -6,11 +6,11 @@ This package provides `ctx.aistaffProduct`, the replaceable in-memory Host imple
 
 ## Model Experience
 
-None. The projection is a Host product service and contributes no prompt section, model message, or tool schema.
+None, as this Host projection service contributes no prompt, model message, Session event, or tool schema.
 
 #### KV Cache effect
 
-None; projection values do not enter a model request.
+None; the service does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 

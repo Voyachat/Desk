@@ -8,11 +8,19 @@ The integration deliberately excludes snapshot download, upload, training, pipel
 
 ## Model Experience
 
-The tool adds one bounded catalog result only when called. It does not add a standing prompt section.
+### Tool schema and result
+
+#### What the model sees
+
+The generated [`modelscope_search` schema](../../../docs/tool-catalog.md#voyaseek-aidsh-tool-modelscope) while the tool is visible, plus one bounded catalog result when the model calls it. The package adds no standing prompt section.
+
+#### Token effect
+
+Fixed schema cost while the tool is visible, plus data-dependent result text for each call.
 
 #### KV Cache effect
 
-The tool call and result extend the active request suffix.
+The tool definition stays prefix-stable while its configuration and visibility are unchanged. Each call and result extend the active request suffix.
 
 ## Known Limitations and Deferred Work
 

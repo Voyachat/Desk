@@ -8,19 +8,11 @@ The Client entry fetches and validates a complete Host baseline before registeri
 
 ## Model Experience
 
-### Employee Experience Remote bridge
-
-#### What the model sees
-
-Nothing. The bridge carries Renderer business projection reads and explicit user operations and does not register prompts, tools, or Session events.
-
-#### Token effect
-
-None. No Remote payload enters model context.
+None, as this Renderer bridge carries business projections and user operations without registering model input.
 
 #### KV Cache effect
 
-None. The package does not alter model requests.
+None; the bridge does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 

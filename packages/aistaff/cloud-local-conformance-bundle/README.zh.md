@@ -7,3 +7,15 @@
 云本地一致性桥接器使用来自 `@voyaseek-ai/dsh-aistaff-supervisor-control/testing` 的内存内 Supervisor。该桥接器不启动也不验证 Rust 伴随进程（sidecar）。当前实际运行的 Rust 生产环境服务提供方默认禁用文件读取与目录列表功能，因此本组合包绝不可出现在任何生产环境配置文件中，亦不得被视作生产环境中已启用本地读取能力的证据。
 
 浏览器脚手架（scaffold）通过完整的依赖列表加载两个远程客户端模块。本组合中不得包含任何生产环境组合包、`supervisor-process`、Fixture 客户端入口，或自动服务回退机制。
+
+## 模型体验
+
+无，因为该仅测试 bundle 只组合一致性 fixture，不贡献提示词、模型消息、会话事件或工具 schema。
+
+#### KV Cache 影响
+
+无；该 bundle 不组装或发送模型请求。
+
+## 已知限制与待办事项
+
+- **仅限测试的本地路径** —— 该组合使用 fixture selector 与内存 Supervisor provider，既不启动也不验证生产 Rust sidecar。

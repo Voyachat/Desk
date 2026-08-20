@@ -8,7 +8,7 @@ The page is not registered for a non-loopback connection. Enabling it starts onl
 
 ## Model Experience
 
-None. The package changes browser Settings and listener configuration only; it contributes no model-visible input.
+None, as this package changes browser Settings and listener configuration without contributing model-visible input.
 
 #### KV Cache effect
 

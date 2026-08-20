@@ -26,11 +26,19 @@ A pi-ai profile's `models` list is edited on the card: one row per model showing
 
 ## Model Experience
 
-The connection check sends the fixed text `Reply with OK.` to each explicitly checked provider/model/runtime route with an output limit of one token. Ordinary settings edits and model-catalog discovery do not send model-visible prompts.
+### Explicit connection check
+
+#### What the model sees
+
+An explicitly checked provider, model, and runtime route receives the fixed user text `Reply with OK.` with an output limit of one token. Ordinary settings edits and model-catalog discovery send no model request.
+
+#### Token effect
+
+One short user message and at most one output token per explicitly checked route.
 
 #### KV Cache effect
 
-The fixed connection-check request has no prior conversation and stores no response in a Session, so it creates no reusable conversation prefix or durable KV-cache identity.
+The check has no conversation history and stores no response in a Session, so it creates no reusable conversation prefix or durable cache identity.
 
 ## Known Limitations and Deferred Work
 

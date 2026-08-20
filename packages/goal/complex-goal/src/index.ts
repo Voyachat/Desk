@@ -1122,37 +1122,52 @@ async function resumeColdAgent(
   })
 }
 
+async function commitCurrentCheckpoint(
+  ctx: Context,
+  agent: Agent,
+  checkpoint: ComplexGoalSnapshot,
+  operation: 'block' | 'retry',
+  changes: (snapshot: ComplexGoalSnapshot) => SnapshotChanges,
+): Promise<ComplexGoalSnapshot | undefined> {
+  const current = foldComplexGoal(agent.session.events)
+  if (current === undefined
+    || current.goalId !== checkpoint.goalId
+    || current.revision !== checkpoint.revision
+    || current.phase !== checkpoint.phase) return undefined
+  return commit(ctx, agent, current, operation, changes(current))
+}
+
 async function recordAutomaticFailure(
   ctx: Context,
   agent: Agent,
   config: ResolvedConfig,
+  checkpoint: ComplexGoalSnapshot | undefined,
   error: unknown,
 ): Promise<void> {
-  const snapshot = foldComplexGoal(agent.session.events)
-  if (snapshot === undefined || snapshot.phase === 'complete' || snapshot.phase === 'blocked') return
-  if (snapshot.phase !== 'paused') {
+  if (checkpoint?.phase !== 'paused') {
     ctx.logger.warn(`complex-goal scheduler: session "${agent.id}" failed before a retry checkpoint: ${boundedError(error)}`)
     return
   }
-  const attempt = (snapshot.recovery?.attempt ?? 0) + 1
   const lastError = boundedError(error)
+  const attempt = (checkpoint.recovery?.attempt ?? 0) + 1
   if (attempt >= config.maxRecoveryAttempts) {
     const blocker = `Automatic recovery failed ${attempt} consecutive times: ${lastError}`
-    const blocked = await commit(ctx, agent, snapshot, 'block', {
+    const blocked = await commitCurrentCheckpoint(ctx, agent, checkpoint, 'block', snapshot => ({
       phase: 'blocked', resumeAt: snapshot.resumeAt ?? 'planning', blocker,
-    })
+    }))
+    if (blocked === undefined) return
     blockGoal(ctx, agent, blocked, 'automatic-recovery-exhausted', blocker)
     await ctx.sessions.flush(agent.session)
     return
   }
-  await commit(ctx, agent, snapshot, 'retry', {
+  await commitCurrentCheckpoint(ctx, agent, checkpoint, 'retry', () => ({
     phase: 'paused',
     recovery: {
       attempt,
       nextAttemptAtMs: Date.now() + retryDelay(config, attempt),
       lastError,
     },
-  })
+  }))
 }
 
 interface ComplexGoalScheduler {
@@ -1194,25 +1209,33 @@ function startScheduler(
 
   const drive = async (agent: Agent): Promise<void> => {
     let claimed = false
+    let failureCheckpoint: ComplexGoalSnapshot | undefined
     try {
       await agent.whenIdle()
       const initial = foldComplexGoal(agent.session.events)
       if (!automaticCandidate(initial) || active.has(agent)) return
       await trackedRun(active, agent, controller.signal, (signal) => {
-        const maintenance = agent.runMaintenance(maintenanceSignal => runWithinBudget(
-          ctx,
-          agent,
-          initial,
-          config,
-          AbortSignal.any([signal, maintenanceSignal]),
-        ))
+        const maintenance = agent.runMaintenance(async maintenanceSignal => {
+          try {
+            return await runWithinBudget(
+              ctx,
+              agent,
+              initial,
+              config,
+              AbortSignal.any([signal, maintenanceSignal]),
+            )
+          } catch (error: unknown) {
+            failureCheckpoint = foldComplexGoal(agent.session.events)
+            throw error
+          }
+        })
         claimed = true
         return maintenance
       })
     } catch (error: unknown) {
       if (controller.signal.aborted || !claimed) return
       try {
-        await recordAutomaticFailure(ctx, agent, config, error)
+        await recordAutomaticFailure(ctx, agent, config, failureCheckpoint, error)
       } catch (checkpointError: unknown) {
         ctx.logger.warn(`complex-goal scheduler: could not persist retry for session "${agent.id}": ${boundedError(checkpointError)}`)
       }

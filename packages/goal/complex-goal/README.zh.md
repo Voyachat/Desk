@@ -12,7 +12,7 @@ Auditor 启动前，宿主会通过 `ctx.shell` 在显式文件系统 `read-only
 
 Auditor 在另一个 fresh session 中启动。provider-owned 创建 hook 会在发布前追加 `sandbox/mode: read-only`，共享委派路径把审批固定为 `never`；固定白名单还把 Auditor 限制在父级实际存在的观察工具。只有 `status: complete`、`integrity: clean` 与 `alignment: aligned` 同时成立，并且确定性检查已通过，才提交完成。Auditor 在检查失败时声称完成，不能替换可信状态。每次被接受的审计都会完整替换后续 Manager 可以读取的可信 requirement、artifact、fact 与证据状态。
 
-每次转换都向父 session 追加完整的 version-3 `complex-goal/change` 快照，并在下一次可能产生副作用的 Executor 启动前完成持久化刷新。快照会冻结任务工作区、`verificationGates`、有界证据大小、开始时间、总耗时截止点与恢复尝试。session persistence 中的 planning、executing、auditing 或 paused 状态会被自动发现并恢复；executing 或 auditing 必须先重新验证与审计，之后才能启动另一个 Executor。连续自动失败会使用持久指数退避，达到配置上限后转为可见的 blocked goal。`/goal-complex resume` 仍是人工恢复入口，但不再是必需开关。
+每次转换都向父 session 追加完整的 version-3 `complex-goal/change` 快照，并在下一次可能产生副作用的 Executor 启动前完成持久化刷新。快照会冻结任务工作区、`verificationGates`、有界证据大小、开始时间、总耗时截止点与恢复尝试。session persistence 中的 planning、executing、auditing 或 paused 状态会被自动发现并恢复；executing 或 auditing 必须先重新验证与审计，之后才能启动另一个 Executor。只有已成功领取 maintenance 且对应 paused revision 仍为当前状态的失败才会记录持久重试；idle claim 领取失败或另一个 owner 已推进 revision 时，不会计为恢复失败。连续自动失败会使用持久指数退避，达到配置上限后转为可见的 blocked goal。`/goal-complex resume` 仍是人工恢复入口，但不再是必需开关。
 
 ## 任务工作区与回写
 

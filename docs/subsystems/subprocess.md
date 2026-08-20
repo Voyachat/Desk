@@ -12,7 +12,7 @@ One provider's spawn working directories, executable paths, ordinary processes, 
 
 ## Managed environment namespace and captured output
 
-`DSH_*` variables are Harness-owned child-process facts; implementations discard ambient `DSH_*` names before the caller's explicit `env` merges, so a current fact arrives only as a deliberate string entry, while an explicit `undefined` tombstone removes an ordinary ambient value. Each collected stream reports its truncation and spill-recovery state through `CollectedOutput`.
+`DSH_*` variables are Harness-owned child-process facts; implementations discard ambient `DSH_*` names before the caller's explicit `env` merges, so a current fact arrives only as a deliberate string entry, while an explicit `undefined` tombstone removes an ordinary ambient value. `VOYASEEK_HOME` is the only optional managed key outside that namespace. Each collected stream reports its truncation and spill-recovery state through `CollectedOutput`.
 
 ```ts type-equiv
 /** One environment key inside the managed {@link DSH_ENV_PREFIX} namespace. */
@@ -21,7 +21,7 @@ type DshEnvironmentKey = `${typeof DSH_ENV_PREFIX}${string}`
 
 ```ts type-equiv
 /** Trusted Voyaseek Harness variables for one child-process execution. */
-type DshEnvironment = Readonly<Record<DshEnvironmentKey, string>>
+type DshEnvironment = Readonly<Record<DshEnvironmentKey, string> & { VOYASEEK_HOME?: string }>
 ```
 
 ```ts type-equiv

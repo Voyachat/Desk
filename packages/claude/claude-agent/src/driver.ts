@@ -97,6 +97,7 @@ export class ClaudeSdkAgent implements AgentDriver {
    * @param id - the shared agent/session identity.
    * @param options - per-agent options recorded on the published agent.
    * @param session - the prepared session this driver owns.
+   * @param runtimeId - configured runtime id this driver matches in switch events.
    * @param engineFactory - builds the query engine once the agent exists, so the approval bridge can cite it.
    * @param cwd - workspace handed to every SDK child.
    * @param runtimeProvider - only provider route this Claude endpoint can serve.
@@ -108,6 +109,7 @@ export class ClaudeSdkAgent implements AgentDriver {
     public readonly id: SessionId,
     public readonly options: AgentOptions,
     public readonly session: Session,
+    private readonly runtimeId: string,
     engineFactory: (agent: ClaudeSdkAgent) => SdkQueryEngine,
     private readonly cwd: string,
     private readonly runtimeProvider: string,
@@ -268,7 +270,7 @@ export class ClaudeSdkAgent implements AgentDriver {
       const context = this.runtimeContext.project(joinContextSections(sections), sections)
       const handoff = runtimeHandoffMessage(
         this.session,
-        this.session.header.agentRuntime ?? 'claude',
+        this.runtimeId,
         'claude-agent/runtime',
       )
       const proposed = [

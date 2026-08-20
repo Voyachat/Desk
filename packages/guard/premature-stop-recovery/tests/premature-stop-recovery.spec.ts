@@ -193,6 +193,52 @@ describe('same-turn recovery', () => {
     ])
   })
 
+  it.each([
+    {
+      outcome: 'rejected',
+      install: (ctx: Context) => {
+        ctx.on('tools/pre-execute', async () => ({ kind: 'deny' as const, reason: 'operator rejected the call' }))
+      },
+    },
+    {
+      outcome: 'cancelled',
+      install: (ctx: Context) => {
+        ctx.on('tools/execute', async () => ({
+          content: [{ type: 'text' as const, text: 'Error: tool call aborted' }],
+          isError: true as const,
+          error: {
+            message: 'tool call aborted',
+            info: { name: 'AbortError', code: 'ABORTED' },
+          },
+        }))
+      },
+    },
+  ])('does not reset the recovery limit after a $outcome tool result', async ({ install }) => {
+    const { ctx, agent, adapter } = await setup([
+      response('让我现在运行搜索。'),
+      toolCall('blocked-work'),
+      response('好，继续发请求。'),
+      response('任务仍未完成；工具调用未获准完成，需要解除阻塞后重试。'),
+    ], { maxContinuations: 1 })
+    install(ctx)
+    ctx.tools.register(defineContentToolFixture({
+      name: 'work',
+      description: 'perform one protected task action',
+      parameters: {},
+      execute: () => Promise.resolve([{ type: 'text', text: 'done' }]),
+    }))
+    send(agent)
+    await agent.whenIdle()
+
+    expect(adapter.requests).toHaveLength(4)
+    expect(agent.session.events.find(event => event.type === 'tool/result')?.data)
+      .toMatchObject({ message: { content: [{ isError: true }] } })
+    expect(recoveryNotices(agent)).toEqual([
+      'Automatic continuation 1/1',
+      'Recovery limit reached (1)',
+    ])
+  })
+
   it('removes recovery behavior when its plugin fiber is disposed', async () => {
     const ctx = new Context()
     await mountAgentLoopTestDependencies(ctx)

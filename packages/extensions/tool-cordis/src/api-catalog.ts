@@ -166,6 +166,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'bounded pass counts.',
       },
       {
+        signature: 'acknowledgeMaintenance( receiptIds: readonly MemoryMaintenanceReceiptId[], options?: MemoryOperationOptions, ): Promise<number>',
+        description: 'Mark committed maintenance receipts delivered after their Session events flush. Providers that return `receiptId` from maintain must override this method.',
+        parameters: [{ name: 'receiptIds', description: 'exact provider-issued receipt identities.' }, { name: 'options', description: 'optional cancellation.' }],
+        returns: 'number newly acknowledged.',
+      },
+      {
         signature: 'abstract remember(request: RememberMemoryRequest, options?: MemoryOperationOptions): Promise<MemoryItem>',
         description: 'Store or replace one explicit structured memory.',
         parameters: [{ name: 'request', description: 'trusted Session-derived explicit memory.' }, { name: 'options', description: 'optional cancellation.' }],
@@ -3591,7 +3597,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'MemoryMaintenanceOutcome',
-    declaration: 'export interface MemoryMaintenanceOutcome {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly status: \'changed\' | \'unchanged\' | \'failed\';\n    readonly changes: readonly MemoryMaintenanceChange[];\n}',
+    declaration: 'export interface MemoryMaintenanceOutcome {\n    readonly receiptId?: MemoryMaintenanceReceiptId;\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly status: \'changed\' | \'unchanged\' | \'failed\';\n    readonly changes: readonly MemoryMaintenanceChange[];\n}',
+  },
+  {
+    name: 'MemoryMaintenanceReceiptId',
+    declaration: 'export type MemoryMaintenanceReceiptId = Branded<\'MemoryMaintenanceReceiptId\'>;',
   },
   {
     name: 'MemoryMaintenanceResult',

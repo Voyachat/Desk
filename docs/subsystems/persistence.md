@@ -86,6 +86,14 @@ interface SessionHeader {
    * would replay history the model can no longer act on.
    */
   readonly agentPreset?: string
+  /**
+   * Agent driver runtime this session's agent runs under (e.g. the default
+   * loop or an alternative driver registered with the loop factory). Durable
+   * because the runtime decides how history is produced: a resume under a
+   * different driver would continue a transcript that driver cannot drive.
+   * Absent means the deployment default driver.
+   */
+  readonly agentRuntime?: string
 }
 ```
 
@@ -95,7 +103,7 @@ A backend refuses a log it cannot faithfully interpret with `SessionFormatUnsupp
 
 ## `CreateSessionOptions` — seeding and metadata
 
-Creating a `Session` through the store takes a `seed` (initial replay or fork history) and `meta` (the storage-level fields the store folds into a `SessionHeader`). The store fills in `version`/`id` and defaults `createdAt`; the caller may supply the validated absolute `cwd`, the `parentSession` lineage, the `seedLength` seed boundary, the optional coarse `origin`, the `delegationDepth`, the `agentPreset` the agent was composed from, and an existing `createdAt`. `origin: 'subagent'` lets product navigation hide duplicate child rows; it does not prove that a descriptor is valid or that the child can resume.
+Creating a `Session` through the store takes a `seed` (initial replay or fork history) and `meta` (the storage-level fields the store folds into a `SessionHeader`). The store fills in `version`/`id` and defaults `createdAt`; the caller may supply the validated absolute `cwd`, the `parentSession` lineage, the `seedLength` seed boundary, the optional coarse `origin`, the `delegationDepth`, the `agentPreset` the agent was composed from, the `agentRuntime` driver that must resume it, and an existing `createdAt`. `origin: 'subagent'` lets product navigation hide duplicate child rows; it does not prove that a descriptor is valid or that the child can resume. Persisting `agentRuntime` prevents a resumed session from silently switching to a driver that cannot continue its transcript.
 
 ```ts type-equiv
 /**
@@ -118,6 +126,7 @@ interface CreateSessionOptions {
     readonly origin?: 'subagent'
     readonly delegationDepth?: number
     readonly agentPreset?: string
+    readonly agentRuntime?: string
   }
 }
 ```

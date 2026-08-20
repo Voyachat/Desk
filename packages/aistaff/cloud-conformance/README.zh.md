@@ -12,8 +12,12 @@
 
 ## 模型体验
 
-该测试前置数据（fixture）不引入任何模型输入、工具 schema、token 或 KV Cache 内容。
+无，因为该仅测试 Cloud fixture 只发布 Renderer 安全状态，不贡献提示词、模型消息、会话事件或工具 schema。
+
+#### KV Cache 影响
+
+无；该 fixture 不组装或发送模型请求。
 
 ## 已知限制与待办事项
 
-该 fixture 故意省略了身份认证、设备注册、包签名（bundle signatures）以及受管运行时路径（managed Runtime paths）。其 local-read 场景仅覆盖固定的能力专属兼容性提供方（conformance provider）；而生产环境中的能力执行必须依赖已发布的 Aistaff 产物及其配套提供方运行环境。
+- **仅限测试的 transport** —— 内存 transport 不会连接或验证生产 Aistaff 部署，也不得作为生产就绪证据。

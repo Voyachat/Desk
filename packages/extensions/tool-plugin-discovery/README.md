@@ -18,7 +18,7 @@ Catalog fields are validated before use. One validated catalog is cached per plu
 
 #### What the model sees
 
-The model sees `find_dsh_plugin(query, limit?, language?)`. Results contain source metadata and an optional package specification, always marked `unreviewed`; the rendered result states that source inspection, the DSH plugin audit, and user confirmation are required before installation.
+The model sees the generated [`find_dsh_plugin` schema](../../../docs/tool-catalog.md#voyaseek-aidsh-tool-plugin-discovery), with `query`, optional `limit`, and optional `language`. Results contain source metadata and an optional package specification, always marked `unreviewed`; the rendered result states that source inspection, the DSH plugin audit, and user confirmation are required before installation.
 
 #### Token effect
 

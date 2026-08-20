@@ -442,6 +442,7 @@ export function apply(ctx: Context, config: Config): void {
         id,
         options,
         session,
+        resolved.runtime,
         (agent) => {
           const permissionBridge = makeCanUseTool(ctx, agent)
           return new SdkQueryEngine({

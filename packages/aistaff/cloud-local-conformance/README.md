@@ -8,4 +8,12 @@ The native fixture path remains private to the selector and Supervisor. Renderer
 
 ## Model Experience
 
-This fixture adds no model input or tool schema. Its canonical Material is test data for Host and Renderer conformance only.
+None, as this test-only fixture publishes Renderer-safe state and contributes no prompt, model message, Session event, or tool schema.
+
+#### KV Cache effect
+
+None; the fixture does not assemble or send model requests.
+
+## Known Limitations and Deferred Work
+
+- **Test-only native access** — the package uses a fixed fixture path and in-memory Supervisor provider and must not be mounted by a production bundle.

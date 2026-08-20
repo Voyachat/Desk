@@ -8,8 +8,12 @@ Startup fails with `CLIENT_GATEWAY_UNAVAILABLE` before publishing `employeeExper
 
 ## Model Experience
 
-This composition adds no model input, tool schema, tokens, or KV-cache content.
+None, as this Host provider publishes an Employee Experience adapter and contributes no prompt, model message, Session event, or tool schema.
+
+#### KV Cache effect
+
+None; the provider does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 
-Production assembly remains intentionally unavailable until Aistaff releases the pinned Client Gateway artifact and an authenticated transport owner supplies `AistaffClientGatewayInputs`.
+- **Deployment inputs unavailable** — production assembly remains unavailable until a pinned Client Gateway artifact and an authenticated transport owner supply `AistaffClientGatewayInputs`.

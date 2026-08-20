@@ -12,6 +12,12 @@ The Aistaff language-policy Host plugin and invariant compile as separate entrie
 
 `@deepseek-ai/dsh-aistaff-language-policy` publishes `lib/rules-*.js` as an explicit package artifact. The workspace package-file policy owns the same extra entry, and desktop runtime verification requires one matching physical chunk and imports the staged plugin entry before Electron Forge can consume the directory.
 
+## Alternatives considered
+
+**Publish only the entry files and declarations.** That was the incomplete artifact set: `lib/index.js` retained its relative import while the referenced runtime chunk was absent.
+
+**Pin one build-specific chunk filename.** The chunk is content-hashed, so the package and staging rules match the artifact pattern rather than encoding a filename that changes with the compiled content.
+
 ## Consequences
 
 - The packaged Host plugin and invariant resolve the same compiled rule implementation.

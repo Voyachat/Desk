@@ -2,42 +2,20 @@
 
 English | [中文](README.zh.md)
 
-Claude Agent SDK driver for DSH sessions: a session created under the
-`claude` runtime is orchestrated by Claude Code (through the official
-`@anthropic-ai/claude-agent-sdk`) instead of the default DSH ReactLoopAgent.
-The package is the host half of the Claude integration; the browser half is
-`@voyaseek-ai/dsh-claude-runtime-ui` (the composer runtime selector).
+Claude Agent SDK driver for DSH sessions: a session created under the `claude` runtime is orchestrated by Claude Code (through the official `@anthropic-ai/claude-agent-sdk`) instead of the default DSH ReactLoopAgent. The package is the host half of the Claude integration; the browser half is `@voyaseek-ai/dsh-claude-runtime-ui` (the composer runtime selector).
 
 ## How it works
 
-`agent-loop` exposes a driver-factory registry keyed by session runtime. This
-package registers a factory for the `claude` runtime; `AgentLoop` consults
-`session.header.agentRuntime` at create/resume and builds a `ClaudeSdkAgent`
-for claude sessions. The driver:
+`agent-loop` exposes a driver-factory registry keyed by session runtime. This package registers a factory for the `claude` runtime; `AgentLoop` consults `session.header.agentRuntime` at create/resume and builds a `ClaudeSdkAgent` for claude sessions. The driver:
 
-- owns the turn/step boundaries and the inbox exactly like the default loop,
-  so the session log stays the source of truth;
-- assembles the same scoped system prompt and dynamic context as the native
-  loop, runs `agent/pre-step` and `agent/request`, and records the exact
-  provider/model/system snapshot in `request/header` before each SDK query;
-- runs one SDK `query()` per turn under the session cwd, mapping SDK messages
-  onto durable session events: `system/init` records a `claude-agent/runtime`
-  event (the SDK conversation id plus the model), assistant text/thinking/tool
-  blocks fold into `assistant/message` and `tool/call`, and SDK tool results
-  fold into `tool/result` linked to their call by `sourceEventSeqs`;
-- resumes the SDK conversation across turns by passing the recorded SDK
-  session id as `resume`, restoring it from the log after a restart;
-- after a cross-runtime fork, ignores Claude session ids before the latest
-  `agent/runtime/switched` marker and starts a new SDK conversation with a
-  provider-neutral recall of the retained visible transcript;
-- spawns the Claude Code CLI through `dsh-subprocess` with a scrubbed parent
-  environment, so the SDK child inherits exactly the intended `ANTHROPIC_*`
-  endpoint and credentials.
+- owns the turn/step boundaries and the inbox exactly like the default loop, so the session log stays the source of truth;
+- assembles the same scoped system prompt and dynamic context as the native loop, runs `agent/pre-step` and `agent/request`, and records the exact provider/model/system snapshot in `request/header` before each SDK query;
+- runs one SDK `query()` per turn under the session cwd, mapping SDK messages onto durable session events: `system/init` records a `claude-agent/runtime` event (the SDK conversation id plus the model), assistant text/thinking/tool blocks fold into `assistant/message` and `tool/call`, and SDK tool results fold into `tool/result` linked to their call by `sourceEventSeqs`;
+- resumes the SDK conversation across turns by passing the recorded SDK session id as `resume`, restoring it from the log after a restart;
+- after a cross-runtime fork, ignores Claude session ids before the latest `agent/runtime/switched` marker and starts a new SDK conversation with a provider-neutral recall of the retained visible transcript;
+- spawns the Claude Code CLI through `dsh-subprocess` with a scrubbed parent environment, so the SDK child inherits exactly the intended `ANTHROPIC_*` endpoint and credentials.
 
-Any Claude-API-compatible endpoint works: `baseUrl`/`authToken`/`apiKey`/
-`model` map onto `ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN` /
-`ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL`, and unset fields fall through to the
-parent environment, so third-party gateways need only their env vars.
+Any Claude-API-compatible endpoint works: `baseUrl`/`authToken`/`apiKey`/ `model` map onto `ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN` / `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL`, and unset fields fall through to the parent environment, so third-party gateways need only their env vars.
 
 Registered LLM routes whose exact model descriptor uses `anthropic-messages`, has an endpoint, and names a credential reference join the Claude model picker automatically. The driver resolves that route's current endpoint and credential for each query. OpenAI Responses and Chat Completions routes are not presented as Claude-compatible, even when the same account key can authenticate them.
 
@@ -82,13 +60,8 @@ Claude owns the conversation cache under `~/.claude`; DSH preserves its SDK sess
 
 ## Known Limitations and Deferred Work
 
-- No `assistant/chunk` streaming: the transcript folds final SDK messages,
-  so the UI renders claude replies message-wise rather than token-wise.
-- DSH tools, subagents, and projections do not participate in claude turns;
-  orchestration is entirely Claude Code's built-in surface.
-- The `claude-agent/runtime` session event is in-repo: persistence loads
-  recognize it through the generated catalog, but if this package moves out
-  of the repo, older logs carrying the event need the package mounted (the
-  append API gains plugin-ignorable events when a second consumer exists).
+- No `assistant/chunk` streaming: the transcript folds final SDK messages, so the UI renders claude replies message-wise rather than token-wise.
+- DSH tools, subagents, and projections do not participate in claude turns; orchestration is entirely Claude Code's built-in surface.
+- The `claude-agent/runtime` session event is in-repo: persistence loads recognize it through the generated catalog, but if this package moves out of the repo, older logs carrying the event need the package mounted (the append API gains plugin-ignorable events when a second consumer exists).
 - Token/usage statistics and per-turn cost reporting are deferred.
 - Claude permission modes and the native DSH file sandbox share product-level intent but not an operating-system enforcement implementation; UI copy must not claim identical kernel isolation or network control.

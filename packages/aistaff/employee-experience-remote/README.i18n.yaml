@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/aistaff/employee-experience-remote/README.md
-README.md: eef567734b6ece7e8c1489743bc421b3f3987aef
-README.zh.md: 4a84d8959b33b23e9a75a4f125f4643005233f05
+README.md: 107843a4ca788bb372f7a2beb3601be2a530f157
+README.zh.md: ef3be097f2adc6218ac8d7473675eb8d8ade8811

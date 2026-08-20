@@ -18,7 +18,7 @@
 
 #### 模型看到的内容
 
-模型会看到 `find_dsh_plugin(query, limit?, language?)`。结果包含源码元数据和可选的软件包规格，始终标为 `unreviewed`；渲染结果明确要求安装前检查源码、通过 DSH 插件审计并获得用户确认。
+模型会看到生成的 [`find_dsh_plugin` schema](../../../docs/tool-catalog.md#voyaseek-aidsh-tool-plugin-discovery)，参数包括 `query`、可选 `limit` 和可选 `language`。结果包含源码元数据和可选的软件包规格，始终标为 `unreviewed`；渲染结果明确要求安装前检查源码、通过 DSH 插件审计并获得用户确认。
 
 #### Token 影响
 

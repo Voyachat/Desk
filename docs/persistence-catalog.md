@@ -148,13 +148,14 @@ Source: [`packages/core/agent/src/types.ts:20`](../packages/core/agent/src/types
  * The event is informational: it changes neither model history nor session reconstruction.
  */
 'agent-memory/maintenance': {
+  receiptId?: MemoryMaintenanceReceiptId
   turn: number
   status: MemoryMaintenanceOutcome['status']
   changes: readonly MemoryMaintenanceChange[]
 }
 ```
 
-Source: [`packages/memory/agent-memory/src/index.ts:170`](../packages/memory/agent-memory/src/index.ts)
+Source: [`packages/memory/agent-memory/src/index.ts:190`](../packages/memory/agent-memory/src/index.ts)
 
 ### `agent-preset/*`
 

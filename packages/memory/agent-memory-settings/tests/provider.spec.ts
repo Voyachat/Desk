@@ -78,6 +78,13 @@ describe('SQLite-backed agent memory', () => {
     old.exec(`
       UPDATE capture_outbox
       SET payload = json_set(payload, '$.assistantText', '模型猜测用户还喜欢拿铁');
+      DROP INDEX capture_receipts_processed;
+      DROP TABLE capture_receipts;
+      CREATE TABLE capture_receipts (
+        capture_key TEXT PRIMARY KEY,
+        processed_at INTEGER NOT NULL
+      ) STRICT;
+      CREATE INDEX capture_receipts_processed ON capture_receipts(processed_at DESC);
       PRAGMA user_version = 2;
     `)
     old.close()
@@ -87,7 +94,7 @@ describe('SQLite-backed agent memory', () => {
     const version = migrated.prepare('PRAGMA user_version').get() as { user_version: number }
     const payload = migrated.prepare('SELECT payload FROM capture_outbox').get() as { payload: string }
     migrated.close()
-    expect(version.user_version).toBe(3)
+    expect(version.user_version).toBe(4)
     expect(JSON.parse(payload.payload)).toEqual({
       sessionId: 'pending', turn: 2, userText: '我的验证饮料改成咖啡',
     })
@@ -111,13 +118,78 @@ describe('SQLite-backed agent memory', () => {
     `)
     old.close()
 
-    await expect(harness(first.root)).rejects.toThrow('could not migrate schema version 2 to 3')
+    await expect(harness(first.root)).rejects.toThrow('could not migrate schema version 2 to 4')
     const unchanged = new DatabaseSync(first.path, { readOnly: true })
     const version = unchanged.prepare('PRAGMA user_version').get() as { user_version: number }
     const payload = unchanged.prepare('SELECT payload FROM capture_outbox').get() as { payload: string }
     unchanged.close()
     expect(version.user_version).toBe(2)
     expect(payload.payload).toBe('not-json')
+  })
+
+  it('migrates v3 receipts as already delivered when their historical outcome is unavailable', async () => {
+    const first = await harness()
+    const capture = {
+      sessionId: SessionId('legacy-receipt'), turn: 1, userText: '验证饮料是正山小种',
+    }
+    await first.memory.capture(capture)
+    await first.memory.maintain(preferenceMaintainer)
+    await first.ctx.fiber.dispose()
+
+    const old = new DatabaseSync(first.path)
+    old.exec(`
+      DROP INDEX capture_receipts_processed;
+      ALTER TABLE capture_receipts RENAME TO capture_receipts_v4;
+      CREATE TABLE capture_receipts (
+        capture_key TEXT PRIMARY KEY,
+        processed_at INTEGER NOT NULL
+      ) STRICT;
+      INSERT INTO capture_receipts (capture_key, processed_at)
+      SELECT capture_key, processed_at FROM capture_receipts_v4;
+      DROP TABLE capture_receipts_v4;
+      CREATE INDEX capture_receipts_processed ON capture_receipts(processed_at DESC);
+      PRAGMA user_version = 3;
+    `)
+    old.close()
+
+    const second = await harness(first.root)
+    await expect(second.memory.maintain(preferenceMaintainer, { sessionId: capture.sessionId })).resolves.toMatchObject({
+      processed: 0, outcomes: [],
+    })
+    await expect(second.memory.capture(capture)).resolves.toBe('duplicate')
+    await second.ctx.fiber.dispose()
+  })
+
+  it('retains committed maintenance receipts across restart until acknowledgement', async () => {
+    const first = await harness()
+    const capture = {
+      sessionId: SessionId('receipt-restart'), turn: 1, userText: '验证饮料是正山小种',
+    }
+    await first.memory.capture(capture)
+    const committed = await first.memory.maintain(preferenceMaintainer, { sessionId: capture.sessionId })
+    expect(committed.outcomes).toMatchObject([{
+      receiptId: 'receipt-restart:1', sessionId: capture.sessionId, turn: 1, status: 'changed',
+    }])
+    const receiptId = committed.outcomes[0]?.receiptId
+    expect(receiptId).toBeDefined()
+    await first.ctx.fiber.dispose()
+
+    const second = await harness(first.root)
+    await expect(second.memory.maintain(preferenceMaintainer, { sessionId: capture.sessionId })).resolves.toMatchObject({
+      processed: 0,
+      outcomes: [{ receiptId, sessionId: capture.sessionId, turn: 1, status: 'changed' }],
+    })
+    if (receiptId === undefined) throw new Error('missing maintenance receipt identity')
+    await expect(second.memory.acknowledgeMaintenance([receiptId])).resolves.toBe(1)
+    await expect(second.memory.acknowledgeMaintenance([receiptId])).resolves.toBe(0)
+    await second.ctx.fiber.dispose()
+
+    const third = await harness(first.root)
+    await expect(third.memory.maintain(preferenceMaintainer, { sessionId: capture.sessionId })).resolves.toMatchObject({
+      processed: 0, outcomes: [],
+    })
+    await expect(third.memory.capture(capture)).resolves.toBe('duplicate')
+    await third.ctx.fiber.dispose()
   })
 
   it('durably queues, consolidates, and corrects one semantic memory', async () => {

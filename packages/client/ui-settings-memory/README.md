@@ -8,7 +8,7 @@ The same plugin contributes low-emphasis rows to the conversation: a committed m
 
 ## Model Experience
 
-None directly; this package renders durable maintenance and recall provenance already owned by the agent-memory context consumer.
+None, as this package renders maintenance and recall provenance already owned by the agent-memory context consumer.
 
 #### KV Cache effect
 

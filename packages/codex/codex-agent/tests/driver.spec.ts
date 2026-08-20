@@ -108,14 +108,18 @@ async function nextTask(): Promise<void> {
   await new Promise<void>((resolve) => { setImmediate(resolve) })
 }
 
-async function makeDriver(children: FakeChild[] = [fakeChild()], runtime = 'codex') {
+async function makeDriver(
+  children: FakeChild[] = [fakeChild()],
+  runtime = 'codex',
+  recordedRuntime: string | undefined = runtime,
+) {
   const ctx = new Context()
   await ctx.plugin(LlmRuntime)
   await ctx.plugin(SessionStore)
   await ctx.plugin(ToolRuntime)
   await ctx.plugin(SystemPrompt, { persona: 'Follow the shared policy.' })
   const session = ctx.sessions.create(SessionId('codex-test'), {
-    meta: { cwd: '/tmp/codex-test', agentRuntime: runtime },
+    meta: { cwd: '/tmp/codex-test', ...recordedRuntime === undefined ? {} : { agentRuntime: recordedRuntime } },
   })
   const queue = [...children]
   const engine = new CodexAppServerEngine(() => {
@@ -128,6 +132,7 @@ async function makeDriver(children: FakeChild[] = [fakeChild()], runtime = 'code
     session.id,
     { provider: 'dashscope', model: 'qwen-test' },
     session,
+    runtime,
     engine,
     () => Promise.resolve({ argv: ['codex', 'app-server', '--stdio'], env: {}, disposeGraceMs: 100 }),
     '/tmp/codex-test',
@@ -240,7 +245,7 @@ describe('CodexAgent', () => {
 
   it('uses the configured runtime id when matching a cross-runtime handoff', async () => {
     const child = fakeChild()
-    const { session, driver } = await makeDriver([child], 'codex-custom')
+    const { session, driver } = await makeDriver([child], 'codex-custom', undefined)
     session.append('user/message', createUserMessage({
       content: [{ type: 'text', text: 'custom runtime history' }], source: { kind: 'user' },
     }), { surfaceOp: 'append' })

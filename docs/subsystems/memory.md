@@ -46,6 +46,15 @@ abstract capture( request: CaptureMemoryRequest, options?: MemoryOperationOption
 abstract maintain( maintainer: MemoryMaintainer, options?: MemoryMaintenanceOptions, ): Promise<MemoryMaintenanceResult>
 
 /**
+ * Mark committed maintenance receipts delivered after their Session events flush.
+ * Providers that return `receiptId` from {@link maintain} must override this method.
+ * @param receiptIds - exact provider-issued receipt identities.
+ * @param options - optional cancellation.
+ * @returns number newly acknowledged.
+ */
+acknowledgeMaintenance( receiptIds: readonly MemoryMaintenanceReceiptId[], options?: MemoryOperationOptions, ): Promise<number>
+
+/**
  * Store or replace one explicit structured memory.
  * @param request - trusted Session-derived explicit memory.
  * @param options - optional cancellation.
@@ -93,5 +102,5 @@ abstract forget(ids: readonly MemoryId[], options?: MemoryOperationOptions): Pro
 abstract clear(options?: MemoryOperationOptions): Promise<number>
 ```
 
-Source: [`packages/memory/agent-memory/src/index.ts:185`](../../packages/memory/agent-memory/src/index.ts)
+Source: [`packages/memory/agent-memory/src/index.ts:200`](../../packages/memory/agent-memory/src/index.ts)
 <!-- END GENERATED cordis-surface -->

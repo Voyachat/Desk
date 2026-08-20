@@ -8,14 +8,15 @@ The provider accepts multiple inputs in one operation and preserves input/page o
 
 ## Model Experience
 
-Indirect. The Host image fallback includes one OCR Markdown section per image for a text-only model.
+Indirectly, through the Host image fallback that includes OCR Markdown in a text-model request.
 
 #### KV Cache effect
 
-Local Markdown replaces image blocks in the affected request suffix.
+OCR Markdown replaces image blocks in the affected request suffix.
 
 ## Known Limitations and Deferred Work
 
 - This provider runs only on macOS 10.15 or later; another `ctx.documentConverter` provider is required for Windows and Linux distributions.
+- The optional `mac-ocr` runtime is loaded on the first conversion; installations that omit optional dependencies can compose the provider, but conversion fails with `FAILED` until that runtime is installed.
 - OCR preserves recognized text and page order but does not replace general visual reasoning about scenes or objects.
 - Inputs and complete Markdown are buffered in memory and bounded by the caller and provider limits.

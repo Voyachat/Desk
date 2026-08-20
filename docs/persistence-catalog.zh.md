@@ -150,13 +150,14 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
  * The event is informational: it changes neither model history nor session reconstruction.
  */
 'agent-memory/maintenance': {
+  receiptId?: MemoryMaintenanceReceiptId
   turn: number
   status: MemoryMaintenanceOutcome['status']
   changes: readonly MemoryMaintenanceChange[]
 }
 ```
 
-来源：[`packages/memory/agent-memory/src/index.ts:164`](../packages/memory/agent-memory/src/index.ts)
+来源：[`packages/memory/agent-memory/src/index.ts:190`](../packages/memory/agent-memory/src/index.ts)
 
 ### `agent-preset/*`
 
@@ -617,7 +618,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 'permission/preset': { preset: string }
 ```
 
-来源：[`packages/interaction/permission-presets/src/index.ts:50`](../packages/interaction/permission-presets/src/index.ts)
+来源：[`packages/interaction/permission-presets/src/index.ts:51`](../packages/interaction/permission-presets/src/index.ts)
 
 ### `plan/*`
 

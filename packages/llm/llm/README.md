@@ -87,11 +87,19 @@ Two adapters implement `LlmAdapter` on different internals: [`@voyaseek-ai/dsh-l
 
 ## Model Experience
 
-The explicit runtime probe sends the fixed user text `Reply with OK.` with a one-token output limit. It is not associated with a Session and does not enter conversation history. Ordinary streaming behavior is unchanged.
+### Explicit runtime probe
+
+#### What the model sees
+
+The selected runtime receives the fixed user text `Reply with OK.` with a one-token output limit. The probe is not associated with a Session and does not enter conversation history; ordinary streaming requests remain unchanged.
+
+#### Token effect
+
+One short user message and at most one output token per explicit probe. Ordinary calls remain pass-through.
 
 #### KV Cache effect
 
-The probe has no conversation prefix and creates no durable cache identity. Ordinary calls remain pass-through: the selected adapter and provider own cache reuse and routing boundaries.
+The probe has no conversation prefix and creates no durable cache identity. For ordinary calls, the selected adapter and provider own cache reuse and routing.
 
 ## Known Limitations and Deferred Work
 

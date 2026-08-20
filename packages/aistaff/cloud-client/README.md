@@ -10,8 +10,12 @@ Mutations bind body `operation_id` to `Idempotency-Key`. A dispatched timeout or
 
 ## Model Experience
 
-This package does not add model input, tool schemas, tokens, or KV-cache content. It only supplies Renderer-visible product state and user operations.
+None, as this Host adapter publishes Renderer-safe business projections and contributes no prompt, model message, Session event, or tool schema.
+
+#### KV Cache effect
+
+None; the package does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 
-No released Aistaff Client Gateway artifact or provider conformance environment is currently available. Tests inject a package-local conformance codec and carrier only; production composition must fail to load until a pinned artifact version, integrity, root hash, explicit transport, protocol offer, timeout, and initial object-layer snapshot are supplied.
+- **Production artifact unavailable** — no released Aistaff Client Gateway artifact or provider conformance environment is currently available. Tests use a package-local codec and carrier; production startup requires a pinned artifact, integrity metadata, transport, protocol offer, timeouts, and an initial snapshot.

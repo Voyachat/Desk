@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
 import AgentRegistry, { agentEvents, Inbox, type Agent } from '@voyaseek-ai/dsh-agent'
 import AgentMemory, {
-  MemoryId, type CaptureMemoryRequest, type MemoryItem, type RecallMemoryRequest,
-  type MemoryMaintainer, type MemoryMaintenanceResult, type RememberMemoryRequest,
+  MemoryId, MemoryMaintenanceReceiptId, type CaptureMemoryRequest, type MemoryItem, type RecallMemoryRequest,
+  type MemoryMaintainer, type MemoryMaintenanceReceiptId as MaintenanceReceiptId, type MemoryMaintenanceResult, type RememberMemoryRequest,
   type UpdateMemoryRequest,
 } from '@voyaseek-ai/dsh-agent-memory'
 import LlmRuntime, { CallId, createAssistantMessage, createUserMessage } from '@voyaseek-ai/dsh-llm'
@@ -18,6 +18,10 @@ class TestMemory extends AgentMemory {
   remembered: RememberMemoryRequest[] = []
   recalled: MemoryItem[] = []
   maintenance: MemoryMaintenanceResult = { processed: 0, failed: 0, pending: 0, outcomes: [] }
+  maintenanceCalls = 0
+  acknowledgeFailures = 0
+  acknowledgeAttempts: MaintenanceReceiptId[][] = []
+  acknowledged: MaintenanceReceiptId[] = []
   override status() {
     return {
       enabled: this.enabled,
@@ -32,7 +36,18 @@ class TestMemory extends AgentMemory {
   }
   override capture(request: CaptureMemoryRequest): Promise<'queued'> { this.captures.push(request); return Promise.resolve('queued') }
   override maintain(_maintainer: MemoryMaintainer): Promise<MemoryMaintenanceResult> {
+    this.maintenanceCalls += 1
     return Promise.resolve(this.maintenance)
+  }
+  override acknowledgeMaintenance(receiptIds: readonly MaintenanceReceiptId[]): Promise<number> {
+    this.acknowledgeAttempts.push([...receiptIds])
+    if (this.acknowledgeFailures > 0) {
+      this.acknowledgeFailures -= 1
+      return Promise.reject(new Error('simulated acknowledgement failure'))
+    }
+    const fresh = receiptIds.filter(receiptId => !this.acknowledged.includes(receiptId))
+    this.acknowledged.push(...fresh)
+    return Promise.resolve(fresh.length)
   }
   override remember(request: RememberMemoryRequest): Promise<MemoryItem> {
     this.remembered.push(request)
@@ -226,7 +241,10 @@ describe('agent-memory context consumer', () => {
       processed: 1,
       failed: 0,
       pending: 0,
-      outcomes: [{ sessionId: SessionId('maintained'), turn: 1, status: 'changed', changes: [] }],
+      outcomes: [{
+        receiptId: MemoryMaintenanceReceiptId('maintained:1'),
+        sessionId: SessionId('maintained'), turn: 1, status: 'changed', changes: [],
+      }],
     }
     const session = ctx.sessions.create(SessionId('maintained'), { meta: { cwd: '/project' } })
     session.append('turn/start', { turn: 1 })
@@ -237,9 +255,53 @@ describe('agent-memory context consumer', () => {
     await vi.waitFor(() => {
       expect(session.events.at(-1)).toMatchObject({
         type: 'agent-memory/maintenance',
-        data: { turn: 1, status: 'changed', changes: [] },
+        data: { receiptId: MemoryMaintenanceReceiptId('maintained:1'), turn: 1, status: 'changed', changes: [] },
       })
     })
+    await vi.waitFor(() => expect(memory.acknowledged).toEqual([MemoryMaintenanceReceiptId('maintained:1')]))
+    await ctx.fiber.dispose()
+  })
+
+  it('keeps a committed receipt while its originating Session is cold and delivers it on resume', async () => {
+    const { ctx, memory } = await harness()
+    const receiptId = MemoryMaintenanceReceiptId('cold:1')
+    memory.maintenance = {
+      processed: 0, failed: 0, pending: 0,
+      outcomes: [{ receiptId, sessionId: SessionId('cold'), turn: 1, status: 'unchanged', changes: [] }],
+    }
+    const trigger = fakeAgent(ctx.sessions.create(SessionId('trigger')))
+    agentEvents(ctx, trigger).emit('agent/session-start', { source: 'resume' })
+    await vi.waitFor(() => expect(memory.maintenanceCalls).toBe(1))
+    expect(memory.acknowledged).toEqual([])
+
+    const session = ctx.sessions.create(SessionId('cold'), { meta: { cwd: '/project' } })
+    agentEvents(ctx, fakeAgent(session)).emit('agent/session-start', { source: 'resume' })
+    await vi.waitFor(() => expect(memory.acknowledged).toEqual([receiptId]))
+    expect(session.events.filter(event => event.type === 'agent-memory/maintenance')).toMatchObject([{
+      data: { receiptId, turn: 1, status: 'unchanged', changes: [] },
+    }])
+    await ctx.fiber.dispose()
+  })
+
+  it('does not append a receipt twice when acknowledgement fails after Session flush', async () => {
+    const { ctx, memory } = await harness()
+    const receiptId = MemoryMaintenanceReceiptId('idempotent:1')
+    memory.maintenance = {
+      processed: 0, failed: 0, pending: 0,
+      outcomes: [{ receiptId, sessionId: SessionId('idempotent'), turn: 1, status: 'changed', changes: [] }],
+    }
+    memory.acknowledgeFailures = 1
+    const session = ctx.sessions.create(SessionId('idempotent'), { meta: { cwd: '/project' } })
+    const agent = fakeAgent(session)
+
+    agentEvents(ctx, agent).emit('agent/session-start', { source: 'resume' })
+    await vi.waitFor(() => expect(memory.acknowledgeAttempts).toHaveLength(1))
+    expect(session.events.filter(event => event.type === 'agent-memory/maintenance')).toHaveLength(1)
+
+    agentEvents(ctx, agent).emit('agent/session-start', { source: 'resume' })
+    await vi.waitFor(() => expect(memory.acknowledged).toEqual([receiptId]))
+    expect(memory.acknowledgeAttempts).toHaveLength(2)
+    expect(session.events.filter(event => event.type === 'agent-memory/maintenance')).toHaveLength(1)
     await ctx.fiber.dispose()
   })
 })

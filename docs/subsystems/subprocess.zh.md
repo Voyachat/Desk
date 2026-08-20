@@ -12,7 +12,7 @@
 
 ## 受管环境命名空间与捕获的输出
 
-`DSH_*` 变量是归 Harness 所有的子进程事实；实现会在合并调用方显式 `env` 之前丢弃环境中已有的 `DSH_*` 名称，因此当前事实只会以有意提供的字符串条目形式到达，而显式的 `undefined` tombstone 会删除普通环境中已有的值。每条被收集的流都通过 `CollectedOutput` 报告自身的截断与 spill 恢复状态。
+`DSH_*` 变量是归 Harness 所有的子进程事实；实现会在合并调用方显式 `env` 之前丢弃环境中已有的 `DSH_*` 名称，因此当前事实只会以有意提供的字符串条目形式到达，而显式的 `undefined` tombstone 会删除普通环境中已有的值。`VOYASEEK_HOME` 是该命名空间外唯一可选的受管键。每条被收集的流都通过 `CollectedOutput` 报告自身的截断与 spill 恢复状态。
 
 ```ts type-equiv
 /** One environment key inside the managed {@link DSH_ENV_PREFIX} namespace. */
@@ -21,7 +21,7 @@ type DshEnvironmentKey = `${typeof DSH_ENV_PREFIX}${string}`
 
 ```ts type-equiv
 /** Trusted Voyaseek Harness variables for one child-process execution. */
-type DshEnvironment = Readonly<Record<DshEnvironmentKey, string>>
+type DshEnvironment = Readonly<Record<DshEnvironmentKey, string> & { VOYASEEK_HOME?: string }>
 ```
 
 ```ts type-equiv

@@ -1,4 +1,6 @@
-# Agent Note：Agent 驱动 seam 使 Claude Agent SDK 能够编排 DSH 会话
+# Agent Note: Agent 驱动 seam 使 Claude Agent SDK 能够编排 DSH 会话
+
+Status: implemented
 
 [English](2026-08-17-claude-agent-sdk-driver-seam.md) | 中文
 
@@ -21,6 +23,12 @@ DSH 会话目前完全由仓库内置的 `ReactLoopAgent` 编排：`AgentLoop` �
 网关端到端贯穿运行时选择逻辑：`session.create` 接口校验 `agentRuntime` 是否存在于 `driverRuntimes()` 列表中（若不存在则返回 `runtime-not-found` 错误），将其写入会话头（header），回显给客户端，并在摘要信息及 `session-added` 框架中提供该值；拒绝运行时不一致的冷启动恢复（cold resume，报错 `runtime-conflict`）；fork 出的子会话继承该运行时，因为其种子会话（seed session）正是在此运行时下生成的。
 
 浏览器端（`packages/claude/ui-runtime`）占据 composer 的 `conversation.input.left` 插槽：它标识当前会话的运行时，并通过将所属工作区（workspace）切换至所选运行时来完成切换——由于会话自身的运行时不可变更，因此该切换操作实际作用于新创建的、在目标运行时下生成的会话。
+
+## 考虑过的替代方案
+
+**为 Claude fork agent loop。** 第二套循环会重复现有的会话、收件箱、轮次/步骤、审批、发布、释放与恢复生命周期机制，并逐渐偏离本机循环。
+
+**拦截 `llm/stream`。** Claude Agent SDK 拥有自己的轮次结构，因此在模型流位置适配会伪造生命周期事件，而不是让驱动实现标准 `Agent` 接口。
 
 ## 后果
 

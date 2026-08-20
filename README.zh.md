@@ -1,76 +1,35 @@
-# Voyaseek Harness
+# AiDesktop
 
 [English](README.md) | 中文
 
-Voyaseek Harness（`dsh`）是由 [Voyaseek AI](https://voyaseek.com) 开发的开源 agent harness（智能体框架）。
+AiDesktop 是一个独立桌面 AI 客户端，以 Voyaseek Harness 作为运行时和 Client 基座，并通过插件装配 Aistaff 产品能力。
 
-它采用**一切皆插件**的架构，并由 [Cordis](https://github.com/cordiverse/cordis) 驱动，其设计参见论文 [_A Programming Paradigm for Spatiotemporal Composability_](https://github.com/cordiverse/paper)。
+## 当前状态
 
-## 开发者预览
+本仓库包含隔离的 DSH 源码基线、Aistaff Client slot 插件、本地 UI fixture、Host Remote 与 bundle、Electron 封装代码，以及可运行的用户可见前端 Demo。
 
-Voyaseek Harness 目前处于 _开发者预览_ 阶段，正在快速迭代。**未来将出现破坏兼容性的变更。**
+- [架构](docs/architecture.md)
+- [开发指南](docs/development.md)
+- [可运行的前端主流程 Demo](apps/frontend-demo/README.md)
+
+真实 Aistaff Client Gateway、登录与 Workforce 流程、Cloud Run 到 Material 的投影、SSE replay、签名员工包激活、Supervisor 集成和客户发布安全要求尚未完成。Fixture 不执行真实云端员工任务或本地副作用。
+
+## 开发模式
+
+`pnpm run dev:aistaff` 启动隔离的 `.aidesktop-dev` profile。该入口通过专用 overlay 启用动态 Cordis 插件 HMR，发布 profile 则保持关闭。动态插件定义及最后成功构建的 JavaScript 持久化在该 profile 的 `$VOYASEEK_HOME/dynamic-cordis/` 下；可编辑源码位于 `sources/<pluginId>/host.ts` 与 `sources/<pluginId>/client.tsx`。
 
 ## 运行
 
-### 通过 `npm` 运行
-
-安装 `Node.js`，然后运行：
-
-```sh
-npx @voyaseek-ai/dsh web
-```
-
-该命令会启动 Web UI，默认地址为 `http://127.0.0.1:3080`。详见 [Web UI 指南](docs/user/guide/index.md)。
+AiDesktop 通过隔离的开发 profile 从本仓库运行。
 
 ### 从源码运行
 
-如需从仓库源码运行：
+安装受支持的 Node.js 版本与 pnpm，然后运行：
 
 ```sh
-git clone https://github.com/voyaseek-ai/voyaseek-harness.git
-cd voyaseek-harness
 pnpm install
 pnpm run build
-pnpm dsh web
+pnpm run dev:aistaff
 ```
 
-## 社区与支持
-
-- 欢迎通过 [GitHub Discussions](https://github.com/voyaseek-ai/voyaseek-harness/discussions) 提交反馈或 bug 报告。
-- 为你的插件仓库添加 [`dsh-plugin`](https://github.com/topics/dsh-plugin) 话题，便于被发现。
-- 欢迎加入 Voyaseek Harness 企微群：扫码添加企微小助手并填写入群问卷，完成后小助手会邀请你入群。
-
-<table>
-  <thead>
-    <tr>
-      <th align="center">企微小助手</th>
-      <th align="center">入群问卷</th>
-      <th align="center">微信公众号</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><img src="assets/community-wecom-assistant.png" alt="Voyaseek Harness 企微小助手二维码" width="180" height="180"></td>
-      <td align="center"><a href="https://trtgsjkv6r.feishu.cn/share/base/form/shrcnIt5twSVdLGD52KJBckGCgg"><img src="assets/community-wecom-survey.png" alt="Voyaseek Harness 入群问卷二维码" width="180" height="180"></a></td>
-      <td align="center"><img src="assets/community-wechat-official-account.png" alt="Voyaseek Harness 团队微信公众号二维码" width="180" height="180"></td>
-    </tr>
-  </tbody>
-</table>
-
-## 参与贡献
-
-参见 [CONTRIBUTING.md](CONTRIBUTING.md)。
-
-## 开发
-
-请先阅读[开发指南](docs/development.md)与[架构文档](docs/architecture.md)。
-
-桌面发行工作遵循 [Electron 打包参考文档](docs/electron-packaging.md)。
-
-面向 agent：请遵循 [AGENTS.md](AGENTS.md)。
-
-## 许可证
-
-[MIT](LICENSE)
-
-第三方依赖及其许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+开发命令使用隔离的开发 profile，从仓库源码启动 AiDesktop。

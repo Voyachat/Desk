@@ -4,13 +4,13 @@
 
 本包定义了确定性 UI 验收测试前置数据（fixture）所使用的、符合 JSON 格式的员工（employee）、任务（task）、审批（approval）、回执（receipt）、事件（event）、快照（snapshot）、结果（result）以及渲染器到宿主（Renderer-to-Host）等类型。实体 ID 在运行时保持为普通字符串，但通过 TypeScript 类型品牌（brand）加以区分，以防止调用方意外混用。
 
-## 模型交互体验
+## 模型体验
 
-无。本包不提供任何提示词（prompt）片段、模型消息（model message）或工具 schema（tool schema）。
+无，因为本包只导出产品数据约定，不贡献提示词、模型消息、会话事件或工具 schema。
 
 #### KV Cache 影响
 
-无；没有任何导出值会传递至模型请求。
+无；导出的类型在运行时不会进入模型请求。
 
 ## 已知限制与待办事项
 

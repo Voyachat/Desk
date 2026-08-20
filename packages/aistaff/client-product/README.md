@@ -14,7 +14,7 @@ Material text and Markdown are rendered as text without raw HTML. Structured mat
 
 ## Model Experience
 
-None, as this package renders product controls and contributes no prompt, model message, session event, or tool schema.
+None, as this package renders product controls and contributes no prompt, model message, Session event, or tool schema.
 
 #### KV Cache effect
 

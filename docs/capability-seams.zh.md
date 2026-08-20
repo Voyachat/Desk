@@ -9,15 +9,22 @@
 
 ```mermaid
 flowchart LR
+  pkg_agent_memory["agent-memory"]
+  svc_agentMemory["ctx.agentMemory<br/>Structured cross-session memory"]
+  pkg_agent_memory_settings["agent-memory-settings"]
+  pkg_agent_memory_context["agent-memory-context"]
+  pkg_apiproxy["apiproxy"]
   pkg_attachment["attachment"]
   svc_attachments["ctx.attachments<br/>Durable binary attachment storage"]
   pkg_attachment_local["attachment-local"]
   pkg_host_runtime["host-runtime"]
   pkg_llm_pi_ai["llm-pi-ai"]
+  pkg_image_fallback["image-fallback"]
+  svc_imageFallback["ctx.imageFallback<br/>Image-to-text fallback routing"]
+  pkg_tool_fs["tool-fs"]
   pkg_document_converter["document-converter"]
   svc_documentConverter["ctx.documentConverter<br/>Document-to-Markdown conversion"]
   pkg_document_converter_mac_ocr["document-converter-mac-ocr"]
-  pkg_apiproxy["apiproxy"]
   pkg_llm["llm"]
   svc_llm["ctx.llm<br/>LLM adapter registry"]
   pkg_llm_deepseek["llm-deepseek"]
@@ -79,7 +86,6 @@ flowchart LR
   pkg_system_prompt["system-prompt"]
   svc_systemPrompt["ctx.systemPrompt<br/>System prompt assembly registry"]
   pkg_tools["tools"]
-  pkg_tool_fs["tool-fs"]
   pkg_tool_terminal["tool-terminal"]
   pkg_tool_web["tool-web"]
   svc_tools["ctx.tools<br/>Tool registry and guarded execution pipeline"]
@@ -202,6 +208,8 @@ flowchart LR
   pkg_agent --> svc_agents
   pkg_agent_default_model --> svc_agentDefaultModel
   pkg_agent_loop --> svc_agentLoop
+  pkg_agent_memory --> svc_agentMemory
+  pkg_agent_memory_settings --> svc_agentMemory
   pkg_agent_presets --> svc_agentPresets
   pkg_api_gateway --> svc_typertGateway
   pkg_apiproxy --> svc_apiProxy
@@ -231,6 +239,7 @@ flowchart LR
   pkg_fs_local --> svc_fs
   pkg_fs_sandbox --> svc_fs
   pkg_goal --> svc_goals
+  pkg_image_fallback --> svc_imageFallback
   pkg_invariants --> svc_invariants
   pkg_jobs --> svc_jobs
   pkg_jobs_local --> svc_jobs
@@ -304,6 +313,8 @@ flowchart LR
   svc_agentDefaultModel --> pkg_headless
   svc_agentDefaultModel --> pkg_host_apiproxy
   svc_agentLoop --> pkg_agent_spine_demo
+  svc_agentMemory --> pkg_agent_memory_context
+  svc_agentMemory --> pkg_apiproxy
   svc_agents --> pkg_acp
   svc_agents --> pkg_agent_loop
   svc_agents --> pkg_subagent_inprocess
@@ -325,6 +336,8 @@ flowchart LR
   svc_e2b --> pkg_fs_e2b
   svc_e2b --> pkg_subprocess_e2b
   svc_fs --> pkg_tool_fs
+  svc_imageFallback --> pkg_apiproxy
+  svc_imageFallback --> pkg_tool_fs
   svc_invariants --> pkg_agent
   svc_invariants --> pkg_agent_loop
   svc_invariants --> pkg_scope
@@ -419,7 +432,9 @@ flowchart LR
 
 | ctx 键 | 角色 | 所属包 | 实现 | 直接消费方 | 配套插件 | 说明 |
 | --- | --- | --- | --- | --- | --- | --- |
+| `ctx.agentMemory` | `seam` | [`agent-memory`](../packages/memory/agent-memory) | [`agent-memory-settings`](../packages/memory/agent-memory-settings) | [`agent-memory-context`](../packages/memory/agent-memory-context), `apiproxy` | - | 提供方持有持久捕获、维护、召回与变更；context 插件提供已记录且模型可见的召回，Host 暴露用户管理操作。 |
 | `ctx.attachments` | `seam` | [`attachment`](../packages/attachment/attachment) | [`attachment-local`](../packages/attachment/attachment-local) | `host-runtime`, [`llm-pi-ai`](../packages/llm/llm-pi-ai) | - | 宿主会在会话事件之前提交已接受的图片；提供方适配器将已授权的持久引用解析为提供方原生内容。 |
+| `ctx.imageFallback` | `core` | [`image-fallback`](../packages/llm/image-fallback) | - | [`tool-fs`](../packages/fs/tool-fs), `apiproxy` | - | 该服务为纯文本模型路由解析有序的托管视觉与本地文档回退；文件工具与 Host 诊断消费其有界结果。 |
 | `ctx.documentConverter` | `seam` | [`document-converter`](../packages/document/document-converter) | [`document-converter-mac-ocr`](../packages/document/document-converter-mac-ocr) | `apiproxy` | - | Provider 把本机文档字节转换为有界 Markdown；Host 图片降级会在可选托管视觉路由前消费该服务。 |
 | `ctx.llm` | `seam` | [`llm`](../packages/llm/llm) | [`llm-deepseek`](../packages/llm/llm-deepseek), [`llm-pi-ai`](../packages/llm/llm-pi-ai), [`llm-replay`](../packages/test-support/llm-replay) | [`agent-loop`](../packages/core/agent-loop), [`compaction-basic`](../packages/compaction/compaction-basic) | - | 适配器注册提供方实现；agent loop（智能体循环）与压缩功能调用提供方无关的流服务。 |
 | `ctx.tokenMeter` | `core` | [`token-meter`](../packages/llm/token-meter) | - | [`compaction-basic`](../packages/compaction/compaction-basic) | - | 拥有按会话隔离的回放折叠区；压力消费方共享不可变且带修订版本的测量结果。 |
@@ -476,5 +491,3 @@ flowchart LR
 | `ctx.apiProxy` | `core` | `apiproxy` | - | `connection` | - | 与传输无关的 Host 网关接口：它分派浏览器 API 调用，每条打开的 Host 流自行订阅转发事件，而不是由广播方法向其推送。 |
 | `ctx.dynamicCordisRunner` | `core` | [`cordis-host-runner`](../packages/extensions/cordis-host-runner) | - | [`tool-cordis`](../packages/extensions/tool-cordis) | - | 拥有内存定义注册表、Host 半的 vm 沙箱和 request-run 往返流程；浏览器页面通过其 Remote 命名空间在线访问同一服务。 |
 | `ctx.cordisInspect` | `core` | [`cordis-host-runner`](../packages/extensions/cordis-host-runner) | - | [`tool-cordis`](../packages/extensions/tool-cordis) | - | 注册 Host inspect 提供方、镜像 Client 提供方 manifest，并通过动态 Cordis 传输路由 Client 查询。 |
-
-维护模式：混合模式。服务从 Cordis 声明中发现；接口、实现和消费方角色在 `scripts/gen-doc-graphs.ts` 中分类，并设有完整性守卫。

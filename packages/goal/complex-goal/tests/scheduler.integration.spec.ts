@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
+import type { Agent } from '@voyaseek-ai/dsh-agent'
 import AgentDefaultModel from '@voyaseek-ai/dsh-agent-default-model'
 import AgentLoop from '@voyaseek-ai/dsh-agent-loop'
 import { mountAgentLoopTestDependencies } from '@voyaseek-ai/dsh-agent-loop-testkit'
@@ -85,7 +86,8 @@ async function seedPausedGoal(
   cwd: string,
   sessionId: SessionId,
   dispose = true,
-): Promise<void> {
+  beforeFlush?: (agent: Agent) => void,
+): Promise<Agent> {
   const handle = await ctx.agents.create({
     sessionId,
     meta: { cwd },
@@ -120,8 +122,10 @@ async function seedPausedGoal(
   handle.agent.session.append('complex-goal/change', {
     kind: 'complex-goal/change', version: 3, operation: 'interrupt', snapshot: paused,
   })
+  beforeFlush?.(handle.agent)
   await ctx.sessions.flush(handle.agent.session)
   if (dispose) await handle.dispose()
+  return handle.agent
 }
 
 describe('durable complex-goal scheduler', () => {
@@ -148,6 +152,73 @@ describe('durable complex-goal scheduler', () => {
         blocker: 'A live external authority is required.',
       })
     }, { timeout: 5_000 })
+  })
+
+  it('does not count a lost idle claim as a durable recovery failure', { timeout: 10_000 }, async () => {
+    const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-complex-claim-race-')))
+    roots.push(root)
+    const sessions = join(root, 'sessions')
+    const sessionId = SessionId('claim-race-complex-goal')
+    const ctx = await mount(sessions, new MockAdapter([]), { automaticResume: true })
+    const claim = vi.fn()
+    await seedPausedGoal(ctx, root, sessionId, false, (agent) => {
+      vi.spyOn(agent, 'runMaintenance').mockImplementationOnce(() => {
+        claim()
+        throw new Error(`agent "${agent.id}" already has active work`)
+      })
+    })
+
+    await vi.waitFor(() => expect(claim).toHaveBeenCalled(), { timeout: 5_000, interval: 5 })
+    const inspected = await ctx.sessionPersistence.inspect(sessionId)
+    expect(foldComplexGoal(inspected.events)).toMatchObject({ phase: 'paused', revision: 2 })
+    expect(inspected.events.flatMap(event => event.type === 'complex-goal/change' ? [event.data.operation] : []))
+      .not.toContain('retry')
+  })
+
+  it('does not attribute an old maintenance error to a concurrently advanced goal', { timeout: 10_000 }, async () => {
+    const root = await realpath(await mkdtemp(join(tmpdir(), 'dsh-complex-generation-race-')))
+    roots.push(root)
+    const sessions = join(root, 'sessions')
+    const sessionId = SessionId('generation-race-complex-goal')
+    const ctx = await mount(sessions, new MockAdapter([
+      maxTokensResponse('manager stopped before a structured decision'),
+    ]), { automaticResume: true })
+    const claim = vi.fn()
+    await seedPausedGoal(ctx, root, sessionId, false, (agent) => {
+      const runMaintenance = agent.runMaintenance.bind(agent)
+      vi.spyOn(agent, 'runMaintenance').mockImplementationOnce(job => {
+        claim()
+        return runMaintenance(job).catch(async error => {
+          const current = foldComplexGoal(agent.session.events)
+          expect(current).toMatchObject({ phase: 'paused' })
+          if (current === undefined) throw new Error('missing complex-goal checkpoint')
+          const superseded: ComplexGoalSnapshot = {
+            ...current,
+            revision: current.revision + 1,
+            phase: 'blocked',
+            blocker: 'A concurrent owner advanced the goal after claiming idle.',
+          }
+          agent.session.append('complex-goal/change', {
+            kind: 'complex-goal/change', version: 3, operation: 'block', snapshot: superseded,
+          })
+          await ctx.sessions.flush(agent.session)
+          throw error
+        })
+      })
+    })
+
+    await vi.waitFor(() => expect(claim).toHaveBeenCalled(), { timeout: 5_000, interval: 5 })
+
+    await vi.waitFor(async () => {
+      const inspected = await ctx.sessionPersistence.inspect(sessionId)
+      expect(foldComplexGoal(inspected.events)).toMatchObject({
+        phase: 'blocked',
+        blocker: 'A concurrent owner advanced the goal after claiming idle.',
+      })
+    }, { timeout: 5_000 })
+    const inspected = await ctx.sessionPersistence.inspect(sessionId)
+    expect(inspected.events.flatMap(event => event.type === 'complex-goal/change' ? [event.data.operation] : []))
+      .not.toContain('retry')
   })
 
   it('persists retry timing and finishes reconciliation after another process restart', { timeout: 15_000 }, async () => {

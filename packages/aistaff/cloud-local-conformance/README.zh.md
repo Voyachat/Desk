@@ -8,4 +8,12 @@
 
 ## 模型体验
 
-本 fixture 不引入任何模型输入或工具 schema。其规范化的产物（Material）仅为 Host 与渲染器（Renderer）一致性测试提供测试数据。
+无，因为该仅测试 fixture 只发布 Renderer 安全状态，不贡献提示词、模型消息、会话事件或工具 schema。
+
+#### KV Cache 影响
+
+无；该 fixture 不组装或发送模型请求。
+
+## 已知限制与待办事项
+
+- **仅限测试的本地访问** —— 本包使用固定 fixture 路径和内存 Supervisor provider，不得由生产 bundle 挂载。

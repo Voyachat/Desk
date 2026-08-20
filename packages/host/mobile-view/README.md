@@ -10,11 +10,11 @@ The Host registers the live `mobile-view` settings namespace (`enabled`, `port`)
 
 ## Model Experience
 
-None. The plugin reads already committed session events and never changes model input.
+None, as this plugin reads already committed Session events and never changes model input.
 
 #### KV Cache effect
 
-None.
+None; the viewer does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 

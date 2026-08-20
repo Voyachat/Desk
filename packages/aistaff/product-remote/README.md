@@ -8,19 +8,11 @@ Host composition loads the default export after the product projection. Client c
 
 ## Model Experience
 
-### Product Remote bridge
-
-#### What the model sees
-
-Nothing. The bridge carries Renderer product reads and user actions and does not register prompt text, tools, or Session events.
-
-#### Token effect
-
-None. No request or response enters model context.
+None, as this Renderer bridge carries product projections and operations without registering model input.
 
 #### KV Cache effect
 
-None. The package does not alter model requests.
+None; the bridge does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 

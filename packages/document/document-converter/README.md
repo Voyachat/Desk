@@ -6,11 +6,11 @@ The provider-neutral `ctx.documentConverter` service converts complete in-memory
 
 ## Model Experience
 
-Indirect. A Consumer decides whether converted Markdown becomes model-visible and must record that input through its owning session event.
+Indirectly, through consumers that include recorded converted Markdown in a model request.
 
 #### KV Cache effect
 
-Converted Markdown changes the affected request suffix when a Consumer includes it in a model request.
+Converted Markdown changes the affected request suffix when a consumer includes it.
 
 ## Known Limitations and Deferred Work
 

@@ -723,10 +723,15 @@ function toolSource(entry: ToolPackage, toolName: string): string {
   return source
 }
 
+/** Escape model-facing prose so Markdown renderers do not parse literal placeholders as HTML. */
+function markdownText(value: string): string {
+  return value.replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+}
+
 /** Render one tool's entry: name, description, JSON-Schema parameters, source. */
 function renderTool(schema: ToolSchema, source: string): string[] {
   const out = [`### \`${schema.name}\``, '']
-  if (schema.description) out.push(schema.description, '')
+  if (schema.description) out.push(markdownText(schema.description), '')
   out.push('```json', JSON.stringify(schema.parameters, null, 2), '```', '')
   out.push(`Source: [\`${source}\`](../${source})`, '')
   return out

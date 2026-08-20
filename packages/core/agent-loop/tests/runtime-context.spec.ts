@@ -93,7 +93,7 @@ describe('runtimeHandoffMessage', () => {
     await ctx.fiber.dispose()
   })
 
-  it('omits dynamic memory recall and bounds long portable history', async () => {
+  it('omits dynamic memory recall and bounds the complete handoff by tokens and UTF-8 bytes', async () => {
     const ctx = new Context()
     await ctx.plugin(SessionStore)
     const session = ctx.sessions.create(SessionId('runtime-handoff-bounded'))
@@ -109,7 +109,10 @@ describe('runtimeHandoffMessage', () => {
         turn: index + 1,
         step: 1,
         message: createAssistantMessage({
-          content: [{ type: 'text', text: `${String(index)}:${'x'.repeat(10_000)}` }],
+          content: [{
+            type: 'text',
+            text: `${String(index)}:${index % 2 === 0 ? 'x'.repeat(10_000) : '记'.repeat(10_000)}`,
+          }],
           source: { provider: 'test', model: 'test-model' },
         }),
       }, { surfaceOp: 'append' })
@@ -120,7 +123,8 @@ describe('runtimeHandoffMessage', () => {
     const text = handoff?.content[0]?.type === 'text' ? handoff.content[0].text : ''
     expect(text).toContain('original prompt')
     expect(text).not.toContain('stale recalled memory')
-    expect(Array.from(text).length).toBeLessThanOrEqual(64_500)
+    expect(Math.ceil(text.length / 4)).toBeLessThanOrEqual(16_000)
+    expect(new TextEncoder().encode(text).byteLength).toBeLessThanOrEqual(64_000)
     expect(text).toContain('Earlier conversation omitted')
     await ctx.fiber.dispose()
   })

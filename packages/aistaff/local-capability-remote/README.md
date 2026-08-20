@@ -8,19 +8,11 @@ The Client entry fetches a complete Host baseline before registering `ctx.localC
 
 ## Model Experience
 
-### Local Capability Remote bridge
-
-#### What the model sees
-
-Nothing. The bridge carries explicit user authorization actions and display-safe projections and does not register prompts, tools, or Session events.
-
-#### Token effect
-
-None. No Remote payload enters model context.
+None, as this Renderer bridge carries authorization operations and display-safe projections without registering model input.
 
 #### KV Cache effect
 
-None. The package does not alter model requests.
+None; the bridge does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 

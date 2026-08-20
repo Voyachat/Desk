@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-17-product-packages-catalog-exclusion.md
-2026-08-17-product-packages-catalog-exclusion.md: f165ecbad2b6e4c43260983d662a5b2acb194a6c
-2026-08-17-product-packages-catalog-exclusion.zh.md: ec61793cb461aa9340345cae66ce6c81295cfa71
+2026-08-17-product-packages-catalog-exclusion.md: 2eca81ca3dab276000b37a9acf84d9f36579511d
+2026-08-17-product-packages-catalog-exclusion.zh.md: 05b5ef6aca71d6a9d97f93daf2c2918c91887891

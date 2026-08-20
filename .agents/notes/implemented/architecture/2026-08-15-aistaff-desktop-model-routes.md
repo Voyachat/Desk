@@ -16,6 +16,14 @@ The Electron main process reads model credentials from regular, owner-only, boun
 
 The main process resolves Electron's effective proxy for both provider endpoints and converts only the same valid credential-free HTTP(S) authority to Node proxy environment variables. Explicit launch proxy variables take precedence. `127.0.0.1` and `localhost` are always present in both `NO_PROXY` spellings for Host traffic. Before Renderer navigation, the BrowserWindow independently resolves the Runtime URL and fails startup unless every proxy directive is `DIRECT`, preventing proxy fallback for the unencrypted loopback page.
 
+## Alternatives considered
+
+**Put the routes and default in the shared DSH catalog.** The routes are product deployment choices, so changing the shared catalog or default profile would also change non-AI Staff deployments.
+
+**Carry credential values in the generated profile or Renderer.** That would place secrets in repository-controlled configuration, browser-visible state, or packaged artifacts instead of the bounded main-process file reader.
+
+**Allow the loopback Runtime page to follow the system proxy.** The page uses unencrypted local HTTP, so startup instead requires a direct route and fails before navigation when Electron resolves any proxy directive.
+
 ## Consequences
 
 The packaged product can use the local Gemini and DashScope credentials without adding a secret store or Renderer bridge. Missing local credential files do not block startup; the existing DSH credential error remains the visible failure. Domain-split PAC results, a leading `DIRECT`, SOCKS, and authenticated proxy entries are not converted and require an explicit supported launch proxy when direct Node access is unavailable. Real DSH smoke checks select both routes and record only route names and success markers.

@@ -8,7 +8,7 @@
 
 ## 表面接口
 
-```ts
+```text
 import {
   EmployeeExperienceObjectLayer,
   type EmployeeExperienceSnapshot,
@@ -31,11 +31,11 @@ abstract class ProviderBase extends EmployeeExperienceObjectLayer {
 
 ## 模型体验
 
-无。本包仅承载 Renderer 的业务投影，不提供任何提示词（prompt）、模型消息、会话事件或工具 schema。
+无，因为本包只承载 Renderer 业务投影，不贡献提示词、模型消息、会话事件或工具 schema。
 
 #### KV Cache 影响
 
-无。没有任何导出值会直接进入模型请求。
+无；没有导出值会直接进入模型请求。
 
 ## 已知限制与待办事项
 

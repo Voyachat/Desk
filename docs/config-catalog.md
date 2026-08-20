@@ -220,7 +220,7 @@ export interface Config {
 }
 ```
 
-Source: [`packages/memory/agent-memory-settings/src/index.ts:42`](../packages/memory/agent-memory-settings/src/index.ts)
+Source: [`packages/memory/agent-memory-settings/src/index.ts:44`](../packages/memory/agent-memory-settings/src/index.ts)
 
 <a id="voyaseek-aidsh-agent-presets"></a>
 
@@ -778,7 +778,7 @@ export interface Config {
 }
 ```
 
-Source: [`packages/document/document-converter-mac-ocr/src/index.ts:17`](../packages/document/document-converter-mac-ocr/src/index.ts)
+Source: [`packages/document/document-converter-mac-ocr/src/index.ts:16`](../packages/document/document-converter-mac-ocr/src/index.ts)
 
 <a id="voyaseek-aidsh-e2b"></a>
 
@@ -1168,6 +1168,12 @@ export interface PiAiProviderProfile {
   /** Endpoint for this route's models; defaults to the installed catalog's endpoint. */
   baseURL?: string
   /**
+   * Additional protocol endpoints authenticated by the same {@link apiKeyEnv}.
+   * The primary `api`/`baseURL` pair continues to serve native requests;
+   * Claude and Codex select the entry whose protocol they require.
+   */
+  alternateEndpoints?: PiAiAlternateEndpointProfile[]
+  /**
    * This route's model catalog. Omission serves the installed catalog for the
    * route unchanged; an explicit list replaces it, each entry defaulting its
    * unset fields from the installed model of the same id.
@@ -1230,6 +1236,14 @@ export interface PiAiProviderProfile {
   streamIdleTimeoutMs?: number
   /** Provider-owned model-request retry policy; omission uses normal defaults. */
   retryPolicy?: RetryPolicyConfig
+}
+
+/** One additional protocol endpoint sharing its provider route's credential. */
+export interface PiAiAlternateEndpointProfile {
+  /** Wire protocol served by this endpoint. */
+  api: string
+  /** Endpoint prefix used for that protocol. */
+  baseURL: string
 }
 
 /** One configured model entry: an id plus the catalog fields it overrides. */
@@ -1324,7 +1338,7 @@ type WithheldThinkingFormat = 'chat-template' | 'qwen-chat-template'
 
 Depends on: `Api` (`@earendil-works/pi-ai`) · `CacheRetention` (`@earendil-works/pi-ai`) · `Model` (`@earendil-works/pi-ai`) · `ModelThinkingLevel` (`@earendil-works/pi-ai`) · `OpenAICompletionsCompat` (`@earendil-works/pi-ai`) · [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets` (`@earendil-works/pi-ai`) · `Transport` (`@earendil-works/pi-ai`)
 
-Source: [`packages/llm/llm-pi-ai/src/config.ts:180`](../packages/llm/llm-pi-ai/src/config.ts)
+Source: [`packages/llm/llm-pi-ai/src/config.ts:194`](../packages/llm/llm-pi-ai/src/config.ts)
 
 <a id="voyaseek-aidsh-llm-replay"></a>
 

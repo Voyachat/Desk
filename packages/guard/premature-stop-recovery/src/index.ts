@@ -41,8 +41,8 @@ interface RecoveryState {
   resultCount: number
 }
 
-/** Count successful tool calls in the open turn as durable concrete progress. */
-function toolResultCount(agent: Agent, turn: number): number {
+/** Count append-only successful tool executions in the open turn as durable concrete progress. */
+function successfulToolResultCount(agent: Agent, turn: number): number {
   const events = agent.session.events
   let count = 0
   for (let index = events.length - 1; index >= 0; index -= 1) {
@@ -50,7 +50,9 @@ function toolResultCount(agent: Agent, turn: number): number {
     if (event?.type === 'turn/start' && event.data.turn === turn) break
     if (event?.type === 'tool/result'
       && event.data.turn === turn
-      && event.data.message.content.every(block => block.isError === false)) count += 1
+      && event.surfaceOp === 'append'
+      && event.data.error === undefined
+      && event.data.message.content[0].isError === false) count += 1
   }
   return count
 }
@@ -88,7 +90,7 @@ export function apply(ctx: Context, config: Config): void {
     const text = stoppedText(agent, turn)
     if (text === undefined || !looksLikePrematureStop(text)) return
 
-    const resultCount = toolResultCount(agent, turn)
+    const resultCount = successfulToolResultCount(agent, turn)
     let state = states.get(agent)
     if (state?.turn !== turn) {
       state = { turn, continuations: 0, finalizing: false, resultCount }

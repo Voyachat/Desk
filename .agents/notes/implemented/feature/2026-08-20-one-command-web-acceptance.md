@@ -1,8 +1,10 @@
 # Agent Note: One-command Web acceptance
 
+Status: implemented
+
 English | [中文](2026-08-20-one-command-web-acceptance.zh.md)
 
-## Context
+## Problem
 
 The assembled AiDesktop Web application depends on ordered Host, Client, and frontend artifacts. Its source Host and Client plugin watcher are separate processes, and a bare Vite page is not an application because it lacks `window.__DSH_BOOT__`. A feature session needs one repeatable entry that cannot silently serve stale artifacts, accept an unrelated HTTP listener, or leave either long-running process behind.
 
@@ -19,6 +21,14 @@ Reports are opt-in through `--report-dir <dir>`. After owned processes stop, the
 The checkout-owned `scripts/aidesktop-accept` entry resolves the repository from its own real path and invokes the root command with pnpm's explicit working-directory option. A user may install a symbolic link to this entry in `PATH`; the global item contains no copied implementation or fixed repository path, and a moved or deleted checkout fails explicitly.
 
 The complete build is the default freshness rule. The command does not infer which files changed or offer a skip-build mode because Host-generated Remote declarations, Client bundles, and the frontend shell have an ordered dependency. The existing two-command development workflow remains available for specialized use; direct Vite startup is not an acceptance path.
+
+## Alternatives considered
+
+**Use the existing two-command development workflow or start Vite directly.** The development workflow remains useful for specialized iteration, but it does not provide one owner for ordered build freshness, Host and Client lifecycle, assembled boot readiness, and cleanup; a bare Vite page lacks `window.__DSH_BOOT__`.
+
+**Infer changed files or allow a skip-build mode.** Host-generated Remote declarations, Client bundles, and the frontend shell have an ordered dependency, so the acceptance command performs the complete build instead of risking stale consumed artifacts.
+
+**Reuse or stop an existing listener on the requested default port.** The listener may be unrelated, so the command preserves its owner and chooses another port; an explicitly requested occupied port fails.
 
 ## Consequences
 

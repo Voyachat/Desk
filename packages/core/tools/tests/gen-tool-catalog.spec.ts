@@ -135,4 +135,20 @@ describe('gen-tool-catalog render', () => {
     expect(md).toContain('```json')
     expect(md).toContain('Source: [`packages/demo/tool-demo/src/index.ts`]')
   })
+
+  it('escapes literal angle-bracket placeholders in model-facing prose', () => {
+    const catalog: ToolCatalog = [{
+      pkg: '@voyaseek-ai/dsh-tool-demo',
+      sources: { demo: 'packages/demo/tool-demo/src/index.ts' },
+      requires: [],
+      writes: [],
+      schemas: [{
+        name: 'demo',
+        description: 'Reports <response clipped> without creating an HTML element.',
+        parameters: { type: 'object', properties: {} },
+      }],
+    }]
+
+    expect(render(catalog)).toContain('Reports &lt;response clipped&gt; without creating an HTML element.')
+  })
 })

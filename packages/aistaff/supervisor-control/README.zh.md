@@ -12,7 +12,7 @@
 
 ## 表面接口（Surface）
 
-```ts
+```text
 const hello = await ctx.aistaffSupervisorControl.hello()
 const result = await ctx.aistaffSupervisorControl.readCapability({
   operation_id,
@@ -32,21 +32,13 @@ const result = await ctx.aistaffSupervisorControl.readCapability({
 
 若调用结果不确定，则失败并抛出 `SupervisorControlError` 错误，其错误码为 `OUTCOME_UNKNOWN`，并携带原始 `operation_id` 及保留的 `receipt_ref`。调用方须通过 `readOperation()` 或 `getReceipt()` 进行操作协调，**不得**创建新的操作身份（operation identity）。
 
-## 模型体验（Model Experience）
+## 模型体验
 
-### Supervisor 控制能力 seam
-
-#### 模型所见内容
-
-模型无法直接感知该 seam。任何经许可的读取内容，必须由提供方（Provider）或消费方（Consumer）显式追加至所属 DSH 会话（DSH Session）中，后续模型请求才可能包含该内容。
-
-#### Token 影响
-
-无影响。本包不贡献任何提示词（prompt）、工具 schema（tool schema）或会话事件（Session event）。
+无，因为该特权 Host 控制服务不贡献 DSH 提示词、模型消息、会话事件或工具 schema。
 
 #### KV Cache 影响
 
-无影响。该控制能力 seam 不改变模型请求。
+无；任何返回内容是否在之后进入模型请求由消费方负责。
 
 ## 已知限制与待办事项
 

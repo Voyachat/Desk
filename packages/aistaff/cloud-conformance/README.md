@@ -12,8 +12,12 @@ Production bundles must not depend on or mount this package. A green fixture run
 
 ## Model Experience
 
-This test fixture adds no model input, tool schema, tokens, or KV-cache content.
+None, as this test-only Cloud fixture publishes Renderer-safe state and contributes no prompt, model message, Session event, or tool schema.
+
+#### KV Cache effect
+
+None; the fixture does not assemble or send model requests.
 
 ## Known Limitations and Deferred Work
 
-The fixture deliberately omits authentication, device registration, bundle signatures, and managed Runtime paths. Its local-read scenario exercises only the fixed capability-only conformance provider; production capability execution requires the released Aistaff artifact and provider environment.
+- **Test-only transport** — the in-memory transport does not contact or validate a production Aistaff deployment and must not be used as production readiness evidence.

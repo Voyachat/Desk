@@ -2,7 +2,6 @@
 
 import type { Context } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
-import { ocr } from 'mac-ocr'
 import { DocumentConverter, DocumentConversionError } from '@voyaseek-ai/dsh-document-converter'
 import type { DocumentConversionInput, DocumentConversionResult } from '@voyaseek-ai/dsh-document-converter'
 
@@ -58,6 +57,7 @@ export class MacOcrDocumentConverter extends DocumentConverter {
     const documents = []
     let outputBytes = 0
     try {
+      const { ocr } = await import('mac-ocr')
       for (const input of inputs) {
         const pages: string[] = []
         for await (const page of ocr.pages(input.data, {

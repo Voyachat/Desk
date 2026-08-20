@@ -245,6 +245,7 @@ export function apply(ctx: Context, config: Config): void {
         id,
         options,
         session,
+        resolved.runtime,
         new CodexAppServerEngine(spec => ctx.subprocess.spawn(spec)),
         request => resolveCodexTurnConfig(ctx, resolved, request),
         session.header.cwd ?? cwdFallback,

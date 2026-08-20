@@ -52,7 +52,7 @@ interface AgentHandle {
 
 ## The agent handle
 
-`Agent` is the surface every plugin (UI, hooks, orchestrators) programs against; `ctx.agents.get(id)` returns it, and the [initiator scope](#initiating-agent) carries it. The concrete implementation is package-internal to dsh-agent-loop; nothing outside the loop depends on it. The unified `send` method exposes target and wakeup routing directly; `followup`, `steer`, and `inject` are fixed-preset aliases.
+`Agent` is the surface every plugin (UI, hooks, orchestrators) programs against; `ctx.agents.get(id)` returns it, and the [initiator scope](#initiating-agent) carries it. The concrete implementation is package-internal to dsh-agent-loop; nothing outside the loop depends on it. The unified `send` method exposes target and wakeup routing directly; `followup`, `steer`, and `inject` are fixed-preset aliases. An alternative runtime may expose `modelConstraint` to restrict selection to the provider/model routes its native protocol can serve.
 
 Source: [`packages/core/agent/src/types.ts`](../../packages/core/agent/src/types.ts)
 
@@ -63,6 +63,8 @@ interface Agent {
   readonly id: SessionId
   /** The provider route and model this agent's requests use. */
   readonly options: AgentOptions
+  /** Optional model subset imposed by an alternative runtime protocol. */
+  readonly modelConstraint?: AgentModelConstraint
   /** The live session this agent drives; its log is the durable source of truth. */
   readonly session: Session
   /** The agent-owned projection of durable pending work. */
