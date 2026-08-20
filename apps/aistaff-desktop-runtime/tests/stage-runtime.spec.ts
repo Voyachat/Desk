@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -6,9 +6,13 @@ import {
   MAX_RUNTIME_BYTES,
   MAX_RUNTIME_FILE_COUNT,
   assertRuntimeBudget,
+  createRuntimeDeployArgs,
+  ensureTargetNodePtySpawnHelperExecutable,
   inspectRuntime,
   pruneNodePtyPrebuilds,
   rejectNonTargetNodePtyPrebuilds,
+  removeDeployMetadata,
+  verifyTargetNodePtyPrebuilds,
 } from '../scripts/stage-runtime.mjs'
 
 const fixtures: string[] = []
@@ -35,6 +39,70 @@ function writeFixtureFile(path: string, content: string) {
 }
 
 describe('desktop runtime staging policy', () => {
+  it('deploys offline from the shared lockfile without running lifecycle scripts', () => {
+    const args = createRuntimeDeployArgs('/tmp/aistaff-runtime')
+
+    expect(args).toEqual([
+      '--offline',
+      '--frozen-lockfile',
+      '--filter', '@voyaseek-ai/dsh-aistaff-desktop-runtime',
+      'deploy', '--prod', '--ignore-scripts',
+      '--config.node-linker=hoisted',
+      '--config.link-workspace-packages=true',
+      '--config.inject-workspace-packages=true',
+      '/tmp/aistaff-runtime',
+    ])
+    expect(args).toContain('--frozen-lockfile')
+    expect(args).not.toContain('--legacy')
+    expect(args).not.toContain('--config.lockfile=false')
+    expect(args).not.toContain('--config.frozen-lockfile=false')
+    expect(args).not.toContain('--config.dangerously-allow-all-builds=true')
+  })
+
+  it('removes modern deploy metadata after materialization', () => {
+    const root = mkdtempSync(join(tmpdir(), 'aistaff-runtime-metadata-test-'))
+    fixtures.push(root)
+    for (const path of [
+      'package.json',
+      'pnpm-lock.yaml',
+      'pnpm-workspace.yaml',
+      'node_modules/.modules.yaml',
+      'node_modules/.pnpm-workspace-state-v1.json',
+      'node_modules/.pnpm/lock.yaml',
+    ]) writeFixtureFile(join(root, ...path.split('/')), 'development path')
+    writeFixtureFile(join(root, 'node_modules', 'koffi', 'package.json'), '{}')
+
+    removeDeployMetadata(root)
+
+    expect(existsSync(join(root, 'package.json'))).toBe(false)
+    expect(existsSync(join(root, 'pnpm-lock.yaml'))).toBe(false)
+    expect(existsSync(join(root, 'pnpm-workspace.yaml'))).toBe(false)
+    expect(existsSync(join(root, 'node_modules', '.modules.yaml'))).toBe(false)
+    expect(existsSync(join(root, 'node_modules', '.pnpm-workspace-state-v1.json'))).toBe(false)
+    expect(existsSync(join(root, 'node_modules', '.pnpm'))).toBe(false)
+    expect(existsSync(join(root, 'node_modules', 'koffi', 'package.json'))).toBe(true)
+  })
+
+  it('restores the target node-pty spawn-helper executable mode', () => {
+    const { root, nodePty } = createNodePtyFixture()
+    const helper = join(nodePty, 'prebuilds', 'darwin-x64', 'spawn-helper')
+    chmodSync(helper, 0o644)
+
+    ensureTargetNodePtySpawnHelperExecutable(root)
+
+    expect(statSync(helper).mode & 0o777).toBe(0o755)
+    expect(() => verifyTargetNodePtyPrebuilds(root)).not.toThrow()
+  })
+
+  it('rejects every staged node-pty copy when one is missing its spawn-helper', () => {
+    const { root } = createNodePtyFixture()
+    const nestedNodePty = join(root, 'node_modules', 'consumer', 'node_modules', 'node-pty')
+    writeFixtureFile(join(nestedNodePty, 'prebuilds', 'darwin-x64', 'pty.node'), 'nested-addon')
+
+    ensureTargetNodePtySpawnHelperExecutable(root)
+
+    expect(() => verifyTargetNodePtyPrebuilds(root)).toThrow('spawn-helper is missing')
+  })
   it('retains the license and darwin-x64 binaries while removing other node-pty prebuilds', () => {
     const { root, nodePty } = createNodePtyFixture()
 

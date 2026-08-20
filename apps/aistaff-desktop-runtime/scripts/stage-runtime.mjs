@@ -33,7 +33,7 @@ const expectedMachOArchitecture = 'x86_64'
 export const TARGET_NODE_PTY_PREBUILD = 'darwin-x64'
 
 /** Maximum logical bytes accepted in the staged runtime. */
-export const MAX_RUNTIME_BYTES = 470 * 1024 * 1024
+export const MAX_RUNTIME_BYTES = 800 * 1024 * 1024
 
 /** Maximum regular-file count accepted in the staged runtime. */
 export const MAX_RUNTIME_FILE_COUNT = 27_000
@@ -51,17 +51,10 @@ export function stageRuntime() {
     const builtSupervisor = buildSupervisorSidecar()
     const deployEnvironment = scrubBuildEnvironment(process.env)
     deployEnvironment.PNPM_CONFIG_OFFLINE = 'true'
-    run(pnpm, [
-      '--offline',
-      '--filter', '@voyaseek-ai/dsh-aistaff-desktop-runtime',
-      'deploy', '--legacy', '--prod',
-      '--config.node-linker=hoisted',
-      '--config.auto-install-peers=false',
-      '--config.link-workspace-packages=true',
-      '--config.lockfile=false',
-      '--config.frozen-lockfile=false',
-      stageDir,
-    ], { env: deployEnvironment, label: 'runtime deploy' })
+    run(pnpm, createRuntimeDeployArgs(stageDir), {
+      env: deployEnvironment,
+      label: 'runtime deploy',
+    })
 
     materializeLinks(stageDir)
     const builtCli = join(repoRoot, 'apps', 'cli')
@@ -82,6 +75,7 @@ export function stageRuntime() {
     copyMissingWorkspaceClosure(stageDir, join(stagedCli, 'package.json'))
     stageSupervisorSidecar(builtSupervisor, stageDir)
     materializeLinks(stageDir)
+    ensureTargetNodePtySpawnHelperExecutable(stageDir)
     removeDeployMetadata(stageDir)
     pruneDevelopmentArtifacts(stageDir)
     pruneNodePtyPrebuilds(stageDir)
@@ -97,6 +91,25 @@ export function stageRuntime() {
   }
 }
 
+/**
+ * Return the deterministic offline deploy command for the desktop runtime.
+ *
+ * @param {string} stageDir Empty target directory for the physical closure.
+ * @returns {string[]} pnpm arguments that consume the shared lockfile without lifecycle scripts.
+ */
+export function createRuntimeDeployArgs(stageDir) {
+  return [
+    '--offline',
+    '--frozen-lockfile',
+    '--filter', '@voyaseek-ai/dsh-aistaff-desktop-runtime',
+    'deploy', '--prod', '--ignore-scripts',
+    '--config.node-linker=hoisted',
+    '--config.link-workspace-packages=true',
+    '--config.inject-workspace-packages=true',
+    stageDir,
+  ]
+}
+
 function run(command, args, options = {}) {
   const capture = options.capture === true
   const result = spawnSync(command, args, {
@@ -104,8 +117,17 @@ function run(command, args, options = {}) {
     encoding: 'utf8',
     env: options.env ?? scrubBuildEnvironment(process.env),
     stdio: capture ? ['ignore', 'pipe', 'pipe'] : 'inherit',
+    timeout: options.timeout,
+    killSignal: options.killSignal,
   })
-  if (result.error !== undefined) throw result.error
+  if (result.error !== undefined) {
+    if (result.error.code === 'ETIMEDOUT' && options.timeout !== undefined) {
+      throw new Error(`${options.label ?? command} timed out after ${String(options.timeout)} ms`, {
+        cause: result.error,
+      })
+    }
+    throw result.error
+  }
   if (result.status !== 0) {
     const detail = capture && result.stderr.trim().length > 0 ? `: ${result.stderr.trim()}` : ''
     throw new Error(`${options.label ?? command} failed with exit code ${String(result.status)}${detail}`)
@@ -295,9 +317,35 @@ function materializeLinks(directory) {
   }
 }
 
-function removeDeployMetadata(runtimeRoot) {
-  for (const metadata of ['node_modules/.modules.yaml', 'node_modules/.pnpm/lock.yaml']) {
+/**
+ * Remove package-manager state after every dependency link is materialized.
+ *
+ * @param {string} runtimeRoot Staged runtime directory.
+ * @returns {void}
+ */
+export function removeDeployMetadata(runtimeRoot) {
+  for (const metadata of [
+    'package.json',
+    'pnpm-lock.yaml',
+    'pnpm-workspace.yaml',
+    'node_modules/.modules.yaml',
+    'node_modules/.pnpm-workspace-state-v1.json',
+  ]) {
     rmSync(join(runtimeRoot, ...metadata.split('/')), { force: true })
+  }
+  rmSync(join(runtimeRoot, 'node_modules', '.pnpm'), { recursive: true, force: true })
+}
+
+/**
+ * Restore the executable mode that the node-pty archive does not preserve.
+ *
+ * @param {string} runtimeRoot Staged runtime directory.
+ * @returns {void}
+ */
+export function ensureTargetNodePtySpawnHelperExecutable(runtimeRoot) {
+  for (const prebuildRoot of findNodePtyPrebuildRoots(runtimeRoot)) {
+    const helper = join(prebuildRoot, TARGET_NODE_PTY_PREBUILD, 'spawn-helper')
+    if (existsSync(helper)) chmodSync(helper, 0o755)
   }
 }
 
@@ -330,16 +378,16 @@ export function verifyRuntime(runtimeRoot) {
   }
   const nodePtyLicense = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}LICENSE`))
   if (nodePtyLicense === undefined) throw new Error('runtime is missing the node-pty license')
-  const nativeAddon = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}prebuilds${sep}darwin-x64${sep}pty.node`))
-  if (nativeAddon === undefined) throw new Error('runtime is missing the macOS x86_64 node-pty prebuild')
-  const spawnHelper = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}prebuilds${sep}darwin-x64${sep}spawn-helper`))
-  if (spawnHelper === undefined) throw new Error('runtime is missing the macOS x86_64 node-pty spawn-helper')
+  verifyTargetNodePtyPrebuilds(runtimeRoot)
   const languagePolicyChunk = findPath(runtimeRoot, (path) => {
     const directory = `${sep}@voyaseek-ai${sep}dsh-aistaff-language-policy${sep}lib${sep}`
     return path.includes(directory) && /rules-[A-Za-z0-9_-]+\.js$/.test(path)
   })
   if (languagePolicyChunk === undefined) throw new Error('runtime is missing the Aistaff language-policy rule chunk')
   verifyEsmImport(runtimeRoot, 'node_modules/@voyaseek-ai/dsh-aistaff-language-policy/lib/index.js')
+  verifyBareImport(runtimeRoot, 'koffi')
+  verifyBareImport(runtimeRoot, 'node-pty')
+  verifyNodePtySpawn(runtimeRoot)
   verifySupervisorSidecar(join(runtimeRoot, supervisorRuntimePath))
   rejectRuntimeDevelopmentPaths(runtimeRoot)
   const statistics = inspectRuntime(runtimeRoot)
@@ -462,6 +510,101 @@ function findNodePtyPrebuildRoots(runtimeRoot) {
   return roots
 }
 
+/**
+ * Verify every staged node-pty copy has the physical macOS x86_64 binaries.
+ *
+ * @param {string} runtimeRoot Staged runtime directory to inspect.
+ * @returns {void}
+ */
+export function verifyTargetNodePtyPrebuilds(runtimeRoot) {
+  const prebuildRoots = findNodePtyPrebuildRoots(runtimeRoot)
+  if (prebuildRoots.length === 0) {
+    throw new Error('runtime is missing the macOS x86_64 node-pty prebuild')
+  }
+  for (const prebuildRoot of prebuildRoots) {
+    const targetRoot = join(prebuildRoot, TARGET_NODE_PTY_PREBUILD)
+    const nativeAddon = join(targetRoot, 'pty.node')
+    const spawnHelper = join(targetRoot, 'spawn-helper')
+    assertPhysicalFile(nativeAddon, 'runtime node-pty macOS x86_64 addon')
+    const helperMetadata = assertPhysicalFile(spawnHelper, 'runtime node-pty macOS x86_64 spawn-helper')
+    const helperMode = helperMetadata.mode & 0o777
+    if (helperMode !== 0o755) {
+      throw new Error(
+        `runtime node-pty spawn-helper mode must be 0755, received ${helperMode.toString(8).padStart(4, '0')}: ${spawnHelper}`,
+      )
+    }
+  }
+}
+
+/**
+ * Start a real PTY through the staged node-pty package and require clean marker output.
+ *
+ * @param {string} runtimeRoot Staged runtime directory whose package resolution is tested.
+ * @returns {void}
+ */
+export function verifyNodePtySpawn(runtimeRoot) {
+  const marker = 'AISTAFF_NODE_PTY_SMOKE_OK'
+  const script = `
+    const { spawn } = await import('node-pty')
+    const marker = ${JSON.stringify(marker)}
+    let output = ''
+    await new Promise((resolve, reject) => {
+      let settled = false
+      let terminal
+      let timeout
+      const finish = (error) => {
+        if (settled) return
+        settled = true
+        if (timeout !== undefined) clearTimeout(timeout)
+        if (error === undefined) resolve()
+        else reject(error)
+      }
+      timeout = setTimeout(() => {
+        try {
+          terminal?.kill()
+        } catch (error) {
+          finish(new Error('node-pty smoke timed out and could not terminate the PTY', { cause: error }))
+          return
+        }
+        finish(new Error('node-pty smoke timed out'))
+      }, 3000)
+      try {
+        terminal = spawn('/bin/sh', ['-c', ${JSON.stringify(`printf '${marker}\\n'`)}], {
+          name: 'xterm-color',
+          cols: 80,
+          rows: 24,
+          cwd: process.cwd(),
+          env: process.env,
+        })
+      } catch (error) {
+        finish(error)
+        return
+      }
+      terminal.onData((data) => { output += data })
+      terminal.onExit(({ exitCode, signal }) => {
+        if (exitCode !== 0) {
+          finish(new Error(\`node-pty smoke exited with code \${String(exitCode)} and signal \${String(signal)}\`))
+          return
+        }
+        if (!output.includes(marker)) {
+          finish(new Error(\`node-pty smoke marker is missing from output: \${JSON.stringify(output)}\`))
+          return
+        }
+        finish()
+      })
+    })
+    process.stdout.write(marker)
+  `
+  const output = run(process.execPath, ['--input-type=module', '--eval', script], {
+    cwd: runtimeRoot,
+    capture: true,
+    label: 'runtime node-pty PTY smoke',
+    timeout: 5000,
+    killSignal: 'SIGKILL',
+  })
+  if (!output.includes(marker)) throw new Error('runtime node-pty PTY smoke marker is missing')
+}
+
 function verifyEsmImport(runtimeRoot, entry) {
   const path = join(runtimeRoot, ...entry.split('/'))
   run(process.execPath, [
@@ -469,6 +612,14 @@ function verifyEsmImport(runtimeRoot, entry) {
     '--eval',
     `await import(${JSON.stringify(pathToFileURL(path).href)})`,
   ], { capture: true, label: `runtime import ${entry}` })
+}
+
+function verifyBareImport(runtimeRoot, packageName) {
+  run(process.execPath, [
+    '--input-type=module',
+    '--eval',
+    `await import(${JSON.stringify(packageName)})`,
+  ], { cwd: runtimeRoot, capture: true, label: `runtime import ${packageName}` })
 }
 
 function rejectRuntimeDevelopmentPaths(directory) {

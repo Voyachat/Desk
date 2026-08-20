@@ -16,7 +16,9 @@
 
 Preload 只暴露固定的启动 channel。Main 验证所属窗口、顶层 sender frame、精确本地文档或受管 loopback origin、preset，以及 32,000 code unit 的草稿上限。Web 产品等待真实的当前空白 Session，应用并记录 preset，将草稿写入但不发送，并且只在这些步骤成功后确认意图。它不创建占位 Session，也不自动重试结果未知的传输写入。
 
-桌面启动策略当前分为三类。`required` 包含本地输入壳与生成后的 Electron main/preload JavaScript；它们必须保持本地加载，并位于 96 KiB 逻辑字节预算内。`deferred` 包含完整的已部署 Host 运行时，在输入壳显示后启动。`excluded` 包含 macOS x86_64 以外的 `node-pty` prebuild；暂存会物理删除它们，验证会拒绝其存在。普通桌面编译验证 required 闭包。Package 与 make 还会验证生成后的运行时、470 MiB 与 27,000 文件上限、目标 prebuild 和许可证、worker 与客户端产物，以及非目标 prebuild 缺席。
+桌面启动策略当前分为三类。`required` 包含本地输入壳与生成后的 Electron main/preload JavaScript；它们必须保持本地加载，并位于 96 KiB 逻辑字节预算内。`deferred` 包含完整的已部署 Host 运行时，在输入壳显示后启动。`excluded` 包含 macOS x86_64 以外的 `node-pty` prebuild；暂存会物理删除它们，验证会拒绝其存在。
+
+普通桌面编译验证 required 闭包。Package 与 make 还会验证生成后的运行时、800 MiB 与 27,000 文件上限、目标 prebuild 和许可证、worker 与客户端产物，以及非目标 prebuild 缺席。暂存通过 pnpm modern deploy 在离线模式下使用共享锁文件，跳过部署期 lifecycle script，实体化闭包，恢复 `node-pty` `spawn-helper` 的可执行权限，删除包管理器状态，证明 `koffi` 与 `node-pty` 仍可加载，并且只在真实 `/bin/sh` PTY 输出 marker、退出码为 0 且在 3 秒内完成时接受该运行时。
 
 用户可见服务等级从应用启动请求开始计时，直到启动 textarea 可见、获得焦点且可写；在完成签名与 notarization 的发行目标硬件上至少执行 20 次冷启动，要求 `P95 <= 3,000 ms`。完整 Host 就绪时间单独测量。未签名开发应用不能作为发行冷启动证据，因为 macOS 信任评估行为不同。
 
@@ -26,7 +28,8 @@ Preload 只暴露固定的启动 channel。Main 验证所属窗口、顶层 send
 - 启动输入只存在于当前 Electron 进程内，绝不自动发送；应用终止会丢弃未确认输入。
 - 当前策略把 Host 作为一个整体延迟，不声称各个 Host 或客户端插件已经惰性加载。
 - 本地关键闭包超过预算、引用远程资源或不再符合策略时，构建会失败。陈旧运行时仍包含 excluded 原生目标或超过产物预算时，打包会失败。
-- 删除非目标 `node-pty` prebuild 后，旧运行时可减少约 57.8 MiB。进一步删除包之前，必须证明包含的 entry 或静态 import 不再需要它。
+- 包含必需 macOS x86_64 Codex 与 Claude 运行时的物理闭包实测为 764,431,166 字节、26,779 个文件。800 MiB 上限保留了有界的依赖余量，而不会把这些产品能力误判为可删除的打包残留。
+- 删除非目标 `node-pty` prebuild 可减少约 57.8 MiB。进一步删除包之前，必须证明包含的 entry 或静态 import 不再需要它。
 - 签名与 notarization 仍是强制发行输入。本地输入壳从首次交互路径中移除了 Host，但无法绕过 Electron JavaScript 启动前由 macOS 执行的工作。
 
 ## 考虑过的替代方案
