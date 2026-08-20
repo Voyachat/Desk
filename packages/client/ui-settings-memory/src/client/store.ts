@@ -33,7 +33,7 @@ function parseSettings(view: SettingsNamespaceView): { enabled: boolean } {
 export class MemorySettingsStore {
   /** Observable controller state consumed through `useSyncExternalStore`. */
   readonly store: SnapshotStore<MemorySettingsState> = createSnapshotStore({
-    status: 'idle', error: null, writable: false, enabled: true,
+    status: 'idle', error: null, writable: false, enabled: false,
     maxEntries: 0, pendingCount: 0, failedCount: 0, entries: [],
   })
 

@@ -143,6 +143,8 @@
     "dev:aistaff": "tsx scripts/dev-aistaff.ts",
     "dev:web": "tsx scripts/dev-web.ts --poll",
     "accept:web": "tsx scripts/accept-web.ts",
+    "accept:web:smoke": "tsx scripts/accept-web.ts --smoke --no-open",
+    "memory:reset": "tsx scripts/reset-agent-memory.ts",
     "postinstall": "node scripts/install-lefthook.mjs"
   },
   "devDependencies": {

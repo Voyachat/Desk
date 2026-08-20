@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-20-shared-key-provider-configuration.md
+2026-08-20-shared-key-provider-configuration.md: acfc29743d23327d432636ec220957c0db3e7c57
+2026-08-20-shared-key-provider-configuration.zh.md: 07fe96b6b666a056785581344bd9eb5eef711fb1

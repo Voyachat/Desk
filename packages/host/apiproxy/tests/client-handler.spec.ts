@@ -127,6 +127,7 @@ function scriptedApi(overrides: {
       providers: r => ok(r, { providers: [] }),
       models: r => ok(r, { groups: [], failures: [] }),
       discoverModels: err,
+      probeRuntime: err,
       ...overrides.llm,
     },
     memory: {
@@ -765,6 +766,7 @@ describe('config unary surface', () => {
         providers: record('llm.providers', r => ok(r, { providers: [providerRow] })),
         models: record('llm.models', r => ok(r, { groups: [group], failures: [] })),
         discoverModels: record('llm.discoverModels', r => ok(r, { models: [{ id: 'acme-large', contextWindow: 65536 }] })),
+        probeRuntime: record('llm.probeRuntime', r => ok(r, { status: 'reachable' as const })),
       },
     })
     const c = client(api)
@@ -797,11 +799,13 @@ describe('config unary surface', () => {
       apiKey: 'probe-key',
     })
     expect(discovered.result).toEqual({ ok: true, value: { models: [{ id: 'acme-large', contextWindow: 65536 }] } })
+    const probed = await c.llm.probeRuntime({ provider: 'openai', model: 'acme-large', runtime: 'codex' })
+    expect(probed.result).toEqual({ ok: true, value: { status: 'reachable' } })
 
     expect(seen.map(call => call.method)).toEqual([
       'settings.describe', 'settings.openDocument', 'settings.update', 'settings.replace', 'settings.mutate',
       'credentials.describe', 'credentials.set', 'credentials.unset',
-      'llm.providers', 'llm.models', 'llm.discoverModels',
+      'llm.providers', 'llm.models', 'llm.discoverModels', 'llm.probeRuntime',
     ])
     expect(seen[2]?.payload).toEqual({ ns: 'llm-deepseek', patch: { baseURL: 'https://next' } })
     expect(seen[4]?.payload)
@@ -815,6 +819,7 @@ describe('config unary surface', () => {
       api: 'openai-completions',
       apiKey: 'probe-key',
     })
+    expect(seen[11]?.payload).toEqual({ provider: 'openai', model: 'acme-large', runtime: 'codex' })
   })
 
   it('rejects an invalid credential reference name at the carrier boundary', async () => {

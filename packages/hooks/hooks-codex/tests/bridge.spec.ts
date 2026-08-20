@@ -22,7 +22,20 @@ import { MockAdapter, textResponse, toolCallResponse } from '../../../core/agent
  */
 
 const dirs: string[] = []
-afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }) })
+const contexts: Context[] = []
+afterEach(async () => {
+  try {
+    await Promise.all(contexts.splice(0).map(ctx => ctx.fiber.dispose()))
+  } finally {
+    for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true })
+  }
+})
+
+function testContext(): Context {
+  const ctx = new Context()
+  contexts.push(ctx)
+  return ctx
+}
 
 function configDir(): string {
   const dir = mkdtempSync(join(tmpdir(), 'dsh-hooks-codex-'))
@@ -40,7 +53,7 @@ function writeHooks(dir: string, hooks: unknown): void {
 }
 
 async function harness(dir: string, adapter: MockAdapter, beforeHooks?: (ctx: Context) => void): Promise<Context> {
-  const ctx = new Context()
+  const ctx = testContext()
   await mountAgentLoopTestDependencies(ctx)
   await ctx.plugin(AgentLoop, { agents: [] })
   await ctx.plugin(LocalSubprocessRuntime)
@@ -180,7 +193,7 @@ describe('hooks-codex bridge', () => {
     const deny = script(dir, 'deny.sh', '#!/usr/bin/env bash\nexit 2\n')
     writeHooks(dir, { UserPromptSubmit: [{ hooks: [{ type: 'command', command: deny }] }] })
     const adapter = new MockAdapter([textResponse('ok')])
-    const ctx = new Context()
+    const ctx = testContext()
     await mountAgentLoopTestDependencies(ctx)
     await ctx.plugin(AgentLoop, { agents: [] })
     await ctx.plugin(LocalSubprocessRuntime)
@@ -203,7 +216,7 @@ describe('hooks-codex bridge', () => {
     // tracked process through `runPoint`, not await its natural exit.
     const slow = script(dir, 'slow.sh', `#!/usr/bin/env bash\necho $$ > "${pidFile}"\ntouch "${marker}"\nsleep 30\n`)
     writeHooks(dir, { SessionStart: [{ hooks: [{ type: 'command', command: slow }] }] })
-    const ctx = new Context()
+    const ctx = testContext()
     await mountAgentLoopTestDependencies(ctx)
     await ctx.plugin(AgentLoop, { agents: [] })
     await ctx.plugin(LocalSubprocessRuntime)

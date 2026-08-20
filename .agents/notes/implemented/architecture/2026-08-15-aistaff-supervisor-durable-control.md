@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-aistaff-supervisor-durable-control.zh.md)
+
 ## Problem
 
 The `capability_only` consumer flow was already visible through a test-only in-memory Supervisor, while the migrated Rust sidecar deliberately rejected production file reads. Enabling that legacy path would have trusted caller-supplied admission, lost operation outcomes on restart, and returned no authoritative Receipt. The desktop also cannot activate Cloud local operations until Aistaff supplies the signed artifact, device attestation, and acknowledgement protocol.

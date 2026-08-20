@@ -15,7 +15,7 @@ export const STARTUP_CHANNELS = {
 } as const
 
 /** Agent presets that can be selected before a session exists. */
-export type StartupAgentPreset = 'standard' | 'code'
+type StartupAgentPreset = 'standard' | 'code'
 
 /** User input retained by the main process while the runtime starts. */
 export interface StartupIntent {

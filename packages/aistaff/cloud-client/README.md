@@ -1,5 +1,7 @@
 # Aistaff Cloud Client
 
+English | [中文](README.zh.md)
+
 Host-only Client Gateway adapter for the production `EmployeeExperiencePort`. It negotiates one versioned contract selection, builds one snapshot-bound Workforce/Engagement baseline, publishes only complete Renderer-safe replacements, and resumes an at-least-once SSE stream from an opaque cursor.
 
 The package contains no production JSON Schema, service URL, credential, token, or conformance fallback. Production assembly must inject an immutable Aistaff contract artifact codec and an authenticated transport. The transport owns URL resolution and authentication; the artifact owns request encoding, response validation, event decoding, semantic projection composition, and operation-outcome decoding.

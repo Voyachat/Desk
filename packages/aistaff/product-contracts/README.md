@@ -1,5 +1,7 @@
 # Aistaff product contracts
 
+English | [中文](README.zh.md)
+
 This package owns the JSON-compatible employee, task, approval, receipt, event, snapshot, result, and Renderer-to-Host types used by the deterministic UI acceptance fixture. Entity ids remain plain strings at runtime and carry distinct TypeScript brands so callers cannot interchange them accidentally.
 
 ## Model Experience

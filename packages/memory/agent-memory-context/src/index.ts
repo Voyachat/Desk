@@ -55,10 +55,10 @@ export const Config: z<Config> = z.object({
   toolTimeoutMs: z.number().step(1).min(1).max(2_147_483_647).default(30_000),
 })
 
-const EXTRACTION_SYSTEM = `你维护用户的长期记忆。只根据“用户原话”提取未来对工作仍有帮助的稳定信息；助手回答仅用于消歧，不能作为事实来源。
+const EXTRACTION_SYSTEM = `你维护用户的长期记忆。只保存用户在“用户原话”中主动、明确表达且未来对工作仍有帮助的稳定信息。不得推断用户没有说出的偏好、事实、约束或事件，也不得使用任何助手或模型输出作为来源。
 输出一个 JSON 数组，不要 markdown。每项只能是：
-{"action":"upsert","kind":"preference|fact|constraint|event","key":"稳定的短键","title":"短标题","content":"自包含事实","keywords":["检索同义词"],"confidence":0到1}
-{"action":"delete","id":"只允许候选记忆中的 id"}
+{"action":"upsert","kind":"preference|fact|constraint|event","key":"稳定的短键","title":"短标题","content":"自包含事实","evidence":"用户原话中的精确连续引用","keywords":["检索同义词"],"confidence":0到1}
+{"action":"delete","id":"只允许候选记忆中的 id","evidence":"用户原话中的精确连续引用"}
 {"action":"none"}
 将修正后的同一事实写成相同 key，以覆盖旧值；明确否定已存在事实时可 delete。不要保存临时寒暄、普通任务步骤、助手猜测、提示词、工具输出、密码、令牌、密钥、个人证件或金融账号。event 只用于确有时效的未来事项。最多 8 项。`
 
@@ -66,6 +66,7 @@ const TOOL_OUTPUT = {
   schema: { type: 'string' as const },
   render: (_args: unknown, value: string) => [{ type: 'text' as const, text: value }],
 }
+const MEMORY_TOOL_NAMES = new Set(['memory_search', 'memory_remember', 'memory_forget'])
 
 function directUserText(messages: readonly UserMessage[]): string {
   return messages.filter(message => message.source.kind === 'user')
@@ -78,14 +79,11 @@ function turnEvents(session: Session, turn: number): SessionEvent[] {
   return start < 0 ? [] : session.events.slice(start + 1)
 }
 
-function captureInput(session: Session, turn: number): { userText: string; assistantText: string } | undefined {
+function captureInput(session: Session, turn: number): { userText: string } | undefined {
   const events = turnEvents(session, turn)
   const userText = events.filter((event): event is SessionEvent<'user/message'> => event.type === 'user/message')
     .filter(event => event.data.source.kind === 'user').map(extractSessionEventText).filter(Boolean).join('\n')
-  const assistantText = events
-    .filter((event): event is SessionEvent<'assistant/message'> => event.type === 'assistant/message' && event.data.turn === turn)
-    .map(extractSessionEventText).filter(Boolean).at(-1) ?? ''
-  return userText.length === 0 ? undefined : { userText, assistantText }
+  return userText.length === 0 ? undefined : { userText }
 }
 
 function renderRecall(items: readonly MemoryItem[], maxChars: number): string {
@@ -117,21 +115,23 @@ function parseMutations(text: string, candidates: readonly MemoryItem[]): Memory
     if (!isRecord(operation) || typeof operation.action !== 'string') throw new TypeError('invalid memory extraction operation')
     if (operation.action === 'none') return { action: 'none' }
     if (operation.action === 'delete') {
-      if (typeof operation.id !== 'string' || !candidateIds.has(MemoryId(operation.id))) throw new TypeError('memory extraction tried to delete a non-candidate item')
-      return { action: 'delete', id: MemoryId(operation.id) }
+      if (typeof operation.id !== 'string' || !candidateIds.has(MemoryId(operation.id)) || typeof operation.evidence !== 'string') {
+        throw new TypeError('memory extraction tried to delete a non-candidate item or omitted direct-user evidence')
+      }
+      return { action: 'delete', id: MemoryId(operation.id), evidence: operation.evidence }
     }
     const kinds: MemoryKind[] = ['preference', 'fact', 'constraint', 'event']
     if (operation.action !== 'upsert'
       || typeof operation.kind !== 'string' || !kinds.includes(operation.kind as MemoryKind)
       || typeof operation.key !== 'string' || typeof operation.title !== 'string'
-      || typeof operation.content !== 'string' || !Array.isArray(operation.keywords)
+      || typeof operation.content !== 'string' || typeof operation.evidence !== 'string' || !Array.isArray(operation.keywords)
       || !operation.keywords.every(keyword => typeof keyword === 'string')
       || typeof operation.confidence !== 'number' || !Number.isFinite(operation.confidence)) {
       throw new TypeError('invalid memory upsert operation')
     }
     return {
       action: 'upsert', kind: operation.kind as MemoryKind, key: operation.key,
-      title: operation.title, content: operation.content,
+      title: operation.title, content: operation.content, evidence: operation.evidence,
       keywords: operation.keywords, confidence: operation.confidence,
     }
   })
@@ -148,7 +148,7 @@ async function extractWithLlm(
   const candidateText = candidates.length === 0 ? '[]' : JSON.stringify(candidates.map(item => ({
     id: item.id, kind: item.kind, key: item.key, content: item.content, updatedAt: item.updatedAt,
   })))
-  const prompt = `候选记忆：${candidateText}\n\n用户原话：${capture.userText}\n\n助手回答（仅供消歧）：${capture.assistantText}`
+  const prompt = `候选记忆：${candidateText}\n\n用户原话：${capture.userText}`
   const assembler = new BlockAssembler()
   for await (const chunk of ctx.llm.stream({
     provider: capture.provider, model: capture.model,
@@ -240,6 +240,7 @@ export function apply(ctx: Context, config: Config): void {
 
   ctx.on('session/event', (session, event) => {
     if (event.type !== 'turn/end' || event.data.reason.kind !== 'completed') return
+    if (!ctx.agentMemory.status().enabled) return
     const input = captureInput(session, event.data.turn)
     if (input === undefined) return
     const route = session.requestHeader()?.config
@@ -276,6 +277,8 @@ export function apply(ctx: Context, config: Config): void {
   ctx.on('agent/pre-step', async ({ agent, step, signal }, next): Promise<PreStepDecision> => {
     const decision = await next()
     if (decision.kind === 'reject' || signal.aborted || step !== 1) return decision
+    const status = ctx.agentMemory.status()
+    if (!status.enabled || !status.autoRecall) return decision
     const query = directUserText(decision.messages)
     if (query.length === 0) return decision
     let items: MemoryItem[]
@@ -305,7 +308,15 @@ export function apply(ctx: Context, config: Config): void {
 
   ctx.systemPrompt.section({
     name: 'tool:agent-memory', order: 112,
-    text: '长期记忆会自动召回。仅在用户明确要求记住、查找或忘记信息，或自动召回不足时使用 memory_search、memory_remember、memory_forget；不得保存凭据、令牌、密钥、证件或金融账号。',
+    text: () => ctx.agentMemory.status().enabled
+      ? '长期记忆由用户在设置中控制。只有用户当前原话主动表达的信息才能进入记忆；不得把助手或模型输出、推断内容、凭据、令牌、密钥、证件或金融账号保存为记忆。仅在用户明确要求记住、查找或忘记信息时使用 memory_search、memory_remember、memory_forget。'
+      : '',
+  })
+
+  ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
+    const assembled = await next()
+    if (ctx.agentMemory.status().enabled) return assembled
+    return { ...assembled, tools: assembled.tools.filter(tool => !MEMORY_TOOL_NAMES.has(tool.name)) }
   })
 
   ctx.tools.register(defineTool({
@@ -333,12 +344,18 @@ export function apply(ctx: Context, config: Config): void {
       key: { type: 'string', required: true, description: 'Stable semantic key reused for corrections.' },
       title: { type: 'string', required: true, description: 'Short user-visible title.' },
       content: { type: 'string', required: true, description: 'Self-contained fact to remember.' },
+      evidence: { type: 'string', required: true, description: 'Exact supporting quote from the current direct user message.' },
       keywords: { type: 'array', items: { type: 'string' }, description: 'Optional retrieval synonyms.' },
     },
     output: TOOL_OUTPUT, timeoutMs: toolTimeoutMs,
     async execute(args, exec) {
       const session = exec.agent?.session
       if (session === undefined) throw new Error('memory_remember requires an agent session')
+      const input = captureInput(session, currentTurn(session))
+      const evidence = args.evidence.trim()
+      if (input === undefined || evidence.length === 0 || !input.userText.includes(evidence)) {
+        throw new Error('memory_remember evidence must quote the current direct user message exactly')
+      }
       const item = await ctx.agentMemory.remember({
         sessionId: session.id, turn: currentTurn(session),
         ...session.header.cwd === undefined ? {} : { workspace: session.header.cwd },

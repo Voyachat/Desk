@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-aistaff-cloud-conformance-mainline.zh.md)
+
 ## Problem
 
 The local Aistaff source does not publish a Client Gateway contract artifact, authenticated Client endpoint, replayable employee projection, or retained operation-outcome API. Its internal Session, Run, Human Workbench, and Deliverable types are not Renderer contracts. Reusing those types would bind the desktop product to service internals and could report behavior that no published endpoint supports.

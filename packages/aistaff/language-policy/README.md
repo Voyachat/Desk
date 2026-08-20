@@ -1,5 +1,7 @@
 # Aistaff language policy
 
+English | [中文](README.zh.md)
+
 Product language behaviors for the AI Staff desktop deployment, contributed
 entirely through documented DSH extension points (system-prompt sections and
 contexts, the settings document, one model-facing tool) so upstream harness

@@ -54,6 +54,7 @@
   "devDependencies": {
     "@voyaseek-ai/dsh-client-locale": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
+    "@voyaseek-ai/dsh-client-test-runtime": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-theme": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",

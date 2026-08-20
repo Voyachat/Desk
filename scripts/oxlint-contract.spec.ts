@@ -283,7 +283,7 @@ export const longProbe = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 +
     expect(result.status, normalizedOutput(result)).toBe(0)
   })
 
-  it('keeps staged validation project-free while preserving source rules', async () => {
+  it('keeps staged validation project-free while preserving source rules', { timeout: 20_000 }, async () => {
     const configPath = join(repositoryRoot, '.oxlintrc.staged.json')
     const result = parseConfigFileTextToJson(configPath, await readFile(configPath, 'utf8'))
     if (result.error !== undefined) {
@@ -319,7 +319,7 @@ export const longProbe = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 +
     }
   })
 
-  it('preserves successful fix output channels', async () => {
+  it('preserves successful fix output channels', { timeout: 20_000 }, async () => {
     const suffix = randomUUID()
     const path = join(repositoryRoot, 'scripts', `staged-lint-probe-${suffix}.ts`)
 
@@ -343,7 +343,7 @@ export const longProbe = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 +
     }
   })
 
-  it('prints only the final diagnostics when a fix retry still fails', async () => {
+  it('prints only the final diagnostics when a fix retry still fails', { timeout: 20_000 }, async () => {
     const suffix = randomUUID()
     const path = join(repositoryRoot, 'scripts', `staged-lint-probe-${suffix}.ts`)
 

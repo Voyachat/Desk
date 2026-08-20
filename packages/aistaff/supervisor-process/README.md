@@ -1,5 +1,7 @@
 # Aistaff Supervisor process
 
+English | [中文](README.zh.md)
+
 This Host-only package starts the packaged `aistaff-desktop-supervisor` Rust binary, generates a fresh per-launch authentication token, and carries bounded JSONL requests over the child's standard input and output. The Host writes the token once as a bootstrap line on the inherited standard-input pipe before the first JSONL frame; it never enters argv, the child environment, a returned value, or a log.
 
 The transport admits only `hello`, `health`, `shutdown`, the `control.hello`, `control.grant.register`, `control.grant.revoke`, `control.capability.read`, `control.receipt.get`, and `control.operation.read` control plane, plus the retained legacy local-file commands used below that process boundary. Process, browser, workspace write, message-cache, and MCP commands are rejected before a frame is written. Requests and responses are limited to 64 KiB, matched by exact request identity, and failed closed on timeout, EOF, invalid UTF-8, malformed JSON, protocol drift, or an unmatched response.

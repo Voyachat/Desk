@@ -3656,6 +3656,11 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           })
         }
       },
+
+      async probeRuntime(request, signal) {
+        const { provider, model, runtime } = request.payload
+        return ok(request, await ctx.llm.probeModelRuntime(provider, model, runtime, signal))
+      },
     },
 
     events: {

@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-16-dashscope-endpoint-wire-corrections.zh.md)
+
 ## Problem
 
 DashScope's OpenAI-compatible endpoint was fetchable in the models surface but its chat models failed in conversation. The family knowledge base materializes known reasoning families with `reasoning: true`, and pi-ai's OpenAI-completions dispatch sends a reasoning model's system prompt as `role: 'developer'` whenever its URL-derived compat detection says the endpoint supports that role. DashScope is an unrecognized OpenAI-compatible host, so detection defaults the support on, and the endpoint answers `"developer" is not one of ['system', 'assistant', 'user', 'tool', 'function']` with HTTP 400. Every agent conversation carries a system prompt, so every reasoning model on the route was unusable while non-reasoning ids on the same route worked. Live probes reproduced this for deepseek-v4-pro/-flash, kimi-k2.7-code, glm-5.2, qwen3-max, and qwen3.8-max on both `dashscope.aliyuncs.com` id spellings.

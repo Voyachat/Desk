@@ -1,5 +1,7 @@
 # 实施任务索引
 
+English | [中文](README.zh.md)
+
 ## 当前目标
 
 Cloud 与 `capability_only/read_only` 的 test-only conformance 主干均已完成。Local 链路已贯通 Supervisor Control、Local Capability、Host↔Renderer Remote、Local Consent UI、canonical Material/Receipt 与 reload；真实 Rust control、加密持久 replay 和 Host process Provider 也已形成，但发布 sidecar 默认不激活 capabilities，正式 artifact、设备 attestation、OS-vault data key 与 Cloud ack 仍缺失，因此 production 继续 fail closed。

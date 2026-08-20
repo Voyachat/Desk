@@ -13,10 +13,10 @@ const MAX_SCANNED_FILE_BYTES = 1024 * 1024
 const TEXT_EXTENSIONS = new Set(['.cjs', '.js', '.json', '.jsx', '.mjs', '.ts', '.tsx', '.yaml', '.yml'])
 
 /** Severity attached to one pre-install finding. */
-export type PluginAuditSeverity = 'block' | 'warning' | 'info'
+type PluginAuditSeverity = 'block' | 'warning' | 'info'
 
 /** One source-specific security or compatibility observation. */
-export interface PluginAuditFinding {
+interface PluginAuditFinding {
   readonly severity: PluginAuditSeverity
   readonly code: string
   readonly file?: string

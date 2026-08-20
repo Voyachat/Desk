@@ -36,6 +36,7 @@
     "@voyaseek-ai/cordis": "workspace:^"
   },
   "devDependencies": {
+    "@voyaseek-ai/dsh-agent": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^"
   }

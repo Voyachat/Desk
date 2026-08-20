@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-17-claude-agent-sdk-driver-seam.zh.md)
+
 ## Problem
 
 DSH sessions are orchestrated exclusively by the in-repo ReactLoopAgent:

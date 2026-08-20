@@ -43,10 +43,12 @@ async function harness(baseURL: string, overrides: Record<string, unknown> = {})
 function adapterOf(
   providers: Record<string, LlmPiAi.PiAiProviderProfile>,
   apiKey: string | undefined = 'test-key',
+  fetch_?: typeof fetch,
 ): PiAiAdapter {
   return new PiAiAdapter({
     profiles: () => resolveProfiles(providers),
     resolveApiKey: () => Promise.resolve(apiKey),
+    ...fetch_ === undefined ? {} : { fetch: fetch_ },
   })
 }
 
@@ -83,6 +85,82 @@ describe('PiAiAdapter provider routing', () => {
     })
     expect(codex.externalRuntimeModels('anthropicGateway', 'claude')).toEqual(['qwen-claude'])
     expect(codex.externalRuntimeRoute('anthropicGateway', 'qwen-claude', 'codex')).toBeUndefined()
+  })
+
+  it('exports alternate protocol endpoints under the same provider and credential', () => {
+    const adapter = adapterOf({
+      dashscope: {
+        apiKeyEnv: 'DASHSCOPE_API_KEY',
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.example/v1',
+        alternateEndpoints: [
+          { api: 'openai-responses', baseURL: 'https://dashscope.example/responses' },
+          { api: 'anthropic-messages', baseURL: 'https://dashscope.example/anthropic' },
+        ],
+        models: [{ id: 'qwen-max' }],
+      },
+    })
+
+    expect(adapter.externalRuntimeModels('dashscope', 'codex')).toEqual(['qwen-max'])
+    expect(adapter.externalRuntimeModels('dashscope', 'claude')).toEqual(['qwen-max'])
+    expect(adapter.externalRuntimeRoute('dashscope', 'qwen-max', 'codex')).toEqual({
+      provider: 'dashscope',
+      model: 'qwen-max',
+      baseURL: 'https://dashscope.example/responses',
+      apiKeyEnv: 'DASHSCOPE_API_KEY',
+    })
+    expect(adapter.externalRuntimeRoute('dashscope', 'qwen-max', 'claude')).toEqual({
+      provider: 'dashscope',
+      model: 'qwen-max',
+      baseURL: 'https://dashscope.example/anthropic',
+      apiKeyEnv: 'DASHSCOPE_API_KEY',
+    })
+  })
+
+  it('probes Codex and Claude with the stored credential while retaining no response body', async () => {
+    const request = vi.fn<typeof fetch>(() => Promise.resolve(new Response('{"secret":"echoed"}', { status: 200 })))
+    const adapter = adapterOf({
+      dashscope: {
+        apiKeyEnv: 'DASHSCOPE_API_KEY',
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.example/v1',
+        alternateEndpoints: [
+          { api: 'openai-responses', baseURL: 'https://dashscope.example/v1' },
+          { api: 'anthropic-messages', baseURL: 'https://dashscope.example/anthropic' },
+        ],
+        models: [{ id: 'qwen-max' }],
+      },
+    }, 'stored-key', request)
+
+    await expect(adapter.probeExternalRuntime('dashscope', 'qwen-max', 'codex')).resolves.toBe(true)
+    await expect(adapter.probeExternalRuntime('dashscope', 'qwen-max', 'claude')).resolves.toBe(true)
+
+    const [codexUrl, codexInit] = request.mock.calls[0]!
+    expect(codexUrl).toBe('https://dashscope.example/v1/responses')
+    expect(codexInit?.headers).toMatchObject({ authorization: 'Bearer stored-key' })
+    expect(typeof codexInit?.body).toBe('string')
+    expect(JSON.parse(codexInit?.body as string)).toMatchObject({ model: 'qwen-max', max_output_tokens: 1 })
+    const [claudeUrl, claudeInit] = request.mock.calls[1]!
+    expect(claudeUrl).toBe('https://dashscope.example/anthropic/v1/messages')
+    expect(claudeInit?.headers).toMatchObject({ 'x-api-key': 'stored-key' })
+    expect(typeof claudeInit?.body).toBe('string')
+    expect(JSON.parse(claudeInit?.body as string)).toMatchObject({ model: 'qwen-max', max_tokens: 1 })
+  })
+
+  it('returns status-only probe failures without retaining a provider body or credential', async () => {
+    const request = vi.fn<typeof fetch>(() => Promise.resolve(new Response('echoed stored-key', { status: 401 })))
+    const adapter = adapterOf({
+      ali: {
+        apiKeyEnv: 'ALI_API_KEY',
+        api: 'openai-responses',
+        baseURL: 'https://ali.example/v1',
+        models: [{ id: 'qwen-max' }],
+      },
+    }, 'stored-key', request)
+
+    const error = await adapter.probeExternalRuntime('ali', 'qwen-max', 'codex').catch((cause: unknown) => cause)
+    expect(error).toMatchObject({ code: 'PROBE_HTTP_401' })
+    expect(JSON.stringify(error)).not.toContain('stored-key')
   })
 
   it('resolves a catalog model dynamically and uses a private endpoint', async () => {
@@ -736,6 +814,17 @@ describe('provider profile lifecycle', () => {
     expect(() => resolveProfiles([{ provider: 'openai' }] as never)).toThrow(/dict keyed by provider/)
     expect(() => resolveProfiles({ openai: { provider: 'openai' } as never })).toThrow(/moved to the providers dict key/)
     expect(() => resolveProfiles({ openai: { baseURL: '' } })).toThrow(/empty baseURL/)
+    expect(() => resolveProfiles({
+      openai: {
+        alternateEndpoints: [{ api: 'openai-responses', baseURL: '' }],
+      },
+    })).toThrow(/alternateEndpoints\[0\].*empty baseURL/)
+    expect(() => resolveProfiles({
+      openai: {
+        api: 'openai-responses',
+        alternateEndpoints: [{ api: 'openai-responses', baseURL: 'https:\/\/other.example' }],
+      },
+    })).toThrow(/protocol "openai-responses" more than once/)
     expect(() => resolveProfiles({ openai: { apiKeyEnv: 'not-a-var!' } })).toThrow(/must match/)
   })
 

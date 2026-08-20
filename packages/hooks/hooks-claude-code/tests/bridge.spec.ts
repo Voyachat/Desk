@@ -26,7 +26,20 @@ import { MockAdapter, textResponse, toolCallResponse } from '../../../core/agent
  */
 
 const dirs: string[] = []
-afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }) })
+const contexts: Context[] = []
+afterEach(async () => {
+  try {
+    await Promise.all(contexts.splice(0).map(ctx => ctx.fiber.dispose()))
+  } finally {
+    for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true })
+  }
+})
+
+function testContext(): Context {
+  const ctx = new Context()
+  contexts.push(ctx)
+  return ctx
+}
 
 function subagentCarrier(ctx: Context) {
   return scopeTarget(ctx as unknown as SubagentRuntime, undefined)
@@ -55,7 +68,7 @@ async function harnessWithFiber(
   adapter: MockAdapter,
   beforeHooks?: (ctx: Context) => void,
 ): Promise<{ ctx: Context; hooks: Fiber }> {
-  const ctx = new Context()
+  const ctx = testContext()
   await mountAgentLoopTestDependencies(ctx)
   await ctx.plugin(AgentLoop, { agents: [] })
   await ctx.plugin(LocalSubprocessRuntime)
@@ -353,7 +366,7 @@ describe('hooks-claude-code bridge — SubagentStart / SubagentStop (observe)', 
 describe('hooks-claude-code bridge — load resilience', () => {
   it('a missing config file registers no hooks and does not crash the loop', async () => {
     const adapter = new MockAdapter([textResponse('fine')])
-    const ctx = new Context()
+    const ctx = testContext()
     await mountAgentLoopTestDependencies(ctx)
     await ctx.plugin(AgentLoop, { agents: [] })
     await ctx.plugin(LocalSubprocessRuntime)
@@ -413,7 +426,7 @@ describe('hooks-claude-code bridge — load resilience', () => {
     // pass even leaked, so it proved nothing).
     const dir = writeConfig({ UserPromptSubmit: [{ hooks: [{ type: 'command', command: 'exit 2' }] }] })
     const adapter = new MockAdapter([textResponse('ok')])
-    const ctx = new Context()
+    const ctx = testContext()
     await mountAgentLoopTestDependencies(ctx)
     await ctx.plugin(AgentLoop, { agents: [] })
     await ctx.plugin(LocalSubprocessRuntime)

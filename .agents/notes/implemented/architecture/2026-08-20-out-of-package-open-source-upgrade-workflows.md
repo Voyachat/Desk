@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-20-out-of-package-open-source-upgrade-workflows.zh.md)
+
 ## Problem
 
 AiDesktop adopts the DSH source foundation, vendored Cordis packages, released dependencies, copied source blocks, and architecture references. The adoption ledger records provenance and current scope, while DSH/Cordis update rules, Voyaseek package rescoping, product branding, verification, and desktop packaging live in separate owners. Reconstructing their order from memory makes an upstream refresh slow and risks editing foundation code where an existing plugin or deployment extension can preserve product behavior. Embedding a new updater in a runtime package would also add a product dependency on local open-source checkouts and maintenance-only code.

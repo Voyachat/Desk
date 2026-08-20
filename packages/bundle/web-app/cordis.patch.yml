@@ -362,6 +362,16 @@
 - id: tool-str-replace-editor
   disabled: true
 
+# Model-facing memory and complex-goal tools are agent-plane capabilities.
+# The Web surface mounts its agent plane from presets, so the base-layer
+# instances must not leak into every preset's scoped catalog.
+
+- id: agent-memory-context
+  disabled: true
+
+- id: complex-goal
+  disabled: true
+
 # The `skill` REGISTRY stays in the host plane. It is host+per-scope layered
 # (the tools-registry shape): deployment-level providers — repository plugins,
 # a host skill-filesystem row — register into its global layer, while a preset's

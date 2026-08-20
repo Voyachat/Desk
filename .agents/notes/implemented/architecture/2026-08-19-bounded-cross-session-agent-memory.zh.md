@@ -14,24 +14,27 @@ TencentDB Agent Memory 提供更丰富的 L0–L3 流程、异步提炼和混合
 
 `ctx.agentMemory` 是包含 capture、maintenance、显式 remember、recall、list、forget 与 clear 操作的 Provider 中立能力。随产品交付的 Provider 把控制项放在 Settings，把结构化数据放在 owner-only SQLite。已完成轮次先经过凭据／secret 检测，再以确定性 `(session id, turn)` 标识进入 durable outbox。因此崩溃会留下可恢复工作，而不是丢失采集或让重试重复写入。
 
-Consumer 监听已完成的 `turn/end`，只采集直接用户文本与最终 Assistant 消息；工具、推理、流式 chunk、系统消息和召回插件消息均被排除。它通过 `ctx.llm` 使用该会话既有路由模型，针对相关候选生成 upsert、delete 或 no-op mutation。用户文本是唯一权威来源，Assistant 输出只用于消歧。Provider 验证每项 mutation，并更新唯一的 `workspace + kind + semantic key`，因此纠正会替换旧值。事件按配置 TTL 过期，失败提炼留在 outbox 中做有界重试。
+Consumer 监听已完成的 `turn/end`，只采集直接用户文本；Assistant 消息、工具输出、推理、流式 chunk、系统文本和召回历史均被排除。它通过 `ctx.llm` 使用该会话既有路由模型，针对相关候选生成 upsert、delete 或 no-op mutation。每个自动 mutation 都必须携带包含在采集用户文本中的精确佐证原话；缺少该证据时，Provider 会拒绝完整事务。显式 `memory_remember` 工具对当前直接用户消息执行相同的原话要求。Provider 更新唯一的 `workspace + kind + semantic key`，因此纠正会替换旧值。事件按配置 TTL 过期，失败提炼留在 outbox 中做有界重试。
 
 在后续会话的第一步，`agent/pre-step` 召回相关条目，把它们标为不可信历史，再追加一条携带精确条目 ID、来源为 `agent-memory` 的 `user/message`。既有循环会在模型请求前记录这条消息，从而在不修改 `agent-loop` 或会话格式的前提下保持“模型可见即已记录”不变量。`memory_search`、`memory_remember` 与 `memory_forget` 为 Agent 提供显式纠正路径，无需新增另一项 skill 或 runtime。
 
-记忆管理页通过稳定的 `settings.section` slot 注册。配置继续走带 revision 保护的 `settings.*`，条目则走专用的 `memory.list`、`memory.update`、`memory.forget` 与 `memory.clear`，且全部钉在 loopback。浏览器不会收到数据库路径。关闭功能只暂停采集与召回，不删除条目；删除单条和清空全部都需要明确确认。
+记忆管理页通过稳定的 `settings.section` slot 注册。配置继续走带 revision 保护的 `settings.*`，条目则走专用的 `memory.list`、`memory.update`、`memory.forget` 与 `memory.clear`，且全部钉在 loopback。浏览器不会收到数据库路径。记忆默认关闭；关闭时不会排队已完成轮次、不会召回，也不会向模型组装记忆说明和工具 schema。用户在设置页打开开关后才启用这些路径，再次关闭不会删除条目。删除单条和清空全部都需要明确确认。
 
 自动维护只会在 Provider 事务提交后追加 `agent-memory/maintenance`。对话插件把它投影为低强调状态行，也把召回的 `agent-memory` 消息投影为低强调上下文行。两类行都会把精确条目 ID 交给同一编辑器，因此用户无需离开对话，就能检查保存或调用了什么，并替换错误内容。编辑器通过子 slot 贡献，不会耦合进通用对话包。
+
+SQLite 格式使用单调递增的 schema 版本，并为每个受支持的旧版本提供有序迁移步骤。所有步骤在一个 `BEGIN IMMEDIATE` 事务中运行；成功才推进 `user_version`，任一步失败都会回滚完整升级并保持旧数据库不变。当前 v2→v3 迁移会保留已提交记忆和待处理直接用户采集，同时移除已废弃的 Assistant 输出字段。缺少完整路径的版本（包括 v1）会在提供数据前失败。离线恢复命令只接受 agent-memory application id 正确且 schema 不受支持的数据库，拒绝链接或活动 WAL 状态，再按操作者选择的模式把数据库移动到私有的带时间戳备份，或永久 unlink。后续 Host 启动会创建空的当前数据库。
 
 TencentDB Agent Memory 只登记为架构参考，不成为运行时依赖或代理。待服务强制认证、可信身份绑定、严格隔离、带 owner 校验的删除和幂等采集后，远程 Provider 仍可在 `ctx.agentMemory` 后替换。
 
 ## 后果
 
-- 跨会话记忆默认可用，无需外部服务、凭据、向量数据库、Python runtime 或第二套 Agent Runtime。
+- 跨会话记忆需要用户主动开启；开启后无需外部服务、凭据、向量数据库、Python runtime 或第二套 Agent Runtime。
 - 默认容量是 2,000 条结构化条目，而不是 200 个原始轮次。这是产品资源预算，不是 SQLite 上限；部署仍可配置 `maxEntries`。
 - 词法／关键词检索有意避免第二套 embedding seam。自动 pre-step 召回保证日常相关提示会使用记忆，显式工具负责用户主动搜索、纠正与删除。
 - 本地 Provider 仍是单用户，项目作用域跟随可信 Session cwd。共享 Host 必须使用带认证身份作用域的 Provider；移动项目目前会形成新的本地作用域。
 - 召回失败会降级为只处理当前轮次。采集会在 outbox 中跨进程重启存续；最终失败的维护会在 Settings 可见，且不改变已完成会话结果。
 - 可见的“已更新”行表示 Provider 事务已经提交且结果已追加到会话日志；仍在队列中的工作不会显示为已保存。
+- 受支持的旧 schema 会无损升级；缺失迁移步骤会阻止 Provider 启动，直到操作者显式备份或删除该记忆数据库。会话日志和 Settings 相互独立。
 
 ## 考虑过的替代方案
 

@@ -52,7 +52,7 @@ it('boots the built plugin graph and renders a fixture session end to end', asyn
   // Resolve the resident approval so the ordinary composer bar (which owns
   // ContextMeter) resumes without replacing the session shell. This minimal
   // boot graph intentionally does not mount the separate question UI plugin.
-  fireEvent.click(await screen.findByRole('button', { name: 'Allow once' }))
+  fireEvent.click(await screen.findByRole('button', { name: 'Yes' }))
 
   // The fixture mirrors all three token-meter projections, so the assembled
   // ContextMeter reaches its composition panel instead of only the occupancy

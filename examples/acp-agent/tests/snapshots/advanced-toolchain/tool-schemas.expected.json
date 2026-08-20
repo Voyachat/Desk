@@ -47,7 +47,7 @@
     },
     {
       "name": "cordis_define",
-      "description": "Define an immutable Cordis Package. For a new Plugin, use kind:\"new\" and provide only a semantic prefix of 3–6 lowercase English letters; the Host returns the final pluginId and packageId. To modify an existing Plugin, use kind:\"existing\" with its exact pluginId to append a Package without overwriting older versions. Provide at least one of code.host and code.client. Each value is a plain JavaScript function body that returns a Cordis Plugin; no TypeScript, JSX, or import transformation occurs. Query Inspect before depending on a Service, Event, Builtin, Slot, or token. Define only validates parameters and syntax and records source: it does not request approval, execute apply, or change currentPackageId. On success, call cordis_run with the returned IDs.",
+      "description": "Define an immutable Cordis Package. For a new Plugin, use kind:\"new\" and provide only a semantic prefix of 3–6 lowercase English letters; the Host returns the final pluginId and packageId. To modify an existing Plugin, use kind:\"existing\" with its exact pluginId to append a Package without overwriting older versions. Provide at least one of code.host and code.client. Host accepts JavaScript or TypeScript; Client accepts JavaScript, TypeScript, or TSX. Both are function bodies with no import/export resolver; Client JSX uses the provided React binding. Define builds and durably publishes plain JavaScript before returning. It does not normally execute apply or change currentPackageId. In development HMR mode the result names stable editable Host/Client working files under $VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/, and a successful edit appends an immutable Package and hot-updates a running Plugin only when the user already approved future Client versions; developmentHmr reports whether this define immediately started that update. Otherwise call cordis_run with the returned IDs.",
       "parameters": {
         "type": "object",
         "properties": {
@@ -105,11 +105,11 @@
             "properties": {
               "host": {
                 "type": "string",
-                "description": "Plain JavaScript function body that returns the Host-half Cordis Plugin."
+                "description": "JavaScript or TypeScript function body returning the Host-half Cordis Plugin; imports, exports, and JSX are unsupported."
               },
               "client": {
                 "type": "string",
-                "description": "Plain JavaScript function body that returns the browser Client-half Cordis Plugin."
+                "description": "JavaScript, TypeScript, or TSX function body returning the browser Client-half Cordis Plugin; JSX lowers through the provided React binding and imports/exports are unsupported."
               }
             }
           }

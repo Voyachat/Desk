@@ -49,6 +49,7 @@
     "@voyaseek-ai/dsh-agent": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
+    "@voyaseek-ai/dsh-llm-deepseek": "workspace:^",
     "@voyaseek-ai/dsh-scope": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-session-persistence": "workspace:^",

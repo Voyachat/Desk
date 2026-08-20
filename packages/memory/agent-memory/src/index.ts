@@ -61,7 +61,6 @@ export interface CaptureMemoryRequest {
   readonly turn: number
   readonly workspace?: string
   readonly userText: string
-  readonly assistantText: string
   readonly provider?: string
   readonly model?: string
 }
@@ -74,7 +73,7 @@ export interface RecallMemoryRequest {
   readonly limit?: number
 }
 
-/** Explicit user/model-authored durable fact after tool argument validation. */
+/** Explicit durable fact supported by direct user text after tool argument validation. */
 export interface RememberMemoryRequest {
   readonly sessionId: SessionId
   readonly turn: number
@@ -102,10 +101,17 @@ export type MemoryMutation =
     readonly key: string
     readonly title: string
     readonly content: string
+    /** Exact supporting quote from the captured direct user text. */
+    readonly evidence: string
     readonly keywords: readonly string[]
     readonly confidence: number
   }
-  | { readonly action: 'delete'; readonly id: MemoryId }
+  | {
+    readonly action: 'delete'
+    readonly id: MemoryId
+    /** Exact supporting quote from the captured direct user text. */
+    readonly evidence: string
+  }
   | { readonly action: 'none' }
 
 /** Input to the automatic extraction and consolidation callback. */

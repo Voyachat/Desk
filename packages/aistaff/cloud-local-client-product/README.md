@@ -1,5 +1,7 @@
 # Aistaff Cloud and Local Client Product
 
+English | [中文](README.zh.md)
+
 This package is the strict V2 production `dsh.client` entry for the Aistaff Cloud AI employee workbench with Local Capability. Its Host half is a no-op marker; `lib/client.js` registers the browser plugin under `@voyaseek-ai/dsh-aistaff-cloud-local-client-product`.
 
 The browser source reuses only the production `apply` from `@voyaseek-ai/dsh-aistaff-client-product/src/cloud-client/index.ts`. It does not import the Fixture entry or detect services to select a product mode. Loader ordering requires API Remotes, Employee Experience Remote, Local Capability Remote, Client Runtime, layout, and sidebar modules before this wrapper. Cordis injection then requires `slots`, `employeeExperience`, and `localCapability` together, so V2 cannot register a Cloud-only workbench during startup races.

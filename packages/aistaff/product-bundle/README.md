@@ -1,5 +1,7 @@
 # Aistaff product bundle
 
+English | [中文](README.zh.md)
+
 This package is the additive Aistaff product layer over the existing DSH `base` and `web-app` bundles. It mounts the Host product projection and browser product plugin without replacing the DSH Agent Loop, sidebar, conversation, workspace, trajectory, or settings owners.
 
 Use it as the final bundle in an AiDesktop profile. Removing this layer restores the unmodified DSH product surface.

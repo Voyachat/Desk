@@ -47,6 +47,8 @@
   "devDependencies": {
     "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
     "@voyaseek-ai/dsh-agent": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop": "workspace:^",
+    "@voyaseek-ai/dsh-agent-loop-testkit": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",

@@ -15,13 +15,14 @@ afterEach(async () => {
   for (const root of roots.splice(0)) await rm(root, { recursive: true })
 })
 
-async function harness(root?: string): Promise<{ ctx: Context; memory: AgentMemory; path: string; root: string }> {
+async function harness(root?: string, enabled = true): Promise<{ ctx: Context; memory: AgentMemory; path: string; root: string }> {
   const actualRoot = root ?? await mkdtemp(join(tmpdir(), 'dsh-agent-memory-'))
   if (root === undefined) roots.push(actualRoot)
   const path = join(actualRoot, 'memory.sqlite')
   const ctx = new Context()
   await ctx.plugin(FileSettingsProvider, { path: join(actualRoot, 'settings.yaml'), watch: false })
   await ctx.plugin(SettingsAgentMemory, {
+    ...(enabled ? { enabled: true } : {}),
     path, maxEntries: 2, maxHits: 2, maxContentChars: 1_000, maxTitleChars: 80,
     maintenanceBatchSize: 4, maintenanceMaxAttempts: 2,
   })
@@ -31,10 +32,21 @@ async function harness(root?: string): Promise<{ ctx: Context; memory: AgentMemo
 const preferenceMaintainer: MemoryMaintainer = input => Promise.resolve([{
   action: 'upsert', kind: 'preference', key: 'verification-drink', title: '验证饮料',
   content: input.capture.userText.includes('咖啡') ? '用户的验证饮料是咖啡。' : '用户的验证饮料是正山小种。',
+  evidence: input.capture.userText.includes('咖啡') ? '验证饮料改成咖啡' : '验证饮料是正山小种',
   keywords: ['验证饮料', '喝什么'], confidence: 0.95,
 }])
 
 describe('SQLite-backed agent memory', () => {
+  it('keeps capture and recall disabled until the user enables memory', async () => {
+    const { ctx, memory } = await harness(undefined, false)
+    expect(memory.status()).toMatchObject({ enabled: false, autoCapture: true, autoRecall: true })
+    await expect(memory.capture({
+      sessionId: SessionId('disabled'), turn: 1, userText: '请记住我的验证饮料是正山小种',
+    })).resolves.toBe('disabled')
+    await expect(memory.recall({ query: '验证饮料' })).resolves.toEqual([])
+    await ctx.fiber.dispose()
+  })
+
   it('rejects an older on-disk schema instead of silently upgrading it', async () => {
     const root = await mkdtemp(join(tmpdir(), 'dsh-agent-memory-v1-'))
     roots.push(root)
@@ -51,11 +63,68 @@ describe('SQLite-backed agent memory', () => {
     await expect(harness(root)).rejects.toThrow('unsupported schema version 1')
   })
 
+  it('atomically migrates schema v2 while preserving memories and pending user text', async () => {
+    const first = await harness()
+    await first.memory.remember({
+      sessionId: SessionId('source'), turn: 1, kind: 'fact', key: 'verification-drink',
+      title: '验证饮料', content: '用户的验证饮料是正山小种。',
+    })
+    await first.memory.capture({
+      sessionId: SessionId('pending'), turn: 2, userText: '我的验证饮料改成咖啡',
+    })
+    await first.ctx.fiber.dispose()
+
+    const old = new DatabaseSync(first.path)
+    old.exec(`
+      UPDATE capture_outbox
+      SET payload = json_set(payload, '$.assistantText', '模型猜测用户还喜欢拿铁');
+      PRAGMA user_version = 2;
+    `)
+    old.close()
+
+    const second = await harness(first.root)
+    const migrated = new DatabaseSync(first.path, { readOnly: true })
+    const version = migrated.prepare('PRAGMA user_version').get() as { user_version: number }
+    const payload = migrated.prepare('SELECT payload FROM capture_outbox').get() as { payload: string }
+    migrated.close()
+    expect(version.user_version).toBe(3)
+    expect(JSON.parse(payload.payload)).toEqual({
+      sessionId: 'pending', turn: 2, userText: '我的验证饮料改成咖啡',
+    })
+    await expect(second.memory.list()).resolves.toMatchObject([{
+      key: 'verification-drink', content: '用户的验证饮料是正山小种。',
+    }])
+    await expect(second.memory.maintain(preferenceMaintainer)).resolves.toMatchObject({ processed: 1, failed: 0 })
+    await second.ctx.fiber.dispose()
+  })
+
+  it('rolls back a failed schema migration without changing the old database', async () => {
+    const first = await harness()
+    await first.memory.capture({
+      sessionId: SessionId('pending'), turn: 1, userText: '请记住我的验证饮料是正山小种',
+    })
+    await first.ctx.fiber.dispose()
+    const old = new DatabaseSync(first.path)
+    old.exec(`
+      UPDATE capture_outbox SET payload = 'not-json';
+      PRAGMA user_version = 2;
+    `)
+    old.close()
+
+    await expect(harness(first.root)).rejects.toThrow('could not migrate schema version 2 to 3')
+    const unchanged = new DatabaseSync(first.path, { readOnly: true })
+    const version = unchanged.prepare('PRAGMA user_version').get() as { user_version: number }
+    const payload = unchanged.prepare('SELECT payload FROM capture_outbox').get() as { payload: string }
+    unchanged.close()
+    expect(version.user_version).toBe(2)
+    expect(payload.payload).toBe('not-json')
+  })
+
   it('durably queues, consolidates, and corrects one semantic memory', async () => {
     const { ctx, memory, path } = await harness()
     const first = {
       sessionId: SessionId('source-session'), turn: 1, workspace: '/workspace',
-      userText: '请记住我的验证饮料是正山小种', assistantText: '好的', provider: 'test', model: 'test',
+      userText: '请记住我的验证饮料是正山小种', provider: 'test', model: 'test',
     }
     await expect(memory.capture(first)).resolves.toBe('queued')
     await expect(memory.capture(first)).resolves.toBe('duplicate')
@@ -84,10 +153,10 @@ describe('SQLite-backed agent memory', () => {
   it('rejects secrets before durable outbox storage and recovers pending work after restart', async () => {
     const first = await harness()
     await expect(first.memory.capture({
-      sessionId: SessionId('secret'), turn: 1, userText: 'api_key = sk-example1234567890', assistantText: 'noted',
+      sessionId: SessionId('secret'), turn: 1, userText: 'api_key = sk-example1234567890',
     })).resolves.toBe('filtered')
     await first.memory.capture({
-      sessionId: SessionId('recover'), turn: 1, userText: '验证饮料是正山小种', assistantText: 'noted', provider: 'test', model: 'test',
+      sessionId: SessionId('recover'), turn: 1, userText: '验证饮料是正山小种', provider: 'test', model: 'test',
     })
     expect(first.memory.status().pendingCount).toBe(1)
     await first.ctx.fiber.dispose()
@@ -100,7 +169,7 @@ describe('SQLite-backed agent memory', () => {
   it('does not spend a durable retry attempt when maintenance is cancelled', async () => {
     const { ctx, memory } = await harness()
     await memory.capture({
-      sessionId: SessionId('cancelled'), turn: 1, userText: '验证饮料是正山小种', assistantText: 'noted',
+      sessionId: SessionId('cancelled'), turn: 1, userText: '验证饮料是正山小种',
     })
     const abort = new AbortController()
     await expect(memory.maintain(() => {
@@ -108,6 +177,19 @@ describe('SQLite-backed agent memory', () => {
       return Promise.reject(new Error('cancelled maintainer'))
     }, { signal: abort.signal })).rejects.toThrow('session closed')
     await expect(memory.maintain(preferenceMaintainer)).resolves.toMatchObject({ processed: 1, failed: 0, pending: 0 })
+    await ctx.fiber.dispose()
+  })
+
+  it('rejects automatic memory without exact supporting user text', async () => {
+    const { ctx, memory } = await harness()
+    await memory.capture({
+      sessionId: SessionId('unsupported'), turn: 1, userText: '帮我总结这份报告',
+    })
+    await expect(memory.maintain(() => Promise.resolve([{
+      action: 'upsert', kind: 'preference', key: 'favorite-drink', title: '饮料偏好',
+      content: '用户喜欢拿铁。', evidence: '我喜欢拿铁', keywords: ['拿铁'], confidence: 0.9,
+    }]))).resolves.toMatchObject({ processed: 0, failed: 1, pending: 1 })
+    await expect(memory.list()).resolves.toEqual([])
     await ctx.fiber.dispose()
   })
 

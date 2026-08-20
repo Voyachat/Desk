@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-dynamic-cordis-durable-build-hmr.zh.md)
+
 ## Problem
 
 Dynamic Cordis definitions previously depended on process memory and evaluator-ready JavaScript bodies. A service restart lost Plugin and Package identity, and accepting TypeScript or TSX without an artifact owner would either require production to execute author source directly or let a failed rebuild replace the only usable version. Client development also had no normal file edit that could exercise the existing disposal-safe replacement path.

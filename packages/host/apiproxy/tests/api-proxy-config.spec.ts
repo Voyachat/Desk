@@ -853,3 +853,22 @@ describe('llm.discoverModels', () => {
     expect(error.message).toContain('no model discovery is registered')
   })
 })
+
+describe('llm.probeRuntime', () => {
+  it('carries route identity only and returns a code-only connectivity result', async () => {
+    const ctx = await harness()
+    const probe = vi.spyOn(ctx.llm, 'probeModelRuntime')
+      .mockResolvedValue({ status: 'failed', code: 'AUTH' })
+    const api = createApiProxy(ctx, DEFAULTS)
+
+    const value = expectOk(await api.llm.probeRuntime(request({
+      provider: 'dashscope',
+      model: 'qwen-max',
+      runtime: 'claude',
+    })))
+
+    expect(value).toEqual({ status: 'failed', code: 'AUTH' })
+    expect(probe).toHaveBeenCalledWith('dashscope', 'qwen-max', 'claude', undefined)
+    expect(JSON.stringify(value)).not.toContain('API_KEY')
+  })
+})

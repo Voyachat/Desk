@@ -52,6 +52,7 @@ class CliMockAdapter extends LlmAdapter {
         const extraction = JSON.stringify([{
           action: 'upsert', kind: 'preference', key: 'verification-drink', title: '验证饮料',
           content: '用户的验证饮料是 lapsang-fixture。',
+          evidence: '请记住我的验证饮料是 lapsang-fixture。',
           keywords: ['验证饮料', 'drink', 'beverage'], confidence: 0.99,
         }])
         yield { type: 'block-start', index: 0, blockType: 'text' }

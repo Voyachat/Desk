@@ -919,6 +919,12 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         returns: 'validated endpoint metadata, or `undefined` when unsupported.',
       },
       {
+        signature: 'async probeModelRuntime( provider: string, model: string, runtime: LlmModelRuntime, signal?: AbortSignal, ): Promise<LlmRuntimeProbeResult>',
+        description: 'Send one minimal, model-specific request through a configured runtime. Browser callers provide no credential value: the owning adapter resolves its stored reference immediately before network I/O. Failure results carry only stable codes, never provider bodies or credential material.',
+        parameters: [{ name: 'provider', description: 'registered provider route.' }, { name: 'model', description: 'exact configured model id.' }, { name: 'runtime', description: 'Native, Claude, or Codex request mode.' }, { name: 'signal', description: 'caller cancellation.' }],
+        returns: 'connectivity status for this exact route.',
+      },
+      {
         signature: 'registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle',
         description: 'Declare provider routes an adapter plugin can activate through configuration. Registration is all-or-nothing: an empty list, invalid entry, or a provider already declared by any registration throws `LlmError` without registering the rest. Disposed with the fiber.',
         parameters: [{ name: 'entries', description: 'every configurable provider this plugin owns.' }],
@@ -2877,7 +2883,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'CaptureMemoryRequest',
-    declaration: 'export interface CaptureMemoryRequest {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly workspace?: string;\n    readonly userText: string;\n    readonly assistantText: string;\n    readonly provider?: string;\n    readonly model?: string;\n}',
+    declaration: 'export interface CaptureMemoryRequest {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly workspace?: string;\n    readonly userText: string;\n    readonly provider?: string;\n    readonly model?: string;\n}',
   },
   {
     name: 'ClientResponse',
@@ -3441,7 +3447,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LlmAdapter',
-    declaration: 'export abstract class LlmAdapter {\n    providerInfo(provider: string): LlmProviderInfo;\n    providerRetryPolicy(_provider: string): ResolvedRetryPolicy | undefined;\n    listModels(_provider: string): Promise<readonly LlmModelInfo[]>;\n    resolveModel(provider: string, model: string, _signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    externalRuntimeModels(_provider: string, _runtime: LlmExternalRuntime): readonly string[];\n    externalRuntimeRoute(_provider: string, _model: string, _runtime: LlmExternalRuntime): LlmExternalRuntimeRoute | undefined;\n    abstract stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
+    declaration: 'export abstract class LlmAdapter {\n    providerInfo(provider: string): LlmProviderInfo;\n    providerRetryPolicy(_provider: string): ResolvedRetryPolicy | undefined;\n    listModels(_provider: string): Promise<readonly LlmModelInfo[]>;\n    resolveModel(provider: string, model: string, _signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    externalRuntimeModels(_provider: string, _runtime: LlmExternalRuntime): readonly string[];\n    externalRuntimeRoute(_provider: string, _model: string, _runtime: LlmExternalRuntime): LlmExternalRuntimeRoute | undefined;\n    probeExternalRuntime(_provider: string, _model: string, _runtime: LlmExternalRuntime, _signal?: AbortSignal): Promise<boolean>;\n    abstract stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
   },
   {
     name: 'LlmCallConfig',
@@ -3488,6 +3494,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
     declaration: 'export interface LlmModelReasoningInfo {\n    efforts: readonly LlmReasoningEffortInfo[];\n    defaultEffort?: ReasoningEffortId;\n}',
   },
   {
+    name: 'LlmModelRuntime',
+    declaration: 'export type LlmModelRuntime = \'native\' | LlmExternalRuntime;',
+  },
+  {
     name: 'LlmProviderInfo',
     declaration: 'export interface LlmProviderInfo {\n    id: string;\n    name: string;\n}',
   },
@@ -3501,7 +3511,11 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LlmRuntime',
-    declaration: 'export class LlmRuntime extends Service {\n    constructor(ctx: Context);\n    registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle;\n    listProviders(): LlmProviderInfo[];\n    listExternalRuntimeRoutes(runtime: LlmExternalRuntime): Array<{\n        provider: string;\n        models: string[];\n    }>;\n    resolveExternalRuntimeRoute(provider: string, model: string, runtime: LlmExternalRuntime): LlmExternalRuntimeRoute | undefined;\n    registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle;\n    listConfigurableProviders(): LlmConfigurableProvider[];\n    registerModelDiscovery(settingsNs: string, discover: (request: LlmModelDiscoveryRequest) => Promise<readonly LlmDiscoveredModel[]>): () => void;\n    async discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest): Promise<LlmDiscoveredModel[]>;\n    providerRetryPolicy(provider: string): ResolvedRetryPolicy;\n    async listModels(provider: string): Promise<LlmModelInfo[]>;\n    async resolveModelInfo(provider: string, model: string, signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    async resolveCallConfig(config: LlmCallConfig, signal?: AbortSignal): Promise<LlmCallConfig>;\n    async prepareCall(config: LlmCallConfig, signal?: AbortSignal): Promise<PreparedLlmCall>;\n    stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
+    declaration: 'export class LlmRuntime extends Service {\n    constructor(ctx: Context);\n    registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle;\n    listProviders(): LlmProviderInfo[];\n    listExternalRuntimeRoutes(runtime: LlmExternalRuntime): Array<{\n        provider: string;\n        models: string[];\n    }>;\n    resolveExternalRuntimeRoute(provider: string, model: string, runtime: LlmExternalRuntime): LlmExternalRuntimeRoute | undefined;\n    async probeModelRuntime(provider: string, model: string, runtime: LlmModelRuntime, signal?: AbortSignal): Promise<LlmRuntimeProbeResult>;\n    registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle;\n    listConfigurableProviders(): LlmConfigurableProvider[];\n    registerModelDiscovery(settingsNs: string, discover: (request: LlmModelDiscoveryRequest) => Promise<readonly LlmDiscoveredModel[]>): () => void;\n    async discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest): Promise<LlmDiscoveredModel[]>;\n    providerRetryPolicy(provider: string): ResolvedRetryPolicy;\n    async listModels(provider: string): Promise<LlmModelInfo[]>;\n    async resolveModelInfo(provider: string, model: string, signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    async resolveCallConfig(config: LlmCallConfig, signal?: AbortSignal): Promise<LlmCallConfig>;\n    async prepareCall(config: LlmCallConfig, signal?: AbortSignal): Promise<PreparedLlmCall>;\n    stream(options: GenerateOp /* …truncated — full shape in source */',
+  },
+  {
+    name: 'LlmRuntimeProbeResult',
+    declaration: 'export interface LlmRuntimeProbeResult {\n    status: \'unsupported\' | \'unverified\' | \'reachable\' | \'failed\';\n    code?: string;\n}',
   },
   {
     name: 'LspHover',
@@ -3585,7 +3599,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'MemoryMutation',
-    declaration: 'export type MemoryMutation = {\n    readonly action: \'upsert\';\n    readonly kind: MemoryKind;\n    readonly key: string;\n    readonly title: string;\n    readonly content: string;\n    readonly keywords: readonly string[];\n    readonly confidence: number;\n} | {\n    readonly action: \'delete\';\n    readonly id: MemoryId;\n} | {\n    readonly action: \'none\';\n};',
+    declaration: 'export type MemoryMutation = {\n    readonly action: \'upsert\';\n    readonly kind: MemoryKind;\n    readonly key: string;\n    readonly title: string;\n    readonly content: string;\n    readonly evidence: string;\n    readonly keywords: readonly string[];\n    readonly confidence: number;\n} | {\n    readonly action: \'delete\';\n    readonly id: MemoryId;\n    readonly evidence: string;\n} | {\n    readonly action: \'none\';\n};',
   },
   {
     name: 'MemoryOperationOptions',

@@ -47,6 +47,7 @@
   "devDependencies": {
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-tool-cordis": "workspace:^",
+    "@voyaseek-ai/dsh-typert-protocol": "workspace:^",
     "@voyaseek-ai/dsh-typert-registry": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^",
     "zod": "^4.4.3"

@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-17-product-packages-catalog-exclusion.zh.md)
+
 ## Problem
 
 The AiStaff product import brought eleven `packages/aistaff/*` packages that merge twelve `ctx.*` services into the Cordis Context: employee experience, local capability, supervisor control and process, product projection, cloud conformance and provider, remote gateways, and a test-only conformance control. The Typert-backed Cordis catalog fail-closes both ways: every discovered service needs a `SERVICE_PAGE` partition, and every signature type needs a documentation link. Classifying the product surface into the harness documentation catalog would publish product APIs that the public harness docs do not own and regenerate those artifacts on every product change.

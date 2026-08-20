@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-aistaff-desktop-model-routes.zh.md)
+
 ## Problem
 
 The standalone desktop needs a usable default model without putting a credential in the repository, generated profile, Renderer, command line, log, or packaged artifact. On macOS, Node provider requests also need to follow the effective system proxy while the bundled DSH page must keep using its direct loopback connection.

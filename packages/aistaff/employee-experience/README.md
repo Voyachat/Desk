@@ -1,5 +1,7 @@
 # Aistaff employee experience
 
+English | [中文](README.zh.md)
+
 This package owns the formal Renderer-safe AI employee service seam. `EmployeeExperiencePort` registers as `ctx.employeeExperience`; Cloud and local providers remain separate packages. `EmployeeExperienceObjectLayer` owns one complete employee, engagement, and currently loaded engagement projection and publishes immutable replacements through an atomic initial-read-plus-listener `observe()` call.
 
 The package deliberately has no Cloud transport, checkpoint, authentication credential, filesystem location, execution-engine identity, or fixture dependency. Providers validate their owner wire before constructing these DTOs. The Renderer compares opaque revisions only for equality and sends the original `OperationId` while reconciling an uncertain outcome.

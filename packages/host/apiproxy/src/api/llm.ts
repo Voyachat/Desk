@@ -10,6 +10,7 @@
 
 import type { RpcRequest, RpcResponse } from './rpc.ts'
 import type { ModelCatalogFailure, ModelProviderGroup } from './sessions.ts'
+import type { LlmModelRuntime, LlmRuntimeProbeResult } from '@voyaseek-ai/dsh-llm'
 
 /** Wire view of one configurable provider. */
 export interface ConfigurableProviderView {
@@ -74,6 +75,16 @@ export interface LlmApi {
     }>,
     signal?: AbortSignal,
   ): Promise<RpcResponse<{ models: DiscoveredModelView[] }>>
+
+  /**
+   * Send one minimal request through an already configured model/runtime route.
+   * The browser supplies route identity only; the Host resolves the stored
+   * credential reference and returns no provider body or credential value.
+   */
+  probeRuntime(
+    request: RpcRequest<{ provider: string; model: string; runtime: LlmModelRuntime }>,
+    signal?: AbortSignal,
+  ): Promise<RpcResponse<LlmRuntimeProbeResult>>
 }
 
 /** Wire view of one model an interrogated endpoint advertises. */

@@ -60,7 +60,10 @@ import {
 import {
   credentialsDescribeValueSchema, credentialsSetValueSchema, credentialsUnsetValueSchema,
 } from '../api/credentials.schema.ts'
-import { llmDiscoverModelsValueSchema, llmModelsValueSchema, llmProvidersValueSchema } from '../api/llm.schema.ts'
+import {
+  llmDiscoverModelsValueSchema, llmModelsValueSchema,
+  llmProbeRuntimeValueSchema, llmProvidersValueSchema,
+} from '../api/llm.schema.ts'
 import {
   memoryClearValueSchema, memoryForgetValueSchema, memoryListValueSchema, memoryUpdateValueSchema,
 } from '../api/memory.schema.ts'
@@ -163,6 +166,7 @@ export interface IApiClient {
     providers(payload: RequestPayload<'llm.providers'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'llm.providers'>>>
     models(payload: RequestPayload<'llm.models'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'llm.models'>>>
     discoverModels(payload: RequestPayload<'llm.discoverModels'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'llm.discoverModels'>>>
+    probeRuntime(payload: RequestPayload<'llm.probeRuntime'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'llm.probeRuntime'>>>
   }
   memory: {
     list(payload: RequestPayload<'memory.list'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.list'>>>
@@ -231,6 +235,7 @@ const UNARY_VALUE_SCHEMAS: { [K in keyof RpcMethodMap]: z.ZodType<Wire<ResponseV
   'llm.providers': llmProvidersValueSchema,
   'llm.models': llmModelsValueSchema,
   'llm.discoverModels': llmDiscoverModelsValueSchema,
+  'llm.probeRuntime': llmProbeRuntimeValueSchema,
   'memory.list': memoryListValueSchema,
   'memory.update': memoryUpdateValueSchema,
   'memory.forget': memoryForgetValueSchema,
@@ -511,6 +516,7 @@ export abstract class AbstractApiClient implements IApiClient {
     providers: (payload, signal) => this.callUnary('llm.providers', payload, signal),
     models: (payload, signal) => this.callUnary('llm.models', payload, signal),
     discoverModels: (payload, signal) => this.callUnary('llm.discoverModels', payload, signal),
+    probeRuntime: (payload, signal) => this.callUnary('llm.probeRuntime', payload, signal),
   }
 
   readonly memory: IApiClient['memory'] = {

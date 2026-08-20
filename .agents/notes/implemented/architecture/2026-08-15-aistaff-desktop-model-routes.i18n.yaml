@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-15-aistaff-desktop-model-routes.md
+2026-08-15-aistaff-desktop-model-routes.md: ac0c5cd2d7d321580780c055db16d52d4ac853c4
+2026-08-15-aistaff-desktop-model-routes.zh.md: 5077a7161703aa3def3f53daaf18459cb53063b2

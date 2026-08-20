@@ -4,15 +4,16 @@
  * catalog.
  *
  * This is a create, not an edit, which is why it is its own card rather than
- * the provider editor with extra fields: the route id is being *chosen* here,
- * and the settings address does not exist until it is. One `settings.mutate`
+ * the provider editor with extra fields. The card generates a unique internal
+ * route id from the display name or a known-provider recipe; the user never
+ * has to manage that settings address. One `settings.mutate`
  * sets the whole profile at `providers.<route>`; the key travels separately
  * through `credentials.set` under the reference the profile records, exactly as
  * an existing provider's key does.
  *
- * The three fields a hand-declared route cannot default — endpoint, protocol,
- * and at least one model — are required here rather than at load, so the
- * failure names the field while the user is still looking at it.
+ * A route may carry multiple protocol endpoints authenticated by one key. The
+ * endpoint list and at least one model are required here rather than at load,
+ * so a failure names the field while the user is still looking at it.
  *
  * There is deliberately no reasoning-effort control, here or on the editor
  * card: effort is a per-MODEL capability, and the models under one provider
@@ -26,25 +27,20 @@ import type { ReactNode } from 'react'
 import type { IApiClient } from '@voyaseek-ai/dsh-api-remotes/client'
 import { apiKeyFailure } from './apiKey.ts'
 import { EditorFooter } from './EditorFooter.tsx'
+import { EndpointListEditor } from './EndpointListEditor.tsx'
 import { validateDeepSeekModels } from './DeepSeekModelsEditor.tsx'
 import { ModelListEditor } from './ModelListEditor.tsx'
 import type { ModelDraft } from './ModelListEditor.tsx'
 import { deriveKeyRef, messageOf } from './store.ts'
+import {
+  deriveProviderId, endpointFailure, followsRecipe, providerAdvice, recipeEndpoints,
+} from './providerAutomation.ts'
+import type { ProviderEndpointDraft, ProviderRecipe } from './providerAutomation.ts'
 import type { en } from './locales.ts'
 import styles from './ModelsSection.module.css'
 
 /** The settings namespace a hand-declared provider is written into. */
 const NS = 'llm-pi-ai'
-
-/**
- * A route id usable as a settings key AND as the stem of a credential name.
- * The leading letter is the second half of that: `deriveKeyRef` uppercases the
- * id and replaces every non-alphanumeric run with `_`, and a credential
- * reference is a POSIX shell identifier, which cannot start with a digit. A
- * digit-leading id passes every check this card makes and then fails at the
- * credential seam with a raw regular expression the user cannot act on.
- */
-const ROUTE_PATTERN = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/
 
 /** Props of {@link CustomProviderCard}. */
 export interface CustomProviderCardProps {
@@ -78,10 +74,10 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
   // Captured at mount, like the editor's: the write must be judged against the
   // section this card was drafted over, not whatever it grew into meanwhile.
   const [openedAt] = useState(() => props.revision)
-  const [route, setRoute] = useState('')
   const [displayName, setDisplayName] = useState('')
-  const [baseURL, setBaseURL] = useState('')
-  const [protocol, setProtocol] = useState(protocols[0] ?? '')
+  const [endpoints, setEndpoints] = useState<readonly ProviderEndpointDraft[]>([
+    { api: protocols[0] ?? '', baseURL: '' },
+  ])
   const [keyDraft, setKeyDraft] = useState('')
   const [models, setModels] = useState<readonly ModelDraft[]>([])
   const [busy, setBusy] = useState(false)
@@ -96,19 +92,24 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
   /** Everything but the key stops being editable once the provider exists. */
   const profileDisabled = disabled || committed
 
-  const routeInvalid = route.length > 0 && !ROUTE_PATTERN.test(route)
-  const routeTaken = taken.includes(route)
+  const advice = providerAdvice(keyDraft, displayName, endpoints)
+  const route = deriveProviderId(
+    displayName,
+    taken,
+    advice.kind === 'recipe' ? advice.recipe : undefined,
+  )
   // Rows are checked by the same per-row validator the editor cards use, so a
   // bad row is named by its position here too. Capacities have route-level
   // fallbacks; what a route cannot default is at least one model.
   const modelFailure = validateDeepSeekModels(models)
   const keyFailure = apiKeyFailure(keyDraft)
+  const endpointsFailure = endpointFailure(endpoints)
   // The typed key with paste whitespace removed. A blank field yields an empty
   // string, which the create path reads as "no key supplied" — a route may
   // legitimately authenticate through the provider's own ambient discovery.
   const keyValue = keyDraft.trim()
-  const ready = route.length > 0 && !routeInvalid && !routeTaken
-    && baseURL.length > 0 && models.length > 0 && modelFailure === undefined
+  const ready = displayName.trim().length > 0
+    && endpointsFailure === undefined && models.length > 0 && modelFailure === undefined
     && keyFailure === undefined
   // The one blocked gate worth a line under the form. A satisfied card says
   // nothing at all rather than printing an empty paragraph.
@@ -117,31 +118,36 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
     // blocked only by the key stays silent here rather than answering with the
     // next unmet gate — which is satisfied, and reads as a second, false fault.
     || keyFailure !== undefined
-    // Same for the route id, and it must be tested rather than assumed: the
-    // fallback arm below reads "no models yet", so an unmet route gate would
-    // fall through to it and contradict the filled-in list right above.
-    || route.length === 0 || routeInvalid || routeTaken
     ? undefined
-    : baseURL.length === 0
-      ? t('customNeedsBaseUrl')
-      : modelFailure !== undefined
-        ? `${t('model')} ${String(modelFailure.index + 1)}: ${t(modelFailure.key)}`
-        : t('customNeedsModels')
+    : displayName.trim().length === 0
+      ? t('customNeedsDisplayName')
+      : endpointsFailure === 'missing'
+        ? t('customNeedsBaseUrl')
+        : endpointsFailure === 'duplicate'
+          ? t('requestConfigurationDuplicate')
+          : modelFailure !== undefined
+            ? `${t('model')} ${String(modelFailure.index + 1)}: ${t(modelFailure.key)}`
+            : t('customNeedsModels')
 
   /** Perform the create, returning a failure message or undefined. */
   const createOnce = async (): Promise<string | undefined> => {
     const keyRef = deriveKeyRef(route)
     const storesKey = keyValue.length > 0
     if (!committed) {
+      const primaryEndpoint = endpoints[0]
+      if (primaryEndpoint === undefined) return t('customNeedsBaseUrl')
       const profile = {
-        ...displayName.length === 0 ? {} : { displayName },
+        displayName: displayName.trim(),
         // The profile names the conventional reference only when this card is
         // about to store a key, matching the editor: a route declared with the
         // key left blank keeps its provider-native auth path (a credential
         // chain, ADC) instead of resolving a reference nothing ever sets.
         ...storesKey ? { apiKeyEnv: keyRef } : {},
-        api: protocol,
-        baseURL,
+        api: primaryEndpoint.api,
+        baseURL: primaryEndpoint.baseURL.trim(),
+        ...endpoints.length <= 1
+          ? {}
+          : { alternateEndpoints: endpoints.slice(1).map(endpoint => ({ ...endpoint, baseURL: endpoint.baseURL.trim() })) },
         models: models.map(model => ({ ...model })),
       }
       const response = await api.settings.mutate({
@@ -168,6 +174,18 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
     return undefined
   }
 
+  const applyRecipe = (recipe: ProviderRecipe): void => {
+    setDisplayName(current => current.trim().length === 0 ? recipe.displayName : current)
+    setEndpoints(recipeEndpoints(recipe))
+  }
+
+  const adviceMessage = advice.kind === 'recipe'
+    ? (followsRecipe(endpoints, advice.recipe)
+      ? t('providerAdviceReady')
+      : advice.source === 'key' ? t('providerAdviceKey') : t('providerAdviceName'))
+      .replace('{provider}', advice.recipe.displayName)
+    : t(advice.kind === 'ambiguous-key' ? 'providerAdviceAmbiguous' : 'providerAdviceUnknown')
+
   const create = async (): Promise<void> => {
     setBusy(true)
     setFailure(undefined)
@@ -193,57 +211,23 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
         <span className={styles['editorTitle']}>{t('customTitle')}</span>
       </div>
       <div className={styles['field']}>
-        <span className={styles['fieldLabel']}>{t('customRoute')}</span>
-        <input
-          className={styles['input']}
-          type="text"
-          value={route}
-          placeholder="acme-gateway"
-          aria-label={t('customRoute')}
-          disabled={profileDisabled}
-          onChange={(event) => { setRoute(event.target.value) }}
-        />
-      </div>
-      {/* A rejected id reads as a fault, not as guidance — the same split the
-          key field below already makes between its failure and its hint. */}
-      {routeInvalid || routeTaken
-        ? <p className={styles['error']}>{t(routeInvalid ? 'customRouteInvalid' : 'customRouteTaken')}</p>
-        : <p className={styles['advancedHint']}>{t('customRouteHint')}</p>}
-      <div className={styles['field']}>
         <span className={styles['fieldLabel']}>{t('customDisplayName')}</span>
         <input
           className={styles['input']}
           type="text"
           value={displayName}
-          placeholder={route.length === 0 ? t('customDisplayName') : route}
+          placeholder={t('customDisplayName')}
           aria-label={t('customDisplayName')}
           disabled={profileDisabled}
-          onChange={(event) => { setDisplayName(event.target.value) }}
+          onChange={(event) => {
+            const next = event.target.value
+            setDisplayName(next)
+            const nextAdvice = providerAdvice(keyDraft, next, endpoints)
+            if (nextAdvice.kind === 'recipe' && endpoints.every(endpoint => endpoint.baseURL.trim().length === 0)) {
+              setEndpoints(recipeEndpoints(nextAdvice.recipe))
+            }
+          }}
         />
-      </div>
-      <div className={styles['field']}>
-        <span className={styles['fieldLabel']}>{t('baseUrl')}</span>
-        <input
-          className={styles['input']}
-          type="text"
-          value={baseURL}
-          placeholder="https://gateway.example/v1"
-          aria-label={t('baseUrl')}
-          disabled={profileDisabled}
-          onChange={(event) => { setBaseURL(event.target.value) }}
-        />
-      </div>
-      <div className={styles['field']}>
-        <span className={styles['fieldLabel']}>{t('customApi')}</span>
-        <select
-          className={`${styles['input']} ${styles['selectInput']}`}
-          value={protocol}
-          aria-label={t('customApi')}
-          disabled={profileDisabled}
-          onChange={(event) => { setProtocol(event.target.value) }}
-        >
-          {protocols.map(choice => <option key={choice} value={choice}>{choice}</option>)}
-        </select>
       </div>
       <div className={styles['field']}>
         <span className={styles['fieldLabel']}>{t('keyInput')}</span>
@@ -255,7 +239,15 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           placeholder={t('keyPlaceholder')}
           aria-label={t('keyInput')}
           disabled={disabled}
-          onChange={(event) => { setKeyDraft(event.target.value) }}
+          onChange={(event) => {
+            const next = event.target.value
+            setKeyDraft(next)
+            const nextAdvice = providerAdvice(next, displayName, endpoints)
+            if (nextAdvice.kind === 'recipe' && nextAdvice.source === 'key'
+              && endpoints.every(endpoint => endpoint.baseURL.trim().length === 0)) {
+              applyRecipe(nextAdvice.recipe)
+            }
+          }}
         />
         {/* A create card has no stored key to keep, so the blank case says
             what a blank field means here instead: this route may authenticate
@@ -264,13 +256,25 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
           ? null
           : <p className={styles['error']}>{t(keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure)}</p>}
       </div>
+      <div className={styles['automationAdvice']}>
+        <p className={styles['advancedHint']}>{adviceMessage}</p>
+      </div>
+      <EndpointListEditor
+        endpoints={endpoints}
+        onChange={setEndpoints}
+        protocols={protocols}
+        t={t}
+        disabled={profileDisabled}
+      />
       <ModelListEditor
         models={models}
         onChange={setModels}
         probe={{
           settingsNs: NS,
-          baseURL,
-          api: protocol,
+          ...endpoints[0] === undefined
+            ? {}
+            : { baseURL: endpoints[0].baseURL, api: endpoints[0].api },
+          compatibleApis: endpoints.map(endpoint => endpoint.api),
           ...keyValue.length === 0 ? {} : { apiKey: keyValue },
         }}
         probeBlocked={keyFailure === 'keyBlank' ? 'keyBlankNew' : keyFailure}
@@ -279,8 +283,6 @@ export function CustomProviderCard(props: CustomProviderCardProps): ReactNode {
         disabled={profileDisabled}
       />
       {failure !== undefined ? <p className={styles['error']}>{failure}</p> : null}
-      {/* Only the gates with something to say render; the route-id gate has its
-          own field-level hint, so its blocked state would print an empty line. */}
       {hint === undefined ? null : <p className={styles['advancedHint']}>{hint}</p>}
       <EditorFooter
         t={t}

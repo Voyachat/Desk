@@ -69,6 +69,7 @@
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-client-web-react": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/schemastery": "workspace:^",
     "@types/react": "~18.3.1",
     "@voyaseek-ai/cordis": "workspace:^",
     "react": "^18.2.0"

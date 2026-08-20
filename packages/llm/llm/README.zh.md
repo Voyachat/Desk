@@ -13,6 +13,7 @@
 - `ctx.llm.registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle` 为给定提供方路由注册一个适配器实例。注册要么全部成功，要么全部不生效，并且会随调用 fiber 一起 dispose（资源释放）。返回的句柄还提供 `replace(providers)`：候选路由集合会在注册状态发生任何变化前完成整体验证，因此与另一适配器发生冲突时，当前路由仍保持注册并继续提供服务。替换会在一次同步操作中完成，不会出现可观察的空档。`replace([])` 合法，表示保留注册但不持有任何路由；初始注册则不得为空。
 - `ctx.llm.listProviders(): LlmProviderInfo[]` 按注册顺序描述已注册提供方路由。
 - `ctx.llm.listExternalRuntimeRoutes(runtime)` 与 `resolveExternalRuntimeRoute(provider, model, runtime)` 只公开所属适配器能够为 Codex 或 Claude 提供协议兼容 endpoint 与凭据引用的具体模型。它们返回元数据，绝不返回凭据值。
+- `ctx.llm.probeModelRuntime(provider, model, runtime, signal?)` 会通过已保存路由执行一次显式连通性检查。Native 使用普通 stream，外部 Runtime 则委托给所属适配器。结果区分 `unsupported`、`unverified`、`reachable` 与 `failed`；失败只公开稳定 code。调用方既不提供也不接收凭据。
 - `ctx.llm.registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle` 声明适配器插件可通过配置激活的提供方路由——无论已注册还是休眠——每个条目指明其所属 settings namespace，以及 profile 在该分节内的路径。要么全部成功，要么全部不生效（`INVALID_DIRECTORY`/`DUPLICATE_DIRECTORY`），并随调用 fiber dispose。该句柄还带 `replace(entries)`：候选集合会先被整体校验，因此其中若有条目已被另一个注册声明，当前集合原封不动；此处允许传空数组。声明集合随配置变化的插件必须使用 `replace`，而不是先 dispose 再重新注册——后者会在新集合被拒时让目录整个落空。
 - `ctx.llm.listConfigurableProviders(): LlmConfigurableProvider[]` 按声明顺序列出可配置提供方目录；配置界面将其与 `listProviders()` 合并，为每个条目标注存活或休眠。条目可携带 `declared`，表示拥有该路由的适配器是否只因配置点名才知道它。只有适配器能回答这一点：该字段缺失时，只表示该适配器不区分这两种来源，不能据此判断路由是否随产品交付。
 - `ctx.llm.registerModelDiscovery(settingsNs: string, discover): () => void` 为本插件拥有的 settings namespace 提供查询提供方端点的能力。每个 namespace 只能有一个（`INVALID_DISCOVERY`/`DUPLICATE_DISCOVERY`），并随调用 fiber dispose。
@@ -86,11 +87,11 @@
 
 ## 模型体验
 
-无。服务不添加任何与模型绑定的文本、schema 或消息；它只会填入并记录适配器配置的推理强度。
+显式 Runtime 探测会发送固定用户文本 `Reply with OK.`，输出上限为一个 token。该请求不关联 Session，也不会进入对话历史。普通 stream 行为不变。
 
 #### KV Cache 影响
 
-透传；注册表保留已组装请求前缀，cache 复用与路由边界属于所选适配器和提供方。
+探测没有对话前缀，也不会创建持久 cache 身份。普通调用仍为透传；cache 复用与路由边界属于所选适配器和提供方。
 
 ## 已知限制与暂缓事项
 

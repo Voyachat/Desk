@@ -4,7 +4,7 @@ English | [中文](memory.zh.md)
 
 The memory seam owns structured, user-manageable preferences, facts, constraints, and expiring events outside any one session log. Each `MemoryItem` has a stable semantic key and cites its source session and turn. Providers define persistence and ranking; consumers derive scope from trusted sessions rather than accepting identity fields from model or browser input.
 
-The default consumer queues each completed turn, then uses the conversation's routed model through `ctx.llm` to propose validated upsert, delete, or no-op mutations against relevant candidates. User text is authoritative; the Assistant answer only disambiguates it. After the provider transaction commits, a durable maintenance event records the exact changed item identities. The same consumer calls `recall()` before the first model step of a later session and exposes explicit search, remember, and forget tools. Recalled text is an untrusted `agent-memory`-sourced `user/message`, so the ordinary session projection records exactly what the model received and the browser can offer exact-item correction.
+The default consumer queues only direct user text from each completed turn, then uses the conversation's routed model through `ctx.llm` to propose validated upsert, delete, or no-op mutations against relevant candidates. Assistant messages and other generated content never enter extraction, and only information stated explicitly by the user may be retained. After the provider transaction commits, a durable maintenance event records the exact changed item identities. The same consumer calls `recall()` before the first model step of a later session and exposes explicit search, remember, and forget tools. Recalled text is an untrusted `agent-memory`-sourced `user/message`, so the ordinary session projection records exactly what the model received and the browser can offer exact-item correction.
 
 The shipped single-user desktop provider keeps controls in Settings and data in owner-only SQLite. Secret-like input is rejected before the durable outbox or extraction call; `(session, turn)` makes queued capture idempotent; `workspace + kind + semantic key` makes corrections replace old values. Events expire, failed extraction is retried within configured bounds, and lexical/keyword recall combines overlap, confidence, and recency. Low-emphasis conversation rows expose committed maintenance and recall provenance; their editor and the shell-independent Settings section use a dedicated loopback-only privileged API for list, update, delete, and clear without receiving the database path. A shared Host must replace this provider with one scoped by authenticated employee identity.
 
@@ -93,5 +93,5 @@ abstract forget(ids: readonly MemoryId[], options?: MemoryOperationOptions): Pro
 abstract clear(options?: MemoryOperationOptions): Promise<number>
 ```
 
-Source: [`packages/memory/agent-memory/src/index.ts:179`](../../packages/memory/agent-memory/src/index.ts)
+Source: [`packages/memory/agent-memory/src/index.ts:185`](../../packages/memory/agent-memory/src/index.ts)
 <!-- END GENERATED cordis-surface -->

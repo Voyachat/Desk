@@ -18,7 +18,19 @@ import { MockAdapter, textResponse, toolCallResponse } from '../../../core/agent
 const testToolSignal = new AbortController().signal
 
 const dirs: string[] = []
-afterEach(() => { for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true }) })
+const contexts: Context[] = []
+afterEach(async () => {
+  try {
+    await Promise.all(contexts.splice(0).map(ctx => ctx.fiber.dispose()))
+  } finally {
+    for (const d of dirs.splice(0)) rmSync(d, { recursive: true, force: true })
+  }
+})
+function testContext(): Context {
+  const ctx = new Context()
+  contexts.push(ctx)
+  return ctx
+}
 function dir(): string { const d = mkdtempSync(join(tmpdir(), 'dsh-hx-cov-')); dirs.push(d); return d }
 function sh(d: string, name: string, body: string): string {
   const p = join(d, name); writeFileSync(p, body); chmodSync(p, 0o755); return p
@@ -29,7 +41,7 @@ function hooks(d: string, h: unknown): string {
 
 type HarnessOpts = { stderrSummaryMaxChars?: number; sessionRoot?: string }
 async function harness(configPath: string, adapter: MockAdapter, opts: HarnessOpts = {}): Promise<Context> {
-  const ctx = new Context()
+  const ctx = testContext()
   await mountAgentLoopTestDependencies(ctx)
   if (opts.sessionRoot !== undefined) await ctx.plugin(JsonlSessionPersistence, { root: opts.sessionRoot })
   await ctx.plugin(AgentLoop, { agents: [] })
@@ -312,7 +324,7 @@ export function defineCoverageCases(groups: CoverageGroup | readonly CoverageGro
       ] }] })
       const warn = vi.fn()
       const adapter = new MockAdapter([textResponse('ok')])
-      const ctx = new Context()
+      const ctx = testContext()
       await mountAgentLoopTestDependencies(ctx)
       await ctx.plugin(AgentLoop, { agents: [] })
       await ctx.plugin(LocalSubprocessRuntime)
@@ -622,7 +634,7 @@ export function defineCoverageCases(groups: CoverageGroup | readonly CoverageGro
       const marker = join(sessionDir, 'where')
       hooks(serverDir, { PreToolUse: [{ hooks: [{ type: 'command', command: 'pwd > where' }] }] })
       const adapter = new MockAdapter([toolCallResponse('c1', 'Bash', { command: 'x' }), textResponse('done')])
-      const ctx = new Context()
+      const ctx = testContext()
       await mountAgentLoopTestDependencies(ctx)
       await ctx.plugin(AgentLoop, { agents: [] })
       await ctx.plugin(LocalSubprocessRuntime)

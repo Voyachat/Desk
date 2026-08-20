@@ -63,7 +63,10 @@ import {
 import {
   credentialsDescribeRequestSchema, credentialsSetRequestSchema, credentialsUnsetRequestSchema,
 } from '../api/credentials.schema.ts'
-import { llmDiscoverModelsRequestSchema, llmModelsRequestSchema, llmProvidersRequestSchema } from '../api/llm.schema.ts'
+import {
+  llmDiscoverModelsRequestSchema, llmModelsRequestSchema,
+  llmProbeRuntimeRequestSchema, llmProvidersRequestSchema,
+} from '../api/llm.schema.ts'
 import {
   memoryClearRequestSchema, memoryForgetRequestSchema, memoryListRequestSchema, memoryUpdateRequestSchema,
 } from '../api/memory.schema.ts'
@@ -143,6 +146,7 @@ const UNARY_ROUTES: UnaryRoutes = {
   'llm.providers': { schema: llmProvidersRequestSchema, invoke: (api, r) => api.llm.providers(r) },
   'llm.models': { schema: llmModelsRequestSchema, invoke: (api, r) => api.llm.models(r) },
   'llm.discoverModels': { schema: llmDiscoverModelsRequestSchema, invoke: (api, r, signal) => api.llm.discoverModels(r, signal) },
+  'llm.probeRuntime': { schema: llmProbeRuntimeRequestSchema, invoke: (api, r, signal) => api.llm.probeRuntime(r, signal) },
   'memory.list': { schema: memoryListRequestSchema, invoke: (api, r) => api.memory.list(r) },
   'memory.update': { schema: memoryUpdateRequestSchema, invoke: (api, r) => api.memory.update(r) },
   'memory.forget': { schema: memoryForgetRequestSchema, invoke: (api, r) => api.memory.forget(r) },

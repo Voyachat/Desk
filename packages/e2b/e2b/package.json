@@ -43,6 +43,9 @@
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-loader-smoke": "workspace:^",
     "@voyaseek-ai/dsh-sandbox-policy": "workspace:^",
+    "@voyaseek-ai/dsh-subprocess-e2b": "workspace:^",
+    "@voyaseek-ai/dsh-terminal": "workspace:^",
+    "@voyaseek-ai/dsh-terminal-bash": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^"
   }
 }

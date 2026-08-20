@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-17-chat-activity-fold.zh.md)
+
 ## Problem
 
 A long agent turn interleaved one row per reasoning block, one row per tool call, and mid-turn narration text, so the transcript read like an execution log. Users comparing against mainstream chat products saw dozens of internal-execution rows where a conversation should show the question, a compact working signal, and the answer.

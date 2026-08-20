@@ -123,6 +123,10 @@ function parseJsonl(content: string): JsonObject[] {
     .map(line => JSON.parse(line) as JsonObject)
 }
 
+function isJsonObject(value: unknown): value is JsonObject {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
 function contextFromLogs(contents: readonly string[]): NormalizeContext {
   const headers = contents.map(content => parseJsonl(content)[0])
   return {
@@ -226,6 +230,12 @@ async function prepareCliMockFixture(cwd: string): Promise<void> {
   ])
 }
 
+/** Keep the basic CLI round trip independent of asynchronous memory maintenance. */
+async function prepareCliMockFixtureWithoutMemory(cwd: string): Promise<void> {
+  await prepareCliMockFixture(cwd)
+  await writeFile(join(cwd, '.voyaseek', 'settings.yaml'), 'agent-memory:\n  enabled: false\n')
+}
+
 describe('headless stream-json snapshots', () => {
   it('runs one task through the product headless profile command', async () => {
     const task = 'Prove the product headless profile path with one real tool round trip.'
@@ -241,7 +251,7 @@ describe('headless stream-json snapshots', () => {
         DSH_TELEMETRY_DISABLED: '1',
         NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
       },
-      prepare: prepareCliMockFixture,
+      prepare: prepareCliMockFixtureWithoutMemory,
       inspect: async (cwd) => {
         const logs = await persistedLogs(cwd, join(cwd, '.voyaseek', 'sessions'))
         expect(logs).toHaveLength(1)
@@ -290,6 +300,7 @@ describe('headless stream-json snapshots', () => {
     }
     try {
       await prepareCliMockFixture(cwd)
+      await writeFile(join(home, 'settings.yaml'), 'agent-memory:\n  enabled: true\n')
       const first = await run('capture', '请记住我的验证饮料是 lapsang-fixture。')
       const second = await run('recall', '我的验证饮料是什么？')
       const logs = await persistedLogs(cwd, join(home, 'sessions'))
@@ -929,8 +940,8 @@ describe('headless stream-json snapshots', () => {
         const calls = records.filter(record => record.type === 'tool/call')
         expect(calls.map(record => (record.data as JsonObject | undefined)?.name)).toEqual(['complex_goal'])
         const changes = records.flatMap((record) => {
-          if (record.type !== 'complex-goal/change') return []
-          return [record.data as JsonObject]
+          if (record.type !== 'complex-goal/change' || !isJsonObject(record.data)) return []
+          return [record.data]
         })
         expect(changes.map(change => change.operation)).toEqual(['start', 'block'])
         expect(changes.every(change => change.version === 3)).toBe(true)

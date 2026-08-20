@@ -53,6 +53,7 @@
     "@voyaseek-ai/cordis-plugin-loader": "workspace:^",
     "@voyaseek-ai/dsh-command-feedback": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-loader-smoke": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-session": "workspace:^",
     "@voyaseek-ai/dsh-session-telemetry": "workspace:^",

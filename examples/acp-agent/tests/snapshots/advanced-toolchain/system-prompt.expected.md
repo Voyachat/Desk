@@ -21,9 +21,10 @@ Use the workflow tool ONLY when the user explicitly asks for a workflow or for l
 
 # Dynamic Cordis Plugins
 
-Dynamic Cordis plugins temporarily extend the current DSH process. A Plugin uses apply(ctx) to consume Services, listen to Events, provide Services, register model Tools, or register browser UI in Slots.
+Dynamic Cordis plugins extend a running DSH process. A Plugin uses apply(ctx) to consume Services, listen to Events, provide Services, register model Tools, or register browser UI in Slots.
 
-- Plugin and Package definitions exist only in the current process. define itself does not modify repository source, configuration, or disk, and definitions do not survive a process restart.
+- Plugin and immutable Package definitions persist under $VOYASEEK_HOME/dynamic-cordis. A restart restores their identities, source, compiled artifacts, and current Package pointer, but restores no running Fiber or approval state; an explicit run/approval is still required.
+- define does not modify repository source or cordis.yml. It compiles source and atomically publishes plain JavaScript artifacts plus editable development files under $VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/.
 - The restricted execution environment prevents accidental misuse; it is not a security boundary for malicious code. Services obtained by dynamic code connect to the real runtime.
 
 ## Make the user-facing plan clear first
@@ -33,7 +34,7 @@ Dynamic Cordis plugins temporarily extend the current DSH process. A Plugin uses
 - Once a dynamic Plugin is appropriate, decide whether the task creates a new Plugin or modifies the Plugin named by the user with @pluginId. Proceed directly when the goal is clear; do not ask for repeated confirmation.
 - Choose Host, Client, or both from the requested outcome. Do not propose a Client/browser UI when the task does not need visible page behavior, and do not avoid Client when the requested outcome is visual, interactive, or depends on page state. Host versus Client is an implementation choice; do not make the user choose it.
 - When a design direction or a potentially useful interface would materially affect the result, ask at most one concise outcome or creative-preference question and offer a few candidate directions. Otherwise proceed directly; do not conduct a multi-round interview or a complex questionnaire.
-- cordis_define only defines and presents code; it does not run it. After definition, explain the pluginId and packageId returned by the Host and whether the next step is a run or update.
+- cordis_define only defines and presents code; it does not normally run it. After definition, explain the pluginId, packageId, whether the next step is a run or update, and the editable source path when development HMR is enabled and the Host returns one. A development-only immediate HMR may start only for an already running Plugin whose future Client versions were approved.
 - cordis_run may require user approval. When it returns awaiting-approval, explain that the user must allow or reject it in the UI. Do not wait, retry, or claim that it is running.
 - When it returns starting, explain that the request has entered the asynchronous flow and the Client is still activating. starting does not mean success. Wait for the system to report the final result through steering context.
 - Do not request approval again after the user rejects it. After a technical failure, fix the same Plugin from its diagnostics; do not silently create a replacement Plugin.
@@ -70,7 +71,7 @@ When the user enters @pluginId, the system injects identity, the default base Pa
 2. Use cordis_define in existing mode to append a Package to the same Plugin.
 3. Call cordis_run in run or update mode according to the version relationship.
 
-Never silently create another Plugin for @pluginId. If the reference is unavailable because it was removed, belongs to another Session, or was lost on process restart, tell the user directly.
+Never silently create another Plugin for @pluginId. If the reference is unavailable because it was removed or belongs to another Session, tell the user directly. A process restart alone does not remove a persisted definition.
 
 ## High-frequency errors that must be avoided
 
@@ -91,11 +92,11 @@ return {
 }
 ```
 
-### Code: use plain JavaScript only
+### Code: JavaScript, TypeScript, and Client TSX
 
-- Host and Client code is not transformed by TypeScript, JSX, or a bundler.
-- Do not use TypeScript types, as, decorators, import, require, or JSX.
-- Client React code must use React.createElement(...); never write <Component />.
+- Host accepts JavaScript or TypeScript. Client accepts JavaScript, TypeScript, or TSX; Client JSX compiles through the provided React binding.
+- Dynamic halves are function bodies without module resolution. Do not use import, export, require, decorators, or package-relative module references.
+- Type annotations and Client JSX are removed before durable publication. Production runs only the compiled JavaScript artifact.
 - Do not assume that process, Buffer, window, document, fetch, native timers, or any other global is available. Query the corresponding platform's Builtins and Services first.
 
 ### Data: do not serialize live data
@@ -161,7 +162,7 @@ interface ToolArgsMap {
     /** Required with sandbox_permissions: one sentence for the user explaining why this exact command needs the wider access. */
     justification?: string;
   } & Record<string, JsonValue>;
-  /** Define an immutable Cordis Package. For a new Plugin, use kind:"new" and provide only a semantic prefix of 3–6 lowercase English letters; the Host returns the final pluginId and packageId. To modify an existing Plugin, use kind:"existing" with its exact pluginId to append a Package without overwriting older versions. Provide at least one of code.host and code.client. Each value is a plain JavaScript function body that returns a Cordis Plugin; no TypeScript, JSX, or import transformation occurs. Query Inspect before depending on a Service, Event, Builtin, Slot, or token. Define only validates parameters and syntax and records source: it does not request approval, execute apply, or change currentPackageId. On success, call cordis_run with the returned IDs. */
+  /** Define an immutable Cordis Package. For a new Plugin, use kind:"new" and provide only a semantic prefix of 3–6 lowercase English letters; the Host returns the final pluginId and packageId. To modify an existing Plugin, use kind:"existing" with its exact pluginId to append a Package without overwriting older versions. Provide at least one of code.host and code.client. Host accepts JavaScript or TypeScript; Client accepts JavaScript, TypeScript, or TSX. Both are function bodies with no import/export resolver; Client JSX uses the provided React binding. Define builds and durably publishes plain JavaScript before returning. It does not normally execute apply or change currentPackageId. In development HMR mode the result names stable editable Host/Client working files under $VOYASEEK_HOME/dynamic-cordis/sources/<pluginId>/, and a successful edit appends an immutable Package and hot-updates a running Plugin only when the user already approved future Client versions; developmentHmr reports whether this define immediately started that update. Otherwise call cordis_run with the returned IDs. */
   cordis_define: {
     plugin: {
       kind: "new";
@@ -177,9 +178,9 @@ interface ToolArgsMap {
     /** One-sentence, user-facing description of the Package purpose. */
     purpose: string;
     code: {
-      /** Plain JavaScript function body that returns the Host-half Cordis Plugin. */
+      /** JavaScript or TypeScript function body returning the Host-half Cordis Plugin; imports, exports, and JSX are unsupported. */
       host?: string;
-      /** Plain JavaScript function body that returns the browser Client-half Cordis Plugin. */
+      /** JavaScript, TypeScript, or TSX function body returning the browser Client-half Cordis Plugin; JSX lowers through the provided React binding and imports/exports are unsupported. */
       client?: string;
     };
   } & Record<string, JsonValue>;
@@ -418,6 +419,11 @@ interface ToolOutputMap {
     purpose: string;
     hasHostHalf: boolean;
     hasClientHalf: boolean;
+    developmentSources?: {
+      host?: string;
+      client?: string;
+    };
+    developmentHmr: boolean;
   };
   cordis_inspect_list: JsonValue;
   cordis_inspect_query: JsonValue;

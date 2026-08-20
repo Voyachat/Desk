@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-package-mode-typert-generation-scope.zh.md)
+
 ## Problem
 
 The tsdown plugin has two generation modes. Workspace mode intentionally discovers and emits every opted-in contributor once, while package mode runs as part of one package bundle. Asking the workspace generator for every package from package mode made an isolated package build inspect unrelated workspace packages and could fail because of another package's unfinished types.

@@ -297,6 +297,57 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
+.automationAdvice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--dsw-alias-bg-module-platform);
+}
+
+.endpointList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.endpointHeading,
+.endpointEntryHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.endpointEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 10px;
+}
+
+.endpointRole {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--dsw-alias-label-tertiary);
+}
+
+.endpointFields {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(180px, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 720px) {
+  .endpointFields {
+    grid-template-columns: 1fr;
+  }
+}
+
 .editorActions {
   display: flex;
   justify-content: flex-end;
@@ -491,8 +542,18 @@
   color: var(--dsw-alias-state-error-primary);
 }
 
-.runtimeBadge-unprobed {
+.runtimeBadge-unverified {
   color: var(--dsw-alias-state-warn-label);
+}
+
+.runtimeBadge-reachable {
+  color: var(--dsw-alias-state-success-primary);
+  border-color: var(--dsw-alias-state-success-primary);
+}
+
+.runtimeBadge-failed {
+  color: var(--dsw-alias-state-error-primary);
+  border-color: var(--dsw-alias-state-error-primary);
 }
 
 /* Square, label-free affordances: the row's own inputs carry the meaning, so

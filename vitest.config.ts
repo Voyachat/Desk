@@ -112,6 +112,17 @@ const processBoundTests = [
   'packages/llm/llm-pi-ai/tests/adapter.spec.ts',
   'packages/boot/app-boot/tests/app-boot.spec.ts',
   'packages/workflow/workflow-worker-thread/tests/session.spec.ts',
+  'packages/hooks/hooks-claude-code/tests/bridge.spec.ts',
+  'packages/hooks/hooks-claude-code/tests/coverage-*.spec.ts',
+  'packages/hooks/hooks-codex/tests/bridge.spec.ts',
+  'packages/hooks/hooks-codex/tests/coverage-*.spec.ts',
+  'packages/sandbox/sandbox-local/tests/local.spec.ts',
+  'packages/aistaff/supervisor-control-process/tests/supervisor-control-process.spec.ts',
+  'packages/aistaff/supervisor-process/tests/supervisor-process.spec.ts',
+  'packages/lsp/lsp-stdio/tests/instance.spec.ts',
+  'scripts/oxlint-contract.spec.ts',
+  'scripts/install-lefthook.spec.ts',
+  'apps/cli/tests/source-launch.compat.spec.ts',
 ]
 
 export default defineConfig({
@@ -148,6 +159,7 @@ export default defineConfig({
           name: 'process-bound',
           execArgv: vitestExecArgv,
           pool: 'forks',
+          maxWorkers: 1,
           setupFiles: ['./scripts/test-invariants.ts'],
           include: processBoundTests,
           exclude: [

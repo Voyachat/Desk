@@ -744,6 +744,21 @@ importers:
       '@voyaseek-ai/cordis-plugin-group':
         specifier: workspace:^
         version: link:../../vendor/group
+      '@voyaseek-ai/cordis-plugin-include':
+        specifier: workspace:^
+        version: link:../../vendor/include
+      '@voyaseek-ai/dsh-acp-snapshot':
+        specifier: workspace:^
+        version: link:../../packages/test-support/acp-snapshot
+      '@voyaseek-ai/dsh-agent':
+        specifier: workspace:^
+        version: link:../../packages/core/agent
+      '@voyaseek-ai/dsh-agent-presets':
+        specifier: workspace:^
+        version: link:../../packages/preset/agent-presets
+      '@voyaseek-ai/dsh-app-boot':
+        specifier: workspace:^
+        version: link:../../packages/boot/app-boot
       '@voyaseek-ai/dsh-client-modules':
         specifier: workspace:^
         version: link:../../packages/client/modules
@@ -759,9 +774,72 @@ importers:
       '@voyaseek-ai/dsh-cmdline':
         specifier: workspace:^
         version: link:../../packages/boot/cmdline
+      '@voyaseek-ai/dsh-commands':
+        specifier: workspace:^
+        version: link:../../packages/interaction/commands
+      '@voyaseek-ai/dsh-credentials':
+        specifier: workspace:^
+        version: link:../../packages/credentials/credentials
+      '@voyaseek-ai/dsh-goal':
+        specifier: workspace:^
+        version: link:../../packages/goal/goal
+      '@voyaseek-ai/dsh-home-paths':
+        specifier: workspace:^
+        version: link:../../packages/util/home-paths
+      '@voyaseek-ai/dsh-host-apiproxy':
+        specifier: workspace:^
+        version: link:../../packages/host/apiproxy
+      '@voyaseek-ai/dsh-host-webserver':
+        specifier: workspace:^
+        version: link:../../packages/host/webserver
+      '@voyaseek-ai/dsh-jobs':
+        specifier: workspace:^
+        version: link:../../packages/jobs/jobs
+      '@voyaseek-ai/dsh-llm-replay':
+        specifier: workspace:^
+        version: link:../../packages/test-support/llm-replay
+      '@voyaseek-ai/dsh-permission-presets':
+        specifier: workspace:^
+        version: link:../../packages/interaction/permission-presets
       '@voyaseek-ai/dsh-pwsh-local':
         specifier: workspace:^
         version: link:../../packages/shell/pwsh-local
+      '@voyaseek-ai/dsh-sandbox':
+        specifier: workspace:^
+        version: link:../../packages/sandbox/sandbox
+      '@voyaseek-ai/dsh-sandbox-policy':
+        specifier: workspace:^
+        version: link:../../packages/sandbox/sandbox-policy
+      '@voyaseek-ai/dsh-schedule':
+        specifier: workspace:^
+        version: link:../../packages/schedule/schedule
+      '@voyaseek-ai/dsh-session-persistence-jsonl':
+        specifier: workspace:^
+        version: link:../../packages/session/session-persistence-jsonl
+      '@voyaseek-ai/dsh-session-title':
+        specifier: workspace:^
+        version: link:../../packages/session/session-title
+      '@voyaseek-ai/dsh-skill':
+        specifier: workspace:^
+        version: link:../../packages/skill/skill
+      '@voyaseek-ai/dsh-subagent':
+        specifier: workspace:^
+        version: link:../../packages/subagent/subagent
+      '@voyaseek-ai/dsh-subprocess-local':
+        specifier: workspace:^
+        version: link:../../packages/subprocess/subprocess-local
+      '@voyaseek-ai/dsh-token-meter':
+        specifier: workspace:^
+        version: link:../../packages/llm/token-meter
+      '@voyaseek-ai/dsh-tool-web':
+        specifier: workspace:^
+        version: link:../../packages/web/tool-web
+      '@voyaseek-ai/dsh-user-approval':
+        specifier: workspace:^
+        version: link:../../packages/interaction/user-approval
+      '@voyaseek-ai/dsh-workspace':
+        specifier: workspace:^
+        version: link:../../packages/workspace/workspace
       fflate:
         specifier: ^0.8.2
         version: 0.8.3
@@ -1678,6 +1756,9 @@ importers:
       '@voyaseek-ai/dsh-api-gateway':
         specifier: workspace:^
         version: link:../gateway
+      '@voyaseek-ai/dsh-client-connection':
+        specifier: workspace:^
+        version: link:../../client/connection
       '@voyaseek-ai/dsh-commands':
         specifier: workspace:^
         version: link:../../interaction/commands
@@ -2500,6 +2581,9 @@ importers:
       '@voyaseek-ai/dsh-client-runtime':
         specifier: workspace:^
         version: link:../runtime
+      '@voyaseek-ai/dsh-client-test-runtime':
+        specifier: workspace:^
+        version: link:../../test-support/client-runtime
       '@voyaseek-ai/dsh-client-ui-primitives':
         specifier: workspace:^
         version: link:../ui-primitives
@@ -2509,6 +2593,9 @@ importers:
       '@voyaseek-ai/dsh-client-ui-slots':
         specifier: workspace:^
         version: link:../ui-slots
+      '@voyaseek-ai/dsh-client-web-react':
+        specifier: workspace:^
+        version: link:../web-react
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
@@ -2872,6 +2959,9 @@ importers:
       '@voyaseek-ai/dsh-client-ui-conversation':
         specifier: workspace:^
         version: link:../ui-conversation
+      '@voyaseek-ai/dsh-client-ui-primitives':
+        specifier: workspace:^
+        version: link:../ui-primitives
       '@voyaseek-ai/dsh-client-ui-slots':
         specifier: workspace:^
         version: link:../ui-slots
@@ -2996,6 +3086,9 @@ importers:
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
+      '@voyaseek-ai/dsh-typert-protocol':
+        specifier: workspace:^
+        version: link:../../typert/protocol
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -3085,6 +3178,9 @@ importers:
       '@voyaseek-ai/dsh-client-runtime':
         specifier: workspace:^
         version: link:../runtime
+      '@voyaseek-ai/dsh-client-test-runtime':
+        specifier: workspace:^
+        version: link:../../test-support/client-runtime
       '@voyaseek-ai/dsh-client-ui-slots':
         specifier: workspace:^
         version: link:../ui-slots
@@ -3586,6 +3682,9 @@ importers:
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
+      '@voyaseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
       react:
         specifier: ^18.2.0
         version: 18.3.1
@@ -4624,6 +4723,9 @@ importers:
       '@voyaseek-ai/dsh-llm':
         specifier: workspace:^
         version: link:../../llm/llm
+      '@voyaseek-ai/dsh-llm-deepseek':
+        specifier: workspace:^
+        version: link:../../llm/llm-deepseek
       '@voyaseek-ai/dsh-scope':
         specifier: workspace:^
         version: link:../scope
@@ -4682,6 +4784,9 @@ importers:
       '@voyaseek-ai/cordis':
         specifier: workspace:^
         version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-agent':
+        specifier: workspace:^
+        version: link:../agent
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
@@ -4856,6 +4961,15 @@ importers:
       '@voyaseek-ai/dsh-sandbox-policy':
         specifier: workspace:^
         version: link:../../sandbox/sandbox-policy
+      '@voyaseek-ai/dsh-subprocess-e2b':
+        specifier: workspace:^
+        version: link:../subprocess-e2b
+      '@voyaseek-ai/dsh-terminal':
+        specifier: workspace:^
+        version: link:../../terminal/terminal
+      '@voyaseek-ai/dsh-terminal-bash':
+        specifier: workspace:^
+        version: link:../../terminal/terminal-bash
 
   packages/e2b/fs-e2b:
     devDependencies:
@@ -5140,9 +5254,6 @@ importers:
       '@voyaseek-ai/dsh-client-runtime':
         specifier: workspace:^
         version: link:../../client/runtime
-      '@voyaseek-ai/dsh-cordis-client-runner':
-        specifier: workspace:^
-        version: link:../cordis-client-runner
       '@voyaseek-ai/dsh-home-paths':
         specifier: workspace:^
         version: link:../../util/home-paths
@@ -5472,6 +5583,9 @@ importers:
       '@voyaseek-ai/dsh-attachment':
         specifier: workspace:^
         version: link:../../attachment/attachment
+      '@voyaseek-ai/dsh-attachment-local':
+        specifier: workspace:^
+        version: link:../../attachment/attachment-local
       '@voyaseek-ai/dsh-fs':
         specifier: workspace:^
         version: link:../fs
@@ -6130,6 +6244,12 @@ importers:
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
+      '@voyaseek-ai/dsh-jobs-local':
+        specifier: workspace:^
+        version: link:../../jobs/jobs-local
+      '@voyaseek-ai/dsh-permission-presets':
+        specifier: workspace:^
+        version: link:../../interaction/permission-presets
       '@voyaseek-ai/dsh-storage':
         specifier: workspace:^
         version: link:../../storage/storage
@@ -6621,6 +6741,9 @@ importers:
       '@voyaseek-ai/dsh-credentials':
         specifier: workspace:^
         version: link:../../credentials/credentials
+      '@voyaseek-ai/dsh-credentials-local':
+        specifier: workspace:^
+        version: link:../../credentials/credentials-local
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
@@ -6633,6 +6756,9 @@ importers:
       '@voyaseek-ai/dsh-settings':
         specifier: workspace:^
         version: link:../../settings/settings
+      '@voyaseek-ai/dsh-settings-file':
+        specifier: workspace:^
+        version: link:../../settings/settings-file
       '@voyaseek-ai/dsh-timeout':
         specifier: workspace:^
         version: link:../../util/timeout
@@ -6655,6 +6781,9 @@ importers:
       '@voyaseek-ai/dsh-credentials':
         specifier: workspace:^
         version: link:../../credentials/credentials
+      '@voyaseek-ai/dsh-credentials-local':
+        specifier: workspace:^
+        version: link:../../credentials/credentials-local
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
@@ -6670,6 +6799,9 @@ importers:
       '@voyaseek-ai/dsh-settings':
         specifier: workspace:^
         version: link:../../settings/settings
+      '@voyaseek-ai/dsh-settings-file':
+        specifier: workspace:^
+        version: link:../../settings/settings-file
       '@voyaseek-ai/dsh-timeout':
         specifier: workspace:^
         version: link:../../util/timeout
@@ -7692,6 +7824,9 @@ importers:
       '@voyaseek-ai/dsh-llm':
         specifier: workspace:^
         version: link:../../llm/llm
+      '@voyaseek-ai/dsh-loader-smoke':
+        specifier: workspace:^
+        version: link:../../test-support/loader-smoke
       '@voyaseek-ai/dsh-session':
         specifier: workspace:^
         version: link:../../core/session
@@ -8442,6 +8577,12 @@ importers:
       '@voyaseek-ai/dsh-agent':
         specifier: workspace:^
         version: link:../../core/agent
+      '@voyaseek-ai/dsh-agent-loop':
+        specifier: workspace:^
+        version: link:../../core/agent-loop
+      '@voyaseek-ai/dsh-agent-loop-testkit':
+        specifier: workspace:^
+        version: link:../../test-support/agent-loop-testkit
       '@voyaseek-ai/dsh-agent-presets':
         specifier: workspace:^
         version: link:../../preset/agent-presets
@@ -8472,6 +8613,9 @@ importers:
       '@voyaseek-ai/dsh-session-persistence':
         specifier: workspace:^
         version: link:../../session/session-persistence
+      '@voyaseek-ai/dsh-session-persistence-jsonl':
+        specifier: workspace:^
+        version: link:../../session/session-persistence-jsonl
       '@voyaseek-ai/dsh-session-projection':
         specifier: workspace:^
         version: link:../../session/session-projection
@@ -8484,6 +8628,12 @@ importers:
       '@voyaseek-ai/dsh-storage-domain':
         specifier: workspace:^
         version: link:../../storage/storage-domain
+      '@voyaseek-ai/dsh-subagent-fork-in-process':
+        specifier: workspace:^
+        version: link:../subagent-fork-in-process
+      '@voyaseek-ai/dsh-subagent-spawn-in-process':
+        specifier: workspace:^
+        version: link:../subagent-spawn-in-process
       '@voyaseek-ai/dsh-tools':
         specifier: workspace:^
         version: link:../../core/tools
@@ -8824,6 +8974,12 @@ importers:
       '@voyaseek-ai/dsh-agent':
         specifier: workspace:^
         version: link:../../core/agent
+      '@voyaseek-ai/dsh-agent-loop':
+        specifier: workspace:^
+        version: link:../../core/agent-loop
+      '@voyaseek-ai/dsh-agent-loop-testkit':
+        specifier: workspace:^
+        version: link:../../test-support/agent-loop-testkit
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
@@ -9166,6 +9322,9 @@ importers:
       '@voyaseek-ai/cordis':
         specifier: workspace:^
         version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-attachment':
+        specifier: workspace:^
+        version: link:../../attachment/attachment
       '@voyaseek-ai/dsh-client-runtime':
         specifier: workspace:^
         version: link:../../client/runtime
@@ -9310,6 +9469,9 @@ importers:
       '@voyaseek-ai/dsh-tool-cordis':
         specifier: workspace:^
         version: link:../../extensions/tool-cordis
+      '@voyaseek-ai/dsh-typert-protocol':
+        specifier: workspace:^
+        version: link:../protocol
       '@voyaseek-ai/dsh-typert-registry':
         specifier: workspace:^
         version: link:../registry
@@ -9729,6 +9891,9 @@ importers:
       '@voyaseek-ai/dsh-llm':
         specifier: workspace:^
         version: link:../../llm/llm
+      '@voyaseek-ai/dsh-llm-deepseek':
+        specifier: workspace:^
+        version: link:../../llm/llm-deepseek
       '@voyaseek-ai/dsh-session':
         specifier: workspace:^
         version: link:../../core/session

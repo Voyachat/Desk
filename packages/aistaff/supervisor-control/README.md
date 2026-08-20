@@ -1,5 +1,7 @@
 # Aistaff Supervisor control
 
+English | [中文](README.zh.md)
+
 This package owns the Host-only `aidesktop.supervisor-control.v1` Service Definition. `SupervisorControlPort` registers as `ctx.aistaffSupervisorControl` and carries a Supervisor handshake, local resource Grant registration and revocation, bounded capability reads, Receipts, and idempotent operation reconciliation.
 
 `SupervisorGrantRegister.root_path` is the only public path field and exists only on the privileged Host-to-Supervisor call. Every returned Grant, payload, Receipt, error, and operation status is path-free and carries opaque branded identities. The current Host session receives a fresh `capability_context_handle` through `hello()`; `capability_only` requests use that handle and never manufacture a local Runtime identity.

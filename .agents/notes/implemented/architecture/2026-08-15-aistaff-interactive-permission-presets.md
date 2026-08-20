@@ -1,5 +1,7 @@
 # AI Staff keeps approval interactive in every permission preset
 
+English | [中文](2026-08-15-aistaff-interactive-permission-presets.zh.md)
+
 AI Staff is a customer-facing desktop surface. Its profile overrides the generic DSH base so `read-only`, `workspace-write`, and `danger-full-access` all use the `ask` approval policy, with `workspace-write` as the default preset. Selecting `danger-full-access` changes the file sandbox only; it does not suppress approval requests for operations that require explicit authorization.
 
 The generic DSH base retains `danger-full-access + never` for explicit unattended deployments. The product behavior is therefore owned by `apps/aistaff-desktop/src/profile.ts`, not by the shared permission or approval services.

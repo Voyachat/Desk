@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-15-package-mode-typert-generation-scope.md
+2026-08-15-package-mode-typert-generation-scope.md: 81bbe803b327a785abc20254e57804536ac708c4
+2026-08-15-package-mode-typert-generation-scope.zh.md: fe984a166f3f0884de3597f831f4b3205251ff75

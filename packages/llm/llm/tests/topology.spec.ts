@@ -1,12 +1,46 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
 import LlmRuntime, { LlmAdapter, LlmError } from '@voyaseek-ai/dsh-llm'
-import type { GenerateOptions, LlmConfigurableProvider, StreamChunk } from '@voyaseek-ai/dsh-llm'
+import type {
+  GenerateOptions, LlmConfigurableProvider, LlmExternalRuntime, LlmExternalRuntimeRoute, StreamChunk,
+} from '@voyaseek-ai/dsh-llm'
 
 class NoopAdapter extends LlmAdapter {
 
   async * stream(_options: GenerateOptions): AsyncIterable<StreamChunk> {
     throw new Error('not exercised')
+  }
+}
+
+class RuntimeProbeAdapter extends LlmAdapter {
+  readonly externalProbe = vi.fn((
+    _provider: string,
+    _model: string,
+    _runtime: LlmExternalRuntime,
+    _signal?: AbortSignal,
+  ) => Promise.resolve(true))
+
+  async * stream(_options: GenerateOptions): AsyncIterable<StreamChunk> {
+    yield { type: 'finish', reason: { kind: 'stop' } }
+  }
+
+  override externalRuntimeRoute(
+    provider: string,
+    model: string,
+    runtime: LlmExternalRuntime,
+  ): LlmExternalRuntimeRoute | undefined {
+    return runtime === 'codex'
+      ? { provider, model, baseURL: 'https://gateway.example/v1', apiKeyEnv: 'GATEWAY_API_KEY' }
+      : undefined
+  }
+
+  override probeExternalRuntime(
+    provider: string,
+    model: string,
+    runtime: LlmExternalRuntime,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    return this.externalProbe(provider, model, runtime, signal)
   }
 }
 
@@ -264,5 +298,38 @@ describe('model discovery registry', () => {
       .rejects.toMatchObject({ code: 'INVALID_DISCOVERY' })
     // Naming a route alone is enough: the adapter may know it without an endpoint.
     await expect(ctx.llm.discoverModels('llm-example', { provider: 'known-route' })).resolves.toEqual([])
+  })
+})
+
+describe('model runtime connectivity', () => {
+  it('distinguishes Native reachability, external admission, and unsupported modes', async () => {
+    const ctx = await setup()
+    const adapter = new RuntimeProbeAdapter()
+    ctx.llm.registerAdapter(['gateway'], adapter)
+
+    await expect(ctx.llm.probeModelRuntime('gateway', 'model-a', 'native'))
+      .resolves.toEqual({ status: 'reachable' })
+    await expect(ctx.llm.probeModelRuntime('gateway', 'model-a', 'codex'))
+      .resolves.toEqual({ status: 'reachable' })
+    await expect(ctx.llm.probeModelRuntime('gateway', 'model-a', 'claude'))
+      .resolves.toEqual({ status: 'unsupported' })
+    expect(adapter.externalProbe).toHaveBeenCalledWith('gateway', 'model-a', 'codex', undefined)
+  })
+
+  it('keeps failures code-only and leaves an unimplemented admitted probe unverified', async () => {
+    const ctx = await setup()
+    const failing = new RuntimeProbeAdapter()
+    failing.externalProbe.mockRejectedValueOnce(new LlmError('do not return provider body', 'AUTH'))
+    ctx.llm.registerAdapter(['failing'], failing)
+    ctx.llm.registerAdapter(['unverified'], new class extends RuntimeProbeAdapter {
+      override probeExternalRuntime(): Promise<boolean> { return Promise.resolve(false) }
+    }())
+
+    await expect(ctx.llm.probeModelRuntime('failing', 'model-a', 'codex'))
+      .resolves.toEqual({ status: 'failed', code: 'AUTH' })
+    await expect(ctx.llm.probeModelRuntime('unverified', 'model-a', 'codex'))
+      .resolves.toEqual({ status: 'unverified' })
+    expect(JSON.stringify(await ctx.llm.probeModelRuntime('missing', 'model-a', 'native')))
+      .not.toContain('provider body')
   })
 })

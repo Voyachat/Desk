@@ -1,5 +1,7 @@
 # Aistaff local capability
 
+English | [中文](README.zh.md)
+
 This package owns the Renderer-safe local resource and consent seam. `LocalCapabilityPort` registers as `ctx.localCapability`; `LocalCapabilityObjectLayer` publishes deeply immutable complete replacements. Renderer inputs contain only opaque identities, expected revisions, and one stable `OperationId`.
 
 The Host coordinator resolves the current `LocalOperationRequestView` from an injected authoritative source before selecting or dispatching. It never accepts an operation, arguments, risk, policy, filesystem location, Supervisor endpoint, token, or capability context from the Renderer. Native selections pass their location directly to Supervisor grant registration and publish only a display name plus opaque grant identity.

@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-workflow-interruption-recovery-dashboard.zh.md)
+
 ## Problem
 
 Workflow runs are durably described by Session events, but a process exit can leave the last member and run events open. Replaying that history as `running` implies that an absent worker still owns active work. Automatically resubmitting the workflow after restart can repeat model calls or tool side effects. The existing per-message card also did not provide a current-session view of multiple runs and their recovery state.

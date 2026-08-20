@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-17-voyaseek-brand-migration.zh.md)
+
 ## Problem
 
 The desktop client ships to external customers under the Voyaseek brand, but every customer-visible surface carried the upstream identity: window and document titles, the PWA manifest, favicon, sidebar wordmark, hero mark, the first-run notice, Electron app and DMG names, error dialogs, and the model-facing system prompt. A naive global rename of "DeepSeek" would also rewrite the identifiers third-party DSH plugins rely on — `@deepseek-ai/*` package names, `DSH_HOME` layout, `__DSH_BOOT__`, the `dsh` CLI, and session-log event names — breaking plugin resolution and persistence. Separately, MIT requires the upstream copyright and license text to travel with any redistribution, without requiring the upstream brand in the product UI.

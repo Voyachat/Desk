@@ -34,7 +34,7 @@ import { SessionId } from '@voyaseek-ai/dsh-session'
 export const AGENT_MEMORY_SETTINGS_NAMESPACE = 'agent-memory'
 const namespace = settingsNamespace(AGENT_MEMORY_SETTINGS_NAMESPACE)
 const APPLICATION_ID = 0x4453484d
-const SCHEMA_VERSION = 2
+const SCHEMA_VERSION = 3
 const MEMORY_KINDS = ['preference', 'fact', 'constraint', 'event'] as const
 const DATABASE_TABLES = new Set(['memories', 'capture_outbox', 'capture_receipts'])
 
@@ -106,7 +106,7 @@ const positiveInteger = z.number().step(1).min(1).max(Number.MAX_SAFE_INTEGER)
 
 /** Settings validation shared by composition defaults and user writes. */
 export const MemorySettingsSchema: z<MemorySettings> = z.object({
-  enabled: z.boolean().default(true),
+  enabled: z.boolean().default(false),
   autoCapture: z.boolean().default(true),
   autoRecall: z.boolean().default(true),
   maxEntries: positiveInteger.default(2_000),
@@ -193,6 +193,35 @@ function publicItem(row: MemoryRow): MemoryItem {
   }
 }
 
+const DATABASE_MIGRATIONS: Readonly<Record<number, (db: DatabaseSync) => void>> = {
+  2: db => db.exec("UPDATE capture_outbox SET payload = json_remove(payload, '$.assistantText')"),
+}
+
+function migrateDatabase(db: DatabaseSync, actual: string, version: number): void {
+  if (version < 2 || version > SCHEMA_VERSION) {
+    throw new Error(`agent-memory database at "${actual}" has unsupported schema version ${String(version)}`)
+  }
+  db.exec('BEGIN IMMEDIATE')
+  try {
+    let current = version
+    while (current < SCHEMA_VERSION) {
+      const migrate = DATABASE_MIGRATIONS[current]
+      if (migrate === undefined) throw new Error(`missing migration from schema version ${String(current)}`)
+      migrate(db)
+      current += 1
+      db.exec(`PRAGMA user_version = ${String(current)}`)
+    }
+    db.exec('COMMIT')
+  } catch (error) {
+    try {
+      db.exec('ROLLBACK')
+    } catch {
+      // ROLLBACK can only fail when SQLite already ended the failed transaction.
+    }
+    throw new Error(`agent-memory database at "${actual}" could not migrate schema version ${String(version)} to ${String(SCHEMA_VERSION)}`, { cause: error })
+  }
+}
+
 function createDatabase(path: string): DatabaseSync {
   const actual = resolve(path)
   mkdirSync(dirname(actual), { recursive: true, mode: 0o700 })
@@ -218,9 +247,7 @@ function createDatabase(path: string): DatabaseSync {
     if (applicationId === APPLICATION_ID && unknownTables.length > 0) {
       throw new Error(`agent-memory database at "${actual}" has unrecognized tables: ${unknownTables.join(', ')}`)
     }
-    if (applicationId === APPLICATION_ID && version !== SCHEMA_VERSION) {
-      throw new Error(`agent-memory database at "${actual}" has unsupported schema version ${String(version)}`)
-    }
+    if (applicationId === APPLICATION_ID && version !== SCHEMA_VERSION) migrateDatabase(db, actual, version)
     db.exec('PRAGMA journal_mode = WAL')
     db.exec('PRAGMA foreign_keys = ON')
     db.exec(`PRAGMA application_id = ${String(APPLICATION_ID)}`)
@@ -311,12 +338,11 @@ export class SettingsAgentMemory extends AgentMemory {
       const config = this.settings.get()
       if (!config.enabled || !config.autoCapture) return Promise.resolve('disabled')
       const userText = bounded(request.userText, config.maxContentChars)
-      const assistantText = bounded(request.assistantText, config.maxContentChars)
-      if (userText.length === 0 || containsSensitive(`${userText}\n${assistantText}`)) return Promise.resolve('filtered')
+      if (userText.length === 0 || containsSensitive(userText)) return Promise.resolve('filtered')
       const captureKey = captureIdentity(request)
       const receipt = this.db.prepare('SELECT 1 FROM capture_receipts WHERE capture_key = ?').get(captureKey)
       if (receipt !== undefined) return Promise.resolve('duplicate')
-      const payload: CaptureMemoryRequest = { ...request, userText, assistantText }
+      const payload: CaptureMemoryRequest = { ...request, userText }
       const result = this.db.prepare(`
         INSERT OR IGNORE INTO capture_outbox (capture_key, payload) VALUES (?, ?)
       `).run(captureKey, JSON.stringify(payload))
@@ -380,7 +406,7 @@ export class SettingsAgentMemory extends AgentMemory {
       if (containsSensitive(`${request.title}\n${request.content}\n${request.keywords?.join(' ') ?? ''}`)) {
         throw new Error('refusing to store content that appears to contain a credential or secret')
       }
-      const mutation: MemoryMutation = {
+      const mutation: Omit<Extract<MemoryMutation, { action: 'upsert' }>, 'evidence'> = {
         action: 'upsert', kind: request.kind, key: request.key, title: request.title,
         content: request.content, keywords: request.keywords ?? [], confidence: 1,
       }
@@ -487,6 +513,12 @@ export class SettingsAgentMemory extends AgentMemory {
     this.db.exec('BEGIN IMMEDIATE')
     try {
       for (const mutation of mutations.slice(0, 8)) {
+        if (mutation.action !== 'none') {
+          const evidence = mutation.evidence.trim()
+          if (evidence.length === 0 || !capture.userText.includes(evidence)) {
+            throw new Error('automatic memory mutation lacks exact evidence from the captured direct user text')
+          }
+        }
         switch (mutation.action) {
           case 'none': break
           case 'delete':
@@ -527,7 +559,7 @@ export class SettingsAgentMemory extends AgentMemory {
 
   private upsert(
     source: Pick<CaptureMemoryRequest, 'sessionId' | 'turn' | 'workspace'>,
-    mutation: Extract<MemoryMutation, { action: 'upsert' }>,
+    mutation: Omit<Extract<MemoryMutation, { action: 'upsert' }>, 'evidence'>,
     config: MemorySettings,
     mode: 'automatic' | 'explicit',
   ): void {

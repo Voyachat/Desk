@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-16-model-directory-and-access-failures.zh.md)
+
 ## Problem
 
 OpenAI-compatible `GET /models` responses advertise model identifiers but do not carry a portable guarantee that the current account has activated each model or that each identifier accepts chat requests. Treating every new identifier as selected writes heterogeneous image, audio, embedding, and account-gated products into the conversation catalog. When a provider reports an unactivated product as HTTP 400, pi-ai exposes only flattened error text, so the request otherwise looks like invalid user input.

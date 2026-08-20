@@ -6,19 +6,21 @@ import AgentMemory, {
   type MemoryMaintainer, type MemoryMaintenanceResult, type RememberMemoryRequest,
   type UpdateMemoryRequest,
 } from '@voyaseek-ai/dsh-agent-memory'
-import LlmRuntime, { createAssistantMessage, createUserMessage } from '@voyaseek-ai/dsh-llm'
+import LlmRuntime, { CallId, createAssistantMessage, createUserMessage } from '@voyaseek-ai/dsh-llm'
 import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
 import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
 import ToolRuntime from '@voyaseek-ai/dsh-tools'
 import * as memoryContext from '@voyaseek-ai/dsh-agent-memory-context'
 
 class TestMemory extends AgentMemory {
+  enabled = true
   captures: CaptureMemoryRequest[] = []
+  remembered: RememberMemoryRequest[] = []
   recalled: MemoryItem[] = []
   maintenance: MemoryMaintenanceResult = { processed: 0, failed: 0, pending: 0, outcomes: [] }
   override status() {
     return {
-      enabled: true,
+      enabled: this.enabled,
       autoCapture: true,
       autoRecall: true,
       count: this.recalled.length,
@@ -33,6 +35,7 @@ class TestMemory extends AgentMemory {
     return Promise.resolve(this.maintenance)
   }
   override remember(request: RememberMemoryRequest): Promise<MemoryItem> {
+    this.remembered.push(request)
     return Promise.resolve({
       id: MemoryId(request.key), kind: request.kind, key: request.key, title: request.title,
       content: request.content, keywords: request.keywords ?? [], confidence: 1,
@@ -90,6 +93,38 @@ async function harness() {
 }
 
 describe('agent-memory context consumer', () => {
+  it('keeps capture, prompt guidance, and model-visible memory tools off while disabled', async () => {
+    const { ctx, memory } = await harness()
+    memory.enabled = false
+    const session = ctx.sessions.create(SessionId('disabled'))
+    session.append('turn/start', { turn: 1 })
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: '请记住我的验证饮料是正山小种' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
+    await Promise.resolve()
+    expect(memory.captures).toEqual([])
+    const assembly = await ctx.systemPrompt.assemble()
+    expect(assembly.sections.find(section => section.name === 'tool:agent-memory')?.text).toBe('')
+    expect(assembly.tools.map(tool => tool.name)).not.toEqual(expect.arrayContaining([
+      'memory_search', 'memory_remember', 'memory_forget',
+    ]))
+    memory.recalled = [{
+      id: MemoryId('disabled-memory'), kind: 'fact', key: 'disabled', title: 'disabled',
+      content: '不应召回', keywords: ['不应'], confidence: 1, createdAt: 1, updatedAt: 1,
+      source: { sessionId: SessionId('source'), turn: 1, mode: 'automatic' },
+    }]
+    const agent = fakeAgent(session)
+    const prompt = createUserMessage({ content: [{ type: 'text', text: '查询' }], source: { kind: 'user' } })
+    const decision = await agentEvents(ctx, agent).waterfall(
+      'agent/pre-step',
+      { messages: [prompt], turn: 2, step: 1, signal: new AbortController().signal },
+      () => Promise.resolve({ kind: 'enter' as const, messages: [prompt] }),
+    )
+    expect(decision).toMatchObject({ kind: 'enter', messages: [prompt] })
+    await ctx.fiber.dispose()
+  })
+
   it('captures only a completed direct-user turn', async () => {
     const { ctx, memory } = await harness()
     const session = ctx.sessions.create(SessionId('capture'), { meta: { cwd: '/project' } })
@@ -111,7 +146,6 @@ describe('agent-memory context consumer', () => {
       turn: 1,
       workspace: '/project',
       userText: 'my preference',
-      assistantText: 'noted',
     }])
     await ctx.fiber.dispose()
   })
@@ -152,6 +186,37 @@ describe('agent-memory context consumer', () => {
       if (recalledBlock?.type === 'text') expect(recalledBlock.text).toContain('正山小种')
       expect(decision.messages.at(-1)?.source).toEqual({ kind: 'user' })
     }
+    await ctx.fiber.dispose()
+  })
+
+  it('requires memory_remember to cite the current direct user message', async () => {
+    const { ctx, memory } = await harness()
+    const session = ctx.sessions.create(SessionId('explicit'), { meta: { cwd: '/project' } })
+    session.append('turn/start', { turn: 1 })
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: '请记住：我的验证饮料是正山小种。' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    const agent = fakeAgent(session)
+    const execute = (callId: string, evidence: string) => ctx.tools.execute({
+      signal: new AbortController().signal,
+      callId: CallId(callId),
+      name: 'memory_remember',
+      arguments: {
+        kind: 'preference', key: 'verification-drink', title: '验证饮料',
+        content: '用户的验证饮料是正山小种。', evidence,
+      },
+      agent,
+    })
+
+    const rejected = await execute('unsupported', '模型认为用户喜欢正山小种')
+    expect(rejected).toMatchObject({ isError: true })
+    expect(memory.remembered).toEqual([])
+    const accepted = await execute('supported', '我的验证饮料是正山小种')
+    expect(accepted).toMatchObject({ isError: false })
+    expect(memory.remembered).toMatchObject([{
+      sessionId: SessionId('explicit'), turn: 1, workspace: '/project',
+      kind: 'preference', key: 'verification-drink', content: '用户的验证饮料是正山小种。',
+    }])
     await ctx.fiber.dispose()
   })
 

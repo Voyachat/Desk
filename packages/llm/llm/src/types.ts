@@ -151,6 +151,17 @@ export interface LlmProviderInfo {
 /** Alternative agent runtimes that can reuse a provider's native endpoint. */
 export type LlmExternalRuntime = 'codex' | 'claude'
 
+/** Every agent runtime mode shown by model configuration surfaces. */
+export type LlmModelRuntime = 'native' | LlmExternalRuntime
+
+/** Result of one explicit model/runtime connectivity probe. */
+export interface LlmRuntimeProbeResult {
+  /** Whether the route was reached, could not be probed, or rejected the request. */
+  status: 'unsupported' | 'unverified' | 'reachable' | 'failed'
+  /** Stable provider-neutral failure code; never a credential or provider response body. */
+  code?: string
+}
+
 /** Exact provider/model endpoint materialized for an alternative agent runtime. */
 export interface LlmExternalRuntimeRoute {
   /** Provider route retained in the session request log. */

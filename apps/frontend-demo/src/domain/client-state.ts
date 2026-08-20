@@ -1,5 +1,5 @@
 export type SessionId = string
-export type WorkspaceId = string
+type WorkspaceId = string
 export type ViewId = 'chat' | 'trajectory'
 export type PermissionMode = 'read-only' | 'workspace-write' | 'full-access'
 export type MenuId = 'permission' | 'model' | 'preset' | 'workspace' | 'sidebar-view' | null
@@ -28,7 +28,7 @@ export interface TranscriptItem {
   details?: ToolDetails
 }
 
-export interface EmployeeRun {
+interface EmployeeRun {
   employeeName: string
   employeeRole: string
   runLabel: string
@@ -55,7 +55,7 @@ export interface PendingApproval {
   command: string
 }
 
-export interface ComposerState {
+interface ComposerState {
   draft: string
   permission: PermissionMode
   model: string

@@ -1,5 +1,7 @@
 # Aistaff product Remote
 
+English | [中文](README.zh.md)
+
 This package exposes the authoritative `ctx.aistaffProduct` operations through strict generated Typert codecs under the `aistaffProduct` Remote namespace. Its Client entry registers `ctx.aistaffProductPort`, unwraps the carrier envelope, and preserves product business results without maintaining a second projection.
 
 Host composition loads the default export after the product projection. Client composition loads `@voyaseek-ai/dsh-aistaff-product-remote/client` after API Remotes has mounted this package's generated `./remote` contribution.

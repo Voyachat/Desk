@@ -73,7 +73,6 @@
     "@voyaseek-ai/dsh-brand": "workspace:^",
     "@voyaseek-ai/dsh-client-modules": "workspace:^",
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
-    "@voyaseek-ai/dsh-cordis-client-runner": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-llm": "workspace:^",
     "@voyaseek-ai/dsh-home-paths": "workspace:^",

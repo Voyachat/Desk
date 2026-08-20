@@ -13,6 +13,7 @@ An adapter registry plus a single streaming call API, interceptable via a waterf
 - `ctx.llm.registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle` Register one adapter instance for the given provider routes. Registration is all-or-nothing, and is disposed with the calling fiber. The returned disposer also carries `replace(providers)`: the candidate route set is validated in full before anything moves, so a conflict with another adapter leaves the current routes registered and serving, and the swap itself is one synchronous section with no observable gap. `replace([])` is legal — a registration holding zero routes — unlike an empty initial registration.
 - `ctx.llm.listProviders(): LlmProviderInfo[]` Describe registered provider routes in registration order.
 - `ctx.llm.listExternalRuntimeRoutes(runtime)` and `resolveExternalRuntimeRoute(provider, model, runtime)` expose only exact models whose owning adapter can supply a protocol-compatible endpoint and credential reference to Codex or Claude. They return metadata, never credential values.
+- `ctx.llm.probeModelRuntime(provider, model, runtime, signal?)` performs one explicit connectivity check through the saved route. Native uses the normal stream; an external runtime delegates to the owning adapter. Results distinguish `unsupported`, `unverified`, `reachable`, and `failed`; failures expose only a stable code. The caller never supplies or receives a credential.
 - `ctx.llm.registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle` Declare provider routes an adapter plugin can activate through configuration — registered or dormant — each naming its owning settings namespace and the path to its profile inside that section. All-or-nothing (`INVALID_DIRECTORY`/`DUPLICATE_DIRECTORY`), disposed with the calling fiber. The handle also carries `replace(entries)`: the candidate set is validated in full before anything moves, so an entry another registration already declares leaves the current set intact, and an empty array is legal there. A plugin whose declared set follows its configuration must use `replace` rather than disposing and re-registering — the latter strands the directory empty whenever the new set is refused.
 - `ctx.llm.listConfigurableProviders(): LlmConfigurableProvider[]` List the declared directory in declaration order; configuration surfaces merge it with `listProviders()` to mark each entry live or dormant. An entry may carry `declared` — whether the owning adapter knows that route only because configuration named it. Only the adapter can answer, so absence means "this adapter draws no such distinction", never "shipped".
 - `ctx.llm.registerModelDiscovery(settingsNs: string, discover): () => void` Offer to interrogate provider endpoints for the settings namespace this plugin owns. One offer per namespace (`INVALID_DISCOVERY`/`DUPLICATE_DISCOVERY`), disposed with the calling fiber.
@@ -86,11 +87,11 @@ Two adapters implement `LlmAdapter` on different internals: [`@voyaseek-ai/dsh-l
 
 ## Model Experience
 
-None, as the service adds no model-bound text, schema, or message; it only materializes and logs an adapter-configured reasoning effort.
+The explicit runtime probe sends the fixed user text `Reply with OK.` with a one-token output limit. It is not associated with a Session and does not enter conversation history. Ordinary streaming behavior is unchanged.
 
 #### KV Cache effect
 
-Pass-through; the registry preserves the assembled request prefix, while the selected adapter and provider own cache reuse and routing boundaries.
+The probe has no conversation prefix and creates no durable cache identity. Ordinary calls remain pass-through: the selected adapter and provider own cache reuse and routing boundaries.
 
 ## Known Limitations and Deferred Work
 

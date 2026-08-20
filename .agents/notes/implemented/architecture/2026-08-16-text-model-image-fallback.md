@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-16-text-model-image-fallback.zh.md)
+
 ## Problem
 
 Browser image admission treated a model's native image capability as the complete product capability. A text-only model could still perform the user's task from a faithful visual description, but the Host rejected the image before any durable prompt existed. Marking every route as image-capable would instead send unsupported content to providers, strand image blocks in session history after a provider rejection, and misrepresent the model catalog.

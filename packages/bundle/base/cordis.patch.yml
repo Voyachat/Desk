@@ -84,7 +84,7 @@
     - id: agent-memory
       name: '@voyaseek-ai/dsh-agent-memory-settings'
       config:
-        enabled: true
+        enabled: false
         autoCapture: true
         autoRecall: true
         maxEntries: 2000

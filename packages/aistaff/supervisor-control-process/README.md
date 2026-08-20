@@ -1,5 +1,7 @@
 # Aistaff Supervisor control process provider
 
+English | [中文](README.zh.md)
+
 This Host-only package implements `SupervisorControlPort` over the authenticated `SupervisorProcessService`. It performs `control.hello` before publishing `ctx.aistaffSupervisorControl`, requires `aidesktop.supervisor-control.v1`, validates the advertised limits and exact `file/read_text` and `directory/list` capabilities, and fails plugin loading when the Rust process is incompatible.
 
 Grant registration, Grant revocation, bounded reads, Receipt lookup, and operation reconciliation map directly to `control.grant.register`, `control.grant.revoke`, `control.capability.read`, `control.receipt.get`, and `control.operation.read`. The provider validates every request and response, decodes Rust `bytes_base64` into `Uint8Array`, preserves branded values as their original JSON strings, and never creates a Receipt or replacement operation identity in TypeScript.

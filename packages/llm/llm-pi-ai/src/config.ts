@@ -76,6 +76,12 @@ export interface PiAiProviderProfile {
   /** Endpoint for this route's models; defaults to the installed catalog's endpoint. */
   baseURL?: string
   /**
+   * Additional protocol endpoints authenticated by the same {@link apiKeyEnv}.
+   * The primary `api`/`baseURL` pair continues to serve native requests;
+   * Claude and Codex select the entry whose protocol they require.
+   */
+  alternateEndpoints?: PiAiAlternateEndpointProfile[]
+  /**
    * This route's model catalog. Omission serves the installed catalog for the
    * route unchanged; an explicit list replaces it, each entry defaulting its
    * unset fields from the installed model of the same id.
@@ -138,6 +144,14 @@ export interface PiAiProviderProfile {
   streamIdleTimeoutMs?: number
   /** Provider-owned model-request retry policy; omission uses normal defaults. */
   retryPolicy?: RetryPolicyConfig
+}
+
+/** One additional protocol endpoint sharing its provider route's credential. */
+export interface PiAiAlternateEndpointProfile {
+  /** Wire protocol served by this endpoint. */
+  api: string
+  /** Endpoint prefix used for that protocol. */
+  baseURL: string
 }
 
 /** Validated profile with its route stamped and every adapter-owned default resolved. */
@@ -242,6 +256,10 @@ const profile = z.object({
   displayName: z.string(),
   api: z.union(supportedProtocols()),
   baseURL: z.string(),
+  alternateEndpoints: z.array(z.object({
+    api: z.union(supportedProtocols()).required(),
+    baseURL: z.string().required(),
+  })),
   models: z.array(modelProfile),
   modelOverrides: z.dict(modelOverride),
   compat: compatProfile,
@@ -320,6 +338,19 @@ export function resolveProfiles(
     if (source.baseURL !== undefined && source.baseURL.length === 0) {
       throw new Error(`llm-pi-ai: provider "${provider}" has an empty baseURL`)
     }
+    const endpointProtocols = new Set<string>()
+    if (source.api !== undefined) endpointProtocols.add(source.api)
+    for (const [index, endpoint] of (source.alternateEndpoints ?? []).entries()) {
+      if (endpoint.baseURL.length === 0) {
+        throw new Error(`llm-pi-ai: provider "${provider}" alternateEndpoints[${index}] has an empty baseURL`)
+      }
+      if (endpointProtocols.has(endpoint.api)) {
+        throw new Error(
+          `llm-pi-ai: provider "${provider}" configures protocol "${endpoint.api}" more than once`,
+        )
+      }
+      endpointProtocols.add(endpoint.api)
+    }
     if (source.displayName !== undefined && source.displayName.length === 0) {
       throw new Error(`llm-pi-ai: provider "${provider}" has an empty displayName`)
     }
@@ -369,6 +400,9 @@ export function resolveProfiles(
       streamIdleTimeoutMs,
       retryPolicy: resolveRetryPolicy(retryPolicy, `llm-pi-ai: provider "${provider}" retryPolicy`),
       ...rest.headers === undefined ? {} : { headers: { ...rest.headers } },
+      ...rest.alternateEndpoints === undefined
+        ? {}
+        : { alternateEndpoints: rest.alternateEndpoints.map(endpoint => ({ ...endpoint })) },
       ...rest.thinkingBudgets === undefined ? {} : { thinkingBudgets: { ...rest.thinkingBudgets } },
       configuredMaxTokens: catalog.configuredMaxTokens,
       modelsWithDeclaredInput,

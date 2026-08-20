@@ -59,6 +59,10 @@ describe('assembled todo surfaces', () => {
       expect(found).not.toBeNull()
       return found!
     }, { timeout: 10_000 })
+    // The resident fixture also carries a pending approval. Its composer
+    // takeover intentionally hides the ordinary input dock, so resolve it
+    // before asserting on the standing-plan panel mounted in that dock.
+    fireEvent.click(await screen.findByRole('button', { name: 'Yes' }))
     // The panel is the standing plan the turn's `todo/write` event feeds; it
     // mounts above the composer, outside the row, and starts collapsed — its
     // list only exists once expanded.

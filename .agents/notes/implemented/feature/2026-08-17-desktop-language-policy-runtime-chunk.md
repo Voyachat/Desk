@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-17-desktop-language-policy-runtime-chunk.zh.md)
+
 ## Problem
 
 The Aistaff language-policy Host plugin and invariant compile as separate entries that share `rules.ts` through a content-hashed `lib/rules-*.js` chunk. The package publication list included only the two entry files and declarations. The desktop runtime deploy therefore copied `lib/index.js` with its relative chunk import but omitted the referenced file, so every packaged Voyaseek launch stopped before readiness with `ERR_MODULE_NOT_FOUND`.

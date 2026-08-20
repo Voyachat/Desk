@@ -12,6 +12,10 @@ The root `accept:web` command owns local Web acceptance orchestration. It select
 
 Terminal output reports the current state as building, starting, ready, stopped, or failed. The launcher publishes its plain HTTP `Web 地址` line only together with ready, after the assembled HTML check succeeds, so terminals can link the address without presenting a reserved or failed port as openable.
 
+`accept:web:smoke` uses the same complete build, Client watcher, source Host, and assembled-HTML readiness test, then stops its owned processes immediately instead of opening a browser or waiting in the foreground. It is the bounded Host-plus-Client integration check for automation.
+
+Reports are opt-in through `--report-dir <dir>`. After owned processes stop, the launcher writes `accept-web-report.json` and `accept-web.log` beneath that explicit directory with the commit SHA, clean or dirty working-tree state, checked URL, overall result, and stable check outcomes. It does not capture child-process output, environment values, credentials, or provider response bodies. The report records only screenshots deliberately placed beneath that explicit directory; an ordinary run writes no report or screenshot to the repository.
+
 The checkout-owned `scripts/aidesktop-accept` entry resolves the repository from its own real path and invokes the root command with pnpm's explicit working-directory option. A user may install a symbolic link to this entry in `PATH`; the global item contains no copied implementation or fixed repository path, and a moved or deleted checkout fails explicitly.
 
 The complete build is the default freshness rule. The command does not infer which files changed or offer a skip-build mode because Host-generated Remote declarations, Client bundles, and the frontend shell have an ordered dependency. The existing two-command development workflow remains available for specialized use; direct Vite startup is not an acceptance path.
@@ -22,4 +26,4 @@ When the default port is occupied, the command starts the current build on anoth
 
 ## Verification
 
-Focused tests cover argument validation, lifecycle-status rendering, URL publication, exact port ownership, default-port fallback, assembled-application detection, and shell-free browser commands. A manual acceptance run exercises the real root build, source Aistaff profile, Client watcher, HTTP readiness check, browser handoff, and signal-driven cleanup path; the unit suite does not claim that assembled-runtime coverage.
+Focused tests cover argument validation, lifecycle-status rendering, URL publication, exact port ownership, default-port fallback, assembled-application detection, shell-free browser commands, and credential-free report serialization. `pnpm run accept:web:smoke -- --report-dir <external-dir>` exercises the real root build, source Aistaff profile, Client watcher, HTTP readiness check, report write, and signal-driven cleanup path without a paid model call. A foreground `accept:web` run additionally covers browser handoff.

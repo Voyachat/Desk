@@ -4,7 +4,9 @@
 
 排队已完成的用户／助手轮次，通过既有 `ctx.llm` 提炼结构化记忆，经 `agent/pre-step` 注入有界跨会话召回，并注册 `memory_search`、`memory_remember` 与 `memory_forget`。
 
-Consumer 只监听已完成的 `turn/end`。直接用户文本是权威来源；最终 Assistant 消息只用于消歧，系统、工具、推理、流式与插件召回内容均被排除。模型针对 Provider 给出的候选最多生成八个经过验证的 mutation。维护限定到来源活动会话，并会在崩溃后的下一次恢复继续处理，因此 Provider 事务提交后，Consumer 才追加携带精确新增、更新与删除 ID 的 `agent-memory/maintenance`。失败调用留在 durable outbox 中做有界重试，也不会改变已完成用户轮次的结果。
+Consumer 只监听已完成的 `turn/end`。只有直接用户文本会进入提炼；Assistant 消息、系统文本、工具输出、推理、流式内容和插件召回内容均被排除。模型针对 Provider 给出的候选最多生成八个经过验证的 mutation，并且每项写入或删除都必须引用采集用户文本中的精确原话。`memory_remember` 工具对当前直接用户消息执行相同的原话要求。维护限定到来源活动会话，并会在崩溃后的下一次恢复继续处理，因此 Provider 事务提交后，Consumer 才追加携带精确新增、更新与删除 ID 的 `agent-memory/maintenance`。失败调用留在 durable outbox 中做有界重试，也不会改变已完成用户轮次的结果。
+
+用户设置关闭时，Consumer 不会排队已完成轮次或召回已有条目，并从模型组装中移除记忆说明和三个记忆 schema。管理 API 仍可用，因此用户可以在重新开启记忆前检查、删除或清空保留条目。
 
 ## 模型体验
 

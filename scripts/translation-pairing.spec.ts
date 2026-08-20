@@ -222,6 +222,7 @@ describe('translation scope discovery', () => {
     'packages/example/node_modules/dependency/README.md',
     'packages/example/lib/README.md',
     'coverage/report/README.md',
+    'apps/aistaff-desktop/out/AI Staff-darwin-x64/AI Staff.app/Contents/Resources/runtime/README.md',
     'python/sdk-runtime/src/voyaseek_harness_runtime/runtime/dsh-jsonrpc-agent-macos-arm64/README.md',
     'python/sdk-runtime/src/voyaseek_harness_runtime/runtime/node/README.md',
   ])('excludes non-source or non-README path %s', (file) => {

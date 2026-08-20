@@ -54,6 +54,7 @@
     "@voyaseek-ai/dsh-agent-loop": "workspace:^",
     "@voyaseek-ai/dsh-agent-loop-testkit": "workspace:^",
     "@voyaseek-ai/dsh-attachment": "workspace:^",
+    "@voyaseek-ai/dsh-attachment-local": "workspace:^",
     "@voyaseek-ai/dsh-fs": "workspace:^",
     "@voyaseek-ai/dsh-fs-local": "workspace:^",
     "@voyaseek-ai/dsh-fs-observation-policy": "workspace:^",

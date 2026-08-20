@@ -62,3 +62,16 @@ export const llmDiscoverModelsRequestSchema = z.object({
 export const llmDiscoverModelsValueSchema = z.object({
   models: z.array(discoveredModelViewSchema),
 }) satisfies z.ZodType<Wire<ResponseValue<'llm.discoverModels'>>>
+
+/** llm.probeRuntime request payload. */
+export const llmProbeRuntimeRequestSchema = z.object({
+  provider: z.string().min(1),
+  model: z.string().min(1),
+  runtime: z.enum(['native', 'claude', 'codex']),
+}) satisfies z.ZodType<Wire<RequestPayload<'llm.probeRuntime'>>>
+
+/** llm.probeRuntime response value. */
+export const llmProbeRuntimeValueSchema = z.object({
+  status: z.enum(['unsupported', 'unverified', 'reachable', 'failed']),
+  code: z.string().min(1).optional(),
+}) satisfies z.ZodType<Wire<ResponseValue<'llm.probeRuntime'>>>

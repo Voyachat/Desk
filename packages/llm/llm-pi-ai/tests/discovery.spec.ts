@@ -374,6 +374,7 @@ describe('probe key format', () => {
     expect(headers.has('authorization')).toBe(false)
   })
 })
+
 describe('listing classification', () => {
   it('offers only the models an agent conversation can use', async () => {
     const server = await listingServer({

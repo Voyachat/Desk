@@ -14,6 +14,8 @@ import type {
   LlmFailure,
   LlmExternalRuntime,
   LlmExternalRuntimeRoute,
+  LlmModelRuntime,
+  LlmRuntimeProbeResult,
   LlmModelContext,
   LlmModelDiscoveryRequest,
   LlmModelInfo,
@@ -22,7 +24,7 @@ import type {
   ModelModality,
   StreamChunk,
 } from './types.ts'
-import { freezeMessage, type Message } from './message.ts'
+import { createUserMessage, freezeMessage, type Message } from './message.ts'
 import { resolveRetryPolicy } from './retry-policy.ts'
 import type { ResolvedRetryPolicy } from './retry-policy.ts'
 import type { ProviderRequestId } from './brand.ts'
@@ -250,6 +252,24 @@ export abstract class LlmAdapter {
     _runtime: LlmExternalRuntime,
   ): LlmExternalRuntimeRoute | undefined {
     return undefined
+  }
+
+  /**
+   * Perform one minimal request through an admitted external runtime endpoint.
+   * The adapter resolves credentials internally; callers pass only route identity.
+   * @param _provider - one provider route owned by this adapter.
+   * @param _model - exact admitted model id.
+   * @param _runtime - external runtime protocol.
+   * @param _signal - caller cancellation.
+   * @returns true after an endpoint response; false when this adapter cannot probe it.
+   */
+  probeExternalRuntime(
+    _provider: string,
+    _model: string,
+    _runtime: LlmExternalRuntime,
+    _signal?: AbortSignal,
+  ): Promise<boolean> {
+    return Promise.resolve(false)
   }
 
   /**
@@ -486,6 +506,68 @@ export class LlmRuntime extends Service {
       throw new LlmError(`adapter returned invalid ${runtime} route for provider "${provider}" model "${model}"`, 'INVALID_RUNTIME_ROUTE')
     }
     return { ...route }
+  }
+
+  /**
+   * Send one minimal, model-specific request through a configured runtime.
+   * Browser callers provide no credential value: the owning adapter resolves
+   * its stored reference immediately before network I/O. Failure results carry
+   * only stable codes, never provider bodies or credential material.
+   * @param provider - registered provider route.
+   * @param model - exact configured model id.
+   * @param runtime - Native, Claude, or Codex request mode.
+   * @param signal - caller cancellation.
+   * @returns connectivity status for this exact route.
+   */
+  async probeModelRuntime(
+    provider: string,
+    model: string,
+    runtime: LlmModelRuntime,
+    signal?: AbortSignal,
+  ): Promise<LlmRuntimeProbeResult> {
+    let registration: AdapterRegistration
+    try {
+      registration = this.registration(provider)
+    } catch (error: unknown) {
+      return { status: 'failed', code: normalizeLlmFailure(error).code }
+    }
+
+    if (runtime !== 'native') {
+      const route = registration.adapter.externalRuntimeRoute(provider, model, runtime)
+      if (route === undefined) return { status: 'unsupported' }
+      try {
+        const probed = await registration.adapter.probeExternalRuntime(provider, model, runtime, signal)
+        return { status: probed ? 'reachable' : 'unverified' }
+      } catch (error: unknown) {
+        signal?.throwIfAborted()
+        return { status: 'failed', code: normalizeLlmFailure(error).code }
+      }
+    }
+
+    try {
+      const messages = [createUserMessage({
+        source: { kind: 'plugin', plugin: 'llm-runtime-probe' },
+        content: [{ type: 'text', text: 'Reply with OK.' }],
+      })]
+      for await (const chunk of this.stream({
+        provider,
+        model,
+        messages,
+        maxTokens: 1,
+        ...signal === undefined ? {} : { signal },
+      })) {
+        if (chunk.type !== 'finish') continue
+        if (chunk.reason.kind === 'error' || chunk.reason.kind === 'aborted') {
+          if (chunk.reason.kind === 'aborted') signal?.throwIfAborted()
+          return { status: 'failed', code: chunk.reason.failure.code }
+        }
+        return { status: 'reachable' }
+      }
+      return { status: 'failed', code: 'INCOMPLETE_RESPONSE' }
+    } catch (error: unknown) {
+      signal?.throwIfAborted()
+      return { status: 'failed', code: normalizeLlmFailure(error).code }
+    }
   }
 
   /**

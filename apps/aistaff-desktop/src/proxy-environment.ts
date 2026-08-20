@@ -5,7 +5,7 @@ const DASHSCOPE_API_URL = 'https://dashscope.aliyuncs.com/'
 const LOOPBACK_NO_PROXY = ['127.0.0.1', 'localhost'] as const
 
 /** Maximum time system PAC discovery may delay the managed runtime. */
-export const DEFAULT_PROXY_RESOLUTION_TIMEOUT_MS = 3_000
+const DEFAULT_PROXY_RESOLUTION_TIMEOUT_MS = 3_000
 
 /**
  * Resolve the environment additions needed for a Node child to follow Electron's

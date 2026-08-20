@@ -51,6 +51,13 @@
         apiKeyEnv: ACME_GATEWAY_API_KEY
         api: openai-completions
         baseURL: https://gateway.acme.example/v1
+        # The same credential can admit this route to Codex and Claude through
+        # provider endpoints that expose those protocols.
+        alternateEndpoints:
+          - api: openai-responses
+            baseURL: https://gateway.acme.example/v1
+          - api: anthropic-messages
+            baseURL: https://gateway.acme.example/anthropic
         # Reasoning dialect for an endpoint whose URL pi-ai cannot recognize.
         compat:
           thinkingFormat: deepseek
@@ -116,7 +123,7 @@ profile 的 `models` 列表是*替换*该路由已安装 catalog，而不是扩�
 
 **没有**这份元数据的模型——条目未声明 `reasoningEfforts` 的手工声明模型，以及 pi-ai 标记为不具备推理能力的 catalog 模型——完全不公开 `reasoning`。pi-ai 会把这类模型报告为只支持 `off` 一档，但 `off` 会被翻译成*省略* reasoning 选项，而那与「不点名任何档位」产出的请求逐字节相同：选它关不掉任何东西，于是自身默认就在思考的提供方，会在界面显示 `off` 被选中的同时继续思考。把该能力报告为不可用，界面就只剩提供方默认这一项，不会再出现自相矛盾的控件。配置 profile 的 `reasoning` 值（包括 `off`）在存在时是部署默认值；省略它会保留提供方默认值。每次请求的 `GenerateOptions.reasoningEffort` 优先；未出现在确切模型能力中的档位会让**请求**在网络 I/O 前以 `UNSUPPORTED_REASONING_EFFORT` 失败，而不会被自动调整。**描述**一个模型则从不这样失败：同一提供方下各模型接受的档位并不一致，因此 `resolveModel` 对该模型拿不下的 profile 档位报告为「没有默认值」，而不是抛错。在那里抛错会让整个提供方从任何基于它构建的模型目录中消失——一个配错的 profile 字段连支持该档位的模型也一并藏起来——所以坏配置暴露在被执行处，而不是被描述处。pi-ai 的通用流选项通过省略 `reasoning` 表示 `off`。
 
-受支持的 profile 字段是 `apiKeyEnv`、`displayName`、`api`、`baseURL`、`models`、`modelOverrides`、`compat`、`defaultContextWindow`、`defaultMaxTokens`、`defaultInput`、`headers`、`reasoning`、`thinkingBudgets`、`cacheRetention`、`transport`、`timeoutMs`、`websocketConnectTimeoutMs`、`streamIdleTimeoutMs` 和 `retryPolicy`。每个 profile 的可选重试策略都会与该提供方路由一同捕获；省略时使用有界的常规默认值。流空闲间隔必须是正的有限 Node 定时器延迟，默认为五分钟，且只覆盖未完成提供方读取，不包括消费方思考时间。若已配置标头中有同名项，则以 Harness 应用归因为准。
+受支持的 profile 字段是 `apiKeyEnv`、`displayName`、`api`、`baseURL`、`alternateEndpoints`、`models`、`modelOverrides`、`compat`、`defaultContextWindow`、`defaultMaxTokens`、`defaultInput`、`headers`、`reasoning`、`thinkingBudgets`、`cacheRetention`、`transport`、`timeoutMs`、`websocketConnectTimeoutMs`、`streamIdleTimeoutMs` 和 `retryPolicy`。`alternateEndpoints` 中每种协议最多出现一次，且不能与主 `api` 重复；所有条目共用路由的凭据引用。每个 profile 的可选重试策略都会与该提供方路由一同捕获；省略时使用有界的常规默认值。流空闲间隔必须是正的有限 Node 定时器延迟，默认为五分钟，且只覆盖未完成提供方读取，不包括消费方思考时间。若已配置标头中有同名项，则以 Harness 应用归因为准。
 
 适配器强制 pi-ai SDK `maxRetries` 为零，因此一次 `stream()` 调用只会发起一次提供方请求。已移除 profile 字段 `maxRetries` 和 `maxRetryDelayMs` 会使加载失败，而不是静默倍增或隐藏单独组合的 agent（智能体）级重试预算。空闲超时会 abort SDK 的稳定请求信号，并以 `TIMEOUT` 呈现；较早的调用方 abort 仍为 `ABORTED`。
 
@@ -148,7 +155,9 @@ OpenAI 兼容端点对 `GET /models` 的回答是它托管的全部模型，而�
 
 所选模型 descriptor 提供协议实现。这包括原生 API 差异，例如 descriptor 使用 Responses API 而非 Chat Completions 的 OpenAI 模型；harness 适配器不会按模型名称硬编码端点选择。
 
-同一个具体 descriptor 也控制替代 Runtime 的准入。只有解析后的 endpoint 非空且路由指名 `apiKeyEnv` 时，使用 `openai-responses` 的模型才能交给 Codex，使用 `anthropic-messages` 的模型才能交给 Claude。适配器公开的是 endpoint 与凭据引用，而不是密钥；各 Driver 会在子进程启动前即时解析密钥。其他协议保持仅 Native 可用，不会根据模型 id 或成功的 `/models` 列表猜测兼容。
+路由的主协议与 `alternateEndpoints` 控制替代 Runtime 的准入。端点非空且路由指名 `apiKeyEnv` 时，Codex 使用路由的 `openai-responses` 端点，Claude 使用 `anthropic-messages` 端点；二者都在子进程启动前即时解析同一个凭据引用。适配器公开的是所选端点与引用，绝不公开密钥。路由未配置的协议保持不可用，不会根据模型 id 或成功的 `/models` 列表猜测兼容。
+
+明确执行 Runtime 连通性探测时，系统会通过确切的已存提供方、模型与协议发送 `Reply with OK.`，输出上限为一个 token。Native 使用普通 LLM stream；Codex 与 Claude 则通过各自选中的端点直接请求，并解析路由凭据。探测绝不读取或保留提供方响应正文，只报告提供方无关的失败码，包括 HTTP 状态类别、传输失败、超时和缺失凭据。它是真实的提供方请求，只在调用方明确触发时运行。
 
 成功的 assistant 响应会将经版本化的无损 JSON 回放状态与生成该响应的提供方和模型一同存储。请求时，`LlmRuntime` 只有在历史提供方路由与目标提供方路由当前由同一个 `PiAiAdapter` 实例拥有时，才会传递回放状态。即使目标提供方或模型改变，适配器也会验证状态并恢复 pi-ai 响应 id 与提供方 signature；随后由 pi-ai 判定目标 API 可以复用哪些元数据。没有回放状态的历史会被转换为外来的、与提供方无关的内容，绝不伪装为原生 pi-ai 响应。
 
@@ -209,7 +218,7 @@ pi-ai 事件会变为 harness 推理、文本、工具调用、usage 与 finish 
 - **`headers` 可能承载一条脱敏器看不见的凭据**：profile 的 `headers` 是纯字符串字典，因此设在其中的 `Authorization` 或 `api-key` 会被脱敏后的 `describe()` 原样返回，并被任何配置 UI 渲染出来。请把凭据存为 `apiKeyEnv` 引用；把该字典整体改为只写与其余[协议边界工作](../llm/README.md#known-limitations-and-deferred-work)一并暂缓。
 - **路由的 catalog 不会自我刷新**：catalog 就是 `settings.yaml` 所写的内容，因此模型列表的新鲜度只到最近一次编辑为止。这里没有任何环节会去问提供方它服务哪些模型；路由要多一个模型，得有人写进去。
 - **模型族知识库是人工维护的快照**：分类器编码的是发布时已知的非聊天族、无工具族，以及聊天容量；之后发布的族会解析为「未知」：可服务，但带路由的容量猜测、无推理元数据，直到表里补上它。被误分类为非聊天的模型，可以在其条目上声明 `input` 模态按路由恢复。
-- **每条路由只有一种协议格式**：`api` 作用于整条路由，因此混合协议的 catalog 路由（跨 Responses 与 Chat Completions 的 OpenAI 式 catalog）无法承载另一种协议的模型，向这类路由添加它未描述的模型必须点名 `api` 并把全部模型一起迁过去。把该提供方拆成两个路由键是变通办法。
+- **Native 分发仍只使用每条路由的一种主协议**：`api` 与 `baseURL` 选择普通 LLM 请求使用的 descriptor。`alternateEndpoints` 让同一模型目录与凭据准入 Codex 或 Claude；它不会把不同 Native 模型分配给不同协议，也不证明提供方在每个端点都公开了全部已配置模型。
 - **模态声明不经验证，且多声明的后果超出本轮**：没有任何环节会去询问端点接受什么，因此声明了网关并不提供的 `image` 的模型不会在这里被拦下，而是由提供方在轮次中途拒绝。prompt 准入在构造请求之前就把用户消息持久化提交，于是被拒绝的图片留在会话日志里：该模型会不断重发它，而模型选择拒绝切换到任何纯文本模型。恢复途径是换一个确实支持图片的模型、fork 到图片之前，或开启新会话；发送失败时把尚未消费的图片消息从日志中回滚出去这件事已暂缓。
 - **未认证路由取决于其协议**：不点名凭据会让路由解析为「已配置但无密钥」，但 pi-ai 的 OpenAI 兼容实现仍要求 API key 或 `Authorization` 标头，因此无鉴权的本地服务需要一个由 `apiKeyEnv` 引用的占位凭据，或在 `headers` 中给出 `Authorization` 条目。
 - **不支持 `GenerateOptions.stop`**：pi-ai 的通用流选项无法保证所有提供方都支持 stop sequence，因此适配器会拒绝该字段。

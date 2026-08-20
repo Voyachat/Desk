@@ -1,5 +1,7 @@
 # Aistaff Cloud Conformance
 
+English | [中文](README.zh.md)
+
 Test-only deterministic Client Gateway artifact and in-memory transport. Its immutable provenance declares `test_only: true`, a fixed artifact version, and a fixed root hash. The package never reads a production URL, credential, token, Store, Aistaff workspace, or external service.
 
 Mount this plugin before `@voyaseek-ai/dsh-aistaff-cloud-provider` in tests. It supplies `AistaffClientGatewayInputs` and `aistaffCloudConformance` controls. The default `approval` scenario preserves the V1 flow with one ready Cloud employee, a snapshot-bound empty-or-single engagement projection, open, `202` text activity, text material, approval interaction, receipt, material access, retained operation outcome, SSE replay, duplicate delivery, reconnect, and a one-shot cursor-expired response.

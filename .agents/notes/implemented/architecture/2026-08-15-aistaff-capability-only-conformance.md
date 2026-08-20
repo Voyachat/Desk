@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-aistaff-capability-only-conformance.zh.md)
+
 ## Problem
 
 The desktop needs to prove the complete local-consent user flow before Aistaff publishes the production artifact, device attestation, and Cloud dispatch needed for `capability_only`. The migrated Rust Supervisor has a real authenticated process transport and Grant admission, but its production file read and directory list return `LOCAL_FILE_PRODUCTION_EXECUTION_DISABLED`. Treating an in-memory read as production evidence would hide the missing enforcement, identity, and recovery owners.

@@ -87,6 +87,8 @@
     "@voyaseek-ai/dsh-agent-presets": "workspace:^",
     "@voyaseek-ai/dsh-cordis-host-runner": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
+    "@voyaseek-ai/dsh-jobs-local": "workspace:^",
+    "@voyaseek-ai/dsh-permission-presets": "workspace:^",
     "@voyaseek-ai/dsh-storage": "workspace:^",
     "@voyaseek-ai/dsh-storage-domain": "workspace:^",
     "@voyaseek-ai/dsh-typert-protocol": "workspace:^",

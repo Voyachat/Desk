@@ -1,5 +1,7 @@
 # Aistaff product projection
 
+English | [中文](README.zh.md)
+
 This package provides `ctx.aistaffProduct`, the replaceable in-memory Host implementation of the UI acceptance fixture port. Its required `employees` configuration records an explicit initial catalog. Each accepted command appends one complete event before publishing it, and `projectProductEvents()` reconstructs the same snapshot from event history.
 
 ## Model Experience

@@ -111,6 +111,9 @@ describe('minimal agent preset', () => {
         "prompt": "You are a helpful software engineer assistant.",
         "tools": [
           "bash",
+          "find_dsh_plugin",
+          "modelscope_search",
+          "ping_image_fallback",
           "str_replace_editor",
         ],
       }

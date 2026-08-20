@@ -6,6 +6,7 @@
 
 import { spawn } from 'node:child_process'
 import { once } from 'node:events'
+import { mkdir, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { resolve } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -27,6 +28,40 @@ export interface AcceptWebOptions {
   allowPortFallback: boolean
   /** Whether readiness hands the URL to the operating system's default browser. */
   openBrowser: boolean
+  /** Whether the assembled readiness check exits immediately after success. */
+  smoke: boolean
+  /** Explicit external directory for an acceptance report; absent means no report files. */
+  reportDir?: string
+}
+
+/** One stable readiness check recorded without child-process output or credentials. */
+export interface AcceptWebCheck {
+  /** Stable check identifier. */
+  name: 'port' | 'build' | 'client-watcher' | 'host' | 'readiness'
+  /** Final state of this check. */
+  status: 'passed' | 'failed' | 'skipped'
+}
+
+/** Machine-readable acceptance result written only to an explicit report directory. */
+export interface AcceptWebReport {
+  /** Report format revision. */
+  version: 1
+  /** Exact repository commit tested. */
+  commitSha: string
+  /** Whether uncommitted files were present during acceptance. */
+  workingTree: 'clean' | 'dirty'
+  /** Assembled loopback URL tested. */
+  url: string
+  /** ISO timestamp immediately before acceptance orchestration. */
+  startedAt: string
+  /** ISO timestamp after owned processes have stopped. */
+  completedAt: string
+  /** Overall lifecycle result. */
+  result: 'passed' | 'failed' | 'stopped'
+  /** Ordered, credential-free readiness checks. */
+  checks: readonly AcceptWebCheck[]
+  /** Screenshots intentionally written beneath the explicit report directory. */
+  screenshots: readonly string[]
 }
 
 /** A native executable and argv that open one HTTP URL without shell interpolation. */
@@ -65,11 +100,28 @@ export function parseAcceptWebArgs(args: readonly string[]): AcceptWebOptions {
   let port = DEFAULT_PORT
   let allowPortFallback = true
   let openBrowser = true
+  let smoke = false
+  let reportDir: string | undefined
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
-    if (index === 0 && arg === '--') continue
+    if (arg === '--') continue
     if (arg === '--no-open') {
       openBrowser = false
+      continue
+    }
+    if (arg === '--smoke') {
+      smoke = true
+      continue
+    }
+    if (arg === '--report-dir' && args[index + 1] === undefined) {
+      throw new Error('accept:web: --report-dir must be followed by a directory')
+    }
+    const reportDirText = arg === '--report-dir'
+      ? args[index += 1]
+      : arg?.startsWith('--report-dir=') ? arg.slice('--report-dir='.length) : undefined
+    if (reportDirText !== undefined) {
+      if (reportDirText.length === 0) throw new Error('accept:web: --report-dir must not be empty')
+      reportDir = reportDirText
       continue
     }
     if (arg === '--port' && args[index + 1] === undefined) {
@@ -83,9 +135,47 @@ export function parseAcceptWebArgs(args: readonly string[]): AcceptWebOptions {
       allowPortFallback = false
       continue
     }
-    throw new Error(`accept:web: unknown argument ${JSON.stringify(arg)}; usage: pnpm run accept:web -- [--port <port>] [--no-open]`)
+    throw new Error(`accept:web: unknown argument ${JSON.stringify(arg)}; usage: pnpm run accept:web -- [--port <port>] [--no-open] [--smoke] [--report-dir <dir>]`)
   }
-  return { port, allowPortFallback, openBrowser }
+  return {
+    port,
+    allowPortFallback,
+    openBrowser: openBrowser && !smoke,
+    smoke,
+    ...reportDir === undefined ? {} : { reportDir },
+  }
+}
+
+/**
+ * Write a credential-free JSON report and concise text log beneath one explicit directory.
+ * Child-process stdout and stderr are deliberately excluded because provider failures may echo secrets.
+ * @param reportDir - caller-selected directory, resolved from the invoking working directory.
+ * @param report - stable acceptance facts only.
+ * @returns absolute paths of the two written files.
+ */
+export async function writeAcceptWebReport(
+  reportDir: string,
+  report: AcceptWebReport,
+): Promise<{ jsonPath: string; logPath: string }> {
+  const directory = resolve(process.cwd(), reportDir)
+  const jsonPath = resolve(directory, 'accept-web-report.json')
+  const logPath = resolve(directory, 'accept-web.log')
+  const log = [
+    'AiDesktop Web acceptance',
+    `Commit SHA: ${report.commitSha}`,
+    `Working tree: ${report.workingTree}`,
+    `URL: ${report.url}`,
+    `Result: ${report.result}`,
+    ...report.checks.map(check => `Check ${check.name}: ${check.status}`),
+    ...report.screenshots.map(screenshot => `Screenshot: ${screenshot}`),
+    '',
+  ].join('\n')
+  await mkdir(directory, { recursive: true })
+  await Promise.all([
+    writeFile(jsonPath, `${JSON.stringify(report, undefined, 2)}\n`, { encoding: 'utf8', mode: 0o600 }),
+    writeFile(logPath, log, { encoding: 'utf8', mode: 0o600 }),
+  ])
+  return { jsonPath, logPath }
 }
 
 /**
@@ -200,6 +290,35 @@ function waitForChild(child: ChildProcess, label: string): Promise<void> {
   })
 }
 
+async function readCommitSha(): Promise<string> {
+  const child = spawn('git', ['rev-parse', '--verify', 'HEAD'], {
+    cwd: repoRoot,
+    stdio: ['ignore', 'pipe', 'ignore'],
+  })
+  let stdout = ''
+  child.stdout.setEncoding('utf8')
+  child.stdout.on('data', (chunk: string) => {
+    if (stdout.length < 128) stdout += chunk
+  })
+  await waitForChild(child, 'accept:web git revision')
+  const commitSha = stdout.trim()
+  if (!/^[0-9a-f]{40}$/u.test(commitSha)) throw new Error('accept:web: git returned an invalid commit SHA')
+  return commitSha
+}
+
+async function readWorkingTreeState(): Promise<AcceptWebReport['workingTree']> {
+  const child = spawn('git', ['status', '--porcelain', '--untracked-files=normal'], {
+    cwd: repoRoot,
+    stdio: ['ignore', 'pipe', 'ignore'],
+  })
+  const chunks: unknown[] = []
+  child.stdout.on('data', (chunk: unknown) => {
+    chunks.push(chunk)
+  })
+  await waitForChild(child, 'accept:web git status')
+  return chunks.length > 0 ? 'dirty' : 'clean'
+}
+
 async function stopChild(child: ChildProcess | undefined): Promise<void> {
   if (child === undefined || child.pid === undefined || child.exitCode !== null || child.signalCode !== null) return
   const exited = once(child, 'exit')
@@ -243,8 +362,22 @@ function handOffToBrowser(url: string): void {
 
 async function run(options: AcceptWebOptions): Promise<void> {
   const abort = new AbortController()
+  const startedAt = new Date().toISOString()
   let port = options.port
   let url = `http://127.0.0.1:${String(port)}`
+  let result: AcceptWebReport['result'] = 'failed'
+  let activeCheck: AcceptWebCheck['name'] = 'port'
+  const checks: AcceptWebCheck[] = [
+    { name: 'port', status: 'skipped' },
+    { name: 'build', status: 'skipped' },
+    { name: 'client-watcher', status: 'skipped' },
+    { name: 'host', status: 'skipped' },
+    { name: 'readiness', status: 'skipped' },
+  ]
+  const mark = (name: AcceptWebCheck['name'], status: AcceptWebCheck['status']): void => {
+    const check = checks.find(candidate => candidate.name === name)
+    if (check !== undefined) check.status = status
+  }
   let interruptedBy: NodeJS.Signals | undefined
   let build: ChildProcess | undefined
   let host: ChildProcess | undefined
@@ -261,33 +394,51 @@ async function run(options: AcceptWebOptions): Promise<void> {
   process.once('SIGTERM', interruptTerm)
   try {
     port = await selectAcceptWebPort(options.port, options.allowPortFallback)
+    mark('port', 'passed')
     url = `http://127.0.0.1:${String(port)}`
     if (port !== options.port) console.log(`accept:web: port ${String(options.port)} is occupied; using ${String(port)} instead`)
     console.log(formatAcceptWebStatus('building'))
     console.log('accept:web: building the current checkout...')
+    activeCheck = 'build'
     build = spawn(pnpmExecutable(), ['run', 'build'], { cwd: repoRoot, env: process.env, stdio: 'inherit' })
     await waitForChild(build, 'accept:web build')
+    mark('build', 'passed')
     build = undefined
 
+    activeCheck = 'client-watcher'
     const pluginDirs = discoverPluginDirs(repoRoot)
     if (pluginDirs.length === 0) throw new Error('accept:web: no Web Client plugin packages were found')
     console.log(formatAcceptWebStatus('starting'))
     console.log('accept:web: starting the source Host and Client plugin watcher...')
     watcherReady = watchClientPlugins(repoRoot, pluginDirs, CLIENT_POLL_MS).then((readyBundles) => {
       bundles = readyBundles
+      mark('client-watcher', 'passed')
+    }, (error: unknown) => {
+      mark('client-watcher', 'failed')
+      throw error
     })
+    activeCheck = 'host'
     host = startSourceHost(port)
+    mark('host', 'passed')
     const hostExit = waitForChild(host, 'accept:web Host').then(() => {
       if (!abort.signal.aborted) abort.abort(new Error('accept:web: Host stopped before the launcher'))
     }, (error: unknown) => {
       if (!abort.signal.aborted) abort.abort(error)
     })
+    activeCheck = 'readiness'
     await Promise.all([watcherReady, waitForWebApplication(url, abort.signal)])
+    mark('readiness', 'passed')
     console.log(formatAcceptWebStatus('ready', url))
+    result = 'passed'
+    if (options.smoke) return
     if (options.openBrowser) handOffToBrowser(url)
     console.log('accept:web: Client plugin changes reload automatically; rebuild and refresh for Web shell or Host contract changes. Press Ctrl+C to stop.')
     await hostExit
     if (abort.signal.aborted) throw abort.signal.reason
+  } catch (error: unknown) {
+    if (interruptedBy === undefined) mark(activeCheck, 'failed')
+    else result = 'stopped'
+    throw error
   } finally {
     process.off('SIGINT', interruptInt)
     process.off('SIGTERM', interruptTerm)
@@ -297,9 +448,28 @@ async function run(options: AcceptWebOptions): Promise<void> {
       stopChild(host),
       stopChild(build),
     ])
-    const cleanupFailure = cleanup.find((result): result is PromiseRejectedResult => result.status === 'rejected')
-    if (cleanupFailure !== undefined) throw cleanupFailure.reason
+    const cleanupFailure = cleanup.find((cleanupResult): cleanupResult is PromiseRejectedResult => cleanupResult.status === 'rejected')
+    if (cleanupFailure !== undefined) {
+      result = 'failed'
+      mark('host', 'failed')
+    }
     if (interruptedBy !== undefined) console.log(formatAcceptWebStatus('stopped'))
+    if (options.reportDir !== undefined) {
+      const report = await writeAcceptWebReport(options.reportDir, {
+        version: 1,
+        commitSha: await readCommitSha(),
+        workingTree: await readWorkingTreeState(),
+        url,
+        startedAt,
+        completedAt: new Date().toISOString(),
+        result,
+        checks,
+        screenshots: [],
+      })
+      console.log(`验收报告：${report.jsonPath}`)
+      console.log(`脱敏日志：${report.logPath}`)
+    }
+    if (cleanupFailure !== undefined) throw cleanupFailure.reason
     if (interruptedBy === 'SIGINT') process.exitCode = 130
     else if (interruptedBy === 'SIGTERM') process.exitCode = 0
   }
@@ -309,7 +479,12 @@ const invokedPath = process.argv[1]
 const isMain = invokedPath !== undefined && import.meta.url === pathToFileURL(resolve(invokedPath)).href
 if (isMain) {
   try {
-    await run(parseAcceptWebArgs(process.argv.slice(2)))
+    const options = parseAcceptWebArgs(process.argv.slice(2))
+    await run(options)
+    // tsdown's watcher can leave its transform service alive after every
+    // watched bundle has been disposed. Smoke owns no persistent runtime once
+    // its report is written, so terminate the command after orderly cleanup.
+    if (options.smoke) process.exit(0)
   } catch (error: unknown) {
     if (process.exitCode === undefined) process.exitCode = 1
     if (process.exitCode !== 0 && process.exitCode !== 130) {

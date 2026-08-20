@@ -757,6 +757,19 @@ listExternalRuntimeRoutes(runtime: LlmExternalRuntime): Array<{ provider: string
 resolveExternalRuntimeRoute( provider: string, model: string, runtime: LlmExternalRuntime, ): LlmExternalRuntimeRoute | undefined
 
 /**
+ * Send one minimal, model-specific request through a configured runtime.
+ * Browser callers provide no credential value: the owning adapter resolves
+ * its stored reference immediately before network I/O. Failure results carry
+ * only stable codes, never provider bodies or credential material.
+ * @param provider - registered provider route.
+ * @param model - exact configured model id.
+ * @param runtime - Native, Claude, or Codex request mode.
+ * @param signal - caller cancellation.
+ * @returns connectivity status for this exact route.
+ */
+async probeModelRuntime( provider: string, model: string, runtime: LlmModelRuntime, signal?: AbortSignal, ): Promise<LlmRuntimeProbeResult>
+
+/**
  * Declare provider routes an adapter plugin can activate through
  * configuration. Registration is all-or-nothing: an empty list, invalid
  * entry, or a provider already declared by any registration throws
@@ -857,7 +870,7 @@ async prepareCall(config: LlmCallConfig, signal?: AbortSignal): Promise<Prepared
 stream(options: GenerateOptions): AsyncIterable<StreamChunk>
 ```
 
-Source: [`packages/llm/llm/src/index.ts:312`](../../packages/llm/llm/src/index.ts)
+Source: [`packages/llm/llm/src/index.ts:332`](../../packages/llm/llm/src/index.ts)
 
 <a id="llm-events"></a>
 
@@ -906,5 +919,5 @@ Waterfall around every streaming model call (retry, replay, routing). Bound to t
 'llm/stream'(this: LlmRuntime, options: GenerateOptions, next: () => AsyncIterable<StreamChunk>): AsyncIterable<StreamChunk>
 ```
 
-Source: [`packages/llm/llm/src/index.ts:66`](../../packages/llm/llm/src/index.ts)
+Source: [`packages/llm/llm/src/index.ts:68`](../../packages/llm/llm/src/index.ts)
 <!-- END GENERATED cordis-surface -->

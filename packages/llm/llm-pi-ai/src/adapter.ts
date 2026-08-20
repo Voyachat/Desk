@@ -80,6 +80,8 @@ export interface PiAiAdapterOptions {
   resolveApiKey: (provider: string, profile: ResolvedPiAiProviderProfile) => Promise<string | undefined>
   /** Resolve the optional durable attachment service at request time. */
   resolveAttachments?: () => AttachmentStore | undefined
+  /** HTTP transport for external-runtime connectivity probes. */
+  fetch?: typeof fetch
 }
 
 /** Copy profile stream knobs into pi-ai's common option vocabulary. */
@@ -190,6 +192,26 @@ function servesAgentConversation(model: string, profile: ResolvedPiAiProviderPro
   if (profile.modelsWithDeclaredInput.has(model)) return true
   if (catalogModels(profile.provider).has(model)) return true
   return classifyModel(model).agentServable
+}
+
+/** Resolve the endpoint a protocol-specific external runtime requires. */
+function externalEndpoint(
+  profile: ResolvedPiAiProviderProfile,
+  model: Model<Api>,
+  api: string,
+): string | undefined {
+  if (model.api === api && model.baseUrl.length > 0) return model.baseUrl
+  return profile.alternateEndpoints?.find(endpoint => endpoint.api === api)?.baseURL
+}
+
+/** Append one protocol path to a configured endpoint prefix. */
+function endpointUrl(baseURL: string, path: string): string {
+  return `${baseURL.replace(/\/+$/u, '')}/${path.replace(/^\/+/, '')}`
+}
+
+/** Stable code for one refused external probe; provider bodies are never retained. */
+function probeHttpCode(status: number): string {
+  return `PROBE_HTTP_${String(status)}`
 }
 
 /** Merge deployment headers while removing case-insensitive attribution collisions. */
@@ -305,7 +327,7 @@ export class PiAiAdapter extends LlmAdapter {
     if (profile.apiKeyEnv === undefined) return []
     const api = runtime === 'codex' ? 'openai-responses' : 'anthropic-messages'
     return snapshot.models.getModels(provider)
-      .filter(model => servesAgentConversation(model.id, profile) && model.api === api && model.baseUrl.length > 0)
+      .filter(model => servesAgentConversation(model.id, profile) && externalEndpoint(profile, model, api) !== undefined)
       .map(model => model.id)
   }
 
@@ -318,18 +340,74 @@ export class PiAiAdapter extends LlmAdapter {
     const profile = this.profileOf(snapshot, provider)
     const resolved = this.modelOf(snapshot, provider, model)
     const api = runtime === 'codex' ? 'openai-responses' : 'anthropic-messages'
+    const baseURL = externalEndpoint(profile, resolved, api)
     if (profile.apiKeyEnv === undefined
       || !servesAgentConversation(resolved.id, profile)
-      || resolved.api !== api
-      || resolved.baseUrl.length === 0) {
+      || baseURL === undefined) {
       return undefined
     }
     return {
       provider,
       model,
-      baseURL: resolved.baseUrl,
+      baseURL,
       apiKeyEnv: String(profile.apiKeyEnv),
     }
+  }
+
+  override async probeExternalRuntime(
+    provider: string,
+    model: string,
+    runtime: LlmExternalRuntime,
+    signal?: AbortSignal,
+  ): Promise<boolean> {
+    const snapshot = this.current()
+    const profile = this.profileOf(snapshot, provider)
+    const resolved = this.modelOf(snapshot, provider, model)
+    const api = runtime === 'codex' ? 'openai-responses' : 'anthropic-messages'
+    const baseURL = externalEndpoint(profile, resolved, api)
+    if (profile.apiKeyEnv === undefined || baseURL === undefined) return false
+    const apiKey = await this.config.resolveApiKey(provider, profile)
+    if (apiKey === undefined) {
+      throw new LlmError(`llm-pi-ai: no credential resolved from ${String(profile.apiKeyEnv)}`, 'MISSING_CREDENTIAL')
+    }
+    const timeout = AbortSignal.timeout(profile.timeoutMs ?? profile.streamIdleTimeoutMs)
+    const requestSignal = signal === undefined ? timeout : AbortSignal.any([signal, timeout])
+    const commonHeaders = {
+      ...requestHeaders(profile.headers),
+      'content-type': 'application/json',
+    }
+    const request = runtime === 'codex'
+      ? {
+        url: endpointUrl(baseURL, 'responses'),
+        headers: { ...commonHeaders, authorization: `Bearer ${apiKey}` },
+        body: { model, input: 'Reply with OK.', max_output_tokens: 1, stream: false },
+      }
+      : {
+        url: endpointUrl(baseURL, baseURL.replace(/\/+$/u, '').endsWith('/v1') ? 'messages' : 'v1/messages'),
+        headers: { ...commonHeaders, 'anthropic-version': '2023-06-01', 'x-api-key': apiKey },
+        body: { model, max_tokens: 1, messages: [{ role: 'user', content: 'Reply with OK.' }] },
+      }
+    let response: Response
+    try {
+      response = await (this.config.fetch ?? fetch)(request.url, {
+        method: 'POST',
+        headers: request.headers,
+        body: JSON.stringify(request.body),
+        signal: requestSignal,
+      })
+    } catch (error: unknown) {
+      signal?.throwIfAborted()
+      if (timeout.aborted) throw new LlmError('runtime connectivity probe timed out', 'PROBE_TIMEOUT')
+      throw new LlmError('runtime connectivity probe transport failed', 'PROBE_TRANSPORT', { cause: error })
+    }
+    if (!response.ok) {
+      // Never read or retain the response body: gateways may echo request data,
+      // while the status alone is enough for the settings connectivity badge.
+      await response.body?.cancel()
+      throw new LlmError('runtime connectivity probe was refused', probeHttpCode(response.status), { status: response.status })
+    }
+    await response.body?.cancel()
+    return true
   }
 
   async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {

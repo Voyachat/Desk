@@ -11,6 +11,7 @@ import { CustomProviderCard } from '../src/client/CustomProviderCard.tsx'
 import { formatCapacity, parseCapacity } from '../src/client/DeepSeekModelsEditor.tsx'
 import { ModelsSettingsStore, deriveKeyRef, protocolChoices } from '../src/client/store.ts'
 import { en } from '../src/client/locales.ts'
+import { deriveProviderId, endpointFailure, providerAdvice } from '../src/client/providerAutomation.ts'
 
 afterEach(cleanup)
 
@@ -26,6 +27,10 @@ const PiAiConfig = Schema.object({
     displayName: Schema.string(),
     api: Schema.union(PROTOCOLS),
     baseURL: Schema.string(),
+    alternateEndpoints: Schema.array(Schema.object({
+      api: Schema.union(PROTOCOLS).required(),
+      baseURL: Schema.string().required(),
+    })),
     models: Schema.array(Schema.object({
       id: Schema.string().required(),
       name: Schema.string(),
@@ -72,6 +77,7 @@ function scriptedFace(options: {
   /** Routes the adapter reports as hand-declared; the rest come back as shipped. */
   declaredRoutes?: readonly string[]
   discover?: ReturnType<typeof vi.fn>
+  probeRuntime?: ReturnType<typeof vi.fn>
   mutate?: ReturnType<typeof vi.fn>
   set?: ReturnType<typeof vi.fn>
 } = {}) {
@@ -80,6 +86,10 @@ function scriptedFace(options: {
   }
   const namespace = piAiNamespace(providers, options.userProviders ?? providers, options.baseProviders ?? {})
   const discover = options.discover ?? vi.fn(() => Promise.resolve(ok({ models: [] })))
+  const probeRuntime = options.probeRuntime ?? vi.fn((payload: { runtime: string }) => Promise.resolve(ok({
+    status: payload.runtime === 'claude' ? 'failed' as const : 'reachable' as const,
+    ...payload.runtime === 'claude' ? { code: 'AUTH' } : {},
+  })))
   const mutate = options.mutate ?? vi.fn(() => Promise.resolve(ok(namespace)))
   const set = options.set ?? vi.fn(() => Promise.resolve(ok({})))
   const face = {
@@ -96,9 +106,11 @@ function scriptedFace(options: {
       }))),
       models: vi.fn(() => Promise.resolve(ok({ groups: [], failures: [] }))),
       discoverModels: discover,
+      probeRuntime,
     },
     settings: {
-      describe: vi.fn(() => Promise.resolve(ok({ writable: true, namespaces: [namespace] }))),
+      describe: vi.fn(() => Promise.resolve(ok({ writable: true, hasDocument: false, namespaces: [namespace] }))),
+      openDocument: vi.fn(() => Promise.resolve(ok({ opened: true as const }))),
       update: vi.fn(),
       replace: vi.fn(),
       mutate,
@@ -111,7 +123,7 @@ function scriptedFace(options: {
       unset: vi.fn(),
     },
   }
-  return { face, discover, mutate, set, namespace }
+  return { face, discover, probeRuntime, mutate, set, namespace }
 }
 
 type WireFace = ConstructorParameters<typeof ModelsSettingsStore>[0]
@@ -192,6 +204,53 @@ describe('protocolChoices', () => {
 })
 
 describe('model list editing', () => {
+  it('checks each configured runtime through the stored route without sending a credential', async () => {
+    const { probeRuntime } = await mountSection({
+      providers: {
+        dashscope: {
+          apiKeyEnv: 'DASHSCOPE_API_KEY',
+          api: 'openai-completions',
+          baseURL: 'https://dashscope.example/v1',
+          alternateEndpoints: [
+            { api: 'openai-responses', baseURL: 'https://dashscope.example/v1' },
+            { api: 'anthropic-messages', baseURL: 'https://dashscope.example/anthropic' },
+          ],
+          models: [{ id: 'qwen-max' }],
+        },
+      },
+      declaredRoutes: ['dashscope'],
+    })
+    openEditor('dashscope')
+
+    fireEvent.click(screen.getByRole('button', { name: en.runtimeProbe }))
+
+    await waitFor(() => {
+      expect(screen.getByText(`${en.runtimeNative} · ${en.runtimeReachable}`)).toBeTruthy()
+      expect(screen.getByText(`${en.runtimeCodex} · ${en.runtimeReachable}`)).toBeTruthy()
+      expect(screen.getByText(`${en.runtimeClaude} · ${en.runtimeFailed}`)).toBeTruthy()
+    })
+    expect(probeRuntime).toHaveBeenNthCalledWith(1, { provider: 'dashscope', model: 'qwen-max', runtime: 'native' })
+    expect(probeRuntime).toHaveBeenNthCalledWith(2, { provider: 'dashscope', model: 'qwen-max', runtime: 'claude' })
+    expect(probeRuntime).toHaveBeenNthCalledWith(3, { provider: 'dashscope', model: 'qwen-max', runtime: 'codex' })
+    expect(JSON.stringify(probeRuntime.mock.calls)).not.toContain('stored-key')
+    expect(screen.getByTitle(`${en.runtimeClaude}: ${en.runtimeFailed} (AUTH)`)).toBeTruthy()
+  })
+
+  it('keeps connectivity unverified until a new provider has been saved', () => {
+    render(<CustomProviderCard {...{
+      taken: [], namespace: piAiNamespace({}), protocols: PROTOCOLS, revision: 1,
+      api: scriptedFace({ providers: {} }).face as never, t, readOnly: false, onClose: vi.fn(),
+    }} />)
+    fireEvent.change(screen.getByLabelText(en.customDisplayName), { target: { value: 'Acme' } })
+    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.example/v1' } })
+    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
+    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'm' } })
+
+    const probe = screen.getByRole<HTMLButtonElement>('button', { name: en.runtimeProbe })
+    expect(probe.disabled).toBe(true)
+    expect(probe.title).toBe(en.runtimeProbeSaveFirst)
+  })
+
   it('adds, edits, and removes rows without storing emptied optional fields', async () => {
     const { mutate } = await mountSection()
     openEditor('openai')
@@ -705,10 +764,13 @@ describe('hand-declared providers', () => {
     return { ...scripted, onClose }
   }
 
+  function nameCustomProvider(name = 'acme'): void {
+    fireEvent.change(screen.getByLabelText(en.customDisplayName), { target: { value: name } })
+  }
+
   it('writes the whole profile and the key under the derived reference', async () => {
     const { mutate, set, onClose } = mountCard()
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme-gateway' } })
     fireEvent.change(screen.getByLabelText(en.customDisplayName), { target: { value: 'Acme Gateway' } })
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://gateway.acme.example/v1' } })
     fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'gw-key' } })
@@ -739,6 +801,59 @@ describe('hand-declared providers', () => {
     expect(set).toHaveBeenCalledWith({ ref: 'ACME_GATEWAY_API_KEY', value: 'gw-key' })
   })
 
+  it('applies the DashScope recipe and stores three protocol endpoints under one key', async () => {
+    const { mutate, set, onClose } = mountCard()
+
+    nameCustomProvider('阿里')
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'sk-shared-key' } })
+    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
+    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'qwen3.8-max' } })
+
+    expect(screen.getByText(`${en.runtimeNative} · ${en.runtimeSupported}`)).toBeTruthy()
+    expect(screen.getByText(`${en.runtimeClaude} · ${en.runtimeSupported}`)).toBeTruthy()
+    expect(screen.getByText(`${en.runtimeCodex} · ${en.runtimeSupported}`)).toBeTruthy()
+    expect(screen.getByLabelText<HTMLInputElement>(`${en.baseUrl} 2`).value)
+      .toBe('https://dashscope.aliyuncs.com/compatible-mode/v1')
+    expect(screen.getByLabelText<HTMLInputElement>(`${en.baseUrl} 3`).value)
+      .toBe('https://dashscope.aliyuncs.com/apps/anthropic')
+    fireEvent.click(screen.getByText(en.create))
+
+    await waitFor(() => { expect(onClose).toHaveBeenCalledWith(true) })
+    expect(firstMutate(mutate).ops[0]).toEqual({
+      op: 'set',
+      path: ['providers', 'dashscope'],
+      value: {
+        displayName: '阿里',
+        apiKeyEnv: 'DASHSCOPE_API_KEY',
+        api: 'openai-completions',
+        baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+        alternateEndpoints: [
+          { api: 'openai-responses', baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+          { api: 'anthropic-messages', baseURL: 'https://dashscope.aliyuncs.com/apps/anthropic' },
+        ],
+        models: [{ id: 'qwen3.8-max' }],
+      },
+    })
+    expect(set).toHaveBeenCalledWith({ ref: 'DASHSCOPE_API_KEY', value: 'sk-shared-key' })
+  })
+
+  it('auto-fills an exact key-prefix recipe and reports ambiguous generic keys', () => {
+    mountCard()
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'sk-ant-api03-test' } })
+    expect(screen.getByLabelText<HTMLInputElement>(en.customDisplayName).value).toBe('Anthropic')
+    expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).value).toBe('https://api.anthropic.com')
+    expect(screen.getByLabelText<HTMLSelectElement>(en.customApi).value).toBe('anthropic-messages')
+    cleanup()
+
+    mountCard()
+    fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'sk-generic' } })
+    expect(screen.getByText(en.providerAdviceAmbiguous)).toBeTruthy()
+    expect(endpointFailure([
+      { api: 'openai-responses', baseURL: 'https://one.example' },
+      { api: 'openai-responses', baseURL: 'https://two.example' },
+    ])).toBe('duplicate')
+  })
+
   it('scopes each card to fields a provider can actually own', async () => {
     // Reasoning effort is a per-MODEL capability and the
     // models under one provider disagree about it, so a provider-scoped
@@ -749,8 +864,8 @@ describe('hand-declared providers', () => {
       .map(el => el.getAttribute('aria-label')).filter(Boolean)
 
     mountCard()
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
-    expect(fields()).toEqual([en.customRoute, en.customDisplayName, en.baseUrl, en.customApi, en.keyInput])
+    nameCustomProvider()
+    expect(fields()).toEqual([en.customDisplayName, en.keyInput, en.baseUrl, en.customApi])
     cleanup()
 
     // A shipped route's models each carry their own protocol, so its editor
@@ -893,7 +1008,35 @@ describe('hand-declared providers', () => {
     })
   })
 
-  it('selects nothing for a declared route whose profile names no protocol', async () => {
+  it('persists removal of the last alternative endpoint as an empty override', async () => {
+    const { mutate } = await mountSection({
+      providers: {
+        'acme-gateway': {
+          apiKeyEnv: 'ACME_GATEWAY_API_KEY',
+          api: 'openai-completions',
+          baseURL: 'https://gateway.acme.example/v1',
+          alternateEndpoints: [
+            { api: 'anthropic-messages', baseURL: 'https://gateway.acme.example/anthropic' },
+          ],
+          models: [{ id: 'acme-large' }],
+        },
+      },
+      declaredRoutes: ['acme-gateway'],
+    })
+    openEditor('acme-gateway')
+
+    fireEvent.click(screen.getByRole('button', { name: `${en.removeRequestConfiguration} 2` }))
+    fireEvent.click(screen.getByText(en.apply))
+
+    await waitFor(() => { expect(mutate).toHaveBeenCalledTimes(1) })
+    expect(firstMutate(mutate).ops).toEqual([{
+      op: 'set',
+      path: ['providers', 'acme-gateway', 'alternateEndpoints'],
+      value: [],
+    }])
+  })
+
+  it('auto-selects the first supported protocol for a declared route whose profile names none', async () => {
     // A route hand-written into settings.yaml with no model needs no protocol
     // to resolve, so the card can be opened over one. The select must not read
     // as if that route had picked its first choice.
@@ -903,7 +1046,7 @@ describe('hand-declared providers', () => {
     })
     openEditor('acme-gateway')
 
-    expect(screen.getByLabelText<HTMLSelectElement>(en.customApi).value).toBe('')
+    expect(screen.getByLabelText<HTMLSelectElement>(en.customApi).value).toBe(PROTOCOLS[0])
   })
 
   it('retries only the key after the profile landed, and reports the provider on cancel', async () => {
@@ -912,7 +1055,7 @@ describe('hand-declared providers', () => {
       .mockResolvedValueOnce(ok({}))
     const { mutate, onClose } = mountCard({}, { set })
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    fireEvent.change(screen.getByLabelText(en.customDisplayName), { target: { value: 'acme' } })
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: '  gw-key  ' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
@@ -928,7 +1071,7 @@ describe('hand-declared providers', () => {
 
     // The provider exists now, so the fields describing it are settled and
     // only the key can still be corrected.
-    expect(screen.getByLabelText<HTMLInputElement>(en.customRoute).disabled).toBe(true)
+    expect(screen.getByLabelText<HTMLInputElement>(en.customDisplayName).disabled).toBe(true)
     expect(screen.getByLabelText<HTMLInputElement>(en.baseUrl).disabled).toBe(true)
     expect(screen.getByLabelText<HTMLInputElement>(en.keyInput).disabled).toBe(false)
 
@@ -946,7 +1089,7 @@ describe('hand-declared providers', () => {
     const set = vi.fn().mockResolvedValue(fail('nope', 'credential-rejected'))
     const { onClose } = mountCard({}, { set })
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'gw-key' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
@@ -960,55 +1103,19 @@ describe('hand-declared providers', () => {
     expect(onClose).toHaveBeenCalledWith(true)
   })
 
-  it('never contradicts a filled-in field with the next gate\u2019s copy', () => {
+  it('hides Provider ID and generates a legal unique route from the display name', () => {
     mountCard()
-    const routeField = screen.getByLabelText(en.customRoute)
-    fireEvent.change(routeField, { target: { value: '2' } })
-    fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
-    fireEvent.click(screen.getByRole('button', { name: en.addModel }))
-    fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'm' } })
-
-    // The route field explains itself right under the input; the shared line
-    // must stay silent rather than falling through to "no models yet" while
-    // the list above plainly has one.
-    expect(screen.getByText(en.customRouteInvalid)).toBeTruthy()
-    expect(screen.queryByText(en.customNeedsModels)).toBeNull()
-
-    // Fixing the route hands the line back to the gate that is actually unmet.
-    fireEvent.change(routeField, { target: { value: 'acme' } })
-    expect(screen.queryByText(en.customNeedsModels)).toBeNull()
-    expect(buttonNamed(en.create).disabled).toBe(false)
+    expect(screen.queryByLabelText(en.customRoute)).toBeNull()
+    expect(deriveProviderId('123 网关', [])).toBe('provider-123')
+    expect(deriveProviderId('Acme Gateway', ['acme-gateway'])).toBe('acme-gateway-2')
+    expect(deriveProviderId('阿里', ['custom-provider', 'custom-provider-2'])).toBe('custom-provider-3')
   })
 
-  it('refuses a route id whose derived credential reference would be illegal', () => {
-    mountCard()
-    const routeField = screen.getByLabelText(en.customRoute)
-    fireEvent.change(routeField, { target: { value: 'https://acme.test/v1' } })
-
-    // Without this check a digit-leading id passes the card and fails at the
-    // credential seam with a raw regular expression: the
-    // reference derives as `123_API_KEY`, and a credential reference is a
-    // POSIX shell identifier, which cannot start with a digit.
-    fireEvent.change(routeField, { target: { value: '123' } })
-    expect(screen.getByText(en.customRouteInvalid)).toBeTruthy()
-    expect(buttonNamed(en.create).disabled).toBe(true)
-
-    fireEvent.change(routeField, { target: { value: 'a1' } })
-    expect(screen.queryByText(en.customRouteInvalid)).toBeNull()
-  })
-
-  it('styles a rejected route id as a fault and its guidance as a hint', () => {
-    mountCard()
-    const routeField = screen.getByLabelText(en.customRoute)
-    // Same split the key field makes: what the user got wrong reads as a
-    // fault, what they have yet to do reads as guidance.
-    expect(screen.getByText(en.customRouteHint).className).toMatch(/advancedHint/)
-
-    fireEvent.change(routeField, { target: { value: '2' } })
-    expect(screen.getByText(en.customRouteInvalid).className).toMatch(/error/)
-
-    fireEvent.change(routeField, { target: { value: 'openai' } })
-    expect(screen.getByText(en.customRouteTaken).className).toMatch(/error/)
+  it('derives the route from a recognized provider recipe before resolving collisions', () => {
+    const advice = providerAdvice('sk-ant-api03-test', '')
+    expect(advice.kind).toBe('recipe')
+    if (advice.kind !== 'recipe') throw new Error('expected an Anthropic recipe')
+    expect(deriveProviderId('', ['anthropic'], advice.recipe)).toBe('anthropic-2')
   })
 
   it('derives a reference the credential seam accepts for every id it admits', () => {
@@ -1022,7 +1129,7 @@ describe('hand-declared providers', () => {
 
   it('names the blocked gate under the form, and nothing once it is satisfied', () => {
     mountCard()
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
 
     // Endpoint first: the gate names the one thing standing in the way.
     expect(screen.getByText(en.customNeedsBaseUrl)).toBeTruthy()
@@ -1039,7 +1146,7 @@ describe('hand-declared providers', () => {
 
   it('refuses to create while a capacity is unreadable', () => {
     mountCard()
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'acme-large' } })
@@ -1052,7 +1159,7 @@ describe('hand-declared providers', () => {
 
   it('keeps each half-typed capacity with its own row across a removal', () => {
     mountCard()
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     for (const [at, id] of [[1, 'first'], [2, 'second'], [3, 'third']] as const) {
       fireEvent.click(screen.getByRole('button', { name: en.addModel }))
@@ -1074,7 +1181,7 @@ describe('hand-declared providers', () => {
 
   it('refuses two models sharing one id', () => {
     mountCard()
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
@@ -1092,7 +1199,7 @@ describe('hand-declared providers', () => {
 
   it('creates a model with no capacities, which the route\u2019s fallbacks size', async () => {
     const { mutate, onClose } = mountCard()
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'bare' } })
@@ -1106,16 +1213,12 @@ describe('hand-declared providers', () => {
     expect(firstMutate(mutate).ops[0]?.value).toMatchObject({ models: [{ id: 'bare' }] })
   })
 
-  it('refuses to create until the route, endpoint, and a model are usable', () => {
+  it('refuses to create until the display name, endpoint, and a model are usable', () => {
     mountCard()
     expect(buttonNamed(en.create).disabled).toBe(true)
+    expect(screen.getByText(en.customNeedsDisplayName)).toBeTruthy()
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'Acme Gateway' } })
-    expect(screen.getByText(en.customRouteInvalid)).toBeTruthy()
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'openai' } })
-    expect(screen.getByText(en.customRouteTaken)).toBeTruthy()
-
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     expect(screen.getByText(en.customNeedsBaseUrl)).toBeTruthy()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     expect(screen.getByText(en.customNeedsModels)).toBeTruthy()
@@ -1132,7 +1235,7 @@ describe('hand-declared providers', () => {
     const refused = vi.fn(() => Promise.resolve(fail('read-only settings', 'settings-rejected')))
     const { onClose } = mountCard({ api: { ...scriptedFace({ mutate: refused }).face } as never })
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'm' } })
@@ -1146,7 +1249,7 @@ describe('hand-declared providers', () => {
     const rejecting = vi.fn(() => Promise.reject(new Error('carrier down')))
     const { onClose } = mountCard({ api: { ...scriptedFace({ mutate: rejecting }).face } as never })
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'm' } })
@@ -1160,7 +1263,7 @@ describe('hand-declared providers', () => {
     const set = vi.fn(() => Promise.resolve(fail('credential is read-only', 'credential-rejected')))
     const { onClose } = mountCard({ api: { ...scriptedFace({ set }).face } as never })
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.change(screen.getByLabelText(en.keyInput), { target: { value: 'k' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
@@ -1171,10 +1274,10 @@ describe('hand-declared providers', () => {
     expect(onClose).not.toHaveBeenCalled()
   })
 
-  it('creates with the chosen protocol and no display name', async () => {
+  it('creates with the chosen protocol and an automatically generated route id', async () => {
     const { mutate, onClose } = mountCard()
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    nameCustomProvider()
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.change(screen.getByLabelText(en.customApi), { target: { value: 'anthropic-messages' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
@@ -1182,11 +1285,12 @@ describe('hand-declared providers', () => {
     fireEvent.click(screen.getByText(en.create))
 
     await waitFor(() => { expect(onClose).toHaveBeenCalledWith(true) })
-    // No display name configured means none stored; the route id is the name.
-    // No key typed means no reference either, matching the editor: the route
+    // The display name is user-facing while its slug becomes the hidden route
+    // id. No key typed means no reference, matching the editor: the route
     // keeps its provider-native auth path instead of resolving a reference
     // nothing ever sets. The with-key case is covered above.
     expect(firstMutate(mutate).ops[0]?.value).toEqual({
+      displayName: 'acme',
       api: 'anthropic-messages',
       baseURL: 'https://acme.test/v1',
       models: [{ id: 'm' }],
@@ -1206,7 +1310,7 @@ describe('hand-declared providers', () => {
     cleanup()
 
     mountCard({ readOnly: true })
-    expect(screen.getByLabelText<HTMLInputElement>(en.customRoute).disabled).toBe(true)
+    expect(screen.getByLabelText<HTMLInputElement>(en.customDisplayName).disabled).toBe(true)
     expect(buttonNamed(en.create).disabled).toBe(true)
   })
 
@@ -1236,7 +1340,7 @@ describe('hand-declared providers', () => {
   it('refuses an unusable key on the field and blocks creation', () => {
     const { mutate, set } = mountCard()
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme-gateway' } })
+    nameCustomProvider('acme-gateway')
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://gateway.acme.example/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'acme-large' } })
@@ -1253,7 +1357,7 @@ describe('hand-declared providers', () => {
   it('stays silent about the other gates when only the key is refused', () => {
     mountCard()
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme-gateway' } })
+    nameCustomProvider('acme-gateway')
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://gateway.acme.example/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'acme-large' } })
@@ -1269,7 +1373,7 @@ describe('hand-declared providers', () => {
   it('tells a whitespace-only key what a blank field means on a create card', () => {
     const { mutate } = mountCard()
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme-gateway' } })
+    nameCustomProvider('acme-gateway')
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://gateway.acme.example/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'acme-large' } })
@@ -1287,7 +1391,7 @@ describe('hand-declared providers', () => {
   it('creates without a key when the route authenticates some other way', async () => {
     const { set, onClose } = mountCard()
 
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'ambient-gateway' } })
+    nameCustomProvider('ambient-gateway')
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://gateway.acme.example/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'acme-large' } })
@@ -1402,7 +1506,7 @@ describe('API key field', () => {
     const load = vi.spyOn(controller, 'load')
 
     fireEvent.click(screen.getByRole('button', { name: en.customAdd }))
-    fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })
+    fireEvent.change(screen.getByLabelText(en.customDisplayName), { target: { value: 'acme' } })
     fireEvent.change(screen.getByLabelText(en.baseUrl), { target: { value: 'https://acme.test/v1' } })
     fireEvent.click(screen.getByRole('button', { name: en.addModel }))
     fireEvent.change(screen.getByLabelText(`${en.modelId} 1`), { target: { value: 'm' } })

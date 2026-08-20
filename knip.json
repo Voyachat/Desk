@@ -7,10 +7,7 @@
     "bwrap",
     "icacls",
     "musl-gcc",
-    "python3",
     "sandbox-exec",
-    "tar",
-    "taskkill",
     "where.exe"
   ],
   "ignoreWorkspaces": [
@@ -18,8 +15,7 @@
     "python/sdk-runtime"
   ],
   "ignoreDependencies": [
-    "@yarnpkg/cli-dist",
-    "lightningcss"
+    "@yarnpkg/cli-dist"
   ],
   "workspaces": {
     ".": {
@@ -54,6 +50,7 @@
         "acp-agent/tests/fixtures/subagent-durability-failure.ts",
         "acp-agent/tests/fixtures/subagent-report-fence.ts",
         "acp-agent/tests/fixtures/subagent-settlement-marker.ts",
+        "acp-agent/tests/fixtures/snapshot-document-converter.ts",
         "acp-agent/tests/fixtures/workspace-context-compaction.ts",
         "acp-agent/tests/fixtures/subagent/subagent-acp/mock-delegating-llm.ts",
         "acp-agent/tests/fixtures/subagent/subagent-acp/driver.ts",
@@ -72,15 +69,6 @@
       ],
       "ignoreDependencies": [
         "@voyaseek-ai/.+"
-      ]
-    },
-    "packages/util/home": {
-      "entry": [
-        "tests/**/*.spec.ts"
-      ],
-      "project": [
-        "src/**/*.ts",
-        "tests/**/*.ts"
       ]
     },
     "packages/host/webserver": {
@@ -120,15 +108,6 @@
         "tests/**/*.{ts,tsx}"
       ]
     },
-    "packages/client/web-ui": {
-      "entry": [
-        "tests/**/*.spec.{ts,tsx}"
-      ],
-      "project": [
-        "src/**/*.{ts,tsx}",
-        "tests/**/*.{ts,tsx}"
-      ]
-    },
     "packages/client/runtime": {
       "entry": [
         "tests/**/*.spec.ts"
@@ -145,9 +124,6 @@
       "project": [
         "src/**/*.ts",
         "tests/**/*.ts"
-      ],
-      "ignoreDependencies": [
-        "@voyaseek-ai/dsh-api-gateway"
       ]
     },
     "packages/client/ui-primitives": {
@@ -653,8 +629,7 @@
     },
     "packages/claude/claude-agent": {
       "entry": [
-        "tests/**/*.spec.ts",
-        "tests/**/*.e2e.ts"
+        "tests/**/*.spec.ts"
       ],
       "project": [
         "src/**/*.ts",
@@ -663,12 +638,14 @@
     },
     "packages/codex/codex-agent": {
       "entry": [
-        "tests/**/*.spec.ts",
-        "tests/**/*.e2e.ts"
+        "tests/**/*.spec.ts"
       ],
       "project": [
         "src/**/*.ts",
         "tests/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@openai/codex"
       ]
     },
     "packages/fs/tool-fs": {
@@ -744,6 +721,78 @@
         "@types/react-dom",
         "react",
         "react-dom"
+      ]
+    },
+    "apps/aistaff-desktop": {
+      "entry": [
+        "assets/startup.js",
+        "tests/**/*.spec.ts"
+      ],
+      "project": [
+        "src/**/*.ts",
+        "tests/**/*.ts"
+      ]
+    },
+    "apps/aistaff-desktop-runtime": {
+      "ignoreDependencies": [
+        "@voyaseek-ai/.+"
+      ]
+    },
+    "packages/aistaff/cloud-conformance-bundle": {
+      "ignoreDependencies": [
+        "@voyaseek-ai/.+"
+      ]
+    },
+    "packages/aistaff/cloud-local-conformance-bundle": {
+      "ignoreDependencies": [
+        "@voyaseek-ai/.+"
+      ]
+    },
+    "packages/aistaff/cloud-product-bundle": {
+      "ignoreDependencies": [
+        "@voyaseek-ai/.+"
+      ]
+    },
+    "packages/aistaff/product-bundle": {
+      "entry": [],
+      "project": [
+        "src/**/*.ts"
+      ],
+      "ignoreDependencies": [
+        "@voyaseek-ai/.+"
+      ]
+    },
+    "packages/aistaff/employee-experience-remote": {
+      "ignoreDependencies": [
+        "zod"
+      ]
+    },
+    "packages/aistaff/local-capability-remote": {
+      "ignoreDependencies": [
+        "zod"
+      ]
+    },
+    "packages/aistaff/product-remote": {
+      "ignoreDependencies": [
+        "zod"
+      ]
+    },
+    "packages/memory/agent-memory": {
+      "entry": [],
+      "project": [
+        "src/**/*.ts"
+      ]
+    },
+    "packages/aistaff/local-capability": {
+      "entry": [],
+      "project": [
+        "src/**/*.ts"
+      ]
+    },
+    "packages/document/document-converter": {
+      "entry": [],
+      "project": [
+        "src/**/*.ts"
       ]
     },
     "apps/cli": {

@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-20-out-of-package-open-source-upgrade-workflows.md
+2026-08-20-out-of-package-open-source-upgrade-workflows.md: 2ab2887a749b2f91ac6be8a8aa3633d8f66d57d8
+2026-08-20-out-of-package-open-source-upgrade-workflows.zh.md: 3ea029bedeeac271086bc838379c66ada53661a7

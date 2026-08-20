@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-16-dashscope-endpoint-wire-corrections.md
+2026-08-16-dashscope-endpoint-wire-corrections.md: 5d0fb0ee4fbbe00136b6e8012cd3a32a92db8006
+2026-08-16-dashscope-endpoint-wire-corrections.zh.md: bb64026f94f7596321b497794961faabaa2c47ca

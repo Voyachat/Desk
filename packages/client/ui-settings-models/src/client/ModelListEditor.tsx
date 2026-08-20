@@ -14,7 +14,7 @@
  * rows the user can still fill in by hand.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type { DiscoveredModelView, IApiClient } from '@voyaseek-ai/dsh-api-remotes/client'
 import { Button, Modal } from '@voyaseek-ai/dsh-client-ui-primitives'
@@ -44,11 +44,16 @@ function numberOf(model: ModelDraft, key: string): number | undefined {
   return typeof value === 'number' ? value : undefined
 }
 
-type RuntimeCompatibility = 'supported' | 'unsupported' | 'unprobed'
+type Runtime = 'native' | 'claude' | 'codex'
+type RuntimeCompatibility = 'supported' | 'unsupported' | 'unverified' | 'reachable' | 'failed'
+interface RuntimeProbeState {
+  status: RuntimeCompatibility
+  code?: string
+}
 
-function runtimeCompatibility(api: string | undefined, runtime: 'native' | 'claude' | 'codex'): RuntimeCompatibility {
+function runtimeCompatibility(api: string | undefined, runtime: Runtime): RuntimeCompatibility {
   if (runtime === 'native') return 'supported'
-  if (api === undefined) return 'unprobed'
+  if (api === undefined) return 'unverified'
   if (runtime === 'codex') return api === 'openai-responses' ? 'supported' : 'unsupported'
   return api === 'anthropic-messages' ? 'supported' : 'unsupported'
 }
@@ -77,6 +82,8 @@ export interface ProbeTarget {
   baseURL?: string
   /** Wire protocol the form names, when it names one. */
   api?: string
+  /** Every protocol configured for runtime compatibility badges. */
+  compatibleApis?: readonly string[]
   /** Key typed into the form and not yet stored, when there is one. */
   apiKey?: string
 }
@@ -100,6 +107,8 @@ export interface ModelListEditorProps {
    * told what the field already says.
    */
   probeBlocked?: keyof typeof en | undefined
+  /** Why stored-route connectivity cannot be checked until the card is saved. */
+  runtimeProbeBlocked?: boolean
   /** Wire face the fetch action calls. */
   api: Pick<IApiClient, 'llm'>
   /** Section copy. */
@@ -195,6 +204,18 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
   // FIELD: a single buffer would be displaced by editing any other field, and
   // the abandoned one would render its stored NaN as the literal `NaN`.
   const [editing, setEditing] = useState<ReadonlyMap<string, string>>(new Map())
+  const [runtimeResults, setRuntimeResults] = useState<ReadonlyMap<string, RuntimeProbeState>>(new Map())
+  const [probingRows, setProbingRows] = useState<ReadonlySet<number>>(new Set())
+  const probeGeneration = useRef(0)
+  const runtimeConfiguration = JSON.stringify([
+    probe.provider, probe.baseURL, probe.api, probe.compatibleApis,
+    models.map(model => [textOf(model, 'id'), textOf(model, 'api')]),
+  ])
+  useEffect(() => {
+    probeGeneration.current += 1
+    setRuntimeResults(new Map())
+    setProbingRows(new Set())
+  }, [runtimeConfiguration])
 
   /** Buffer key for one capacity field; the row half moves when rows do. */
   const bufferKey = (index: number, field: CapacityField): string => `${String(index)}:${field}`
@@ -334,6 +355,51 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
   // A route the adapter already describes answers without an endpoint; only a
   // draft with neither has nothing to ask about.
   const askable = probe.provider !== undefined || (probe.baseURL !== undefined && probe.baseURL.length > 0)
+  const compatibleApisFor = (model: ModelDraft): readonly string[] => {
+    const modelApi = textOf(model, 'api')
+    return modelApi.length > 0
+      ? [modelApi]
+      : probe.compatibleApis ?? (probe.api === undefined ? [] : [probe.api])
+  }
+  const configuredStatus = (model: ModelDraft, runtime: Runtime): RuntimeCompatibility => {
+    if (runtime === 'native') return 'supported'
+    const compatibleApis = compatibleApisFor(model)
+    if (compatibleApis.length === 0) return 'unverified'
+    return compatibleApis.some(api_ => runtimeCompatibility(api_, runtime) === 'supported')
+      ? 'supported'
+      : 'unsupported'
+  }
+  const runtimeKey = (index: number, runtime: Runtime): string => `${String(index)}:${runtime}`
+  const probeModelRuntimes = async (model: ModelDraft, index: number): Promise<void> => {
+    const provider = probe.provider
+    const modelId = textOf(model, 'id').trim()
+    if (provider === undefined || modelId.length === 0) return
+    const generation = probeGeneration.current
+    setProbingRows(current => new Set(current).add(index))
+    const results = await Promise.all((['native', 'claude', 'codex'] as const).map(async (runtime) => {
+      const configured = configuredStatus(model, runtime)
+      if (configured !== 'supported') return [runtime, { status: configured }] as const
+      try {
+        const response = await api.llm.probeRuntime({ provider, model: modelId, runtime })
+        return [runtime, response.result.ok
+          ? response.result.value
+          : { status: 'failed' as const, code: response.result.error.code }] as const
+      } catch {
+        return [runtime, { status: 'failed' as const, code: 'TRANSPORT' }] as const
+      }
+    }))
+    if (generation !== probeGeneration.current) return
+    setRuntimeResults((current) => {
+      const next = new Map(current)
+      for (const [runtime, result] of results) next.set(runtimeKey(index, runtime), result)
+      return next
+    })
+    setProbingRows((current) => {
+      const next = new Set(current)
+      next.delete(index)
+      return next
+    })
+  }
   return (
     <section className={styles['modelCatalog']} aria-label={t('models')}>
       <div className={styles['modelListHead']}>
@@ -439,23 +505,40 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
           </div>
           <div className={styles['runtimeCompatibility']} aria-label={`${t('runtimeCompatibility')} ${index + 1}`}>
             {(['native', 'claude', 'codex'] as const).map((runtime) => {
-              const status = runtimeCompatibility(textOf(model, 'api') || probe.api, runtime)
+              const result = runtimeResults.get(runtimeKey(index, runtime))
+              const status = result?.status ?? configuredStatus(model, runtime)
               const runtimeLabel = runtime === 'native'
                 ? t('runtimeNative')
                 : runtime === 'claude' ? t('runtimeClaude') : t('runtimeCodex')
               const statusLabel = status === 'supported'
                 ? t('runtimeSupported')
-                : status === 'unsupported' ? t('runtimeUnsupported') : t('runtimeUnprobed')
+                : status === 'unsupported'
+                  ? t('runtimeUnsupported')
+                  : status === 'reachable'
+                    ? t('runtimeReachable')
+                    : status === 'failed' ? t('runtimeFailed') : t('runtimeUnprobed')
               return (
                 <span
                   className={`${styles['runtimeBadge']} ${styles[`runtimeBadge-${status}`]}`}
-                  title={`${runtimeLabel}: ${statusLabel}`}
+                  title={`${runtimeLabel}: ${statusLabel}${result?.code === undefined ? '' : ` (${result.code})`}`}
                   key={runtime}
                 >
                   {runtimeLabel} · {statusLabel}
                 </span>
               )
             })}
+            <button
+              type="button"
+              className={styles['linkButton']}
+              disabled={disabled || probingRows.has(index) || probe.provider === undefined
+                || props.runtimeProbeBlocked === true || textOf(model, 'id').trim().length === 0}
+              title={probe.provider === undefined || props.runtimeProbeBlocked === true
+                ? t('runtimeProbeSaveFirst')
+                : undefined}
+              onClick={() => { void probeModelRuntimes(model, index) }}
+            >
+              {probingRows.has(index) ? t('runtimeProbing') : t('runtimeProbe')}
+            </button>
           </div>
           {expanded.has(index)
             ? (

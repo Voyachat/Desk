@@ -1,5 +1,7 @@
 # @voyaseek-ai/dsh-aistaff-client-product
 
+English | [中文](README.zh.md)
+
 This browser plugin adds an **AI 员工** action to the existing sidebar footer and an additive employee workbench to the shell overlay. It does not replace the shipped sidebar, conversation, details, or settings surfaces.
 
 The package has two explicit browser entries. `./client` is the preserved deterministic Fixture path used by the first local UI acceptance flow. `./cloud-client` is the production UI path and selects `ctx.employeeExperience`; it never detects, imports, or falls back to the Fixture port. Both register the same `sidebar.footer.action` and `shell.overlay` seats with the same visual language.

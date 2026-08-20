@@ -2,6 +2,8 @@
 
 Status: implemented
 
+English | [中文](2026-08-15-model-failure-presentation-and-todo-settlement.zh.md)
+
 ## Problem
 
 Provider and SDK failure messages can contain raw response bodies, endpoint query parameters, or credentials. Rendering those messages in the conversation or retry row exposed untrusted diagnostics as primary user copy. A failed turn also left the last todo projection in `pending` or `in_progress`, which implied that work would continue after the model request had already terminated.
