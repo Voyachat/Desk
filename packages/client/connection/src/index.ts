@@ -116,6 +116,10 @@ const PRIVILEGED_METHODS = new Set([
   'credentials.set',
   'credentials.unset',
   'llm.discoverModels',
+  'memory.list',
+  'memory.update',
+  'memory.forget',
+  'memory.clear',
 ])
 
 /**

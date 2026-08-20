@@ -2,13 +2,13 @@
 
 [English](README.md) | 中文
 
-独立于设置外壳的 `settings.section` 页面，用于启用、搜索、检查、删除、清空和打开有界本地记忆文档。它只依赖稳定 slot 与 loopback Settings API，因此设置界面从弹窗重写为全框架视图时不会改变其数据合同。
+独立于设置外壳的 `settings.section` 页面，用于启用、搜索、检查、编辑、删除与清空结构化本地记忆。它只依赖稳定 slot：控制项走 `settings.*`，条目走专用且仅限 loopback 的 `memory.*` API，因此设置界面从弹窗重写为全框架视图时不会改变其数据约定。
 
-非 loopback 连接不会注册该页面。写入携带 `expectedRevision`，监听页面 `settings/document-updated`，关闭功能时保留条目，并在删除单条或清空全部前要求 `RiskConfirmation`。页面不会收到 Host 路径；无路径的 `settings.openDocument` 操作由 Host 打开其自有设置文档。
+同一插件还会在对话中贡献低强调行：已提交的维护事件显示新增、更新、删除或提炼失败，无变化的检查仍保留在日志中，但不会增加对话噪音；召回上下文行则显示本次使用的条目数。发生变化和召回的行都会把 Provider 的精确 ID 交给同一编辑器，因此纠正会替换选中条目，而不是按文本模糊查找。非 loopback 连接不会注册页面和编辑器。控制项写入携带 `expectedRevision`，关闭功能时保留条目，并在删除单条或清空全部前要求 `RiskConfirmation`。浏览器不会收到 SQLite 路径或凭据；无路径的 Settings 文档只编辑控制项。待提炼与失败数量让后台维护状态可见。
 
 ## 模型体验
 
-无，因为本包渲染浏览器设置页面；每条模型可见召回消息都由 agent-memory context Consumer 持有。
+没有直接影响；本包只渲染已由 agent-memory context Consumer 持有的持久维护结果与召回来源。
 
 #### KV Cache 影响
 
@@ -17,4 +17,4 @@
 ## 已知限制与暂缓事项
 
 - 非 loopback 连接有意不提供该页面。
-- 由于有界 Provider 持有共享 Settings 文档中的一个 namespace，“打开记忆文件”会打开整份设置文档。
+- 记忆数据不能直接编辑文件；列表、删除与清空始终经过 Host Provider。

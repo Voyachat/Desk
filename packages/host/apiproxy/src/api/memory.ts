@@ -27,6 +27,13 @@ export interface MemoryApi {
     failedCount: number
     maxEntries: number
   }>>
+  /** Correct one exact item without changing its identity or scope. */
+  update(request: RpcRequest<{
+    id: string
+    title: string
+    content: string
+    keywords?: string[]
+  }>): Promise<RpcResponse<{ entry: MemoryEntryView }>>
   /** Delete exact provider-issued memory identities. */
   forget(request: RpcRequest<{ ids: string[] }>): Promise<RpcResponse<{ deleted: number }>>
   /** Delete all structured items and queued captures. */

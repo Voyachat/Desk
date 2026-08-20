@@ -364,6 +364,7 @@ export function ChatView({
         toolCalls={row.toolCalls}
         startTime={row.startTime}
         endTime={row.endTime}
+        highlights={row.highlights}
         renderMember={renderMember}
         t={t}
       />

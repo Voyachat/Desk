@@ -162,23 +162,27 @@ export interface Config {
 
 Depends on: [`AgentOptions`](subsystems/core.md) · [`SessionId`](subsystems/core.md)
 
-Source: [`packages/core/agent-loop/src/index.ts:259`](../packages/core/agent-loop/src/index.ts)
+Source: [`packages/core/agent-loop/src/index.ts:255`](../packages/core/agent-loop/src/index.ts)
 
 <a id="voyaseek-aidsh-agent-memory-context"></a>
 
 ## `@voyaseek-ai/dsh-agent-memory-context`
 
-Requires: `agents` · `agentMemory`
+Requires: `agents` · `agentMemory` · `llm` · `sessions` · `systemPrompt` · `tools`
 
 ```ts config-catalog
-/** Recall rendering budget. */
+/** Recall, extraction, and tool budgets. */
 export interface Config {
-  /** Unicode code-point budget for the complete injected recall block. */
+  /** Unicode code-point budget for one injected recall block. */
   maxRecallChars?: number
+  /** Maximum output tokens for one structured extraction call. */
+  extractionMaxTokens?: number
+  /** Cooperative timeout for each explicit memory tool call. */
+  toolTimeoutMs?: number
 }
 ```
 
-Source: [`packages/memory/agent-memory-context/src/index.ts:21`](../packages/memory/agent-memory-context/src/index.ts)
+Source: [`packages/memory/agent-memory-context/src/index.ts:42`](../packages/memory/agent-memory-context/src/index.ts)
 
 <a id="voyaseek-aidsh-agent-memory-settings"></a>
 
@@ -189,24 +193,34 @@ Requires: `settings`
 ```ts config-catalog
 /** Live local-provider configuration. */
 export interface Config {
-  /** Whether both automatic paths are active. */
+  /** Whether the provider accepts writes and serves recall. */
   enabled?: boolean
-  /** Whether completed turns are captured. */
+  /** Whether completed turns enter the extraction outbox. */
   autoCapture?: boolean
-  /** Whether relevant prior turns are recalled. */
+  /** Whether automatic and explicit search returns stored items. */
   autoRecall?: boolean
-  /** Maximum stored items before oldest-first eviction. */
+  /** Maximum committed structured items before oldest-update eviction. */
   maxEntries?: number
-  /** Maximum hits returned by one recall. */
+  /** Maximum ordered items returned by recall. */
   maxHits?: number
-  /** Unicode code-point budget for one item body. */
+  /** Unicode code-point limit for one memory body or queued turn field. */
   maxContentChars?: number
-  /** Unicode code-point budget for one item title. */
+  /** Unicode code-point limit for one title. */
   maxTitleChars?: number
+  /** Lifetime of automatic event memories in days. */
+  eventTtlDays?: number
+  /** Maximum durable captures processed by one maintenance pass. */
+  maintenanceBatchSize?: number
+  /** Maximum failed extraction attempts retained for one capture. */
+  maintenanceMaxAttempts?: number
+  /** Explicit database path, primarily for deployment and tests. */
+  path?: string
+  /** Harness home override used only when `path` is absent. */
+  dshHome?: string
 }
 ```
 
-Source: [`packages/memory/agent-memory-settings/src/index.ts:26`](../packages/memory/agent-memory-settings/src/index.ts)
+Source: [`packages/memory/agent-memory-settings/src/index.ts:42`](../packages/memory/agent-memory-settings/src/index.ts)
 
 <a id="voyaseek-aidsh-agent-presets"></a>
 
@@ -669,6 +683,26 @@ export interface Config {
   verificationOutputMaxBytes?: number
   /** Total wall-clock lifetime retained across pause and process restart. */
   maxDurationMs?: number
+  /** Automatically reconcile nonterminal persisted goals without a slash command. */
+  automaticResume?: boolean
+  /** Interval between durable session reconciliation passes. */
+  schedulerPollIntervalMs?: number
+  /** First delay after an automatically resumed run fails. */
+  retryInitialDelayMs?: number
+  /** Maximum exponential retry delay. */
+  retryMaxDelayMs?: number
+  /** Consecutive automatic run failures before the goal is blocked. */
+  maxRecoveryAttempts?: number
+  /** Maximum automatically reconciled goals running concurrently. */
+  maxAutomaticResumes?: number
+  /** Git workspace policy; `auto` degrades explicitly for non-Git or dirty sources. */
+  workspaceIsolation?: 'off' | 'auto' | 'required'
+  /** Durable parent directory for detached per-goal Git worktrees. */
+  workspaceRoot?: string
+  /** Timeout for each trusted Git workspace command. */
+  workspaceCommandTimeoutMs?: number
+  /** Maximum exact binary patch promoted from an audited worktree. */
+  promotionPatchMaxBytes?: number
 }
 
 /** One trusted deployment command used as a deterministic completion gate. */
@@ -682,7 +716,7 @@ export interface VerificationGateConfig {
 }
 ```
 
-Source: [`packages/goal/complex-goal/src/index.ts:86`](../packages/goal/complex-goal/src/index.ts)
+Source: [`packages/goal/complex-goal/src/index.ts:106`](../packages/goal/complex-goal/src/index.ts)
 
 <a id="voyaseek-aidsh-cordis-host-runner"></a>
 
@@ -1608,6 +1642,22 @@ export interface PlanModeConfig {
 ```
 
 Source: [`packages/plan/plan-mode/src/index.ts:70`](../packages/plan/plan-mode/src/index.ts)
+
+<a id="voyaseek-aidsh-premature-stop-recovery"></a>
+
+## `@voyaseek-ai/dsh-premature-stop-recovery`
+
+Requires: `agents`
+
+```ts config-catalog
+/** Premature-stop recovery configuration. */
+export interface Config {
+  /** Maximum continuation prompts without an intervening tool result. */
+  maxContinuations?: number
+}
+```
+
+Source: [`packages/guard/premature-stop-recovery/src/index.ts:18`](../packages/guard/premature-stop-recovery/src/index.ts)
 
 <a id="voyaseek-aidsh-pwsh-local"></a>
 

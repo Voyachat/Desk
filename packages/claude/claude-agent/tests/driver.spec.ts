@@ -9,7 +9,7 @@ import { createUserMessage } from '@voyaseek-ai/dsh-llm'
 import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
 import type { Session } from '@voyaseek-ai/dsh-session'
 import type { CanUseTool, Options, PermissionMode, Query, SDKMessage, Settings } from '@anthropic-ai/claude-agent-sdk'
-import { ClaudeSdkAgent } from '../src/driver.ts'
+import { ClaudeSdkAgent, restoreClaudeSessionId } from '../src/driver.ts'
 import { SdkQueryEngine } from '../src/engine.ts'
 import type {} from '../src/types.ts'
 
@@ -75,11 +75,12 @@ async function makeDriver(
   permissionMode: () => PermissionMode = () => 'bypassPermissions',
   canUseTool?: CanUseTool,
   permissionSettings?: () => Settings['permissions'] | undefined,
+  runtime = 'claude',
 ): Promise<{ ctx: Context; session: Session; driver: ClaudeSdkAgent; sdk: FakeSdk }> {
   const ctx = new Context()
   await ctx.plugin(SessionStore)
   const session = ctx.sessions.create(SessionId('claude-session'), {
-    meta: { cwd: '/tmp/claude-work', agentRuntime: 'claude' },
+    meta: { cwd: '/tmp/claude-work', agentRuntime: runtime },
   })
   const sdk = new FakeSdk()
   const driver = new ClaudeSdkAgent(
@@ -111,6 +112,16 @@ function eventTypes(session: Session): string[] {
 }
 
 describe('ClaudeSdkAgent', () => {
+  it('does not resume a Claude provider session inherited across a later runtime switch', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SessionStore)
+    const session = ctx.sessions.create(SessionId('claude-provider-reset'))
+    session.append('claude-agent/runtime', { claudeSessionId: 'claude-old' })
+    expect(restoreClaudeSessionId(session)).toBe('claude-old')
+    session.append('agent/runtime/switched', { fromRuntime: 'codex', toRuntime: 'claude' })
+    expect(restoreClaudeSessionId(session)).toBeUndefined()
+    await ctx.fiber.dispose()
+  })
   it('projects one successful exchange into the durable transcript', async () => {
     const { session, driver, sdk } = await makeDriver()
     sdk.script(successScript('claude-1', 'hello from claude'))
@@ -141,6 +152,43 @@ describe('ClaudeSdkAgent', () => {
     expect(turnEnd?.data.reason).toEqual({ kind: 'completed' })
     const runtime = session.events.find(event => event.type === 'claude-agent/runtime')
     expect(runtime?.data).toEqual({ claudeSessionId: 'claude-1', model: 'claude-test' })
+  })
+
+  it('prepends retained visible history on the first turn after a runtime switch', async () => {
+    const { session, driver, sdk } = await makeDriver()
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: 'earlier task' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    session.append('agent/runtime/switched', { fromRuntime: 'codex', toRuntime: 'claude' })
+    sdk.script(successScript('claude-handoff', 'continued'))
+
+    sendPrompt(driver, 'continue here')
+    await driver.whenIdle()
+
+    expect(sdk.captured[0]?.prompt).toContain('[User]\nearlier task')
+    expect(sdk.captured[0]?.prompt).toContain('continue here')
+    expect(session.events.find(event => event.type === 'user/message'
+      && event.data.source.kind === 'plugin'
+      && event.data.source.plugin === '@voyaseek-ai/dsh-agent-loop/runtime-handoff')).toBeDefined()
+  })
+
+  it('uses the configured runtime id when matching a cross-runtime handoff', async () => {
+    const { session, driver, sdk } = await makeDriver(
+      () => 'bypassPermissions',
+      undefined,
+      undefined,
+      'claude-custom',
+    )
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: 'custom runtime history' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    session.append('agent/runtime/switched', { fromRuntime: 'native', toRuntime: 'claude-custom' })
+    sdk.script(successScript('claude-custom-handoff', 'continued'))
+
+    sendPrompt(driver, 'continue')
+    await driver.whenIdle()
+
+    expect(sdk.captured[0]?.prompt).toContain('[User]\ncustom runtime history')
   })
 
   it('resumes the recorded SDK conversation on later turns', async () => {

@@ -57,6 +57,34 @@ beforeEach(() => {
 })
 
 describe('PiAiAdapter provider routing', () => {
+  it('exports only exact protocol-compatible routes to Codex and Claude', () => {
+    const codex = adapterOf({
+      ali: {
+        apiKeyEnv: 'ALI_API_KEY',
+        api: 'openai-responses',
+        baseURL: 'https://ali.example/v1',
+        models: [{ id: 'qwen-max' }],
+      },
+      anthropicGateway: {
+        apiKeyEnv: 'ALI_API_KEY',
+        api: 'anthropic-messages',
+        baseURL: 'https://ali.example/anthropic',
+        models: [{ id: 'qwen-claude' }],
+      },
+    })
+
+    expect(codex.externalRuntimeModels('ali', 'codex')).toEqual(['qwen-max'])
+    expect(codex.externalRuntimeModels('ali', 'claude')).toEqual([])
+    expect(codex.externalRuntimeRoute('ali', 'qwen-max', 'codex')).toEqual({
+      provider: 'ali',
+      model: 'qwen-max',
+      baseURL: 'https://ali.example/v1',
+      apiKeyEnv: 'ALI_API_KEY',
+    })
+    expect(codex.externalRuntimeModels('anthropicGateway', 'claude')).toEqual(['qwen-claude'])
+    expect(codex.externalRuntimeRoute('anthropicGateway', 'qwen-claude', 'codex')).toBeUndefined()
+  })
+
   it('resolves a catalog model dynamically and uses a private endpoint', async () => {
     const server = await mockServer([{ events: textEvents }])
     const ctx = await harness(server.url)

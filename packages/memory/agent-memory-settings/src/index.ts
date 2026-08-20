@@ -5,7 +5,7 @@
  */
 
 import { createHash } from 'node:crypto'
-import { closeSync, mkdirSync, openSync, chmodSync } from 'node:fs'
+import { chmodSync, closeSync, lstatSync, mkdirSync, openSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import type { Context } from '@voyaseek-ai/cordis'
@@ -17,11 +17,14 @@ import AgentMemory, {
   type MemoryItem,
   type MemoryKind,
   type MemoryMaintainer,
+  type MemoryMaintenanceOptions,
+  type MemoryMaintenanceChange,
   type MemoryMaintenanceResult,
   type MemoryMutation,
   type MemoryOperationOptions,
   type RecallMemoryRequest,
   type RememberMemoryRequest,
+  type UpdateMemoryRequest,
 } from '@voyaseek-ai/dsh-agent-memory'
 import { resolveDshHome } from '@voyaseek-ai/dsh-home-paths'
 import { settingsNamespace, type SettingsScope } from '@voyaseek-ai/dsh-settings'
@@ -31,20 +34,31 @@ import { SessionId } from '@voyaseek-ai/dsh-session'
 export const AGENT_MEMORY_SETTINGS_NAMESPACE = 'agent-memory'
 const namespace = settingsNamespace(AGENT_MEMORY_SETTINGS_NAMESPACE)
 const APPLICATION_ID = 0x4453484d
-const SCHEMA_VERSION = 1
+const SCHEMA_VERSION = 2
 const MEMORY_KINDS = ['preference', 'fact', 'constraint', 'event'] as const
+const DATABASE_TABLES = new Set(['memories', 'capture_outbox', 'capture_receipts'])
 
 /** Live local-provider configuration. */
 export interface Config {
+  /** Whether the provider accepts writes and serves recall. */
   enabled?: boolean
+  /** Whether completed turns enter the extraction outbox. */
   autoCapture?: boolean
+  /** Whether automatic and explicit search returns stored items. */
   autoRecall?: boolean
+  /** Maximum committed structured items before oldest-update eviction. */
   maxEntries?: number
+  /** Maximum ordered items returned by recall. */
   maxHits?: number
+  /** Unicode code-point limit for one memory body or queued turn field. */
   maxContentChars?: number
+  /** Unicode code-point limit for one title. */
   maxTitleChars?: number
+  /** Lifetime of automatic event memories in days. */
   eventTtlDays?: number
+  /** Maximum durable captures processed by one maintenance pass. */
   maintenanceBatchSize?: number
+  /** Maximum failed extraction attempts retained for one capture. */
   maintenanceMaxAttempts?: number
   /** Explicit database path, primarily for deployment and tests. */
   path?: string
@@ -138,7 +152,7 @@ function captureIdentity(request: CaptureMemoryRequest): string {
 function containsSensitive(text: string): boolean {
   const patterns = [
     /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/iu,
-    /\bBearer\s+[A-Za-z0-9._~+/-]{12,}=*/iu,
+    /\bBearer\s+[-\w.~+/]{12,}=*/iu,
     /\b(?:password|passwd|passphrase|api[_ -]?key|access[_ -]?token|refresh[_ -]?token|client[_ -]?secret)\s*[:=]\s*\S+/iu,
     /\b(?:sk|ghp|github_pat|xox[baprs])-[_A-Za-z0-9-]{12,}\b/u,
     /\bAKIA[0-9A-Z]{16}\b/u,
@@ -188,6 +202,10 @@ function createDatabase(path: string): DatabaseSync {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
   }
+  const file = lstatSync(actual)
+  if (file.isSymbolicLink() || !file.isFile()) {
+    throw new Error(`agent-memory database at "${actual}" must be a regular file, not a link or directory`)
+  }
   chmodSync(actual, 0o600)
   const db = new DatabaseSync(actual)
   try {
@@ -196,6 +214,10 @@ function createDatabase(path: string): DatabaseSync {
     const tables = (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT GLOB 'sqlite_*'").all() as Array<{ name: string }>).map(row => row.name)
     if (applicationId !== 0 && applicationId !== APPLICATION_ID) throw new Error(`agent-memory database at "${actual}" belongs to another application`)
     if (applicationId === 0 && tables.length > 0) throw new Error(`agent-memory database at "${actual}" is not empty`)
+    const unknownTables = tables.filter(table => !DATABASE_TABLES.has(table))
+    if (applicationId === APPLICATION_ID && unknownTables.length > 0) {
+      throw new Error(`agent-memory database at "${actual}" has unrecognized tables: ${unknownTables.join(', ')}`)
+    }
     if (applicationId === APPLICATION_ID && version !== SCHEMA_VERSION) {
       throw new Error(`agent-memory database at "${actual}" has unsupported schema version ${String(version)}`)
     }
@@ -229,6 +251,11 @@ function createDatabase(path: string): DatabaseSync {
         next_attempt_at INTEGER NOT NULL DEFAULT 0,
         last_error TEXT
       ) STRICT;
+      CREATE TABLE IF NOT EXISTS capture_receipts (
+        capture_key TEXT PRIMARY KEY,
+        processed_at INTEGER NOT NULL
+      ) STRICT;
+      CREATE INDEX IF NOT EXISTS capture_receipts_processed ON capture_receipts(processed_at DESC);
       PRAGMA user_version = ${String(SCHEMA_VERSION)};
     `)
     return db
@@ -286,24 +313,36 @@ export class SettingsAgentMemory extends AgentMemory {
       const userText = bounded(request.userText, config.maxContentChars)
       const assistantText = bounded(request.assistantText, config.maxContentChars)
       if (userText.length === 0 || containsSensitive(`${userText}\n${assistantText}`)) return Promise.resolve('filtered')
+      const captureKey = captureIdentity(request)
+      const receipt = this.db.prepare('SELECT 1 FROM capture_receipts WHERE capture_key = ?').get(captureKey)
+      if (receipt !== undefined) return Promise.resolve('duplicate')
       const payload: CaptureMemoryRequest = { ...request, userText, assistantText }
       const result = this.db.prepare(`
         INSERT OR IGNORE INTO capture_outbox (capture_key, payload) VALUES (?, ?)
-      `).run(captureIdentity(request), JSON.stringify(payload))
+      `).run(captureKey, JSON.stringify(payload))
       return Promise.resolve(result.changes === 0 ? 'duplicate' : 'queued')
     })
   }
 
-  override maintain(maintainer: MemoryMaintainer, options?: MemoryOperationOptions): Promise<MemoryMaintenanceResult> {
+  override maintain(maintainer: MemoryMaintainer, options?: MemoryMaintenanceOptions): Promise<MemoryMaintenanceResult> {
     return this.serialized(async () => {
       const config = this.settings.get()
-      if (!config.enabled || !config.autoCapture) return { processed: 0, failed: 0, pending: this.pendingCount() }
+      if (!config.enabled || !config.autoCapture) return { processed: 0, failed: 0, pending: this.pendingCount(), outcomes: [] }
       const rows = this.db.prepare(`
         SELECT capture_key, payload, attempts FROM capture_outbox
-        WHERE attempts < ? AND next_attempt_at <= ? ORDER BY rowid LIMIT ?
-      `).all(config.maintenanceMaxAttempts, Date.now(), config.maintenanceBatchSize) as unknown as OutboxRow[]
+        WHERE attempts < ? AND next_attempt_at <= ?
+          AND (? IS NULL OR json_extract(payload, '$.sessionId') = ?)
+        ORDER BY rowid LIMIT ?
+      `).all(
+        config.maintenanceMaxAttempts,
+        Date.now(),
+        options?.sessionId ?? null,
+        options?.sessionId ?? null,
+        config.maintenanceBatchSize,
+      ) as unknown as OutboxRow[]
       let processed = 0
       let failed = 0
+      const outcomes: MemoryMaintenanceResult['outcomes'][number][] = []
       for (const row of rows) {
         abortIfRequested(options?.signal)
         const capture = JSON.parse(row.payload) as CaptureMemoryRequest
@@ -311,18 +350,25 @@ export class SettingsAgentMemory extends AgentMemory {
         try {
           const mutations = await maintainer({ capture, candidates }, options)
           abortIfRequested(options?.signal)
-          this.applyMutations(capture, candidates, mutations, config)
-          this.db.prepare('DELETE FROM capture_outbox WHERE capture_key = ?').run(row.capture_key)
+          const changes = this.applyMutations(row.capture_key, capture, candidates, mutations, config)
+          outcomes.push({
+            sessionId: capture.sessionId,
+            turn: capture.turn,
+            status: changes.length === 0 ? 'unchanged' : 'changed',
+            changes,
+          })
           processed += 1
         } catch (error) {
+          if (options?.signal?.aborted === true) throw options.signal.reason
           const attempts = row.attempts + 1
           const delay = Math.min(60_000, 1_000 * (2 ** Math.min(attempts - 1, 6)))
           this.db.prepare('UPDATE capture_outbox SET attempts = ?, next_attempt_at = ?, last_error = ? WHERE capture_key = ?')
             .run(attempts, Date.now() + delay, bounded(String(error), 500), row.capture_key)
+          outcomes.push({ sessionId: capture.sessionId, turn: capture.turn, status: 'failed', changes: [] })
           failed += 1
         }
       }
-      return { processed, failed, pending: this.pendingCount() }
+      return { processed, failed, pending: this.pendingCount(), outcomes }
     })
   }
 
@@ -346,12 +392,35 @@ export class SettingsAgentMemory extends AgentMemory {
     })
   }
 
+  override update(request: UpdateMemoryRequest, options?: MemoryOperationOptions): Promise<MemoryItem> {
+    return this.serialized(() => {
+      abortIfRequested(options?.signal)
+      const config = this.settings.get()
+      if (!config.enabled) throw new Error('long-term memory is disabled')
+      const row = this.db.prepare('SELECT * FROM memories WHERE id = ?').get(request.id) as unknown as MemoryRow | undefined
+      if (row === undefined) throw new Error(`memory "${String(request.id)}" does not exist`)
+      const title = bounded(request.title, config.maxTitleChars)
+      const content = bounded(request.content, config.maxContentChars)
+      const keywords = [...new Set((request.keywords ?? JSON.parse(row.keywords) as string[])
+        .map(value => bounded(value, 80)).filter(Boolean))].slice(0, 20)
+      if (title.length === 0 || content.length === 0) throw new Error('memory update requires non-empty title and content')
+      if (containsSensitive(`${title}\n${content}\n${keywords.join(' ')}`)) {
+        throw new Error('refusing to store content that appears to contain a credential or secret')
+      }
+      this.db.prepare('UPDATE memories SET title = ?, content = ?, keywords = ?, updated_at = ? WHERE id = ?')
+        .run(title, content, JSON.stringify(keywords), Date.now(), request.id)
+      const updated = this.db.prepare('SELECT * FROM memories WHERE id = ?').get(request.id) as unknown as MemoryRow
+      return Promise.resolve(publicItem(updated))
+    })
+  }
+
   override recall(request: RecallMemoryRequest, options?: MemoryOperationOptions): Promise<MemoryItem[]> {
     return this.serialized(() => {
       abortIfRequested(options?.signal)
       const config = this.settings.get()
       if (!config.enabled || !config.autoRecall) return Promise.resolve([])
-      return Promise.resolve(this.search(request.query, request.workspace, request.excludeSessionId, Math.min(request.limit ?? config.maxHits, config.maxHits)))
+      const limit = Math.min(request.limit ?? config.maxHits, config.maxHits)
+      return Promise.resolve(this.search(request.query, request.workspace, request.excludeSessionId, limit))
     })
   }
 
@@ -379,7 +448,7 @@ export class SettingsAgentMemory extends AgentMemory {
       const count = (this.db.prepare('SELECT COUNT(*) AS count FROM memories').get() as { count: number }).count
       this.db.exec('BEGIN IMMEDIATE')
       try {
-        this.db.exec('DELETE FROM memories; DELETE FROM capture_outbox; COMMIT')
+        this.db.exec('DELETE FROM memories; DELETE FROM capture_outbox; DELETE FROM capture_receipts; COMMIT')
       } catch (error) {
         this.db.exec('ROLLBACK')
         throw error
@@ -399,33 +468,57 @@ export class SettingsAgentMemory extends AgentMemory {
     `).all(scopeOf(workspace), exclude ?? null, exclude ?? null, this.settings.get().maxEntries) as unknown as MemoryRow[]
     return rows.map(row => ({ row, score: relevance(queryTerms, row) }))
       .filter(item => item.score > 0)
-      .sort((left, right) => right.score - left.score || right.row.confidence - left.row.confidence || right.row.updated_at - left.row.updated_at)
+      .sort((left, right) => right.score - left.score
+        || right.row.confidence - left.row.confidence
+        || right.row.updated_at - left.row.updated_at)
       .slice(0, limit)
       .map(item => publicItem(item.row))
   }
 
   private applyMutations(
+    captureKey: string,
     capture: CaptureMemoryRequest,
     candidates: readonly MemoryItem[],
     mutations: readonly MemoryMutation[],
     config: MemorySettings,
-  ): void {
+  ): MemoryMaintenanceChange[] {
     const deletable = new Set(candidates.map(item => item.id))
+    const changes: MemoryMaintenanceChange[] = []
     this.db.exec('BEGIN IMMEDIATE')
     try {
       for (const mutation of mutations.slice(0, 8)) {
         switch (mutation.action) {
           case 'none': break
           case 'delete':
-            if (deletable.has(mutation.id)) this.db.prepare('DELETE FROM memories WHERE id = ?').run(mutation.id)
+            if (deletable.has(mutation.id)) {
+              const deleted = candidates.find(item => item.id === mutation.id)
+              const result = this.db.prepare('DELETE FROM memories WHERE id = ?').run(mutation.id)
+              if (result.changes > 0 && deleted !== undefined) {
+                changes.push({ action: 'deleted', id: deleted.id, kind: deleted.kind, title: deleted.title })
+              }
+            }
             break
-          case 'upsert':
+          case 'upsert': {
+            const key = normalizedKey(mutation.key)
+            const id = memoryIdentity(scopeOf(capture.workspace), mutation.kind, key)
+            const existed = this.db.prepare('SELECT 1 FROM memories WHERE id = ?').get(id) !== undefined
             this.upsert(capture, mutation, config, 'automatic')
+            const item = this.db.prepare('SELECT * FROM memories WHERE id = ?').get(id) as unknown as MemoryRow
+            changes.push({ action: existed ? 'updated' : 'created', id, kind: item.kind, title: item.title })
             break
+          }
         }
       }
       this.prune(config.maxEntries)
+      this.db.prepare('INSERT INTO capture_receipts (capture_key, processed_at) VALUES (?, ?)').run(captureKey, Date.now())
+      this.db.prepare('DELETE FROM capture_outbox WHERE capture_key = ?').run(captureKey)
+      this.db.prepare(`
+        DELETE FROM capture_receipts WHERE capture_key IN (
+          SELECT capture_key FROM capture_receipts ORDER BY processed_at DESC LIMIT -1 OFFSET ?
+        )
+      `).run(config.maxEntries * 10)
       this.db.exec('COMMIT')
+      return changes
     } catch (error) {
       this.db.exec('ROLLBACK')
       throw error

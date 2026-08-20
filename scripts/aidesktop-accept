@@ -1,0 +1,13 @@
+#!/bin/zsh
+
+set -eu
+
+launcher_path="${0:A}"
+repo_root="${launcher_path:h:h}"
+
+if [[ ! -f "$repo_root/package.json" ]]; then
+  print -u2 -- "aidesktop-accept: cannot locate AiDesktop package.json from $launcher_path"
+  exit 1
+fi
+
+exec pnpm --dir "$repo_root" run accept:web -- "$@"

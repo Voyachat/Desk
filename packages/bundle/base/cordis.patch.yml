@@ -359,6 +359,9 @@
 
     - id: complex-goal
       name: '@voyaseek-ai/dsh-complex-goal'
+      config:
+        workspaceIsolation: auto
+        workspaceRoot: !!js dshHomePath('complex-goal-workspaces')
 
     - id: plan-mode
       name: '@voyaseek-ai/dsh-plan-mode'
@@ -511,6 +514,12 @@
       name: '@voyaseek-ai/dsh-tool-str-replace-editor'
       config:
         maxOutputChars: 16000
+
+    # Recover provider stops that end on an unperformed action commitment.
+    - id: premature-stop-recovery
+      name: '@voyaseek-ai/dsh-premature-stop-recovery'
+      config:
+        maxContinuations: 3
 
     # Consecutive-repeat reminders on the tool chain.
     - id: repeat-tool-reminder

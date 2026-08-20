@@ -38,10 +38,20 @@ flowchart LR
   cfg --> plugin_dsh_base_llm_retry
   plugin_dsh_base_settings["settings<br/>@voyaseek-ai/dsh-settings-file"]
   cfg --> plugin_dsh_base_settings
+  plugin_dsh_base_agent_memory["agent-memory<br/>@voyaseek-ai/dsh-agent-memory-settings"]
+  cfg --> plugin_dsh_base_agent_memory
   plugin_dsh_base_credentials["credentials<br/>@voyaseek-ai/dsh-credentials-local"]
   cfg --> plugin_dsh_base_credentials
   plugin_dsh_base_llm_pi_ai["llm-pi-ai<br/>@voyaseek-ai/dsh-llm-pi-ai"]
   cfg --> plugin_dsh_base_llm_pi_ai
+  plugin_dsh_base_glm_4_6v_flash["glm-4.6v-flash<br/>GLM-4.6V-Flash"]
+  cfg --> plugin_dsh_base_glm_4_6v_flash
+  plugin_dsh_base_glm_4_6v_flashx["glm-4.6v-flashx<br/>GLM-4.6V-FlashX"]
+  cfg --> plugin_dsh_base_glm_4_6v_flashx
+  plugin_dsh_base_glm_4_6v["glm-4.6v<br/>GLM-4.6V"]
+  cfg --> plugin_dsh_base_glm_4_6v
+  plugin_dsh_base_image_fallback["image-fallback<br/>@voyaseek-ai/dsh-image-fallback"]
+  cfg --> plugin_dsh_base_image_fallback
   plugin_dsh_base_session_persistence_jsonl["session-persistence-jsonl<br/>@voyaseek-ai/dsh-session-persistence-jsonl"]
   cfg --> plugin_dsh_base_session_persistence_jsonl
   plugin_dsh_base_attachment_local["attachment-local<br/>@voyaseek-ai/dsh-attachment-local"]
@@ -84,6 +94,8 @@ flowchart LR
   cfg --> plugin_dsh_base_tool_fs_search
   plugin_dsh_base_agent_instructions["agent-instructions<br/>@voyaseek-ai/dsh-agent-instructions"]
   cfg --> plugin_dsh_base_agent_instructions
+  plugin_dsh_base_agent_memory_context["agent-memory-context<br/>@voyaseek-ai/dsh-agent-memory-context"]
+  cfg --> plugin_dsh_base_agent_memory_context
   plugin_dsh_base_skill["skill<br/>@voyaseek-ai/dsh-skill"]
   cfg --> plugin_dsh_base_skill
   plugin_dsh_base_skill_filesystem["skill-filesystem<br/>@voyaseek-ai/dsh-skill-filesystem"]
@@ -106,6 +118,8 @@ flowchart LR
   cfg --> plugin_dsh_base_goal_round_driver
   plugin_dsh_base_command_goal["command-goal<br/>@voyaseek-ai/dsh-command-goal"]
   cfg --> plugin_dsh_base_command_goal
+  plugin_dsh_base_complex_goal["complex-goal<br/>@voyaseek-ai/dsh-complex-goal"]
+  cfg --> plugin_dsh_base_complex_goal
   plugin_dsh_base_plan_mode["plan-mode<br/>@voyaseek-ai/dsh-plan-mode"]
   cfg --> plugin_dsh_base_plan_mode
   plugin_dsh_base_token_meter["token-meter<br/>@voyaseek-ai/dsh-token-meter"]
@@ -120,6 +134,8 @@ flowchart LR
   cfg --> plugin_dsh_base_subagent_spawn_in_process
   plugin_dsh_base_subagent_fork_in_process["subagent-fork-in-process<br/>@voyaseek-ai/dsh-subagent-fork-in-process"]
   cfg --> plugin_dsh_base_subagent_fork_in_process
+  plugin_dsh_base_subagent_prime_computer_use["subagent-prime-computer-use<br/>@voyaseek-ai/dsh-subagent-acp"]
+  cfg --> plugin_dsh_base_subagent_prime_computer_use
   plugin_dsh_base_tool_subagent_control["tool-subagent-control<br/>@voyaseek-ai/dsh-tool-subagent-control"]
   cfg --> plugin_dsh_base_tool_subagent_control
   plugin_dsh_base_tool_subagent_list_agents["tool-subagent-list-agents<br/>@voyaseek-ai/dsh-tool-subagent-control/list-agents"]
@@ -152,6 +168,8 @@ flowchart LR
   cfg --> plugin_dsh_base_tool_ralph
   plugin_dsh_base_tool_str_replace_editor["tool-str-replace-editor<br/>@voyaseek-ai/dsh-tool-str-replace-editor"]
   cfg --> plugin_dsh_base_tool_str_replace_editor
+  plugin_dsh_base_premature_stop_recovery["premature-stop-recovery<br/>@voyaseek-ai/dsh-premature-stop-recovery"]
+  cfg --> plugin_dsh_base_premature_stop_recovery
   plugin_dsh_base_repeat_tool_reminder["repeat-tool-reminder<br/>@voyaseek-ai/dsh-repeat-tool-reminder"]
   cfg --> plugin_dsh_base_repeat_tool_reminder
   plugin_dsh_base_web["web<br/>@voyaseek-ai/dsh-web"]
@@ -189,8 +207,13 @@ flowchart LR
 | `jobs` | `@voyaseek-ai/dsh-jobs-local` |
 | `llm-retry` | `@voyaseek-ai/dsh-llm-retry` |
 | `settings` | `@voyaseek-ai/dsh-settings-file` |
+| `agent-memory` | `@voyaseek-ai/dsh-agent-memory-settings` |
 | `credentials` | `@voyaseek-ai/dsh-credentials-local` |
 | `llm-pi-ai` | `@voyaseek-ai/dsh-llm-pi-ai` |
+| `glm-4.6v-flash` | `GLM-4.6V-Flash` |
+| `glm-4.6v-flashx` | `GLM-4.6V-FlashX` |
+| `glm-4.6v` | `GLM-4.6V` |
+| `image-fallback` | `@voyaseek-ai/dsh-image-fallback` |
 | `session-persistence-jsonl` | `@voyaseek-ai/dsh-session-persistence-jsonl` |
 | `attachment-local` | `@voyaseek-ai/dsh-attachment-local` |
 | `session-query-sqlite` | `@voyaseek-ai/dsh-session-query-sqlite` |
@@ -212,6 +235,7 @@ flowchart LR
 | `tool-fs` | `@voyaseek-ai/dsh-tool-fs` |
 | `tool-fs-search` | `@voyaseek-ai/dsh-tool-fs-search` |
 | `agent-instructions` | `@voyaseek-ai/dsh-agent-instructions` |
+| `agent-memory-context` | `@voyaseek-ai/dsh-agent-memory-context` |
 | `skill` | `@voyaseek-ai/dsh-skill` |
 | `skill-filesystem` | `@voyaseek-ai/dsh-skill-filesystem` |
 | `skill-badge` | `@voyaseek-ai/dsh-skill-badge` |
@@ -223,6 +247,7 @@ flowchart LR
 | `goal` | `@voyaseek-ai/dsh-goal` |
 | `goal-round-driver` | `@voyaseek-ai/dsh-goal-round-driver` |
 | `command-goal` | `@voyaseek-ai/dsh-command-goal` |
+| `complex-goal` | `@voyaseek-ai/dsh-complex-goal` |
 | `plan-mode` | `@voyaseek-ai/dsh-plan-mode` |
 | `token-meter` | `@voyaseek-ai/dsh-token-meter` |
 | `compaction-basic` | `@voyaseek-ai/dsh-compaction-basic` |
@@ -230,6 +255,7 @@ flowchart LR
 | `subagent` | `@voyaseek-ai/dsh-subagent` |
 | `subagent-spawn-in-process` | `@voyaseek-ai/dsh-subagent-spawn-in-process` |
 | `subagent-fork-in-process` | `@voyaseek-ai/dsh-subagent-fork-in-process` |
+| `subagent-prime-computer-use` | `@voyaseek-ai/dsh-subagent-acp` |
 | `tool-subagent-control` | `@voyaseek-ai/dsh-tool-subagent-control` |
 | `tool-subagent-list-agents` | `@voyaseek-ai/dsh-tool-subagent-control/list-agents` |
 | `tool-subagent` | `@voyaseek-ai/dsh-tool-subagent` |
@@ -246,6 +272,7 @@ flowchart LR
 | `tool-goal` | `@voyaseek-ai/dsh-tool-goal` |
 | `tool-ralph` | `@voyaseek-ai/dsh-tool-ralph` |
 | `tool-str-replace-editor` | `@voyaseek-ai/dsh-tool-str-replace-editor` |
+| `premature-stop-recovery` | `@voyaseek-ai/dsh-premature-stop-recovery` |
 | `repeat-tool-reminder` | `@voyaseek-ai/dsh-repeat-tool-reminder` |
 | `web` | `@voyaseek-ai/dsh-web` |
 | `web-search-deepseek` | `@voyaseek-ai/dsh-web-search-deepseek` |

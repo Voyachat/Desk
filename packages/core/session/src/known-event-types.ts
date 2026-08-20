@@ -17,8 +17,10 @@
  * consumer exists.
  */
 export const KNOWN_SESSION_EVENT_TYPES: ReadonlySet<string> = new Set([
+  'agent-memory/maintenance',
   'agent-preset/selected',
   'agent/inbox/spliced',
+  'agent/runtime/switched',
   'approval/asked',
   'approval/decided',
   'approval/policy',

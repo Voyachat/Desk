@@ -53,7 +53,8 @@ export function DisclosureRow({
     onToggle()
   }
   const toggleFromKeyboard = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (!rowExpands || (event.key !== 'Enter' && event.key !== ' ')) return
+    if (!rowExpands || event.target !== event.currentTarget
+      || (event.key !== 'Enter' && event.key !== ' ')) return
     event.preventDefault()
     onToggle()
   }

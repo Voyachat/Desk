@@ -735,6 +735,22 @@ registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHa
 listProviders(): LlmProviderInfo[]
 
 /**
+ * List registered provider/model subsets admitted by an alternative runtime.
+ * @param runtime - alternative runtime protocol.
+ * @returns provider routes with non-empty exact model lists.
+ */
+listExternalRuntimeRoutes(runtime: LlmExternalRuntime): Array<{ provider: string; models: string[] }>
+
+/**
+ * Resolve exact process metadata for an alternative runtime request.
+ * @param provider - registered provider route.
+ * @param model - exact selected model id.
+ * @param runtime - alternative runtime protocol.
+ * @returns validated endpoint metadata, or `undefined` when unsupported.
+ */
+resolveExternalRuntimeRoute( provider: string, model: string, runtime: LlmExternalRuntime, ): LlmExternalRuntimeRoute | undefined
+
+/**
  * Declare provider routes an adapter plugin can activate through
  * configuration. Registration is all-or-nothing: an empty list, invalid
  * entry, or a provider already declared by any registration throws
@@ -835,7 +851,7 @@ async prepareCall(config: LlmCallConfig, signal?: AbortSignal): Promise<Prepared
 stream(options: GenerateOptions): AsyncIterable<StreamChunk>
 ```
 
-Source: [`packages/llm/llm/src/index.ts:284`](../../packages/llm/llm/src/index.ts)
+Source: [`packages/llm/llm/src/index.ts:312`](../../packages/llm/llm/src/index.ts)
 
 <a id="llm-events"></a>
 
@@ -884,5 +900,5 @@ Waterfall around every streaming model call (retry, replay, routing). Bound to t
 'llm/stream'(this: LlmRuntime, options: GenerateOptions, next: () => AsyncIterable<StreamChunk>): AsyncIterable<StreamChunk>
 ```
 
-Source: [`packages/llm/llm/src/index.ts:64`](../../packages/llm/llm/src/index.ts)
+Source: [`packages/llm/llm/src/index.ts:66`](../../packages/llm/llm/src/index.ts)
 <!-- END GENERATED cordis-surface -->

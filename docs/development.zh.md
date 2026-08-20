@@ -124,6 +124,14 @@ keyless [CI 工作流](../.github/workflows/ci.yml) 将独立门禁分组到若�
 
 根目录的[贡献者说明](../AGENTS.md#commands)概述常用命令，[`package.json`](../package.json) 与 [scripts/run-gates.ts](../scripts/run-gates.ts) 则负责当前脚本和门禁清单。请选择覆盖变更表面的最小检查集。文档变更使用 `pnpm run doc-sync`；包公开行为变更还需更新所属 README 或 JSDoc，而基于构建产物的检查需要先运行 `pnpm run build`。
 
+### Web 验收
+
+在仓库根目录运行 `pnpm run accept:web`，即可在浏览器中验收当前 AiDesktop 检出目录。此前台启动器会完成有序的仓库构建，启动隔离的 Aistaff 源码 Profile 与 Client 插件 watcher，确认所选环回地址返回包含启动数据的完整应用，然后在默认浏览器中打开该 URL。终端输出会标明每个生命周期状态（`构建中`、`启动中`、`已就绪`、`已停止` 或 `失败`），并且只在完整应用检查成功、状态变为 `已就绪` 后发布纯文本的可点击 `Web 地址`。默认端口 `3081` 已被占用时，启动器不会停止或复用占用方，而是自动选择下一个可用端口；传入 `-- --port <port>` 会严格使用指定端口，并在它已被占用时失败。调用方只需要已验证的 URL 时可传入 `-- --no-open`。
+
+[`scripts/aidesktop-accept`](../scripts/aidesktop-accept) 是供仓库根目录外使用、相对于检出目录的命令入口。在仓库根目录将它一次性安装到已有的 `PATH` 目录，例如运行 `ln -s "$PWD/scripts/aidesktop-accept" "$HOME/.local/bin/aidesktop-accept"`，之后即可从任意目录运行 `aidesktop-accept`。该入口通过自身真实路径解析检出目录，并把所有参数转发给 `accept:web`；安装项始终是符号链接，因此移动或删除检出目录后，命令会明确失败，不会选择其他仓库。
+
+验收期间请保持启动器运行，按 `Ctrl+C` 会同时停止 Host 与 watcher。Client 插件源码变更会自动重建并重新加载；Web shell、Host 约定或其他普通包发生变更后，需要停止并重新运行 `aidesktop-accept`（或在仓库根目录运行 `pnpm run accept:web`），让完整构建先刷新所有被消费的产物，再重新加载页面。
+
 ### 演示
 
 从源码 checkout 运行这些演示前，请单独执行仓库构建：

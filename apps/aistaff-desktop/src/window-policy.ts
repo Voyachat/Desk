@@ -33,6 +33,22 @@ export function isRuntimeDocument(url: string, runtimeUrl: URL): boolean {
   }
 }
 
+/** Return true only for the exact immutable startup document URL. */
+export function isStartupDocument(url: string, startupUrl: URL): boolean {
+  try {
+    const candidate = new URL(url)
+    return candidate.href === startupUrl.href
+  } catch {
+    return false
+  }
+}
+
+/** Allow the packaged startup document and, once known, the managed loopback origin. */
+export function isOwnedDocument(url: string, startupUrl: URL, runtimeUrl: URL | undefined): boolean {
+  return isStartupDocument(url, startupUrl)
+    || (runtimeUrl !== undefined && isRuntimeDocument(url, runtimeUrl))
+}
+
 /** Accept only a proxy resolution that cannot fall back from loopback to a proxy. */
 export function isDirectProxyResolution(resolution: string): boolean {
   if (/\r|\n/u.test(resolution)) return false

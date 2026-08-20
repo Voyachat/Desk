@@ -14,13 +14,13 @@
 // answer, not an escape hatch.
 
 import { useState } from 'react'
-import { Button, IconEditOutline16, MarkdownText } from '@voyaseek-ai/dsh-client-ui-primitives'
+import { Button, IconChevronDownOutline14, IconEditOutline16, MarkdownText } from '@voyaseek-ai/dsh-client-ui-primitives'
 import type { PendingQuestion, PlanReview, QuestionComposerProps } from './contract/slots.ts'
 import css from './PlanReviewPanel.module.css'
 
 /** The panel's own props: the question domain face, the narrowed review, and the locale seat. */
 export type PlanReviewPanelProps =
-  { pending: PendingQuestion; review: PlanReview } & Pick<QuestionComposerProps, 't'>
+  { pending: PendingQuestion; review: PlanReview; onCollapse: () => void } & Pick<QuestionComposerProps, 't'>
 
 /**
  * Optional-prop spread for a decision button's tooltip: `title` is optional on
@@ -39,7 +39,7 @@ function tooltip(description: string | undefined): { title?: string } {
  * @param props - the question domain face, the narrowed plan review, and `t`.
  * @returns The plan-review takeover for this request.
  */
-export function PlanReviewPanel({ pending, review, t }: PlanReviewPanelProps) {
+export function PlanReviewPanel({ pending, review, t, onCollapse }: PlanReviewPanelProps) {
   // One-shot latch shaped like the approval takeover's: the panel leaves only
   // when the host's resolved frame lands, so until then a second click must
   // not re-fire. A failed send (rejected receipt / transport) re-arms it and
@@ -64,7 +64,16 @@ export function PlanReviewPanel({ pending, review, t }: PlanReviewPanelProps) {
       <section className={css.card} aria-label={review.question}>
         <div className={css.strip}>
           <span className={css.dot} />
-          {t('plan.header')}
+          <span>{t('plan.header')}</span>
+          <button
+            type="button"
+            className={css.collapse}
+            aria-label={t('nav.collapse')}
+            title={t('nav.collapse')}
+            onClick={onCollapse}
+          >
+            <IconChevronDownOutline14 />
+          </button>
         </div>
         <div className={css.body} data-plan-review-scroll>
           <MarkdownText text={review.plan} />

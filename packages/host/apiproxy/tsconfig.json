@@ -45,6 +45,9 @@
       "path": "../../core/agent-default-model"
     },
     {
+      "path": "../../memory/agent-memory"
+    },
+    {
       "path": "../../preset/agent-presets"
     },
     {

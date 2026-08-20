@@ -7,9 +7,10 @@ import { randomUUID } from 'node:crypto'
 import { mkdir, stat } from 'node:fs/promises'
 import { dirname } from 'node:path'
 import type { Context } from '@voyaseek-ai/cordis'
-import { installModelSelection } from '@voyaseek-ai/dsh-agent'
+import { installModelSelection, modelConstraintAllows } from '@voyaseek-ai/dsh-agent'
 import type { Agent, ModelSelection, ModelSelectionRef, AgentOptions, AgentStatus } from '@voyaseek-ai/dsh-agent'
 import type {} from '@voyaseek-ai/dsh-agent-presets/types'
+import { MemoryId } from '@voyaseek-ai/dsh-agent-memory'
 import { AttachmentError } from '@voyaseek-ai/dsh-attachment'
 import type { ImageAttachmentRef } from '@voyaseek-ai/dsh-attachment'
 import { contentHasImage, createUserMessage, freezeMessage, ReasoningEffortId } from '@voyaseek-ai/dsh-llm'
@@ -1201,23 +1202,21 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         // Incrementally folded by the session, so a per-step read costs
         // O(new events) rather than a rescan.
         const logged = agent.session.requestHeader()?.config
-        if (logged === undefined) {
-          const selected = defaults.defaultModelSelection()
-          const constraint = agent.modelConstraint
-          if (constraint === undefined
-            || (selected.provider === constraint.provider
-              && (constraint.models === undefined || constraint.models.includes(selected.model)))) {
-            return selected
+        const constraint = agent.modelConstraint
+        if (logged !== undefined && (constraint === undefined
+          || modelConstraintAllows(constraint, logged.provider, logged.model))) {
+          return {
+            provider: logged.provider,
+            model: logged.model,
+            ...logged.reasoningEffort === undefined
+              ? {}
+              : { reasoningEffort: logged.reasoningEffort },
           }
+        }
+        if (constraint !== undefined) {
           return { provider: constraint.provider, model: constraint.defaultModel }
         }
-        return {
-          provider: logged.provider,
-          model: logged.model,
-          ...logged.reasoningEffort === undefined
-            ? {}
-            : { reasoningEffort: logged.reasoningEffort },
-        }
+        return defaults.defaultModelSelection()
       },
       set current(next: ModelSelection) {
         picked = next
@@ -2360,20 +2359,23 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         const current = selectionFor(found.agent).current
         const catalog = await buildModelCatalog(ctx)
         const constraint = found.agent.modelConstraint
+        const constrainedRoutes = constraint?.routes
+          ?? (constraint === undefined ? [] : [{ provider: constraint.provider, models: constraint.models }])
         const groups = constraint === undefined
           ? catalog.groups
           : catalog.groups
-              .filter(group => group.id === constraint.provider)
-              .map(group => ({
-                ...group,
-                models: constraint.models === undefined
-                  ? group.models
-                  : group.models.filter(model => constraint.models?.includes(model.id) === true),
-              }))
-              .filter(group => group.models.length > 0)
+            .filter(group => constrainedRoutes.some(route => route.provider === group.id))
+            .map(group => ({
+              ...group,
+              models: constrainedRoutes.find(route => route.provider === group.id)?.models === undefined
+                ? group.models
+                : group.models.filter(model => constrainedRoutes
+                  .find(route => route.provider === group.id)?.models?.includes(model.id) === true),
+            }))
+            .filter(group => group.models.length > 0)
         const failures = constraint === undefined
           ? catalog.failures
-          : catalog.failures.filter(failure => failure.id === constraint.provider)
+          : catalog.failures.filter(failure => constrainedRoutes.some(route => route.provider === failure.id))
         const routable = routeServed(current.provider)
         return ok(request, { current: { ...current }, routable, groups, failures })
       },
@@ -2385,9 +2387,7 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         return serializeImageAdmission(found.agent, async () => {
           try {
             const constraint = found.agent.modelConstraint
-            if (constraint !== undefined
-              && (provider !== constraint.provider
-                || (constraint.models !== undefined && !constraint.models.includes(model)))) {
+            if (constraint !== undefined && !modelConstraintAllows(constraint, provider, model)) {
               throw new Error(`Runtime "${found.agent.session.header.agentRuntime ?? 'native'}" does not support model "${provider}/${model}"`)
             }
             const resolved = await ctx.llm.resolveCallConfig({
@@ -2466,7 +2466,19 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
       },
 
       async fork(request) {
-        const { sessionId, atSeq } = request.payload
+        const { sessionId, atSeq, agentRuntime } = request.payload
+        const overridesRuntime = Object.hasOwn(request.payload, 'agentRuntime')
+        const requestedRuntime = agentRuntime === '' ? undefined : agentRuntime
+        if (requestedRuntime !== undefined) {
+          const available = ctx.get('agentLoop')?.driverRuntimes() ?? []
+          if (!available.includes(requestedRuntime)) {
+            return err(request, {
+              code: 'runtime-not-found',
+              message: `no agent driver registered for runtime "${requestedRuntime}"`,
+              details: { agentRuntime: requestedRuntime, available },
+            })
+          }
+        }
         let source: SessionReadState
         try {
           source = await readSessionState(sessionId)
@@ -2518,28 +2530,39 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           })
         }
         const childId = `session-${randomUUID()}` as SessionId
-        // The child inherits the parent's composition for the same reason a
-        // resumed session keeps its own: the seeded history was produced under
-        // those tools, and composing anything else would strand the tool calls
-        // it already carries. Now that no model-facing row sits in the host
-        // plane, composing nothing would leave the child with no tools at all.
+        const targetRuntime = overridesRuntime ? requestedRuntime : source.header.agentRuntime
+        const switchesRuntime = targetRuntime !== source.header.agentRuntime
+        const seed: SessionEvent[] = [...events.slice(0, cut)]
+        if (switchesRuntime) {
+          seed.push({
+            type: 'agent/runtime/switched',
+            seq: seed.length,
+            time: Date.now(),
+            data: {
+              ...source.header.agentRuntime === undefined
+                ? {}
+                : { fromRuntime: source.header.agentRuntime },
+              ...targetRuntime === undefined ? {} : { toRuntime: targetRuntime },
+            },
+          })
+        }
+        // The child inherits the parent's composition: tool and policy owners
+        // remain DSH-scoped even when a provider-specific driver changes.
         const forkComposition = await composeAgent(resolveSessionPreset(source))
         try {
           await ctx.agents.create({
             sessionId: childId,
-            seed: events.slice(0, cut),
+            seed,
             meta: {
               ...source.header.cwd === undefined ? {} : { cwd: source.header.cwd },
               parentSession: source.id,
-              seedLength: cut,
+              seedLength: seed.length,
               ...forkComposition.agentPreset === undefined
                 ? {}
                 : { agentPreset: forkComposition.agentPreset },
-              // The seeded history was produced under the source's driver;
-              // rebuilding it under another runtime would strand that history.
-              ...source.header.agentRuntime === undefined
+              ...targetRuntime === undefined
                 ? {}
-                : { agentRuntime: source.header.agentRuntime },
+                : { agentRuntime: targetRuntime },
             },
             agentOptions: agentOptions(),
             setup: forkComposition.setup,
@@ -2565,7 +2588,10 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
             })
           }
         }
-        return ok(request, { sessionId: childId })
+        return ok(request, {
+          sessionId: childId,
+          ...targetRuntime === undefined ? {} : { agentRuntime: targetRuntime },
+        })
       },
 
       async prompt(request) {
@@ -3389,6 +3415,76 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
           })
         } catch (error: unknown) {
           return err(request, { code: 'internal', message: `skill listing failed: ${String(error)}`, details: {} })
+        }
+      },
+    },
+
+    memory: {
+      async list(request) {
+        const memory = ctx.get('agentMemory')
+        if (memory === undefined) {
+          return err(request, { code: 'internal', message: 'long-term memory provider is absent', details: {} })
+        }
+        try {
+          const status = memory.status()
+          const entries = (await memory.list()).map(item => ({
+            id: String(item.id), kind: item.kind, key: item.key, title: item.title,
+            content: item.content, keywords: [...item.keywords], confidence: item.confidence,
+            createdAt: item.createdAt, updatedAt: item.updatedAt,
+            ...item.expiresAt === undefined ? {} : { expiresAt: item.expiresAt },
+            ...item.workspace === undefined ? {} : { workspace: item.workspace },
+            source: {
+              sessionId: String(item.source.sessionId), turn: item.source.turn, mode: item.source.mode,
+            },
+          }))
+          return ok(request, {
+            entries, pendingCount: status.pendingCount, failedCount: status.failedCount,
+            maxEntries: status.maxEntries,
+          })
+        } catch (error) {
+          return err(request, { code: 'internal', message: `long-term memory listing failed: ${String(error)}`, details: {} })
+        }
+      },
+      async forget(request) {
+        const memory = ctx.get('agentMemory')
+        if (memory === undefined) return err(request, { code: 'internal', message: 'long-term memory provider is absent', details: {} })
+        try {
+          return ok(request, { deleted: await memory.forget(request.payload.ids.map(MemoryId)) })
+        } catch (error) {
+          return err(request, { code: 'internal', message: `long-term memory deletion failed: ${String(error)}`, details: {} })
+        }
+      },
+      async update(request) {
+        const memory = ctx.get('agentMemory')
+        if (memory === undefined) return err(request, { code: 'internal', message: 'long-term memory provider is absent', details: {} })
+        try {
+          const item = await memory.update({
+            id: MemoryId(request.payload.id),
+            title: request.payload.title,
+            content: request.payload.content,
+            ...request.payload.keywords === undefined ? {} : { keywords: request.payload.keywords },
+          })
+          return ok(request, {
+            entry: {
+              id: String(item.id), kind: item.kind, key: item.key, title: item.title,
+              content: item.content, keywords: [...item.keywords], confidence: item.confidence,
+              createdAt: item.createdAt, updatedAt: item.updatedAt,
+              ...item.expiresAt === undefined ? {} : { expiresAt: item.expiresAt },
+              ...item.workspace === undefined ? {} : { workspace: item.workspace },
+              source: { sessionId: String(item.source.sessionId), turn: item.source.turn, mode: item.source.mode },
+            },
+          })
+        } catch (error) {
+          return err(request, { code: 'internal', message: `long-term memory update failed: ${String(error)}`, details: {} })
+        }
+      },
+      async clear(request) {
+        const memory = ctx.get('agentMemory')
+        if (memory === undefined) return err(request, { code: 'internal', message: 'long-term memory provider is absent', details: {} })
+        try {
+          return ok(request, { deleted: await memory.clear() })
+        } catch (error) {
+          return err(request, { code: 'internal', message: `long-term memory clear failed: ${String(error)}`, details: {} })
         }
       },
     },

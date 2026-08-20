@@ -13,7 +13,8 @@ describe('RuntimeSelectorController', () => {
   it('starts on the default loop driver with no session', () => {
     const controller = new RuntimeSelectorController()
     expect(controller.store.getSnapshot()).toEqual({
-      current: '', sessionId: null, busy: false, error: null,
+      current: '', sessionId: null, blank: true, running: false,
+      busy: false, error: null, warningSeq: null,
     })
   })
 
@@ -35,21 +36,32 @@ describe('RuntimeSelectorController', () => {
     controller.fail('first failure')
     expect(controller.store.getSnapshot().error).toBe('first failure')
     // The next attempt clears the stale line before it starts.
-    controller.begin()
+    controller.begin(false)
     expect(controller.store.getSnapshot()).toMatchObject({ busy: true, error: null })
     controller.fail('second failure')
     expect(controller.store.getSnapshot()).toMatchObject({ busy: false, error: 'second failure' })
     // A settled switch keeps the busy flag down and whatever line stands.
-    controller.begin()
+    controller.begin(false)
     controller.done()
     expect(controller.store.getSnapshot()).toMatchObject({ busy: false, error: null })
   })
 
   it('sync settles an in-flight switch and its failure line', () => {
     const controller = new RuntimeSelectorController()
-    controller.begin()
+    controller.begin(false)
     controller.fail('stale')
     controller.sync(sid('s3'), 'claude')
     expect(controller.store.getSnapshot()).toMatchObject({ busy: false, error: null, current: 'claude' })
+  })
+
+  it('keeps a cross-runtime warning through the child-session sync until dismissed', () => {
+    const controller = new RuntimeSelectorController()
+    controller.sync(sid('source'), 'claude', false)
+    controller.begin(true)
+    expect(controller.store.getSnapshot().warningSeq).toBe(1)
+    controller.sync(sid('child'), 'codex', false)
+    expect(controller.store.getSnapshot().warningSeq).toBe(1)
+    controller.dismissWarning()
+    expect(controller.store.getSnapshot().warningSeq).toBeNull()
   })
 })

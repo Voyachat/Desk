@@ -12,6 +12,8 @@ import type {
   LlmConfigurableProvider,
   LlmDiscoveredModel,
   LlmFailure,
+  LlmExternalRuntime,
+  LlmExternalRuntimeRoute,
   LlmModelContext,
   LlmModelDiscoveryRequest,
   LlmModelInfo,
@@ -225,6 +227,32 @@ export abstract class LlmAdapter {
   }
 
   /**
+   * List models on one route that an alternative agent runtime can serve
+   * through its own native protocol client.
+   * @param _provider - one provider route owned by this adapter.
+   * @param _runtime - alternative runtime protocol.
+   * @returns exact admitted model ids; empty means unsupported.
+   */
+  externalRuntimeModels(_provider: string, _runtime: LlmExternalRuntime): readonly string[] {
+    return []
+  }
+
+  /**
+   * Resolve the endpoint and credential reference for one admitted external-runtime model.
+   * @param _provider - one provider route owned by this adapter.
+   * @param _model - exact selected model id.
+   * @param _runtime - alternative runtime protocol.
+   * @returns process-safe endpoint metadata, or `undefined` when unsupported.
+   */
+  externalRuntimeRoute(
+    _provider: string,
+    _model: string,
+    _runtime: LlmExternalRuntime,
+  ): LlmExternalRuntimeRoute | undefined {
+    return undefined
+  }
+
+  /**
    * Stream one model call as raw chunks. The only required method.
    * @param options - the fully-assembled request; implementations must honor `options.signal`.
    * @returns the chunk stream, obeying the adapter contract documented on `StreamChunk`.
@@ -418,6 +446,46 @@ export class LlmRuntime extends Service {
    */
   listProviders(): LlmProviderInfo[] {
     return [...this.adapters.values()].map(({ provider }) => ({ ...provider }))
+  }
+
+  /**
+   * List registered provider/model subsets admitted by an alternative runtime.
+   * @param runtime - alternative runtime protocol.
+   * @returns provider routes with non-empty exact model lists.
+   */
+  listExternalRuntimeRoutes(runtime: LlmExternalRuntime): Array<{ provider: string; models: string[] }> {
+    const routes: Array<{ provider: string; models: string[] }> = []
+    for (const registration of this.adapters.values()) {
+      const provider = registration.provider.id
+      const models = [...registration.adapter.externalRuntimeModels(provider, runtime)]
+      if (models.length === 0) continue
+      if (models.some(model => model.length === 0) || new Set(models).size !== models.length) {
+        throw new LlmError(`adapter returned invalid ${runtime} model admission for provider "${provider}"`, 'INVALID_RUNTIME_ROUTE')
+      }
+      routes.push({ provider, models })
+    }
+    return routes
+  }
+
+  /**
+   * Resolve exact process metadata for an alternative runtime request.
+   * @param provider - registered provider route.
+   * @param model - exact selected model id.
+   * @param runtime - alternative runtime protocol.
+   * @returns validated endpoint metadata, or `undefined` when unsupported.
+   */
+  resolveExternalRuntimeRoute(
+    provider: string,
+    model: string,
+    runtime: LlmExternalRuntime,
+  ): LlmExternalRuntimeRoute | undefined {
+    const registration = this.registration(provider)
+    const route = registration.adapter.externalRuntimeRoute(provider, model, runtime)
+    if (route === undefined) return undefined
+    if (route.provider !== provider || route.model !== model || route.baseURL.length === 0 || route.apiKeyEnv.length === 0) {
+      throw new LlmError(`adapter returned invalid ${runtime} route for provider "${provider}" model "${model}"`, 'INVALID_RUNTIME_ROUTE')
+    }
+    return { ...route }
   }
 
   /**

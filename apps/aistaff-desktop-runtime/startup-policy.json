@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "required": {
+    "startupShell": {
+      "html": "apps/aistaff-desktop/assets/startup.html",
+      "resources": [
+        "apps/aistaff-desktop/assets/startup.css",
+        "apps/aistaff-desktop/assets/startup.js"
+      ]
+    },
+    "desktopDist": {
+      "root": "apps/aistaff-desktop/dist",
+      "extensions": [
+        ".js",
+        ".cjs"
+      ]
+    },
+    "maxTotalBytes": 98304
+  },
+  "deferred": {
+    "managedRuntimeRoot": "apps/aistaff-desktop-runtime/runtime",
+    "activation": "after-startup-shell-show"
+  },
+  "excluded": {
+    "nodePtyPrebuilds": {
+      "root": "apps/aistaff-desktop-runtime/runtime/node_modules/node-pty/prebuilds",
+      "mode": "all-except-target",
+      "target": "darwin-x64"
+    }
+  }
+}

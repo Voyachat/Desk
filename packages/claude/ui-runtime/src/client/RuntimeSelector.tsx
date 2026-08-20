@@ -2,12 +2,12 @@
  * The composer runtime-selector chip: labels the agent driver the current
  * session runs under (Native = DSH loop, Claude = Claude Agent SDK, Codex =
  * OpenAI Codex) and
- * switches by connecting the session workspace under the chosen runtime —
- * a session never changes its own runtime, so the switch lands on a session
- * minted under the pick (a matching blank one is reused) and opens it.
+ * switches by connecting a matching blank session or forking retained
+ * conversation history under the chosen runtime. The source session stays
+ * unchanged.
  */
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { InjectFace, PropsLocale, PropsRuntime } from '@voyaseek-ai/dsh-client-ui-slots'
 import {
   IconAgentPresetOutline16,
@@ -15,6 +15,7 @@ import {
   IconCodeOutline16,
   IconSparkle16,
   Menu,
+  Toast,
 } from '@voyaseek-ai/dsh-client-ui-primitives'
 // Type-only: pulls the ui-conversation SlotMap merge (the input.left seat and
 // its InputZone owner share).
@@ -38,9 +39,10 @@ export type RuntimeSelectorProps =
  * @param props - composed slot props.
  * @returns the chip with its three-mode menu.
  */
-export function RuntimeSelector({ select, useRuntimeSelector, t }: RuntimeSelectorProps) {
+export function RuntimeSelector({ dismissWarning, select, useRuntimeSelector, t }: RuntimeSelectorProps) {
   const state = useRuntimeSelector(snapshot => snapshot)
   const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLSpanElement>(null)
 
   const runtime = state.current === CLAUDE_RUNTIME
     ? { label: t('option.claude'), Icon: IconSparkle16 }
@@ -50,7 +52,7 @@ export function RuntimeSelector({ select, useRuntimeSelector, t }: RuntimeSelect
   const { label, Icon } = runtime
 
   return (
-    <span className={css.wrap}>
+    <span ref={rootRef} className={css.wrap}>
       <Menu
         open={open}
         onClose={() => { setOpen(false) }}
@@ -97,8 +99,8 @@ export function RuntimeSelector({ select, useRuntimeSelector, t }: RuntimeSelect
             aria-haspopup="menu"
             aria-expanded={open}
             aria-label={t('chip.aria')}
-            title={state.error ?? t('chip.title')}
-            disabled={state.busy}
+            title={state.error ?? (state.running ? t('chip.running') : t('chip.title'))}
+            disabled={state.busy || state.running}
             onClick={() => { setOpen(value => !value) }}
           >
             <Icon className={css.icon} />
@@ -108,6 +110,14 @@ export function RuntimeSelector({ select, useRuntimeSelector, t }: RuntimeSelect
         )}
       />
       {state.error !== null && !state.busy && <span className={css.error} role="status">{state.error}</span>}
+      {state.warningSeq !== null && (
+        <Toast
+          key={state.warningSeq}
+          text={t('switch.warning')}
+          anchor={rootRef.current?.closest<HTMLElement>('[data-composer-card]') ?? null}
+          onDone={dismissWarning}
+        />
+      )}
     </span>
   )
 }

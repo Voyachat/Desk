@@ -18,7 +18,10 @@ export function registerChatNodeRenderers(ctx: Context): void {
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register(
     { name: 'conversation.chat.node', key: 'steering', locale: NS }, UserMessageNodeView))
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register(
-    { name: 'conversation.chat.node', key: 'context', locale: NS }, ContextMessageNodeView))
+    {
+      name: 'conversation.chat.node', key: 'context', locale: NS,
+      children: { 'conversation.chat.context-actions': { kind: 'list', scope: 'session' } },
+    }, ContextMessageNodeView))
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register(
     { name: 'conversation.chat.node', key: 'assistant-step', locale: NS }, AssistantNodeView))
   ctx.slots.inject('conversation.chat.node', () => ctx.slots.register({

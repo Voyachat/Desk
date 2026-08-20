@@ -2,10 +2,78 @@
   "version": 1,
   "adoptions": [
     {
+      "id": "agent-memory-graphiti-validity",
+      "mode": "architecture",
+      "upstream": "https://github.com/getzep/graphiti",
+      "upstream_ref": "10374d6044f91b9ecae3586828abb1ecbf022c4f",
+      "license": "Apache-2.0",
+      "upstream_paths": [
+        "graphiti_core/utils/maintenance/edge_operations.py"
+      ],
+      "local_paths": [
+        "packages/memory/agent-memory-settings/src/index.ts"
+      ],
+      "local_changes": "Semantic-key replacement and event expiry only; no graph database or copied source.",
+      "update_policy": "Re-review if company knowledge graph becomes a product requirement.",
+      "decision": "Architecture only: adopt invalidation/expiry semantics, not the temporal graph runtime."
+    },
+    {
+      "id": "agent-memory-langmem-background",
+      "mode": "architecture",
+      "upstream": "https://github.com/langchain-ai/langmem",
+      "upstream_ref": "29cbe41e58528f92e9efa773c12e15c47be3808c",
+      "license": "MIT",
+      "upstream_paths": [
+        "src/langmem/knowledge/extraction.py"
+      ],
+      "local_paths": [
+        "packages/memory/agent-memory-settings/src/index.ts",
+        "packages/memory/agent-memory-context/src/index.ts"
+      ],
+      "local_changes": "Durable local outbox and existing ctx.llm replace LangGraph/Python manager.",
+      "update_policy": "Re-review if upstream publishes durable idempotent recovery contracts.",
+      "decision": "Architecture only: separate turn hot path from background extraction and consolidation."
+    },
+    {
+      "id": "agent-memory-letta-tools",
+      "mode": "architecture",
+      "upstream": "https://github.com/letta-ai/letta-code",
+      "upstream_ref": "ee230f304a1a9415d949420c0835ff8583df26f7",
+      "license": "Apache-2.0",
+      "upstream_paths": [
+        "src/tools/impl/memory.ts",
+        "src/agent/memory.ts"
+      ],
+      "local_paths": [
+        "packages/memory/agent-memory-context/src/index.ts"
+      ],
+      "local_changes": "Existing DSH tools and system prompt; no Letta agent, filesystem, or skill runtime.",
+      "update_policy": "Re-review after Letta Code stabilizes a public memory-filesystem contract.",
+      "decision": "Architecture only: add explicit search/remember/forget beside automatic maintenance."
+    },
+    {
+      "id": "agent-memory-mem0-decisions",
+      "mode": "architecture",
+      "upstream": "https://github.com/mem0ai/mem0",
+      "upstream_ref": "001c235229be8795e3834520467bd0d661ed8f34",
+      "license": "Apache-2.0",
+      "upstream_paths": [
+        "mem0-ts/src/oss/src/memory/index.ts",
+        "mem0-ts/src/oss/src/prompts/index.ts"
+      ],
+      "local_paths": [
+        "packages/memory/agent-memory/src/index.ts",
+        "packages/memory/agent-memory-settings/src/index.ts"
+      ],
+      "local_changes": "Provider-neutral mutations; trusted scope; private SQLite; secret rejection; no copied source.",
+      "update_policy": "Re-review on action schema or conflict-test changes.",
+      "decision": "Architecture only: adopt ADD/UPDATE/DELETE/NONE-style consolidation without Mem0 runtime."
+    },
+    {
       "id": "deepseek-harness",
       "mode": "source",
       "upstream": "https://github.com/deepseek-ai/deepseek-harness.git",
-      "upstream_ref": "local-snapshot-2026-08-15+sha256.6b11b3c00e0fd7f9850e7828f29a15dc9e312c9d5fe0b16543e87748d8fea054",
+      "upstream_ref": "47f943859bef60e4160492346772ded9b24f765a",
       "license": "MIT",
       "upstream_paths": [
         "."
@@ -15,7 +83,7 @@
       ],
       "local_changes": "AiDesktop product docs, Electron app, and isolated packages/aistaff plugin layer added; DSH api/remotes mounts the Aistaff Remote contributions and the Client bundler admits the Renderer-safe employee-experience leaf; build outputs and secrets excluded",
       "update_policy": "stable-release",
-      "decision": "用户指定从 /Users/baron/projects/DsAgent 复制首个源码基线；Aistaff 通过独立插件岛接入，后续升级与官方 upstream 比较"
+      "decision": "代码级 Git 树比对将 /Users/baron/projects/DsAgent 隔离复制的源码基线固定到上游 0.1.0-rc.5 发布树；Aistaff 通过独立插件岛接入"
     },
     {
       "id": "dsh-find-plugin",
@@ -156,7 +224,7 @@
       "id": "openai-codex-app-server",
       "mode": "dependency",
       "upstream": "https://github.com/openai/codex.git",
-      "upstream_ref": "rust-v0.148.0@3ba0f711642a888aec92a611a3f3b2211157ff89",
+      "upstream_ref": "rust-v0.147.0@be6e8eac029b183056b7e4402879f15d2c85f61b",
       "license": "Apache-2.0",
       "upstream_paths": [
         "codex-rs/app-server",

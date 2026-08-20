@@ -34,6 +34,7 @@
     "@voyaseek-ai/dsh-fs-observation-policy": "workspace:*",
     "@voyaseek-ai/dsh-fs-sandbox": "workspace:^",
     "@voyaseek-ai/dsh-goal": "workspace:*",
+    "@voyaseek-ai/dsh-complex-goal": "workspace:*",
     "@voyaseek-ai/dsh-goal-round-driver": "workspace:*",
     "@voyaseek-ai/dsh-hooks-claude-code": "workspace:*",
     "@voyaseek-ai/dsh-hooks-codex": "workspace:*",

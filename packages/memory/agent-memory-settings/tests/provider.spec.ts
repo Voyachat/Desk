@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { mkdtemp, rm, stat } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { DatabaseSync } from 'node:sqlite'
 import { Context } from '@voyaseek-ai/cordis'
 import FileSettingsProvider from '@voyaseek-ai/dsh-settings-file'
 import { MemoryId, type AgentMemory, type MemoryMaintainer } from '@voyaseek-ai/dsh-agent-memory'
@@ -34,6 +35,22 @@ const preferenceMaintainer: MemoryMaintainer = input => Promise.resolve([{
 }])
 
 describe('SQLite-backed agent memory', () => {
+  it('rejects an older on-disk schema instead of silently upgrading it', async () => {
+    const root = await mkdtemp(join(tmpdir(), 'dsh-agent-memory-v1-'))
+    roots.push(root)
+    const path = join(root, 'memory.sqlite')
+    const db = new DatabaseSync(path)
+    db.exec(`
+      PRAGMA application_id = 1146308685;
+      PRAGMA user_version = 1;
+      CREATE TABLE memories (id TEXT PRIMARY KEY) STRICT;
+      CREATE TABLE capture_outbox (capture_key TEXT PRIMARY KEY) STRICT;
+    `)
+    db.close()
+
+    await expect(harness(root)).rejects.toThrow('unsupported schema version 1')
+  })
+
   it('durably queues, consolidates, and corrects one semantic memory', async () => {
     const { ctx, memory, path } = await harness()
     const first = {
@@ -42,13 +59,24 @@ describe('SQLite-backed agent memory', () => {
     }
     await expect(memory.capture(first)).resolves.toBe('queued')
     await expect(memory.capture(first)).resolves.toBe('duplicate')
-    await expect(memory.maintain(preferenceMaintainer)).resolves.toMatchObject({ processed: 1, pending: 0 })
+    await expect(memory.maintain(preferenceMaintainer)).resolves.toMatchObject({
+      processed: 1,
+      pending: 0,
+      outcomes: [{ status: 'changed', changes: [{ action: 'created', title: '验证饮料' }] }],
+    })
+    await expect(memory.capture(first)).resolves.toBe('duplicate')
     await memory.capture({ ...first, turn: 2, userText: '验证饮料改成咖啡' })
     await memory.maintain(preferenceMaintainer)
     const recalled = await memory.recall({ query: '我喝什么？', workspace: '/workspace' })
     expect(recalled).toHaveLength(1)
     expect(recalled[0]).toMatchObject({ kind: 'preference', key: 'verification-drink', content: '用户的验证饮料是咖啡。' })
     expect(memory.status()).toMatchObject({ count: 1, pendingCount: 0, failedCount: 0, maxEntries: 2 })
+    await expect(memory.update({
+      id: recalled[0]!.id, title: '验证饮品', content: '用户的验证饮料是手冲咖啡。', keywords: ['饮品'],
+    })).resolves.toMatchObject({ id: recalled[0]!.id, title: '验证饮品', content: '用户的验证饮料是手冲咖啡。' })
+    await expect(memory.update({
+      id: recalled[0]!.id, title: '凭据', content: 'api_key = sk-example1234567890',
+    })).rejects.toThrow('credential or secret')
     expect((await stat(path)).mode & 0o777).toBe(0o600)
     await ctx.fiber.dispose()
   })
@@ -67,6 +95,20 @@ describe('SQLite-backed agent memory', () => {
     await second.memory.maintain(preferenceMaintainer)
     expect(second.memory.status()).toMatchObject({ count: 1, pendingCount: 0 })
     await second.ctx.fiber.dispose()
+  })
+
+  it('does not spend a durable retry attempt when maintenance is cancelled', async () => {
+    const { ctx, memory } = await harness()
+    await memory.capture({
+      sessionId: SessionId('cancelled'), turn: 1, userText: '验证饮料是正山小种', assistantText: 'noted',
+    })
+    const abort = new AbortController()
+    await expect(memory.maintain(() => {
+      abort.abort(new Error('session closed'))
+      return Promise.reject(new Error('cancelled maintainer'))
+    }, { signal: abort.signal })).rejects.toThrow('session closed')
+    await expect(memory.maintain(preferenceMaintainer)).resolves.toMatchObject({ processed: 1, failed: 0, pending: 0 })
+    await ctx.fiber.dispose()
   })
 
   it('bounds structured items and supports explicit remember, deletion, and clear', async () => {

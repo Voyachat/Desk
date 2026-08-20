@@ -6,9 +6,10 @@
 
 import type { Context } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
-import type { PreStepDecision } from '@voyaseek-ai/dsh-agent'
+import type { Agent, PreStepDecision } from '@voyaseek-ai/dsh-agent'
 import AgentMemory, {
   MemoryId,
+  type CaptureMemoryRequest,
   type MemoryItem,
   type MemoryKind,
   type MemoryMaintenanceInput,
@@ -24,12 +25,26 @@ import { defineTool } from '@voyaseek-ai/dsh-tools'
 /** Cordis plugin and source-attribution name. */
 export const name = 'agent-memory-context'
 /** Existing extension services used by the Consumer. */
-export const inject = ['agents', 'agentMemory', 'llm', 'systemPrompt', 'tools']
+export const inject = ['agents', 'agentMemory', 'llm', 'sessions', 'systemPrompt', 'tools']
+
+declare module '@voyaseek-ai/dsh-llm' {
+  interface MessageSourceMap {
+    /** Structured memories automatically recalled for the current user turn. */
+    'agent-memory': {
+      kind: 'agent-memory'
+      form: 'recall'
+      items: readonly { id: MemoryId; kind: MemoryKind; title: string }[]
+    }
+  }
+}
 
 /** Recall, extraction, and tool budgets. */
 export interface Config {
+  /** Unicode code-point budget for one injected recall block. */
   maxRecallChars?: number
+  /** Maximum output tokens for one structured extraction call. */
   extractionMaxTokens?: number
+  /** Cooperative timeout for each explicit memory tool call. */
   toolTimeoutMs?: number
 }
 
@@ -117,7 +132,7 @@ function parseMutations(text: string, candidates: readonly MemoryItem[]): Memory
     return {
       action: 'upsert', kind: operation.kind as MemoryKind, key: operation.key,
       title: operation.title, content: operation.content,
-      keywords: operation.keywords as string[], confidence: operation.confidence,
+      keywords: operation.keywords, confidence: operation.confidence,
     }
   })
 }
@@ -165,35 +180,97 @@ export function apply(ctx: Context, config: Config): void {
   const extractionMaxTokens = config.extractionMaxTokens ?? 1_200
   const toolTimeoutMs = config.toolTimeoutMs ?? 30_000
   const lifecycle = new AbortController()
-  const maintain = async (): Promise<void> => {
+  const pending = new Set<Promise<void>>()
+  const capturesByAgent = new Map<Agent, CaptureMemoryRequest[]>()
+  const track = (task: Promise<void>): void => {
+    pending.add(task)
+    void task.then(() => pending.delete(task), () => pending.delete(task))
+  }
+  const maintain = async (signal: AbortSignal, sessionId: Session['id']): Promise<void> => {
     try {
       const result = await ctx.agentMemory.maintain(
         (input, options) => extractWithLlm(ctx, input, extractionMaxTokens, options?.signal),
-        { signal: lifecycle.signal },
+        { signal, sessionId },
       )
+      for (const outcome of result.outcomes) {
+        const session = ctx.sessions.get(outcome.sessionId)
+        if (session === undefined) continue
+        session.append('agent-memory/maintenance', {
+          turn: outcome.turn,
+          status: outcome.status,
+          changes: outcome.changes,
+        })
+        await ctx.sessions.flush(session)
+      }
       if (result.failed > 0) ctx.logger.warn(`agent-memory maintenance left ${String(result.failed)} capture(s) for bounded retry`)
     } catch (error) {
-      if (!lifecycle.signal.aborted) ctx.logger.warn(`agent-memory maintenance failed: ${String(error)}`)
+      if (!signal.aborted && !lifecycle.signal.aborted) ctx.logger.warn(`agent-memory maintenance failed: ${String(error)}`)
     }
   }
-  ctx.effect(() => () => { lifecycle.abort(new Error('agent-memory context disposed')) }, 'agentMemoryContext.abort')
-  queueMicrotask(() => { void maintain() })
+  const processCaptures = async (
+    requests: readonly CaptureMemoryRequest[],
+    signal: AbortSignal,
+    maintainSessionId?: Session['id'],
+  ): Promise<void> => {
+    let shouldMaintain = false
+    for (const request of requests) {
+      try {
+        const result = await ctx.agentMemory.capture(request, { signal })
+        if (result === 'queued' || result === 'duplicate') shouldMaintain = true
+      } catch (error: unknown) {
+        if (!signal.aborted && !lifecycle.signal.aborted) {
+          ctx.logger.warn(`agent-memory capture failed for ${String(request.sessionId)} turn ${String(request.turn)}: ${String(error)}`)
+        }
+      }
+    }
+    if (shouldMaintain && maintainSessionId !== undefined) await maintain(signal, maintainSessionId)
+  }
+  ctx.effect(() => async () => {
+    lifecycle.abort(new Error('agent-memory context disposed'))
+    await Promise.allSettled([...pending])
+  }, 'agentMemoryContext.settle')
+
+  ctx.on('agent/session-start', ({ agent }) => {
+    try {
+      track(agent.runMaintenance(signal => maintain(signal, agent.session.id)))
+    } catch (error: unknown) {
+      ctx.logger.warn(`agent-memory could not claim resumed maintenance for ${String(agent.id)}: ${String(error)}`)
+    }
+  })
 
   ctx.on('session/event', (session, event) => {
     if (event.type !== 'turn/end' || event.data.reason.kind !== 'completed') return
     const input = captureInput(session, event.data.turn)
     if (input === undefined) return
     const route = session.requestHeader()?.config
-    void ctx.agentMemory.capture({
+    const request: CaptureMemoryRequest = {
       sessionId: session.id, turn: event.data.turn,
       ...session.header.cwd === undefined ? {} : { workspace: session.header.cwd },
       ...route === undefined ? {} : { provider: route.provider, model: route.model },
       ...input,
-    }).then((result) => {
-      if (result === 'queued' || result === 'duplicate') void maintain()
-    }).catch((error: unknown) => {
-      ctx.logger.warn(`agent-memory capture failed for ${String(session.id)} turn ${String(event.data.turn)}: ${String(error)}`)
-    })
+    }
+    const agent = ctx.agents.get(session.id)
+    if (agent === undefined || agent.session !== session) {
+      track(processCaptures([request], lifecycle.signal, session.id))
+      return
+    }
+    const queued = capturesByAgent.get(agent) ?? []
+    queued.push(request)
+    capturesByAgent.set(agent, queued)
+  })
+
+  ctx.on('agent/status', ({ agent, status }) => {
+    if (status !== 'idle') return
+    const requests = capturesByAgent.get(agent)
+    if (requests === undefined) return
+    capturesByAgent.delete(agent)
+    try {
+      // Claim the just-entered idle phase synchronously so existing whenIdle()
+      // observers follow extraction and its session durability checkpoint.
+      track(agent.runMaintenance(signal => processCaptures(requests, signal, agent.session.id)))
+    } catch (error: unknown) {
+      ctx.logger.warn(`agent-memory could not claim idle maintenance for ${String(agent.id)}: ${String(error)}`)
+    }
   })
 
   ctx.on('agent/pre-step', async ({ agent, step, signal }, next): Promise<PreStepDecision> => {
@@ -217,7 +294,11 @@ export function apply(ctx: Context, config: Config): void {
     const text = renderRecall(items, maxRecallChars)
     const recalled = createUserMessage({
       content: [{ type: 'text', text }],
-      source: { kind: 'plugin', plugin: name, form: 'recall', sections: [{ name: 'long-term-memory', text }] },
+      source: {
+        kind: 'agent-memory',
+        form: 'recall',
+        items: items.map(item => ({ id: item.id, kind: item.kind, title: item.title })),
+      },
     })
     return { kind: 'enter', messages: [recalled, ...decision.messages] }
   }, { prepend: true })

@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { DisclosureRow, IconThinkOutline14 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
+import type { ActivityHighlight } from './activity-fold.ts'
 import { formatRunDuration } from './message-chrome.ts'
 import a11yCss from './accessibility.module.css'
 import css from './ActivityFold.module.css'
@@ -23,6 +24,8 @@ export interface ActivityFoldProps {
   readonly startTime: number | null
   /** Latest member end time (epoch ms); null while the fold still runs. */
   readonly endTime: number | null
+  /** Key tool outcomes and visible narration derived from folded members. */
+  readonly highlights?: readonly ActivityHighlight[]
   /** Render one member key through the standard node seat. */
   readonly renderMember: (key: string) => ReactNode
   /** The owning view's locale seat. */
@@ -35,7 +38,7 @@ export interface ActivityFoldProps {
  * @returns the disclosure row, collapsed by default.
  */
 export function ActivityFold({
-  members, running, toolCalls, startTime, endTime, renderMember, t,
+  members, running, toolCalls, startTime, endTime, highlights = [], renderMember, t,
 }: ActivityFoldProps) {
   const [expanded, setExpanded] = useState(false)
   const wasRunning = useRef(running)
@@ -54,6 +57,10 @@ export function ActivityFold({
     ? startTime !== null ? Math.max(0, now - startTime) : null
     : startTime !== null && endTime !== null ? Math.max(0, endTime - startTime) : null
   const parts: string[] = []
+  for (const highlight of highlights) {
+    if (highlight.kind === 'text') parts.push(highlight.text)
+    else parts.push(t(`activity.tool.${highlight.status}`, { name: highlight.name }))
+  }
   if (elapsedMs !== null && elapsedMs >= 1000) parts.push(formatRunDuration(elapsedMs, t))
   if (toolCalls > 0) parts.push(t('activity.steps', { steps: toolCalls }))
   return (

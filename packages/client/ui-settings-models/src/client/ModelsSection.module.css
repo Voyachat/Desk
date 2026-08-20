@@ -467,6 +467,34 @@
   gap: 6px;
 }
 
+.runtimeCompatibility {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 2px 0;
+}
+
+.runtimeBadge {
+  padding: 1px 6px;
+  border: 1px solid var(--dsw-alias-border-l3);
+  border-radius: 4px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.runtimeBadge-supported {
+  color: var(--dsw-alias-state-success-primary);
+}
+
+.runtimeBadge-unsupported {
+  color: var(--dsw-alias-state-error-primary);
+}
+
+.runtimeBadge-unprobed {
+  color: var(--dsw-alias-state-warn-label);
+}
+
 /* Square, label-free affordances: the row's own inputs carry the meaning, so
    the actions stay glyphs and announce themselves through aria-label. */
 .iconButton {

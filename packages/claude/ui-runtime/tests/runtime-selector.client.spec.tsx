@@ -24,12 +24,14 @@ function setup(
   select = vi.fn(),
 ) {
   const store = createSnapshotStore<RuntimeSelectorState>({
-    current: '', sessionId: null, busy: false, error: null, ...patch,
+    current: '', sessionId: null, blank: true, running: false,
+    busy: false, error: null, warningSeq: null, ...patch,
   })
   const useRuntimeSelector = bindSnapshotSelector(store)
-  const props = { useRuntimeSelector, select, t } as unknown as RuntimeSelectorProps
+  const dismissWarning = vi.fn()
+  const props = { useRuntimeSelector, select, dismissWarning, t } as unknown as RuntimeSelectorProps
   const view = render(<RuntimeSelector {...props} />)
-  return { store, select, view }
+  return { store, select, dismissWarning, view }
 }
 
 const chip = () => screen.getByRole('button', { name: '运行模式' })
@@ -72,8 +74,20 @@ describe('RuntimeSelector', () => {
     expect(chip().textContent).toContain('正在切换运行模式…')
   })
 
+  it('disables switching while the current response is running', () => {
+    setup({ running: true })
+    expect((chip() as HTMLButtonElement).disabled).toBe(true)
+    expect(chip().getAttribute('title')).toBe('当前回复完成后可切换运行模式')
+  })
+
   it('surfaces the failure line beside the chip', () => {
     setup({ error: 'host unreachable' })
     expect(screen.getByRole('status').textContent).toBe('host unreachable')
+  })
+
+  it('shows the transient weak warning for a conversation handoff', () => {
+    const { dismissWarning } = setup({ warningSeq: 1 })
+    expect(screen.getByRole('alert').textContent).toBe('对话内切换模式，会降低执行效果')
+    expect(dismissWarning).not.toHaveBeenCalled()
   })
 })

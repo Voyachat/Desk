@@ -6,6 +6,7 @@
 
 | 包 | 职责 | ctx key |
 |---|---|---|
+| [`premature-stop-recovery/`](premature-stop-recovery/README.md) | 对未执行的动作承诺执行有界恢复 | 监听 agent 事件 |
 | [`repeat-tool-reminder/`](repeat-tool-reminder/README.md) | 针对重复工具调用的建议性提醒 | 监听工具和 agent 事件 |
 | [`timeout-policy/`](timeout-policy/README.md) | 以部署策略形式设置单次工具调用截止时间 | 注册 `tools/execute` 监听器 |
 

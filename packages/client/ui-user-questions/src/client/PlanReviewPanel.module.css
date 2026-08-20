@@ -54,6 +54,27 @@
   line-height: 18px;
 }
 
+.strip > span:nth-child(2) {
+  flex: 1 1 auto;
+}
+
+.collapse {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.collapse:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
 .dot {
   width: 8px;
   height: 8px;

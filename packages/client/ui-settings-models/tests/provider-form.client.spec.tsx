@@ -864,7 +864,7 @@ describe('hand-declared providers', () => {
       providers: {
         'acme-gateway': {
           apiKeyEnv: 'ACME_GATEWAY_API_KEY',
-          api: 'openai-completions',
+          api: 'openai-responses',
           baseURL: 'https://gateway.acme.example/v1',
           models: [{ id: 'acme-large' }],
         },
@@ -874,8 +874,13 @@ describe('hand-declared providers', () => {
     openEditor('acme-gateway')
 
     const protocol = screen.getByLabelText<HTMLSelectElement>(en.customApi)
-    expect(protocol.value).toBe('openai-completions')
+    expect(protocol.value).toBe('openai-responses')
+    expect(screen.getByText(`${en.runtimeNative} · ${en.runtimeSupported}`)).toBeTruthy()
+    expect(screen.getByText(`${en.runtimeClaude} · ${en.runtimeUnsupported}`)).toBeTruthy()
+    expect(screen.getByText(`${en.runtimeCodex} · ${en.runtimeSupported}`)).toBeTruthy()
     fireEvent.change(protocol, { target: { value: 'anthropic-messages' } })
+    expect(screen.getByText(`${en.runtimeClaude} · ${en.runtimeSupported}`)).toBeTruthy()
+    expect(screen.getByText(`${en.runtimeCodex} · ${en.runtimeUnsupported}`)).toBeTruthy()
     fireEvent.click(screen.getByText(en.apply))
 
     await waitFor(() => { expect(mutate).toHaveBeenCalledTimes(1) })

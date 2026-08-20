@@ -2,7 +2,7 @@
 
 import type { Context } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
-import type { Agent } from '@voyaseek-ai/dsh-agent'
+import type { Agent, AgentModelRouteConstraint } from '@voyaseek-ai/dsh-agent'
 import { credentialRef } from '@voyaseek-ai/dsh-credentials'
 import type { AgentDriverFactory } from '@voyaseek-ai/dsh-agent-loop'
 import { CallId } from '@voyaseek-ai/dsh-llm'
@@ -102,24 +102,50 @@ export function configuredCodexArgv(config: Pick<ResolvedConfig, 'provider' | 'b
  * Resolve child environment and credentials immediately before one turn.
  * @param ctx - context carrying the optional credential provider.
  * @param config - validated process and credential-reference configuration.
+ * @param request - optional provider and model selected for this turn.
  * @returns process inputs containing the current credential value only in the child environment.
  */
-export async function resolveCodexTurnConfig(ctx: Context, config: ResolvedConfig): Promise<CodexTurnConfig> {
+export async function resolveCodexTurnConfig(
+  ctx: Context,
+  config: ResolvedConfig,
+  request?: { provider: string; model: string },
+): Promise<CodexTurnConfig> {
+  const route = request === undefined || request.provider === config.provider
+    ? undefined
+    : ctx.get('llm')?.resolveExternalRuntimeRoute(request.provider, request.model, 'codex')
+  if (request !== undefined && request.provider !== config.provider && route === undefined) {
+    throw new Error(`codex-agent: provider "${request.provider}" model "${request.model}" has no Responses-compatible runtime route`)
+  }
+  const turn = route === undefined
+    ? config
+    : { ...config, provider: route.provider, baseUrl: route.baseURL, apiKeyEnv: route.apiKeyEnv }
   const env: NodeJS.ProcessEnv = { ...scrubbedParentEnv(), ...config.env }
-  if (config.apiKeyEnv !== undefined) {
+  if (turn.apiKeyEnv !== undefined) {
     const credentials = ctx.get('credentials')
     if (credentials === undefined) {
-      throw new Error(`codex-agent: credential ${config.apiKeyEnv} requires a credentials provider`)
+      throw new Error(`codex-agent: credential ${turn.apiKeyEnv} requires a credentials provider`)
     }
-    const resolved = await credentials.resolve(credentialRef(config.apiKeyEnv))
-    if (resolved === undefined) throw new Error(`codex-agent: credential ${config.apiKeyEnv} is not configured`)
-    env[config.apiKeyEnv] = resolved.value
+    const resolved = await credentials.resolve(credentialRef(turn.apiKeyEnv))
+    if (resolved === undefined) throw new Error(`codex-agent: credential ${turn.apiKeyEnv} is not configured`)
+    env[turn.apiKeyEnv] = resolved.value
   }
   return {
-    argv: configuredCodexArgv(config),
+    argv: configuredCodexArgv(turn),
     env,
-    disposeGraceMs: config.disposeGraceMs,
+    disposeGraceMs: turn.disposeGraceMs,
   }
+}
+
+function admittedRuntimeRoutes(ctx: Context, resolved: ResolvedConfig): AgentModelRouteConstraint[] {
+  const routes: AgentModelRouteConstraint[] = [{
+    provider: resolved.provider,
+    ...resolved.models === undefined || resolved.models.length === 0 ? {} : { models: [...resolved.models] },
+  }]
+  for (const route of ctx.get('llm')?.listExternalRuntimeRoutes('codex') ?? []) {
+    if (route.provider === resolved.provider) continue
+    routes.push({ provider: route.provider, models: [...route.models] })
+  }
+  return routes
 }
 
 function availableDecisions(params: Record<string, unknown>): string[] {
@@ -220,12 +246,13 @@ export function apply(ctx: Context, config: Config): void {
         options,
         session,
         new CodexAppServerEngine(spec => ctx.subprocess.spawn(spec)),
-        () => resolveCodexTurnConfig(ctx, resolved),
+        request => resolveCodexTurnConfig(ctx, resolved, request),
         session.header.cwd ?? cwdFallback,
         resolved.provider,
         resolved.model,
         agent => makeCodexServerRequest(ctx, agent),
         resolved.models === undefined || resolved.models.length === 0 ? undefined : resolved.models,
+        admittedRuntimeRoutes(ctx, resolved),
       )
     },
   }

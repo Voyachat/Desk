@@ -18,7 +18,7 @@ import type { PendingInteractionStatus } from './pending.ts'
 // the 'title' projection key this manager projects into list rows (and any
 // useProjection('title') consumer reads). Zero value imports by construction.
 import type {} from '@voyaseek-ai/dsh-session-title/client'
-import { Notifier } from './notifier.ts'
+import { Notifier } from '../contract/notifier.ts'
 import { ProjectionValueStore } from './projection-store.ts'
 import { Session } from './session.ts'
 import type { SessionRemotes } from './remotes.ts'
@@ -583,22 +583,27 @@ export class SessionManager {
    * @returns the fork result (the child session id).
    */
   async fork(
-    opts: { sessionId: SessionId; atSeq?: number },
-  ): Promise<RpcResult<{ sessionId: SessionId }>> {
+    opts: { sessionId: SessionId; atSeq?: number; agentRuntime?: string },
+  ): Promise<RpcResult<{ sessionId: SessionId; agentRuntime?: string }>> {
     try {
       const source = this.summaries.find(s => s.sessionId === opts.sessionId)
       const { result } = await this.api.sessions.fork({
         sessionId: opts.sessionId,
         ...opts.atSeq === undefined ? {} : { atSeq: opts.atSeq },
+        ...opts.agentRuntime === undefined ? {} : { agentRuntime: opts.agentRuntime },
       })
       const childId = result.ok
         ? result.value.sessionId
         : workspaceAttachSessionId(result.error)
       if (childId !== undefined) {
+        const childRuntime = opts.agentRuntime === undefined
+          ? source?.agentRuntime
+          : opts.agentRuntime === '' ? undefined : opts.agentRuntime
         this.recordMutation({ kind: 'upsert', summary: {
           sessionId: childId, updatedAt: Date.now(), running: false, blank: false,
           parentSessionId: opts.sessionId,
           ...(source?.cwd !== undefined ? { cwd: source.cwd } : {}),
+          ...(childRuntime === undefined ? {} : { agentRuntime: childRuntime }),
         } })
       }
       return result

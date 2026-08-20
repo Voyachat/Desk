@@ -7,7 +7,8 @@ import { readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import { afterEach, expect, it } from 'vitest'
-import { CallId } from '@voyaseek-ai/dsh-llm'
+import { CallId, createUserMessage } from '@voyaseek-ai/dsh-llm'
+import { RpcId } from '@voyaseek-ai/dsh-host-apiproxy'
 import { canonicalPath, writableRoots } from '@voyaseek-ai/dsh-sandbox'
 import { SessionId } from '@voyaseek-ai/dsh-session'
 // Empty type imports carry the tools/sandboxPolicy/approval Context merges.
@@ -76,6 +77,36 @@ afterEach(async () => {
   await scaffold?.close()
   scaffold = undefined
 })
+
+it('mounts the Claude and Codex conversation runtimes in the shipped Web composition', async () => {
+  scaffold = await launchWebScaffold()
+  const ctx = scaffold.ctx
+  expect(ctx.agentLoop.driverRuntimes()).toEqual(['claude', 'codex'])
+
+  const created = await ctx.apiProxy.sessions.create({
+    rpcId: RpcId('runtime-switch-source'),
+    payload: { cwd: scaffold.workspaceCwd },
+  })
+  expect(created.result.ok).toBe(true)
+  if (!created.result.ok) return
+  const source = ctx.sessions.get(created.result.value.sessionId)
+  expect(source).toBeDefined()
+  source?.append('turn/start', { turn: 1 })
+  source?.append('user/message', createUserMessage({
+    content: [{ type: 'text', text: 'retained assembled history' }], source: { kind: 'user' },
+  }), { surfaceOp: 'append' })
+  source?.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
+
+  const switched = await ctx.apiProxy.sessions.fork({
+    rpcId: RpcId('runtime-switch-codex'),
+    payload: { sessionId: created.result.value.sessionId, agentRuntime: 'codex' },
+  })
+  expect(switched.result).toMatchObject({ ok: true, value: { agentRuntime: 'codex' } })
+  if (!switched.result.ok) return
+  const child = ctx.sessions.get(switched.result.value.sessionId)
+  expect(child?.header.agentRuntime).toBe('codex')
+  expect(child?.events.at(-2)?.type).toBe('agent/runtime/switched')
+}, 120_000)
 
 it('assembles the shipped Web catalog, file-reference guidance, and confined access default', async () => {
   scaffold = await launchWebScaffold()

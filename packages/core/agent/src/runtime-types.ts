@@ -30,14 +30,41 @@ export interface AgentOptions {
   maxTokens?: number
 }
 
-/** Provider/model subset an alternative runtime can faithfully serve. */
+/** One provider/model subset an alternative runtime can faithfully serve. */
+export interface AgentModelRouteConstraint {
+  /** Provider route accepted by the runtime protocol endpoint. */
+  readonly provider: string
+  /** Exact admitted model ids; absent means every model on the provider route. */
+  readonly models?: readonly string[]
+}
+
+/** Provider/model subsets an alternative runtime can faithfully serve. */
 export interface AgentModelConstraint {
-  /** Only provider route accepted by the runtime protocol endpoint. */
+  /** Default provider route used when no compatible selection is durable. */
   readonly provider: string
   /** Runtime fallback when the global default is outside this subset. */
   readonly defaultModel: string
-  /** Exact admitted model ids; absent means every model on the provider route. */
+  /** Exact admitted model ids on the default provider route. */
   readonly models?: readonly string[]
+  /** Complete protocol-compatible route list; omission means only the default route. */
+  readonly routes?: readonly AgentModelRouteConstraint[]
+}
+
+/**
+ * Test whether an alternative runtime admits one exact provider/model route.
+ * @param constraint - runtime provider/model admission policy.
+ * @param provider - selected provider route.
+ * @param model - selected model id.
+ * @returns whether the runtime can faithfully serve the route.
+ */
+export function modelConstraintAllows(
+  constraint: AgentModelConstraint,
+  provider: string,
+  model: string,
+): boolean {
+  const routes = constraint.routes ?? [{ provider: constraint.provider, models: constraint.models }]
+  const route = routes.find(candidate => candidate.provider === provider)
+  return route !== undefined && (route.models === undefined || route.models.includes(model))
 }
 
 /** Options for {@link Agent.cancel}. */

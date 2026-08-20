@@ -21,6 +21,7 @@ import {
 function config(patch: Partial<ResolvedConfig>): ResolvedConfig {
   return {
     runtime: 'claude',
+    provider: 'claude-agent',
     env: {},
     disposeGraceMs: 1000,
     ...patch,

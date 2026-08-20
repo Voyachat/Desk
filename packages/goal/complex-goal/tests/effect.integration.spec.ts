@@ -87,6 +87,7 @@ describe('independently verified complex goal over the real spawn stack', () => 
       phase: 'planning',
       round: 0,
       maxRounds: 3,
+      workspace: { kind: 'shared', sourceCwd: '/workspace', taskCwd: '/workspace', reason: 'disabled' },
       verificationGates: [],
       verificationOutputMaxBytes: 1_024,
       trustedState: { requirements: [], artifacts: [], facts: [] },
@@ -104,13 +105,13 @@ describe('independently verified complex goal over the real spawn stack', () => 
         type: 'complex-goal/change',
         seq: 0,
         time: 1,
-        data: { kind: 'complex-goal/change', version: 2, operation: 'start', snapshot: start },
+        data: { kind: 'complex-goal/change', version: 3, operation: 'start', snapshot: start },
       },
       {
         type: 'complex-goal/change',
         seq: 1,
         time: 2,
-        data: { kind: 'complex-goal/change', version: 2, operation: 'block', snapshot: blocked },
+        data: { kind: 'complex-goal/change', version: 3, operation: 'block', snapshot: blocked },
       },
     ]
 
@@ -247,10 +248,12 @@ describe('independently verified complex goal over the real spawn stack', () => 
         'planning', 'executing', 'auditing', 'auditing', 'planning',
         'executing', 'auditing', 'auditing', 'complete',
       ])
-      const rejectedCertification = parentHandle.agent.session.events.find(event =>
-        event.type === 'complex-goal/change'
+      const rejectedCertification = parentHandle.agent.session.events.find(
+        (event): event is SessionEvent<'complex-goal/change'> =>
+          event.type === 'complex-goal/change'
         && event.data.operation === 'audit'
-        && event.data.snapshot.phase === 'planning')
+        && event.data.snapshot.phase === 'planning',
+      )
       expect(rejectedCertification?.data.snapshot).toMatchObject({
         latestVerification: { status: 'failed', gates: [{ status: 'runner-failed' }] },
         latestAudit: { status: 'complete', integrity: 'clean', alignment: 'aligned' },
@@ -260,6 +263,7 @@ describe('independently verified complex goal over the real spawn stack', () => 
       expect(state).toMatchObject({
         phase: 'complete',
         round: 2,
+        promotion: 'not-required',
         latestVerification: { status: 'passed', gates: [{ id: 'artifact', status: 'passed' }] },
         latestAudit: { status: 'complete', integrity: 'clean', alignment: 'aligned' },
       })

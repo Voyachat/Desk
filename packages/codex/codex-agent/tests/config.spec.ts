@@ -38,6 +38,35 @@ describe('codex-agent configuration', () => {
     expect((await resolveCodexTurnConfig(ctx, config)).env.DASHSCOPE_API_KEY).toBe('second-value')
   })
 
+  it('materializes a configured Responses route and its credential for Codex', async () => {
+    const ctx = {
+      get: (name: string) => name === 'llm'
+        ? {
+          resolveExternalRuntimeRoute: () => ({
+            provider: 'ali', model: 'qwen-max', baseURL: 'https://ali.example/v1', apiKeyEnv: 'ALI_API_KEY',
+          }),
+        }
+        : name === 'credentials'
+          ? { resolve: () => Promise.resolve({ value: 'ali-secret', source: 'test' }) }
+          : undefined,
+    } as unknown as Context
+    const result = await resolveCodexTurnConfig(ctx, {
+      runtime: 'codex',
+      provider: 'dashscope',
+      model: 'qwen-default',
+      env: {},
+      disposeGraceMs: 100,
+    }, { provider: 'ali', model: 'qwen-max' })
+
+    expect(result.argv).toEqual(expect.arrayContaining([
+      'model_provider="ali"',
+      'model_providers.ali.base_url="https://ali.example/v1"',
+      'model_providers.ali.env_key="ALI_API_KEY"',
+    ]))
+    expect(result.env.ALI_API_KEY).toBe('ali-secret')
+    expect(result.argv.join(' ')).not.toContain('ali-secret')
+  })
+
   it('allows only the explicit full-access/no-prompt pair and otherwise fails closed without an approval provider', async () => {
     const ctx = new Context()
     const unrestricted = {

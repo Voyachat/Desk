@@ -206,7 +206,13 @@ function makeHarness(init?: Partial<ConversationSnapshot>, locale: 'en' | 'zh' =
       case 'steering':
         return <UserMessageNodeView {...nodeProps<'user' | 'steering'>()} />
       case 'context':
-        return <ContextMessageNodeView {...nodeProps<'context'>()} />
+        return (
+          <ContextMessageNodeView
+            {...nodeProps<'context'>()}
+            renderSlot={renderSlot as React.ComponentProps<typeof ContextMessageNodeView>['renderSlot']}
+            SessionProvider={props.SessionProvider}
+          />
+        )
       case 'assistant-step':
         return <AssistantNodeView {...nodeProps<'assistant-step'>()} />
       case 'command':
@@ -978,7 +984,7 @@ describe('ChatView', () => {
     expect(view.queryByTestId('tool-seat-a')).toBeNull()
     expect(view.queryByTestId('tool-seat-b')).toBeNull()
     expect(view.getByText('已处理')).toBeTruthy()
-    expect(view.getByText('3秒 · 2 步')).toBeTruthy()
+    expect(view.getByText('已完成 bash · 已完成 bash · let me parse · 3秒 · 2 步')).toBeTruthy()
     expandActivityFolds(view)
     expect(view.getByText('on it, fetching data')).toBeTruthy()
     expect(view.getByText('let me parse')).toBeTruthy()

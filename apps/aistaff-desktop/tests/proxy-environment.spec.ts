@@ -85,6 +85,12 @@ describe('desktop child proxy environment', () => {
     )).resolves.toEqual({})
   })
 
+  it('bounds a system PAC lookup that never settles', async () => {
+    const pending = new Promise<string>(() => {})
+
+    await expect(resolveProxyEnvironment(() => pending, {}, 5)).resolves.toEqual({})
+  })
+
   it.each([
     'SOCKS5 socks.example:1080',
     'PROXY user:secret@proxy.example:8080',

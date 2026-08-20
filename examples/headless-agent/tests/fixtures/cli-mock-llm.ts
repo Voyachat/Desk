@@ -48,9 +48,22 @@ class CliMockAdapter extends LlmAdapter {
       return
     }
     if (process.env.DSH_CLI_MEMORY_MODE !== undefined) {
+      if (options.system?.includes('你维护用户的长期记忆') === true) {
+        const extraction = JSON.stringify([{
+          action: 'upsert', kind: 'preference', key: 'verification-drink', title: '验证饮料',
+          content: '用户的验证饮料是 lapsang-fixture。',
+          keywords: ['验证饮料', 'drink', 'beverage'], confidence: 0.99,
+        }])
+        yield { type: 'block-start', index: 0, blockType: 'text' }
+        yield { type: 'text-delta', index: 0, text: extraction }
+        yield { type: 'block-end', index: 0, block: { type: 'text', text: extraction } }
+        yield { type: 'usage', usage: { inputTokens: 30, outputTokens: 20 } }
+        yield { type: 'finish', reason: { kind: 'stop' } }
+        return
+      }
       const recalled = options.messages.flatMap(message => message.content).some(block =>
         block.type === 'text'
-        && block.text.includes('以下是来自其他会话的长期记忆')
+        && block.text.includes('以下是相关长期记忆')
         && block.text.includes('lapsang-fixture'),
       )
       const reply = process.env.DSH_CLI_MEMORY_MODE === 'capture'

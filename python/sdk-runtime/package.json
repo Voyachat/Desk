@@ -47,6 +47,8 @@
     "@voyaseek-ai/dsh-llm-pi-ai": "workspace:^",
     "@voyaseek-ai/dsh-llm-retry": "workspace:^",
     "@voyaseek-ai/dsh-home-paths": "workspace:^",
+    "@voyaseek-ai/dsh-document-converter": "workspace:^",
+    "@voyaseek-ai/dsh-image-fallback": "workspace:^",
     "@voyaseek-ai/dsh-permission-presets": "workspace:^",
     "@voyaseek-ai/dsh-plan-mode": "workspace:^",
     "@voyaseek-ai/dsh-terminal": "workspace:^",

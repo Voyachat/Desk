@@ -1,10 +1,35 @@
 // @vitest-environment jsdom
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { Button, ConnectionBanner, Input, Menu, Modal, Pill } from '@voyaseek-ai/dsh-client-ui-primitives'
+import { Button, ConnectionBanner, DisclosureRow, Input, Menu, Modal, Pill } from '@voyaseek-ai/dsh-client-ui-primitives'
 import { POINTER_GRACE_MS } from '../src/pointer-grace.ts'
 
 afterEach(cleanup)
+
+describe('DisclosureRow', () => {
+  it('does not toggle the row when a nested action handles keyboard activation', () => {
+    const onToggle = vi.fn()
+    const onAction = vi.fn()
+    render(
+      <DisclosureRow
+        icon={<span>icon</span>}
+        title="Context"
+        open={false}
+        expandable
+        expandOnRowClick
+        onToggle={onToggle}
+        collapsedContent={<button type="button" onClick={(event) => { event.stopPropagation(); onAction() }}>Edit</button>}
+      />,
+    )
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Edit' }), { key: 'Enter' })
+    fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
+    expect(onAction).toHaveBeenCalledOnce()
+    expect(onToggle).not.toHaveBeenCalled()
+
+    fireEvent.keyDown(screen.getByRole('button', { name: /Context/ }), { key: 'Enter' })
+    expect(onToggle).toHaveBeenCalledOnce()
+  })
+})
 
 describe('Button', () => {
   it('renders children, icon, and forwards clicks', () => {

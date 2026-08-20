@@ -148,6 +148,8 @@ OpenAI 兼容端点对 `GET /models` 的回答是它托管的全部模型，而�
 
 所选模型 descriptor 提供协议实现。这包括原生 API 差异，例如 descriptor 使用 Responses API 而非 Chat Completions 的 OpenAI 模型；harness 适配器不会按模型名称硬编码端点选择。
 
+同一个具体 descriptor 也控制替代 Runtime 的准入。只有解析后的 endpoint 非空且路由指名 `apiKeyEnv` 时，使用 `openai-responses` 的模型才能交给 Codex，使用 `anthropic-messages` 的模型才能交给 Claude。适配器公开的是 endpoint 与凭据引用，而不是密钥；各 Driver 会在子进程启动前即时解析密钥。其他协议保持仅 Native 可用，不会根据模型 id 或成功的 `/models` 列表猜测兼容。
+
 成功的 assistant 响应会将经版本化的无损 JSON 回放状态与生成该响应的提供方和模型一同存储。请求时，`LlmRuntime` 只有在历史提供方路由与目标提供方路由当前由同一个 `PiAiAdapter` 实例拥有时，才会传递回放状态。即使目标提供方或模型改变，适配器也会验证状态并恢复 pi-ai 响应 id 与提供方 signature；随后由 pi-ai 判定目标 API 可以复用哪些元数据。没有回放状态的历史会被转换为外来的、与提供方无关的内容，绝不伪装为原生 pi-ai 响应。
 
 如果 listener 改写已组装 assistant 内容，loop 会在记录消息前丢弃回放状态，因为其提供方元数据不再描述该内容。无效版本、格式错误元数据、消息与回放状态之间的提供方／模型不匹配，以及内容／块不匹配都会显式以 `LlmError('INVALID_REPLAY_STATE')` 失败。

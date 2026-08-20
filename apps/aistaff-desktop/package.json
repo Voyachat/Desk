@@ -7,13 +7,14 @@
   "type": "module",
   "main": "dist/main.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && tsdown src/preload.ts --no-config --root src --format cjs --platform node --external electron --out-dir dist --no-clean --sourcemap --logLevel error --write && node ../aistaff-desktop-runtime/scripts/verify-startup-policy.mjs --required-only",
     "typecheck": "tsc -p tsconfig.test.json",
     "test": "vitest run",
     "stage:runtime": "node ../aistaff-desktop-runtime/scripts/stage-runtime.mjs",
     "verify:runtime": "node ../aistaff-desktop-runtime/scripts/stage-runtime.mjs --verify-only",
-    "package": "npm run build && npm run verify:runtime && electron-forge package --platform darwin --arch x64",
-    "make": "npm run build && npm run verify:runtime && electron-forge make --platform darwin --arch x64"
+    "verify:startup": "node ../aistaff-desktop-runtime/scripts/verify-startup-policy.mjs",
+    "package": "npm run build && npm run verify:runtime && npm run verify:startup && electron-forge package --platform darwin --arch x64",
+    "make": "npm run build && npm run verify:runtime && npm run verify:startup && electron-forge make --platform darwin --arch x64"
   },
   "devDependencies": {
     "@electron-forge/cli": "8.0.0-alpha.10",

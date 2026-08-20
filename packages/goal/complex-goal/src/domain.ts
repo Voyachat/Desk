@@ -1,6 +1,7 @@
 /** Durable decoding and replay for independently verified complex goals. */
 
 import type { SessionEvent } from '@voyaseek-ai/dsh-session'
+import { isAbsolute } from 'node:path'
 import type {
   ComplexGoalAudit,
   ComplexGoalChange,
@@ -8,7 +9,9 @@ import type {
   ComplexGoalExecution,
   ComplexGoalOperation,
   ComplexGoalPhase,
+  ComplexGoalRecovery,
   ComplexGoalSnapshot,
+  ComplexGoalWorkspace,
   ComplexGoalVerification,
   ComplexGoalVerificationGate,
   ComplexGoalVerificationGateResult,
@@ -18,20 +21,23 @@ import type {
   VerifiedRequirement,
 } from './types.ts'
 
-export const COMPLEX_GOAL_CHANGE_VERSION = 2
+/** Current durable `complex-goal/change` event version. */
+export const COMPLEX_GOAL_CHANGE_VERSION = 3
 
 declare module '@voyaseek-ai/dsh-session/types' {
   interface SessionEventMap {
     /**
      * Complete state after one independently verified complex-goal transition.
-     * @mode emit
      * @param payload - versioned operation and complete post-transition snapshot.
      */
     'complex-goal/change': ComplexGoalChange
   }
 }
 
-/** Empty trusted state before the first Auditor report. */
+/**
+ * Create empty trusted state before the first Auditor report.
+ * @returns a new state without requirements, artifacts, or facts.
+ */
 export function emptyVerifiedState(): VerifiedComplexGoalState {
   return { requirements: [], artifacts: [], facts: [] }
 }
@@ -94,6 +100,56 @@ function oneOf<T extends string>(value: unknown, field: string, choices: readonl
   return value as T
 }
 
+function absolutePath(value: unknown, field: string): string {
+  const path = normalizedText(value, field)
+  if (!isAbsolute(path)) throw new Error(`complex goal ${field} must be absolute`)
+  return path
+}
+
+function decodeWorkspace(value: unknown): ComplexGoalWorkspace {
+  if (!isRecord(value)) throw new Error('complex goal workspace must be a record')
+  if (value['kind'] === 'shared') {
+    exactKeys(value, ['kind', 'sourceCwd', 'taskCwd', 'reason'])
+    const sourceCwd = absolutePath(value['sourceCwd'], 'workspace.sourceCwd')
+    const taskCwd = absolutePath(value['taskCwd'], 'workspace.taskCwd')
+    if (sourceCwd !== taskCwd) throw new Error('complex goal shared workspace must use the source cwd')
+    return {
+      kind: 'shared',
+      sourceCwd,
+      taskCwd,
+      reason: oneOf(value['reason'], 'workspace.reason', [
+        'disabled', 'missing-cwd', 'subprocess-unavailable', 'not-git', 'dirty',
+      ]),
+    }
+  }
+  if (value['kind'] === 'git-worktree') {
+    exactKeys(value, ['kind', 'sourceRoot', 'sourceCwd', 'taskRoot', 'taskCwd', 'baseCommit'])
+    const workspace: ComplexGoalWorkspace = {
+      kind: 'git-worktree',
+      sourceRoot: absolutePath(value['sourceRoot'], 'workspace.sourceRoot'),
+      sourceCwd: absolutePath(value['sourceCwd'], 'workspace.sourceCwd'),
+      taskRoot: absolutePath(value['taskRoot'], 'workspace.taskRoot'),
+      taskCwd: absolutePath(value['taskCwd'], 'workspace.taskCwd'),
+      baseCommit: normalizedText(value['baseCommit'], 'workspace.baseCommit'),
+    }
+    if (!/^[0-9a-f]{40,64}$/u.test(workspace.baseCommit)) {
+      throw new Error('complex goal workspace.baseCommit must be a full hexadecimal object id')
+    }
+    return workspace
+  }
+  throw new Error('complex goal workspace.kind must be shared or git-worktree')
+}
+
+function decodeRecovery(value: unknown): ComplexGoalRecovery {
+  if (!isRecord(value)) throw new Error('complex goal recovery must be a record')
+  exactKeys(value, ['attempt', 'nextAttemptAtMs', 'lastError'])
+  return {
+    attempt: positiveInteger(value['attempt'], 'recovery.attempt'),
+    nextAttemptAtMs: positiveInteger(value['nextAttemptAtMs'], 'recovery.nextAttemptAtMs'),
+    lastError: normalizedText(value['lastError'], 'recovery.lastError'),
+  }
+}
+
 function decodeRequirement(value: unknown, index: number): VerifiedRequirement {
   if (!isRecord(value)) throw new Error(`complex goal trustedState.requirements[${index}] must be a record`)
   exactKeys(value, ['requirement', 'status', 'evidence'])
@@ -114,7 +170,11 @@ function decodeArtifact(value: unknown, index: number): VerifiedArtifact {
   }
 }
 
-/** Decode one Auditor-owned state snapshot at a model or durable boundary. */
+/**
+ * Decode one Auditor-owned state snapshot at a model or durable boundary.
+ * @param value - untrusted structured-output or persisted value.
+ * @returns the strict trusted state.
+ */
 export function decodeVerifiedState(value: unknown): VerifiedComplexGoalState {
   if (!isRecord(value)) throw new Error('complex goal trustedState must be a record')
   exactKeys(value, ['requirements', 'artifacts', 'facts'])
@@ -209,7 +269,12 @@ function decodeVerification(value: unknown): ComplexGoalVerification {
   return verification
 }
 
-/** Decode one untrusted Executor report at a model or durable boundary. */
+/**
+ * Decode one untrusted Executor report at a model or durable boundary.
+ * @param value - untrusted structured-output or persisted value.
+ * @param childId - host-attested child id when model output must not select it.
+ * @returns the strict Executor report.
+ */
 export function decodeExecution(value: unknown, childId?: ComplexGoalExecution['childId']): ComplexGoalExecution {
   if (!isRecord(value)) throw new Error('complex goal latestExecution must be a record')
   exactKeys(value, childId === undefined
@@ -231,7 +296,12 @@ export function decodeExecution(value: unknown, childId?: ComplexGoalExecution['
   return result
 }
 
-/** Decode one strict Auditor result at a model or durable boundary. */
+/**
+ * Decode one strict Auditor result at a model or durable boundary.
+ * @param value - untrusted structured-output or persisted value.
+ * @param childId - host-attested child id when model output must not select it.
+ * @returns the strict Auditor result.
+ */
 export function decodeAudit(value: unknown, childId?: ComplexGoalAudit['childId']): ComplexGoalAudit {
   if (!isRecord(value)) throw new Error('complex goal audit must be a record')
   exactKeys(value, childId === undefined
@@ -267,8 +337,8 @@ function decodeSnapshot(value: unknown): ComplexGoalSnapshot {
   if (!isRecord(value)) throw new Error('complex goal snapshot must be a record')
   exactKeys(value, [
     'revision', 'goalId', 'objective', 'startedAtMs', 'deadlineAtMs', 'phase', 'round', 'maxRounds',
-    'verificationGates', 'verificationOutputMaxBytes', 'trustedState',
-  ], ['contract', 'latestExecution', 'latestVerification', 'latestAudit', 'resumeAt', 'blocker'])
+    'workspace', 'verificationGates', 'verificationOutputMaxBytes', 'trustedState',
+  ], ['contract', 'latestExecution', 'latestVerification', 'latestAudit', 'promotion', 'resumeAt', 'blocker', 'recovery'])
   const phase = oneOf<ComplexGoalPhase>(value['phase'], 'snapshot.phase',
     ['planning', 'executing', 'auditing', 'paused', 'blocked', 'complete'])
   if (!Array.isArray(value['verificationGates'])) {
@@ -287,6 +357,7 @@ function decodeSnapshot(value: unknown): ComplexGoalSnapshot {
     phase,
     round: nonNegativeInteger(value['round'], 'snapshot.round'),
     maxRounds: positiveInteger(value['maxRounds'], 'snapshot.maxRounds'),
+    workspace: decodeWorkspace(value['workspace']),
     verificationGates,
     verificationOutputMaxBytes: positiveInteger(value['verificationOutputMaxBytes'], 'snapshot.verificationOutputMaxBytes'),
     trustedState: decodeVerifiedState(value['trustedState']),
@@ -294,10 +365,16 @@ function decodeSnapshot(value: unknown): ComplexGoalSnapshot {
     ...value['latestExecution'] === undefined ? {} : { latestExecution: decodeExecution(value['latestExecution']) },
     ...value['latestVerification'] === undefined ? {} : { latestVerification: decodeVerification(value['latestVerification']) },
     ...value['latestAudit'] === undefined ? {} : { latestAudit: decodeAudit(value['latestAudit']) },
+    ...value['promotion'] === undefined ? {} : {
+      promotion: oneOf(value['promotion'], 'snapshot.promotion', [
+        'not-required', 'no-changes', 'applied', 'already-applied',
+      ]),
+    },
     ...value['resumeAt'] === undefined ? {} : {
       resumeAt: oneOf(value['resumeAt'], 'snapshot.resumeAt', ['planning', 'auditing']),
     },
     ...value['blocker'] === undefined ? {} : { blocker: normalizedText(value['blocker'], 'snapshot.blocker') },
+    ...value['recovery'] === undefined ? {} : { recovery: decodeRecovery(value['recovery']) },
   }
   if (snapshot.deadlineAtMs <= snapshot.startedAtMs) {
     throw new Error('complex goal deadlineAtMs must be later than startedAtMs')
@@ -317,6 +394,8 @@ function decodeSnapshot(value: unknown): ComplexGoalSnapshot {
     if (audit?.status !== 'complete' || audit.integrity !== 'clean' || audit.alignment !== 'aligned') {
       throw new Error('complex goal complete snapshot requires a complete, clean, aligned audit')
     }
+    if (snapshot.promotion === undefined) throw new Error('complex goal complete snapshot requires promotion status')
+    if (snapshot.recovery !== undefined) throw new Error('complex goal complete snapshot cannot retain retry state')
   }
   if (snapshot.latestVerification !== undefined) {
     if (snapshot.latestVerification.round !== snapshot.round
@@ -335,7 +414,11 @@ function decodeSnapshot(value: unknown): ComplexGoalSnapshot {
   return snapshot
 }
 
-/** Strictly decode a change that declares this package's event kind. */
+/**
+ * Strictly decode a value that declares this package's event kind.
+ * @param value - session-event data at the durable boundary.
+ * @returns a decoded change, or undefined when the value belongs to another event kind.
+ */
 export function decodeComplexGoalChange(value: unknown): ComplexGoalChange | undefined {
   if (!isRecord(value) || value['kind'] !== 'complex-goal/change') return undefined
   exactKeys(value, ['kind', 'version', 'operation', 'snapshot'])
@@ -343,15 +426,20 @@ export function decodeComplexGoalChange(value: unknown): ComplexGoalChange | und
     throw new Error(`unsupported complex goal change version ${String(value['version'])}`)
   }
   const operation = oneOf<ComplexGoalOperation>(value['operation'], 'operation',
-    ['start', 'manage', 'execute', 'verify', 'audit', 'interrupt', 'resume', 'block'])
+    ['start', 'manage', 'execute', 'verify', 'audit', 'interrupt', 'resume', 'retry', 'block'])
   return { kind: 'complex-goal/change', version: COMPLEX_GOAL_CHANGE_VERSION, operation, snapshot: decodeSnapshot(value['snapshot']) }
 }
 
 /** Mutable replay accumulator. */
 export interface ComplexGoalFoldState {
+  /** Latest validated snapshot, when the log has started a complex goal. */
   snapshot: ComplexGoalSnapshot | undefined
 }
 
+/**
+ * Create an empty replay accumulator.
+ * @returns a state without a complex-goal snapshot.
+ */
 export function emptyComplexGoalFoldState(): ComplexGoalFoldState {
   return { snapshot: undefined }
 }
@@ -371,6 +459,7 @@ function assertTransition(previous: ComplexGoalSnapshot | undefined, change: Com
   if (next.goalId !== previous.goalId || next.objective !== previous.objective
     || next.maxRounds !== previous.maxRounds || next.startedAtMs !== previous.startedAtMs
     || next.deadlineAtMs !== previous.deadlineAtMs
+    || JSON.stringify(next.workspace) !== JSON.stringify(previous.workspace)
     || next.verificationOutputMaxBytes !== previous.verificationOutputMaxBytes
     || JSON.stringify(next.verificationGates) !== JSON.stringify(previous.verificationGates)
     || next.revision !== previous.revision + 1) {
@@ -393,6 +482,8 @@ function assertTransition(previous: ComplexGoalSnapshot | undefined, change: Com
         && next.round === previous.round
       case 'resume': return ['paused', 'blocked'].includes(previous.phase)
         && ['planning', 'auditing'].includes(next.phase) && next.round === previous.round
+      case 'retry': return previous.phase === 'paused' && next.phase === 'paused'
+        && next.round === previous.round && next.recovery !== undefined
       case 'block': return !['complete', 'blocked'].includes(previous.phase) && next.phase === 'blocked'
         && (next.round === previous.round
           || previous.phase === 'planning' && next.round === previous.round + 1)
@@ -401,7 +492,11 @@ function assertTransition(previous: ComplexGoalSnapshot | undefined, change: Com
   if (!valid) throw new Error(`invalid complex goal ${change.operation} transition ${previous.phase} -> ${next.phase}`)
 }
 
-/** Apply one session event to the strict fold. */
+/**
+ * Apply one session event to the strict fold.
+ * @param state - mutable accumulator owned by the current replay.
+ * @param event - next session event in log order.
+ */
 export function applyComplexGoalEvent(state: ComplexGoalFoldState, event: SessionEvent): void {
   if (event.type !== 'complex-goal/change') return
   const change = decodeComplexGoalChange(event.data)
@@ -410,7 +505,11 @@ export function applyComplexGoalEvent(state: ComplexGoalFoldState, event: Sessio
   state.snapshot = change.snapshot
 }
 
-/** Replay the current complex-goal state from a session log. */
+/**
+ * Replay the current complex-goal state from a session log.
+ * @param events - ordered owning-session events.
+ * @returns the latest validated snapshot, or undefined before a complex goal starts.
+ */
 export function foldComplexGoal(events: readonly SessionEvent[]): ComplexGoalSnapshot | undefined {
   const state = emptyComplexGoalFoldState()
   for (const event of events) applyComplexGoalEvent(state, event)

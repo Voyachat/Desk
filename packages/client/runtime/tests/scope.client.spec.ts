@@ -9,7 +9,7 @@
 import { Context } from '@voyaseek-ai/cordis'
 import { describe, expect, it } from 'vitest'
 import type { SessionId } from '@voyaseek-ai/dsh-api-remotes/client'
-import { createScope, scopeOf } from '../src/client/agents/scope.ts'
+import { createScope, scopeOf } from '../src/client/contract/agent-scope.ts'
 
 const sid = (k: string): SessionId => k as SessionId
 

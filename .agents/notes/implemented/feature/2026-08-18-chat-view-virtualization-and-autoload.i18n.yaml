@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-08-18-chat-view-virtualization-and-autoload.md
-2026-08-18-chat-view-virtualization-and-autoload.md: 792de78809416dd100d779a9ab39561f139d95e0
-2026-08-18-chat-view-virtualization-and-autoload.zh.md: fb5805524c896d7f9e960b6a69064e9ab5893bf2
+2026-08-18-chat-view-virtualization-and-autoload.md: 9ddeb2d57c6e6253be81a391014efd1f2421c8d9
+2026-08-18-chat-view-virtualization-and-autoload.zh.md: 9e5d3455b01ea61420c4deec3fdcd9691f7cabcb

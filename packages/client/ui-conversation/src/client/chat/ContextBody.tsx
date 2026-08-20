@@ -529,6 +529,47 @@ export function RecallBody({ content, source, t }: {
   )
 }
 
+interface RecalledMemory {
+  kind: string
+  title: string
+}
+
+function recalledMemories(source: unknown): RecalledMemory[] | null {
+  const record = asRecord(source)
+  if (record?.['kind'] !== 'agent-memory' || !Array.isArray(record['items'])) return null
+  const memories: RecalledMemory[] = []
+  for (const item of record['items']) {
+    const candidate = asRecord(item)
+    const kind = candidate?.['kind']
+    const title = candidate?.['title']
+    if (typeof kind !== 'string' || typeof title !== 'string' || title.length === 0) return null
+    memories.push({ kind, title })
+  }
+  return memories.length === 0 ? null : memories
+}
+
+function MemoryRecallBody({ content, source, t }: {
+  content: ContextMessageNode['content']
+  source: unknown
+  t: Translate
+}): ReactNode {
+  const memories = recalledMemories(source)
+  if (memories === null) return <OpaqueBody content={content} source={source} t={t} />
+  return (
+    <>
+      <ul className={css.recalls} data-context-memories>
+        {memories.map((memory, index) => (
+          <li key={index} className={css.recall}>
+            <span className={css.recallLabel}>{memory.title}</span>
+            <span className={css.recallCounts}>{memory.kind}</span>
+          </li>
+        ))}
+      </ul>
+      <ModelFacingContent content={content} t={t} />
+    </>
+  )
+}
+
 /** The one-line account a `notice` puts on its collapsed row, when it records one. */
 function noticeSummary(source: unknown): string | null {
   const summary = asRecord(source)?.['summary']
@@ -575,10 +616,19 @@ export function contextBody(
       return relaySender(props.source) === null
         ? opaque
         : { rendered: 'relay', summary: null, body: <RelayBody {...props} /> }
-    case 'recall':
-      return recalledSessions(props.source) === null
-        ? opaque
-        : { rendered: 'recall', summary: null, body: <RecallBody {...props} /> }
+    case 'recall': {
+      const memories = recalledMemories(props.source)
+      if (memories === null) {
+        return recalledSessions(props.source) === null
+          ? opaque
+          : { rendered: 'recall', summary: null, body: <RecallBody {...props} /> }
+      }
+      return {
+        rendered: 'recall',
+        summary: props.t('message.context.memory.count', { count: memories.length }),
+        body: <MemoryRecallBody {...props} />,
+      }
+    }
     case null:
       return opaque
     /* v8 ignore next 4 -- closed-union backstop; the compiler rejects a new

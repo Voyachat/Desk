@@ -117,7 +117,46 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 }
 ```
 
-来源：[`packages/core/agent/src/types.ts:19`](../packages/core/agent/src/types.ts)
+来源：[`packages/core/agent/src/types.ts:29`](../packages/core/agent/src/types.ts)
+
+<a id="agentruntimeswitched--log-only"></a>
+
+#### `agent/runtime/switched` — log-only
+
+```ts persistence-catalog
+/**
+ * Records that a fork keeps the source transcript but starts its next
+ * turn under another agent driver. An absent runtime names the native
+ * loop. Alternative drivers use the marker to reject provider-private
+ * continuation ids from the inherited prefix.
+ */
+'agent/runtime/switched': {
+  fromRuntime?: string
+  toRuntime?: string
+}
+```
+
+来源：[`packages/core/agent/src/types.ts:20`](../packages/core/agent/src/types.ts)
+
+### `agent-memory/*`
+
+<a id="agent-memorymaintenance--log-only"></a>
+
+#### `agent-memory/maintenance` — log-only
+
+```ts persistence-catalog
+/**
+ * Reports the committed automatic memory-maintenance outcome for one completed turn.
+ * The event is informational: it changes neither model history nor session reconstruction.
+ */
+'agent-memory/maintenance': {
+  turn: number
+  status: MemoryMaintenanceOutcome['status']
+  changes: readonly MemoryMaintenanceChange[]
+}
+```
+
+来源：[`packages/memory/agent-memory/src/index.ts:164`](../packages/memory/agent-memory/src/index.ts)
 
 ### `agent-preset/*`
 
@@ -263,6 +302,29 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 ```
 
 来源：[`packages/claude/claude-agent/src/types.ts:18`](../packages/claude/claude-agent/src/types.ts)
+
+### `codex-agent/*`
+
+<a id="codex-agentruntime--log-only"></a>
+
+#### `codex-agent/runtime` — log-only
+
+```ts persistence-catalog
+/**
+ * The persistent Codex thread bound to this DSH session. A rebuilt driver
+ * resumes this exact thread before accepting its next turn.
+ */
+'codex-agent/runtime': {
+  /** Codex app-server thread identity. */
+  threadId: string
+  /** Effective model when configured or reported by app-server. */
+  model?: string
+  /** Effective app-server model-provider id when configured or reported. */
+  modelProvider?: string
+}
+```
+
+来源：[`packages/codex/codex-agent/src/types.ts:11`](../packages/codex/codex-agent/src/types.ts)
 
 ### `command/*`
 
@@ -417,6 +479,22 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 类型：[ContentBlock](subsystems/core.md) · [TokenUsage](subsystems/llm-streaming.md)
 
 来源：[`packages/compaction/compaction/src/types.ts:33`](../packages/compaction/compaction/src/types.ts)
+
+### `complex-goal/*`
+
+<a id="complex-goalchange--log-only"></a>
+
+#### `complex-goal/change` — log-only
+
+```ts persistence-catalog
+/**
+ * Complete state after one independently verified complex-goal transition.
+ * @param payload - versioned operation and complete post-transition snapshot.
+ */
+'complex-goal/change': ComplexGoalChange
+```
+
+来源：[`packages/goal/complex-goal/src/domain.ts:33`](../packages/goal/complex-goal/src/domain.ts)
 
 ### `feedback/*`
 

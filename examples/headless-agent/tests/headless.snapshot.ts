@@ -47,6 +47,8 @@ const credentialsConfigPath = fileURLToPath(new URL('../credentials.cordis.snaps
 const invalidCredentialScenarioDir = join(snapshotsDir, 'invalid-credential')
 const ralphScenarioDir = join(snapshotsDir, 'ralph-loop')
 const ralphConfigPath = fileURLToPath(new URL('../ralph.cordis.snapshot.yml', import.meta.url))
+const complexGoalScenarioDir = join(snapshotsDir, 'complex-goal')
+const complexGoalConfigPath = fileURLToPath(new URL('../complex-goal.cordis.snapshot.yml', import.meta.url))
 const settlementScenarioDir = join(snapshotsDir, 'subagent-settlement')
 const settlementConfigPath = fileURLToPath(new URL('../subagent-settlement.cordis.snapshot.yml', import.meta.url))
 const startupFailureConfigPath = fileURLToPath(new URL('./fixtures/startup-activation-error/cordis.yml', import.meta.url))
@@ -160,13 +162,16 @@ function normalizeHeadlessStream(rawStdout: string, cwd: string): string {
 /** Zero durable goal timestamps inside both metadata records and rendered XML JSON. */
 function normalizeGoalTimestamps(value: unknown): unknown {
   if (typeof value === 'string') {
-    return value.replace(/("(?:createdAt|updatedAt|clearedAt)":)\d+/g, '$10')
+    return value
+      .replace(/("(?:createdAt|updatedAt|clearedAt|startedAtMs|deadlineAtMs|nextAttemptAtMs)":)\d+/g, '$10')
+      .replace(/Deadline: [0-9TZ:.-]+/g, 'Deadline: {{deadline}}')
   }
   if (Array.isArray(value)) return value.map(normalizeGoalTimestamps)
   if (value !== null && typeof value === 'object') {
     return Object.fromEntries(Object.entries(value).map(([key, item]) => [
       key,
-      ['createdAt', 'updatedAt', 'clearedAt'].includes(key) && typeof item === 'number'
+      ['createdAt', 'updatedAt', 'clearedAt', 'startedAtMs', 'deadlineAtMs', 'nextAttemptAtMs'].includes(key)
+        && typeof item === 'number'
         ? 0
         : normalizeGoalTimestamps(item),
     ]))
@@ -298,16 +303,39 @@ describe('headless stream-json snapshots', () => {
       const source = recallEvent?.data !== null && typeof recallEvent?.data === 'object'
         ? (recallEvent.data as JsonObject).source
         : undefined
+      const sourceItems = source !== null && typeof source === 'object'
+        ? (source as JsonObject).items
+        : undefined
       const attribution = source !== null && typeof source === 'object'
         ? {
           kind: (source as JsonObject).kind,
-          plugin: (source as JsonObject).plugin,
           form: (source as JsonObject).form,
+          items: Array.isArray(sourceItems) ? sourceItems.length : 0,
         }
         : source
+      const maintenanceEvents = logs.flatMap(log => parseJsonl(log.content))
+        .filter(record => record.type === 'agent-memory/maintenance')
+      const maintenance = maintenanceEvents.find((record) => {
+        if (record.data === null || typeof record.data !== 'object') return false
+        const changes = (record.data as JsonObject).changes
+        return Array.isArray(changes) && changes.some(change =>
+          change !== null && typeof change === 'object' && (change as JsonObject).action === 'created')
+      }) ?? maintenanceEvents[0]
+      const maintenanceData = maintenance?.data !== null && typeof maintenance?.data === 'object'
+        ? maintenance.data as JsonObject
+        : undefined
+      const maintenanceSummary = maintenanceData === undefined
+        ? undefined
+        : {
+          status: maintenanceData.status,
+          actions: Array.isArray(maintenanceData.changes)
+            ? maintenanceData.changes.map(change => change !== null && typeof change === 'object' ? (change as JsonObject).action : undefined)
+            : [],
+        }
       const summary = [
         `capture: ${first.trim()}`,
         `recall: ${second.trim()}`,
+        `maintenance: ${JSON.stringify(maintenanceSummary)}`,
         `source: ${JSON.stringify(attribution)}`,
         '',
       ].join('\n')
@@ -864,6 +892,60 @@ describe('headless stream-json snapshots', () => {
 
     expect(result.stderr).toBe('')
     const normalized = normalizeHeadlessStream(result.stdout, runCwd)
+    if (refreshing) await writeFile(streamExpected, normalized)
+    expect(normalized).toBe(await readFile(streamExpected, 'utf8'))
+  }, LOADER_SMOKE_TEST_TIMEOUT_MS)
+
+  it('replays the durable complex-goal task mode through the one-shot app', async () => {
+    const prompt = await scenarioPrompt(complexGoalScenarioDir, 'complex-goal')
+    const streamExpected = join(complexGoalScenarioDir, 'stream-json.expected.jsonl')
+    let runCwd = ''
+    const result = await runLoaderSmoke({
+      label: 'complex goal headless stream-json snapshot',
+      tempDirPrefix: 'headless-snapshot-complex-goal-',
+      binScript,
+      libBinScript: binScript,
+      configPath: complexGoalConfigPath,
+      binArgs: [complexGoalConfigPath, prompt],
+      tsconfigPath,
+      env: {
+        DSH_SNAPSHOT: 'replay',
+        DSH_SNAPSHOT_FILE: join(complexGoalScenarioDir, 'session.jsonl'),
+        DSH_SNAPSHOT_OVERRIDE: join(complexGoalScenarioDir, 'replay.override.json'),
+        DSH_SNAPSHOT_CHILD_FILES: join(complexGoalScenarioDir, 'session.1.jsonl'),
+        NODE_OPTIONS: [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning'].filter(Boolean).join(' '),
+      },
+      prepare: (cwd) => { runCwd = cwd },
+      inspect: async (cwd) => {
+        const logs = await persistedLogs(cwd)
+        expect(logs).toHaveLength(2)
+        const parent = logs.find(log => typeof log.header.parentSession !== 'string')
+        const child = logs.find(log => typeof log.header.parentSession === 'string')
+        if (parent === undefined || child === undefined) throw new Error('complex-goal snapshot missed parent or Manager log')
+        expect(child.header.parentSession).toBe(parent.header.id)
+        expect(child.header.cwd).toBe(parent.header.cwd)
+
+        const records = parseJsonl(parent.content)
+        const calls = records.filter(record => record.type === 'tool/call')
+        expect(calls.map(record => (record.data as JsonObject | undefined)?.name)).toEqual(['complex_goal'])
+        const changes = records.flatMap((record) => {
+          if (record.type !== 'complex-goal/change') return []
+          return [record.data as JsonObject]
+        })
+        expect(changes.map(change => change.operation)).toEqual(['start', 'block'])
+        expect(changes.every(change => change.version === 3)).toBe(true)
+        expect(changes.at(-1)?.snapshot).toMatchObject({
+          phase: 'blocked',
+          workspace: { kind: 'shared', reason: 'disabled' },
+          blocker: 'External authority is required before safe execution.',
+        })
+        const toolResult = records.find(record => record.type === 'tool/result')
+        expect(JSON.stringify(toolResult)).toContain('Workspace: shared (disabled)')
+      },
+    })
+
+    expect(result.stderr).toBe('')
+    const normalized = normalizeGoalStream(result.stdout, runCwd)
     if (refreshing) await writeFile(streamExpected, normalized)
     expect(normalized).toBe(await readFile(streamExpected, 'utf8'))
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)

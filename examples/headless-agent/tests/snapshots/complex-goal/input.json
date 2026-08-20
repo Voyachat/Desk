@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {
+      "op": "prompt",
+      "text": "Run this dependent task through the independently verified complex task mode."
+    }
+  ]
+}

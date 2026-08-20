@@ -6,6 +6,7 @@ Behavioral guard plugins watch the agent loop for unproductive patterns and enfo
 
 | Package | Role | ctx key |
 |---|---|---|
+| [`premature-stop-recovery/`](premature-stop-recovery/README.md) | Bounded recovery for unperformed action commitments | listens on agent events |
 | [`repeat-tool-reminder/`](repeat-tool-reminder/README.md) | Advisory reminders for repeated tool calls | listens on tool and agent events |
 | [`timeout-policy/`](timeout-policy/README.md) | Arms per-call tool deadlines as deployment policy | registers a `tools/execute` listener |
 

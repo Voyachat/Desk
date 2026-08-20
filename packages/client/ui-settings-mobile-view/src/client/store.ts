@@ -7,12 +7,16 @@ import {
   createSnapshotStore, type SnapshotStore,
 } from '@voyaseek-ai/dsh-client-runtime/client'
 
+/** Host settings namespace for mobile remote view. */
 export const MOBILE_VIEW_SETTINGS_NAMESPACE = 'mobile-view'
+/** Credential reference holding the write-only remote-view bearer token. */
 export const MOBILE_VIEW_TOKEN_REF = 'VOYASEEK_MOBILE_VIEW_TOKEN'
 const STATUS_PATH = '/mobile-view/api/status'
 
+/** Stable failure codes reported by the dedicated mobile-view listener. */
 export type ListenerFailure = 'token-missing' | 'port-unavailable' | 'listener-failed'
 
+/** Current dedicated listener state returned by the same-origin status endpoint. */
 export interface ListenerStatus {
   requested: boolean
   listening: boolean
@@ -21,6 +25,7 @@ export interface ListenerStatus {
   error?: ListenerFailure
 }
 
+/** Complete remote-view settings page state. */
 export interface MobileViewSettingsState {
   status: 'idle' | 'loading' | 'ready' | 'error' | 'unavailable'
   error: string | null
@@ -46,7 +51,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-/** Parse the same-origin listener status without trusting arbitrary JSON. */
+/**
+ * Parse the same-origin listener status without trusting arbitrary JSON.
+ * @param value - untrusted JSON response value.
+ * @returns validated listener state.
+ */
 export function parseListenerStatus(value: unknown): ListenerStatus {
   if (!isRecord(value)
     || typeof value.requested !== 'boolean'
@@ -87,7 +96,11 @@ function preferences(view: SettingsNamespaceView): { enabled: boolean; port: num
   return { enabled: view.value.enabled, port: view.value.port }
 }
 
-/** Generate a printable 256-bit token without retaining it outside the browser process. */
+/**
+ * Generate a printable 256-bit token without retaining it outside the browser process.
+ * @param random - cryptographic random source.
+ * @returns lowercase hexadecimal token.
+ */
 export function generateMobileViewToken(random = globalThis.crypto): string {
   const bytes = new Uint8Array(32)
   random.getRandomValues(bytes)
@@ -107,6 +120,7 @@ async function defaultStatusReader(): Promise<unknown> {
 
 /** Settings-page controller; every mutation refetches the Host-owned truth. */
 export class MobileViewSettingsStore {
+  /** Observable controller state consumed through `useSyncExternalStore`. */
   readonly store: SnapshotStore<MobileViewSettingsState> = createSnapshotStore<MobileViewSettingsState>({
     status: 'idle',
     error: null,
@@ -203,7 +217,10 @@ export class MobileViewSettingsStore {
     })
   }
 
-  /** Change the requested listener port. */
+  /**
+   * Change the requested listener port.
+   * @param port - integer TCP port from 1 through 65535.
+   */
   async setPort(port: number): Promise<void> {
     if (!Number.isInteger(port) || port < 1 || port > 65_535) {
       this.store.update((state) => { state.error = '端口必须是 1 到 65535 的整数' })

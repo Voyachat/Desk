@@ -142,6 +142,7 @@
     "mock:llm": "node --import tsx packages/test-support/llm-mock-server/src/bin.ts",
     "dev:aistaff": "tsx scripts/dev-aistaff.ts",
     "dev:web": "tsx scripts/dev-web.ts --poll",
+    "accept:web": "tsx scripts/accept-web.ts",
     "postinstall": "node scripts/install-lefthook.mjs"
   },
   "devDependencies": {

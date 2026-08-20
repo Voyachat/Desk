@@ -2516,6 +2516,16 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
         return ok(request, { accepted: true as const })
       },
     },
+    memory: {
+      list: request => ok(request, { entries: [], pendingCount: 0, failedCount: 0, maxEntries: 2_000 }),
+      update: request => ok(request, { entry: {
+        id: request.payload.id, kind: 'fact', key: 'edited', title: request.payload.title,
+        content: request.payload.content, keywords: request.payload.keywords ?? [], confidence: 1,
+        createdAt: 1, updatedAt: 2, source: { sessionId: 'fixture', turn: 1, mode: 'explicit' },
+      } }),
+      forget: request => ok(request, { deleted: 0 }),
+      clear: request => ok(request, { deleted: 0 }),
+    },
     subagents: {
       list: request => ok(request, { entries: [], parentAvailable: true }),
       history: (request) => {
@@ -3139,6 +3149,10 @@ export class FixtureApiClient extends AbstractApiClient {
       case 'llm.providers': return this.api.llm.providers(request)
       case 'llm.models': return this.api.llm.models(request)
       case 'llm.discoverModels': return this.api.llm.discoverModels(request, signal)
+      case 'memory.list': return this.api.memory.list(request)
+      case 'memory.update': return this.api.memory.update(request)
+      case 'memory.forget': return this.api.memory.forget(request)
+      case 'memory.clear': return this.api.memory.clear(request)
     }
   }
 

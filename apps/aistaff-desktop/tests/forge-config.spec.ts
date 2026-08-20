@@ -31,6 +31,8 @@ describe('desktop Forge configuration', () => {
     expect(existsSync(resolve(legalDir!, 'USER_AGREEMENT.zh-CN.md'))).toBe(true)
     expect(existsSync(resolve(legalDir!, 'third-party', 'deepseek-harness', 'LICENSE'))).toBe(true)
     expect(resources.some(entry => entry.endsWith('THIRD_PARTY_NOTICES.md'))).toBe(true)
+    const maintenanceOnly = ['.open-source', '.agents', 'oss_adopt.py', 'rebrand.ts', 'rescope-vendor.ts']
+    expect(resources.some(entry => maintenanceOnly.some(marker => entry.includes(marker)))).toBe(false)
   })
 
   it('keeps the complete Electron fuse policy explicit without OS cookie-key storage', async () => {

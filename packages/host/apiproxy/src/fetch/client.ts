@@ -61,7 +61,9 @@ import {
   credentialsDescribeValueSchema, credentialsSetValueSchema, credentialsUnsetValueSchema,
 } from '../api/credentials.schema.ts'
 import { llmDiscoverModelsValueSchema, llmModelsValueSchema, llmProvidersValueSchema } from '../api/llm.schema.ts'
-import { memoryClearValueSchema, memoryForgetValueSchema, memoryListValueSchema } from '../api/memory.schema.ts'
+import {
+  memoryClearValueSchema, memoryForgetValueSchema, memoryListValueSchema, memoryUpdateValueSchema,
+} from '../api/memory.schema.ts'
 import {
   subagentHistoryValueSchema,
   subagentInterruptValueSchema,
@@ -164,6 +166,7 @@ export interface IApiClient {
   }
   memory: {
     list(payload: RequestPayload<'memory.list'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.list'>>>
+    update(payload: RequestPayload<'memory.update'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.update'>>>
     forget(payload: RequestPayload<'memory.forget'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.forget'>>>
     clear(payload: RequestPayload<'memory.clear'>, signal?: AbortSignal): Promise<RpcResponse<ResponseValue<'memory.clear'>>>
   }
@@ -229,6 +232,7 @@ const UNARY_VALUE_SCHEMAS: { [K in keyof RpcMethodMap]: z.ZodType<Wire<ResponseV
   'llm.models': llmModelsValueSchema,
   'llm.discoverModels': llmDiscoverModelsValueSchema,
   'memory.list': memoryListValueSchema,
+  'memory.update': memoryUpdateValueSchema,
   'memory.forget': memoryForgetValueSchema,
   'memory.clear': memoryClearValueSchema,
 }
@@ -511,6 +515,7 @@ export abstract class AbstractApiClient implements IApiClient {
 
   readonly memory: IApiClient['memory'] = {
     list: (payload, signal) => this.callUnary('memory.list', payload, signal),
+    update: (payload, signal) => this.callUnary('memory.update', payload, signal),
     forget: (payload, signal) => this.callUnary('memory.forget', payload, signal),
     clear: (payload, signal) => this.callUnary('memory.clear', payload, signal),
   }

@@ -72,6 +72,23 @@ function answeredEnvelope(rpcId: string, answers: object[]) {
 }
 
 describe('QuestionComposer', () => {
+  it('collapses and reopens without cancelling or losing the current draft', () => {
+    const { carrier, respond } = wait()
+    render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)
+    fireEvent.click(screen.getByRole('radio', { name: /工程落地型/ }))
+    const custom = screen.getByPlaceholderText('输入你的答案')
+    fireEvent.change(custom, { target: { value: '保留这份草稿' } })
+
+    fireEvent.click(screen.getByRole('button', { name: zh['nav.collapse'] }))
+    expect(screen.queryByRole('radio')).toBeNull()
+    expect(respond).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: /展开待回答问题/ }))
+
+    expect(screen.getByText('2 / 3')).toBeTruthy()
+    expect((screen.getByPlaceholderText('输入你的答案') as HTMLInputElement).value).toBe('保留这份草稿')
+    expect(respond).not.toHaveBeenCalled()
+  })
+
   it('collects single, custom, and multi-select answers before one batch submit', () => {
     const { carrier, respond } = wait()
     render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)

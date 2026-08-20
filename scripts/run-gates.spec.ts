@@ -105,7 +105,9 @@ describe('gate graph validation', () => {
     ['empty', [], /gate graph has no gates/],
     ['duplicate ids', [gate('same'), gate('same')], /duplicate gate id "same"/],
     ['unknown dependencies', [gate('subject', { needs: ['missing'] })], /depends on unknown gate "missing"/],
+    ['unknown ordering predecessors', [gate('subject', { after: ['missing'] })], /orders after unknown gate "missing"/],
     ['cycles', [gate('first', { needs: ['second'] }), gate('second', { needs: ['first'] })], /dependency cycle: first -> second -> first/],
+    ['ordering cycles', [gate('first', { after: ['second'] }), gate('second', { needs: ['first'] })], /dependency cycle: first -> second -> first/],
   ] as const)('rejects %s before starting a child', async (_label, invalid, message) => {
     const execute = vi.fn(async (subject: Gate) => resultFor(subject))
 
@@ -130,6 +132,23 @@ describe('gate graph validation', () => {
     expect(execute).toHaveBeenCalledOnce()
     expect(execute).toHaveBeenCalledWith(root)
     expect(results[0]).toMatchObject({ gate: dependent, status: 'skipped', error: 'dependency failed or skipped: root' })
+  })
+
+  it('runs an ordered gate after its predecessor fails', async () => {
+    const ordered = gate('ordered', { after: ['root'] })
+    const root = gate('root')
+    const execute = vi.fn(async (subject: Gate) => resultFor(subject, subject === root ? 'failed' : 'passed'))
+
+    const results = await runGates([ordered, root], 2, execute)
+
+    expect(execute.mock.calls.map(([subject]) => subject.id)).toEqual(['root', 'ordered'])
+    expect(results.map(result => result.status)).toEqual(['passed', 'failed'])
+  })
+
+  it('orders the mutating test gate after build and knip in check-all', () => {
+    const subject = withPnpmEntrypoint(() => gatesForMode('check-all'))
+
+    expect(subject.find(item => item.id === 'test')?.after).toEqual(['build', 'knip'])
   })
 })
 

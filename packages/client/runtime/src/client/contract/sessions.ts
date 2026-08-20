@@ -12,7 +12,7 @@ import type {
   RpcResult, SessionId, SubagentAddress,
 } from '@voyaseek-ai/dsh-api-remotes/client'
 import type { HostObservable, SessionMaybeProvideInfo } from '@voyaseek-ai/dsh-client-ui-slots'
-import type { AgentContext } from '../agents/scope.ts'
+import type { AgentContext } from './agent-scope.ts'
 import type { SessionSearchResultItem } from '../sessions/manager.ts'
 import type {
   SessionBinding, SessionListState, SessionProvideDescriptor,
@@ -20,7 +20,7 @@ import type {
 import type { SessionFace } from './session.ts'
 import type { ObservableSnapshot } from './store.ts'
 
-export type { AgentContext } from '../agents/scope.ts'
+export type { AgentContext } from './agent-scope.ts'
 
 /** The sessions-service face injected as `ctx.sessions`. */
 export interface ISessions {
@@ -90,11 +90,19 @@ export interface ISessions {
    * @param opts - source session id, the optional event seq anchoring the
    *   cut (the boundary is the first turn/end at or after it; an in-log
    *   anchor in an open turn is unavailable rather than clipped backward),
-   *   and whether to increment an inherited durable title before resolving.
+   *   whether to increment an inherited durable title before resolving, and
+   *   an optional target runtime (`''` selects the native loop). A target
+   *   runtime keeps the seeded visible history but starts a new provider
+   *   continuation in the child.
    * @returns the child session id.
    * @throws when the fork fails, or when a requested child-title rename fails after creation.
    */
-  fork(opts: { sessionId: SessionId; atSeq?: number; increaseTitle?: boolean }): Promise<SessionId>
+  fork(opts: {
+    sessionId: SessionId
+    atSeq?: number
+    increaseTitle?: boolean
+    agentRuntime?: string
+  }): Promise<SessionId>
   /**
    * Register a per-session standard-props provider (hooks become `use<Name>`
    * selector hooks on the render side; props spread verbatim).

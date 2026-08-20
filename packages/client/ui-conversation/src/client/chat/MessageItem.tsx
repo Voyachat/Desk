@@ -10,6 +10,7 @@ import type {
 } from '@voyaseek-ai/dsh-client-runtime/client'
 import { projectFailureDisplay } from '@voyaseek-ai/dsh-client-runtime/client'
 import { JsonBlock, MessageText, StateDot } from '@voyaseek-ai/dsh-client-ui-primitives'
+import type { PropsRenderSlots } from '@voyaseek-ai/dsh-client-ui-slots'
 import type { ChatNodeViewProps, ChatViewSlotProps } from '../contract/slots.ts'
 import { ImageGallery, type ImageLoader } from '@voyaseek-ai/dsh-client-ui-attachment'
 import { messageImageLabels } from '../image-labels.ts'
@@ -387,7 +388,9 @@ export const UserMessageNodeView = memo(function UserMessageNodeView({
 })
 
 /** Injected-context keyed Chat renderer. */
-export const ContextMessageNodeView = memo(function ContextMessageNodeView({ node, t }: ChatNodeViewProps<'context'>) {
+type ContextMessageNodeViewProps = ChatNodeViewProps<'context'> & PropsRenderSlots<'conversation.chat.context-actions'>
+
+export const ContextMessageNodeView = memo(function ContextMessageNodeView({ node, renderSlot, t }: ContextMessageNodeViewProps) {
   const data = node.data
   return (
     <ContextInjectionRow
@@ -395,6 +398,7 @@ export const ContextMessageNodeView = memo(function ContextMessageNodeView({ nod
       source={data.source}
       provenance={data.provenance}
       form={data.form}
+      actions={renderSlot('conversation.chat.context-actions', { source: data.source })}
       t={t}
     />
   )

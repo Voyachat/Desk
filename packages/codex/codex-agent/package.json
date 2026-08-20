@@ -51,7 +51,7 @@
     "@voyaseek-ai/dsh-user-approval": "workspace:^"
   },
   "dependencies": {
-    "@openai/codex": "0.148.0",
+    "@openai/codex": "0.147.0",
     "@voyaseek-ai/schemastery": "workspace:^"
   },
   "devDependencies": {

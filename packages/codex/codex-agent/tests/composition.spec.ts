@@ -32,6 +32,7 @@ describe('codex-agent composition', () => {
       provider: 'dashscope',
       defaultModel: 'qwen-test',
       models: ['qwen-test', 'deepseek-test'],
+      routes: [{ provider: 'dashscope', models: ['qwen-test', 'deepseek-test'] }],
     })
     expect(handle.agent.status).toBe('idle')
     await handle.dispose()

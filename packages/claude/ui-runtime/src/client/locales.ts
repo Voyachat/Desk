@@ -3,8 +3,10 @@
 /** Simplified Chinese dictionary (the key-set source of truth). */
 export const zh = {
   'chip.aria': '运行模式',
-  'chip.title': '运行模式 — 切换后将在同一项目下开启对应模式的新会话',
+  'chip.title': '运行模式 — 有历史时会保留对话并创建对应模式的分支',
   'chip.busy': '正在切换运行模式…',
+  'chip.running': '当前回复完成后可切换运行模式',
+  'switch.warning': '对话内切换模式，会降低执行效果',
   'option.native': '本机模式',
   'option.native.desc': '由 Voyaseek Harness 本机调度',
   'option.claude': 'Claude 模式',
@@ -19,8 +21,10 @@ export type ClaudeRuntimeKey = keyof typeof zh
 /** English dictionary, checked complete against the zh key set. */
 export const en = {
   'chip.aria': 'Runtime mode',
-  'chip.title': 'Runtime mode — switching opens a new session in the same project under the chosen mode',
+  'chip.title': 'Runtime mode — with history, switching keeps the conversation in a new branch',
   'chip.busy': 'Switching runtime mode…',
+  'chip.running': 'You can switch runtime mode after the current response finishes',
+  'switch.warning': 'Switching mode within a conversation may reduce execution quality',
   'option.native': 'Native',
   'option.native.desc': 'Driven by the Voyaseek Harness loop',
   'option.claude': 'Claude',

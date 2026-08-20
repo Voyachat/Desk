@@ -3,19 +3,19 @@
 import type { Context } from '@voyaseek-ai/cordis'
 import type {
   AgentCancelCause,
+  AgentModelRouteConstraint,
   AgentOptions,
   AgentStatus,
   CancelOptions,
   InboxTarget,
   PreStepDecision,
 } from '@voyaseek-ai/dsh-agent'
-import { Inbox, agentEvents, assembleContextFor, type AgentEventDispatch } from '@voyaseek-ai/dsh-agent'
-import type { AgentDriver } from '@voyaseek-ai/dsh-agent-loop'
-import { createUserMessage, deepFreeze, errorChain, type LlmCallConfig, type UserMessage } from '@voyaseek-ai/dsh-llm'
+import { Inbox, agentEvents, assembleContextFor, modelConstraintAllows, type AgentEventDispatch } from '@voyaseek-ai/dsh-agent'
+import { RuntimeContextProjection, runtimeHandoffMessage, type AgentDriver } from '@voyaseek-ai/dsh-agent-loop'
+import { deepFreeze, errorChain, type LlmCallConfig, type UserMessage } from '@voyaseek-ai/dsh-llm'
 import { createScope, type Scope } from '@voyaseek-ai/dsh-scope'
 import { canonicalHeader, headerEquals, type Session, type SessionId, type TurnEndReason } from '@voyaseek-ai/dsh-session'
-import { renderContextSections, renderContextSnapshot, renderPrompt } from '@voyaseek-ai/dsh-system-prompt'
-import { CODEX_PROVIDER } from './constants.ts'
+import { joinContextSections, renderContextSections, renderPrompt } from '@voyaseek-ai/dsh-system-prompt'
 import { CodexAppServerEngine } from './engine.ts'
 import { CodexEventRecorder } from './mapping.ts'
 import type {} from './types.ts'
@@ -43,8 +43,11 @@ export function restoreCodexRuntime(session: Session): {
   model?: string
   modelProvider?: string
 } | undefined {
+  const switched = session.events.findLast(candidate => candidate.type === 'agent/runtime/switched')
   const event = session.events.findLast(candidate => candidate.type === 'codex-agent/runtime')
-  return event?.type === 'codex-agent/runtime' ? event.data : undefined
+  return event?.type === 'codex-agent/runtime' && (switched === undefined || event.seq > switched.seq)
+    ? event.data
+    : undefined
 }
 
 /**
@@ -78,6 +81,7 @@ export class CodexAgent implements AgentDriver {
   private runtime: ReturnType<typeof restoreCodexRuntime>
   private requestHeaderLogged = false
   private readonly serverRequest: CodexServerRequestHandler
+  private readonly runtimeContext: RuntimeContextProjection
 
   /** Bind one unpublished driver to its prepared session. */
   constructor(
@@ -86,26 +90,32 @@ export class CodexAgent implements AgentDriver {
     public readonly options: AgentOptions,
     public readonly session: Session,
     private readonly engine: CodexAppServerEngine,
-    private readonly resolveTurnConfig: () => Promise<CodexTurnConfig>,
+    private readonly resolveTurnConfig: (request: LlmCallConfig) => Promise<CodexTurnConfig>,
     private readonly cwd: string,
     private readonly configuredProvider: string,
     private readonly configuredModel: string,
     makeServerRequest: (agent: CodexAgent) => CodexServerRequestHandler = () => async () => ({ decision: 'decline' }),
     admittedModels?: readonly string[],
+    admittedRoutes?: readonly AgentModelRouteConstraint[],
   ) {
     this.dispatch = agentEvents(driverCtx, this)
     this.scope = createScope(driverCtx, this)
     this.ctx = this.scope.ctx.extend({ agent: this })
     this.runtime = restoreCodexRuntime(session)
     this.serverRequest = makeServerRequest(this)
+    this.runtimeContext = new RuntimeContextProjection(this.ctx, session)
     this.modelConstraint = {
       provider: configuredProvider,
       defaultModel: configuredModel,
       ...admittedModels === undefined ? {} : { models: [...admittedModels] },
+      ...admittedRoutes === undefined ? {} : { routes: admittedRoutes.map(route => ({
+        provider: route.provider,
+        ...route.models === undefined ? {} : { models: [...route.models] },
+      })) },
     }
     this.inbox = new Inbox(session, {
-      inserted: message => { this.dispatch.emit('agent/inbox/inserted', { message }) },
-      discarded: message => { this.dispatch.emit('agent/inbox/discarded', { message }) },
+      inserted: (message) => { this.dispatch.emit('agent/inbox/inserted', { message }) },
+      discarded: (message) => { this.dispatch.emit('agent/inbox/discarded', { message }) },
       claimed: (message, turn) => { this.dispatch.emit('agent/inbox/claimed', { message, turn }) },
     })
   }
@@ -187,14 +197,18 @@ export class CodexAgent implements AgentDriver {
     if (systemPrompt === undefined) throw new Error('codex-agent: no system-prompt service is composed')
     const assembly = await systemPrompt.assemble(assembleContextFor(this, signal))
     signal.throwIfAborted()
-    const context = renderContextSnapshot(assembly)
     const sections = renderContextSections(assembly)
-    const messages = context.length === 0
-      ? claimed
-      : [...claimed, createUserMessage({
-          content: [{ type: 'text', text: context }],
-          source: { kind: 'plugin', plugin: 'codex-agent', form: 'snapshot', sections },
-        })]
+    const context = this.runtimeContext.project(joinContextSections(sections), sections)
+    const handoff = runtimeHandoffMessage(
+      this.session,
+      this.session.header.agentRuntime ?? 'codex',
+      'codex-agent/runtime',
+    )
+    const messages = [
+      ...(handoff === undefined ? [] : [handoff]),
+      ...claimed,
+      ...(context === undefined ? [] : [context]),
+    ]
     const decision = await this.dispatch.waterfall(
       'agent/pre-step', { messages, turn, step, signal },
       () => Promise.resolve<PreStepDecision>({ kind: 'enter', messages }),
@@ -223,7 +237,7 @@ export class CodexAgent implements AgentDriver {
     if (!config.provider || !config.model) {
       throw new Error(`agent "${this.id}" has no Codex provider/model`)
     }
-    if (this.modelConstraint.models !== undefined && !this.modelConstraint.models.includes(config.model)) {
+    if (!modelConstraintAllows(this.modelConstraint, config.provider, config.model)) {
       throw new Error(`codex-agent: model "${config.model}" is not served by this Responses-compatible endpoint`)
     }
     const header = canonicalHeader({
@@ -265,14 +279,11 @@ export class CodexAgent implements AgentDriver {
             this.session.append('user/message', message, { surfaceOp: 'append' })
           }
           const request = await this.requestConfig(turn, step, abort.signal, prepared.developerInstructions)
-          if (request.provider !== this.configuredProvider) {
-            throw new Error(`codex-agent: this runtime is configured for provider "${this.configuredProvider}"; start a Codex conversation configured for "${request.provider}" instead`)
-          }
           if (this.runtime?.modelProvider !== undefined && this.runtime.modelProvider !== request.provider) {
             throw new Error(`codex-agent: session thread uses provider "${this.runtime.modelProvider}"; start a new Codex conversation to use "${request.provider}"`)
           }
-          const process = await this.resolveTurnConfig()
-          const recorder = new CodexEventRecorder(this.session, turn, step, request.model, CODEX_PROVIDER)
+          const process = await this.resolveTurnConfig(request)
+          const recorder = new CodexEventRecorder(this.session, turn, step, request.model, request.provider)
           const outcome = await this.engine.run({
             cwd: this.cwd,
             ...process,
@@ -285,7 +296,7 @@ export class CodexAgent implements AgentDriver {
             signal: abort.signal,
             sink: recorder,
             serverRequest: this.serverRequest,
-            onThread: identity => {
+            onThread: (identity) => {
               const runtime = {
                 threadId: identity.threadId,
                 model: request.model,

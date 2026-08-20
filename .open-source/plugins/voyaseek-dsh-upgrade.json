@@ -1,0 +1,514 @@
+{
+  "api_version": 1,
+  "id": "voyaseek-dsh-upgrade",
+  "description": "Keep DSH and vendored Cordis upstream review separate from Voyaseek plugins, package rescoping, product branding, verification, and explicitly authorized DMG creation.",
+  "adoptions": [
+    "deepseek-harness"
+  ],
+  "packaging_excludes": [
+    ".open-source",
+    ".agents",
+    "scripts/rebrand.ts",
+    "scripts/rescope-vendor.ts"
+  ],
+  "analysis_areas": [
+    {
+      "id": "deepseek-multimodal",
+      "title": "DeepSeek multimodal and durable attachments",
+      "upstream_paths": [
+        "packages/llm/llm-deepseek",
+        "packages/attachment"
+      ],
+      "local_paths": [
+        "packages/llm/llm-deepseek",
+        "packages/llm/image-fallback",
+        "packages/attachment"
+      ],
+      "strategy": "adapt",
+      "rationale": "Adopt provider-native image serialization without replacing the provider-neutral image model or the existing fallback chain.",
+      "verification": [
+        "Run llm-deepseek serialization and adapter tests",
+        "Run image-fallback routing tests",
+        "Add an assembled keyless multimodal snapshot before product adoption"
+      ]
+    },
+    {
+      "id": "llm-runtime",
+      "title": "LLM runtime and reasoning behavior",
+      "upstream_paths": [
+        "packages/llm"
+      ],
+      "local_paths": [
+        "packages/llm"
+      ],
+      "strategy": "review",
+      "rationale": "Compare adapter contracts and wire behavior first because Voyaseek already passes DeepSeek reasoning content on tool-result turns.",
+      "verification": [
+        "Run the changed adapter contract and serialization tests",
+        "Confirm model-visible inputs remain reconstructable from the session log"
+      ]
+    },
+    {
+      "id": "sqlite-persistence",
+      "title": "SQLite persistence and physical compression",
+      "upstream_paths": [
+        "packages/session/session-persistence-sqlite",
+        "packages/session-query/session-query-sqlite",
+        "packages/storage/storage-sqlite"
+      ],
+      "local_paths": [
+        "packages/session/session-persistence-sqlite",
+        "packages/session/session-persistence",
+        "packages/session-query",
+        "packages/storage"
+      ],
+      "strategy": "adapt",
+      "rationale": "Backend-local storage optimizations can be replayed behind existing persistence interfaces, while schema and event semantics require an explicit migration review.",
+      "verification": [
+        "Run shared persistence coordinator contracts",
+        "Run SQLite differential, compression, schema-refusal, and interrupted-turn tests"
+      ]
+    },
+    {
+      "id": "session-core",
+      "title": "Session lifecycle and persistence contracts",
+      "upstream_paths": [
+        "packages/session",
+        "packages/session-query",
+        "packages/storage"
+      ],
+      "local_paths": [
+        "packages/core/session",
+        "packages/session",
+        "packages/session-query",
+        "packages/storage"
+      ],
+      "strategy": "defer",
+      "rationale": "Current runtime-switch, memory, and complex-goal work changes durable session events; core format changes must wait until that work is stable.",
+      "verification": [
+        "Compare event envelopes, header fields, schema versions, repair semantics, and cold resume behavior",
+        "Run backend-neutral persistence contracts before backend-specific tests"
+      ]
+    },
+    {
+      "id": "subagent-reliability",
+      "title": "Subagent providers, settlement, and failure facts",
+      "upstream_paths": [
+        "packages/subagent"
+      ],
+      "local_paths": [
+        "packages/subagent",
+        "packages/codex/codex-agent",
+        "packages/claude/claude-agent",
+        "packages/core/agent-loop"
+      ],
+      "strategy": "defer",
+      "rationale": "The same provider continuation, working-directory, and runtime-handoff surfaces currently contain uncommitted product work; later adoption must be split by public lifecycle, driver, and provider.",
+      "verification": [
+        "Replay upstream failure tests before implementation changes",
+        "Run publication, abort, dispose, process-tree, continuation, and cold-resume tests"
+      ]
+    },
+    {
+      "id": "agent-teams",
+      "title": "Experimental agent teams",
+      "upstream_paths": [
+        "packages/experimental/agent-team",
+        "packages/experimental/tool-agent-team"
+      ],
+      "local_paths": [
+        "packages/goal/complex-goal",
+        "packages/workflow"
+      ],
+      "strategy": "defer",
+      "rationale": "Voyaseek already has a manager-executor-auditor goal path; use the experimental packages as architecture evidence until their lifecycle and persistence semantics are stable.",
+      "verification": [
+        "Compare task graph, mailbox, journal, settlement, and recovery semantics",
+        "Do not copy experimental code while the existing complex-goal feature is changing"
+      ]
+    },
+    {
+      "id": "persistent-pwsh",
+      "title": "Persistent PowerShell terminal",
+      "upstream_paths": [
+        "packages/shell",
+        "packages/terminal",
+        "packages/subprocess"
+      ],
+      "local_paths": [
+        "packages/shell",
+        "packages/terminal",
+        "packages/subprocess"
+      ],
+      "strategy": "adapt",
+      "rationale": "Add persistent PowerShell as a terminal provider and keep the existing stateless ShellExecutor behavior unchanged.",
+      "verification": [
+        "Run shell and terminal lifecycle tests",
+        "Require native Windows ConPTY, ACL, resize, kill, and teardown evidence"
+      ]
+    },
+    {
+      "id": "web-branding",
+      "title": "Web branding slots",
+      "upstream_paths": [
+        "packages/client/ui-brand-official",
+        "packages/client/ui-primitives"
+      ],
+      "local_paths": [
+        "packages/client",
+        "packages/bundle/web-app",
+        "scripts/rebrand.ts",
+        "apps/aistaff-desktop/forge.config.cjs"
+      ],
+      "strategy": "adapt",
+      "rationale": "Use upstream render-time brand slots to reduce UI hardcoding while retaining package rescoping, legal attribution, product identity, and non-UI brand transforms.",
+      "verification": [
+        "Run brand and rescope codemod tests",
+        "Run Web brand composition and Forge resource-boundary tests"
+      ]
+    },
+    {
+      "id": "web-runtime",
+      "title": "Web client and desktop runtime integration",
+      "upstream_paths": [
+        "packages/client",
+        "packages/web",
+        "packages/bundle",
+        "apps/web"
+      ],
+      "local_paths": [
+        "packages/client",
+        "packages/web",
+        "packages/bundle/web-app",
+        "apps/web",
+        "apps/aistaff-desktop",
+        "apps/aistaff-desktop-runtime"
+      ],
+      "strategy": "defer",
+      "rationale": "Runtime switching and session forking currently change these paths; Electron must keep sole ownership of window creation and loopback readiness.",
+      "verification": [
+        "Run shipped Web composition and trusted-host tests",
+        "Run desktop readiness, window-policy, profile, runtime-process, and Forge tests",
+        "Never enable browser auto-open in Electron"
+      ]
+    },
+    {
+      "id": "settings-describe-mirror",
+      "title": "Browser settings describe mirror",
+      "upstream_paths": [
+        "packages/client/ui-settings",
+        "packages/client/ui-settings-models",
+        "packages/client/ui-settings-general",
+        "packages/client/ui-settings-plugins",
+        "packages/client/ui-permission-presets",
+        "packages/client/ui-agent-preset"
+      ],
+      "local_paths": [
+        "packages/client/ui-settings",
+        "packages/client/ui-settings-models",
+        "packages/client/ui-settings-general",
+        "packages/client/ui-settings-plugins",
+        "packages/client/ui-permission-presets",
+        "packages/client/ui-agent-preset"
+      ],
+      "strategy": "defer",
+      "rationale": "The single-reader mirror removes duplicate boot RPCs, but the same client settings surfaces currently participate in runtime-switch and onboarding changes.",
+      "verification": [
+        "Pin one mirror owner and remove direct settings.describe readers only after current client work stabilizes",
+        "Run startup RPC budget, invalidation, write-fold, revision, and reconnect tests"
+      ]
+    },
+    {
+      "id": "composer-attachment-envelope",
+      "title": "Command image-attachment envelope",
+      "upstream_paths": [
+        "packages/interaction/commands",
+        "packages/goal/command-goal",
+        "packages/plan/plan-mode",
+        "packages/client/ui-commands",
+        "packages/client/ui-conversation"
+      ],
+      "local_paths": [
+        "packages/interaction/commands",
+        "packages/goal",
+        "packages/plan",
+        "packages/client/ui-commands",
+        "packages/client/ui-conversation",
+        "packages/attachment"
+      ],
+      "strategy": "defer",
+      "rationale": "Whole-envelope command handling prevents silent image loss, but goal and conversation code currently has uncommitted product work.",
+      "verification": [
+        "Replay command admission and unsupported-image refusal tests before implementation",
+        "Verify rejected submissions retain draft images and successful model-visible images are logged"
+      ]
+    },
+    {
+      "id": "file-session-references",
+      "title": "File and cross-session composer references",
+      "upstream_paths": [
+        "packages/context/file-reference",
+        "packages/context/file-reference-local",
+        "packages/context/session-reference",
+        "packages/client/ui-reference"
+      ],
+      "local_paths": [
+        "packages/context",
+        "packages/session-query",
+        "packages/client/ui-reference",
+        "packages/client/ui-conversation"
+      ],
+      "strategy": "defer",
+      "rationale": "The Host-backed reference seam is reusable, but composer identity, session fork, and conversation rendering are currently changing.",
+      "verification": [
+        "Verify Host-scoped file discovery never becomes a browser filesystem scan",
+        "Run canonical reference codec, cancellation, recall ordering, and assembled Web tests"
+      ]
+    },
+    {
+      "id": "multi-query-web-search",
+      "title": "Bounded multi-query Web search",
+      "upstream_paths": [
+        "packages/web/tool-web",
+        "packages/web/web",
+        "packages/web/web-search-deepseek",
+        "packages/web/web-search-exa",
+        "packages/web/web-search-perplexity"
+      ],
+      "local_paths": [
+        "packages/web/tool-web",
+        "packages/web/web",
+        "packages/web/web-search-deepseek",
+        "packages/web/web-search-exa",
+        "packages/web/web-search-perplexity"
+      ],
+      "strategy": "adapt",
+      "rationale": "Voyaseek currently exposes one query string; a bounded query array can be adopted at the tool Consumer while preserving the provider-neutral single-query service.",
+      "verification": [
+        "Run tool schema, duplicate/blank/bound validation, cancellation, result ordering, and provider integration tests",
+        "Keep provider requests bounded and do not add hidden parallelism below the Consumer"
+      ]
+    },
+    {
+      "id": "python-code-runtime",
+      "title": "Python code runtime protocol and packaged closure",
+      "upstream_paths": [
+        "packages/code-runtime/code-runtime-python",
+        "python"
+      ],
+      "local_paths": [
+        "packages/code-runtime/code-runtime-python",
+        "python"
+      ],
+      "strategy": "review",
+      "rationale": "The framed protocol and packaged-runtime fixes are separable from product UI, but the wire mirror and runtime closure must move together.",
+      "verification": [
+        "Run protocol mirror, byte-metering, malformed-frame, runtime-readiness, packaged-wheel, and MCP closure tests",
+        "Confirm no new product runtime dependency on the external checkout"
+      ]
+    },
+    {
+      "id": "release-tooling",
+      "title": "Release, publication, and runtime-closure tooling",
+      "upstream_paths": [
+        "scripts/release",
+        "scripts/publication-payload.ts",
+        "scripts/verify-runtime-closure.ts",
+        ".github/workflows/release.yml",
+        ".github/workflows/python-release.yml"
+      ],
+      "local_paths": [
+        "scripts/release",
+        "scripts/publication-payload.ts",
+        "scripts/verify-runtime-closure.ts",
+        ".github/workflows/release.yml"
+      ],
+      "strategy": "adopt",
+      "rationale": "These development-time checks are outside the product runtime and can usually be adopted independently after comparing package-family and brand assumptions.",
+      "verification": [
+        "Run release-family and publication-payload tests",
+        "Run runtime-closure verification without packaging or publishing"
+      ]
+    }
+  ],
+  "workflow": [
+    {
+      "id": "inspect-upstream",
+      "phase": "inspect",
+      "title": "Verify the pinned DSH range and list scoped upstream changes",
+      "run": [
+        "python3",
+        "/Users/baron/projects/开源代码/adopt-open-source/scripts/oss_adopt.py",
+        "analyze-upgrade",
+        "--root",
+        "{root}",
+        "--id",
+        "deepseek-harness",
+        "--checkout",
+        "{checkout}",
+        "--target",
+        "{target}"
+      ],
+      "mutates": false,
+      "note": "The command rejects a checkout whose origin differs from the ledger and rejects a target that is not a descendant of the exact baseline injected from the adoption ledger."
+    },
+    {
+      "id": "inspect-local-state",
+      "phase": "inspect",
+      "title": "List local work before preparing an isolated upgrade",
+      "run": [
+        "git",
+        "-C",
+        "{root}",
+        "status",
+        "--short"
+      ],
+      "mutates": false
+    },
+    {
+      "id": "sync-upstream",
+      "phase": "sync",
+      "title": "Apply only reviewed upstream changes in an isolated branch or worktree",
+      "mutates": true,
+      "note": "Preserve product-owned packages and plugins; for vendored Cordis, follow vendor/README.md and treat its manifest and local-modification log as authoritative. Do not make the product depend on the external checkout path."
+    },
+    {
+      "id": "adapt-plugins",
+      "phase": "adapt",
+      "title": "Reconcile Voyaseek behavior at existing plugin and deployment seams",
+      "mutates": true,
+      "note": "Keep product behavior, remote contributions, presets, and desktop assembly in their existing plugin or app owners. Modify DSH or Cordis core only when an extension point cannot preserve the required behavior, and record every retained vendor divergence in vendor/README.md."
+    },
+    {
+      "id": "rescope-vendor",
+      "phase": "brand",
+      "title": "Reapply the maintained Cordis package-name mapping",
+      "run": [
+        "pnpm",
+        "run",
+        "rescope-vendor",
+        "--apply"
+      ],
+      "mutates": true,
+      "note": "Run this step when the upstream range refreshes vendor files; scripts/rescope-vendor.ts remains the executable owner of the mapping."
+    },
+    {
+      "id": "rebrand-product",
+      "phase": "brand",
+      "title": "Reapply the maintained Voyaseek product-brand mapping",
+      "run": [
+        "pnpm",
+        "run",
+        "rebrand",
+        "--apply"
+      ],
+      "mutates": true,
+      "note": "scripts/rebrand.ts protects upstream provenance, legal attribution, the adoption ledger, generated lockfiles, and API-vendor identifiers."
+    },
+    {
+      "id": "refresh-dependencies",
+      "phase": "adapt",
+      "title": "Refresh the workspace lockfile after source and package-name changes",
+      "run": [
+        "pnpm",
+        "install"
+      ],
+      "mutates": true
+    },
+    {
+      "id": "refresh-notices",
+      "phase": "adapt",
+      "title": "Regenerate third-party notices from the maintained owners",
+      "run": [
+        "pnpm",
+        "run",
+        "gen-third-party-notices"
+      ],
+      "mutates": true
+    },
+    {
+      "id": "verify-codemods",
+      "phase": "verify",
+      "title": "Run focused brand, rescope, release-family, and Forge configuration tests",
+      "run": [
+        "pnpm",
+        "exec",
+        "vitest",
+        "run",
+        "scripts/rebrand.spec.ts",
+        "scripts/rescope-vendor.spec.ts",
+        "scripts/release/families.spec.ts",
+        "apps/aistaff-desktop/tests/forge-config.spec.ts"
+      ],
+      "mutates": false
+    },
+    {
+      "id": "verify-rebrand-state",
+      "phase": "verify",
+      "title": "Verify that the brand transform is complete and idempotent",
+      "run": [
+        "pnpm",
+        "run",
+        "rebrand",
+        "--check"
+      ],
+      "mutates": false
+    },
+    {
+      "id": "verify-rescope-state",
+      "phase": "verify",
+      "title": "Verify that vendored package names and references are complete",
+      "run": [
+        "pnpm",
+        "run",
+        "rescope-vendor:check"
+      ],
+      "mutates": false
+    },
+    {
+      "id": "verify-vendored-links",
+      "phase": "verify",
+      "title": "Verify that vendored dependencies resolve only to workspace links",
+      "run": [
+        "pnpm",
+        "run",
+        "verify-vendored-links"
+      ],
+      "mutates": false
+    },
+    {
+      "id": "verify-build",
+      "phase": "verify",
+      "title": "Build the repository after the framework-wide upgrade",
+      "run": [
+        "pnpm",
+        "run",
+        "build"
+      ],
+      "mutates": true,
+      "note": "A DSH or Cordis foundation refresh is repository-wide; retain focused failure-path tests during implementation and run this integration build once before packaging."
+    },
+    {
+      "id": "record-baseline",
+      "phase": "record",
+      "title": "Replace the verified adoption baseline and current-difference facts",
+      "mutates": true,
+      "note": "Update the existing deepseek-harness ledger row only after verification. If Cordis changed, update vendor/README.md versions, exact commits, and the exhaustive local-modification log in the same change. Git history owns iteration history; do not append duplicate ledger rows."
+    },
+    {
+      "id": "package-dmg",
+      "phase": "package",
+      "title": "Create the branded macOS DMG through the existing desktop workflow",
+      "run": [
+        "npm",
+        "--prefix",
+        "apps/aistaff-desktop",
+        "run",
+        "make"
+      ],
+      "mutates": true,
+      "requires_approval": true,
+      "note": "Packaging remains a separate user-authorized action. The plugin never publishes, pushes, or uploads the artifact."
+    }
+  ]
+}

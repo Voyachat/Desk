@@ -1,0 +1,22 @@
+[
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "tool-call" },
+      { "type": "tool-call-delta", "index": 0, "id": "call_complex_goal", "name": "complex_goal", "argumentsDelta": "{\"objective\":\"Complete the dependent task only when independent verification proves it.\"}" },
+      { "type": "block-end", "index": 0, "block": { "type": "tool-call", "id": "call_complex_goal", "name": "complex_goal", "arguments": "{\"objective\":\"Complete the dependent task only when independent verification proves it.\"}" } },
+      { "type": "usage", "usage": { "inputTokens": 20, "outputTokens": 8 } },
+      { "type": "finish", "reason": { "kind": "tool-calls" } }
+    ]
+  },
+  {
+    "kind": "chunks",
+    "chunks": [
+      { "type": "block-start", "index": 0, "blockType": "text" },
+      { "type": "text-delta", "index": 0, "text": "COMPLEX GOAL BLOCKED SAFELY" },
+      { "type": "block-end", "index": 0, "block": { "type": "text", "text": "COMPLEX GOAL BLOCKED SAFELY" } },
+      { "type": "usage", "usage": { "inputTokens": 30, "outputTokens": 4 } },
+      { "type": "finish", "reason": { "kind": "stop" } }
+    ]
+  }
+]

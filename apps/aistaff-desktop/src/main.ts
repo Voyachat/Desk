@@ -1,16 +1,30 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { join } from 'node:path'
+import { pathToFileURL } from 'node:url'
 import type { BrowserWindow as BrowserWindowInstance, MenuItemConstructorOptions } from 'electron'
-import { app, BrowserWindow, dialog, Menu, session, shell } from './electron-api.js'
+import { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } from './electron-api.js'
 import { loadModelCredentials } from './model-credentials.js'
 import { ensureAistaffProfile } from './profile.js'
 import { resolveProxyEnvironment } from './proxy-environment.js'
 import { ManagedRuntime } from './runtime-process.js'
 import { resolveRuntimeEntry } from './runtime-paths.js'
-import { createWindowOptions, isDirectProxyResolution, isRuntimeDocument } from './window-policy.js'
+import {
+  assertTrustedStartupSender,
+  parseStartupIntent,
+  STARTUP_CHANNELS,
+  type StartupIntent,
+  type StartupState,
+} from './startup-ipc.js'
+import { createWindowOptions, isDirectProxyResolution, isOwnedDocument } from './window-policy.js'
 
 let mainWindow: BrowserWindowInstance | undefined
 let runtime: ManagedRuntime | undefined
+let runtimeUrl: URL | undefined
+let runtimeAttempt: Promise<void> | undefined
+let startupDocument = ''
+let startupDocumentUrl = new URL('file:///invalid-startup-document')
+let startupIntent: StartupIntent | null = { draft: '', agentPreset: 'standard' }
+let startupState: StartupState = { phase: 'starting' }
 let shutdownStarted = false
 let shutdownComplete = false
 
@@ -24,10 +38,10 @@ if (!app.requestSingleInstanceLock()) {
   })
   app.on('window-all-closed', () => { app.quit() })
   app.on('before-quit', (event) => {
-    if (shutdownComplete || runtime === undefined) return
-    event.preventDefault()
-    if (shutdownStarted) return
+    if (shutdownComplete || shutdownStarted) return
     shutdownStarted = true
+    if (runtime === undefined) return
+    event.preventDefault()
     void runtime.stop().finally(() => {
       shutdownComplete = true
       app.quit()
@@ -38,6 +52,43 @@ if (!app.requestSingleInstanceLock()) {
 
 async function startApplication(): Promise<void> {
   installApplicationMenu()
+  const appPath = app.getAppPath()
+  const preload = join(appPath, 'dist', 'preload.cjs')
+  startupDocument = join(appPath, 'assets', 'startup.html')
+  startupDocumentUrl = pathToFileURL(startupDocument)
+  const window = new BrowserWindow(createWindowOptions(preload))
+  mainWindow = window
+  configureWindow(window)
+  registerStartupIpc(window)
+  await window.loadFile(startupDocument)
+  window.show()
+  if (shutdownStarted) return
+  beginRuntimeAttempt(window)
+}
+
+function beginRuntimeAttempt(window: BrowserWindowInstance): void {
+  if (runtimeAttempt !== undefined || startupState.phase === 'ready' || shutdownStarted) return
+  const attempt = launchRuntime(window).catch(async (error: unknown) => {
+    runtimeUrl = undefined
+    if (runtime !== undefined) await runtime.stop()
+    if (shutdownStarted || mainWindow !== window) return
+    const message = error instanceof Error ? error.message : String(error)
+    process.stderr.write(`Voyaseek runtime failed to start: ${message}\n`)
+    await showRuntimeFailure(message)
+  })
+  const trackedAttempt = attempt.finally(() => {
+    if (runtimeAttempt === trackedAttempt) runtimeAttempt = undefined
+  })
+  runtimeAttempt = trackedAttempt
+}
+
+async function launchRuntime(window: BrowserWindowInstance): Promise<void> {
+  setStartupState({ phase: 'starting' })
+  await new Promise<void>((resolve) => { setImmediate(resolve) })
+  const previousRuntime = runtime
+  if (previousRuntime !== undefined) await previousRuntime.stop()
+  if (shutdownStarted || mainWindow !== window) return
+
   const userData = app.getPath('userData')
   const dshHome = join(userData, 'dsh')
   const workspace = join(userData, 'workspace')
@@ -48,10 +99,11 @@ async function startApplication(): Promise<void> {
     url => session.defaultSession.resolveProxy(url),
     process.env,
   )
+  if (shutdownStarted || mainWindow !== window) return
 
   const entry = resolveRuntimeEntry(app.isPackaged, process.resourcesPath, app.getAppPath())
   if (!existsSync(entry)) throw new Error(`Bundled DSH runtime is missing: ${entry}`)
-  runtime = new ManagedRuntime({
+  const launchedRuntime = new ManagedRuntime({
     executable: process.execPath,
     entry,
     dshHome,
@@ -61,26 +113,41 @@ async function startApplication(): Promise<void> {
     onLog: message => process.stderr.write(message),
     onUnexpectedExit: (message) => {
       process.stderr.write(`${message}\n`)
-      app.quit()
+      void showRuntimeFailure(message)
     },
   })
-  const runtimeUrl = await runtime.start()
-  const preload = join(app.getAppPath(), 'dist', 'preload.js')
-  const window = new BrowserWindow(createWindowOptions(preload))
-  mainWindow = window
-  const contents = window.webContents
-  const runtimeProxy = await contents.session.resolveProxy(runtimeUrl.href)
-  if (!isDirectProxyResolution(runtimeProxy)) {
-    window.destroy()
-    throw new Error('Bundled DSH loopback runtime is not configured for direct access')
+  runtime = launchedRuntime
+  try {
+    const readyUrl = await launchedRuntime.start()
+    if (shutdownStarted || mainWindow !== window) {
+      await launchedRuntime.stop()
+      return
+    }
+    const runtimeProxy = await window.webContents.session.resolveProxy(readyUrl.href)
+    if (!isDirectProxyResolution(runtimeProxy)) {
+      throw new Error('Bundled DSH loopback runtime is not configured for direct access')
+    }
+    runtimeUrl = readyUrl
+    setStartupState({ phase: 'ready' })
+    await window.loadURL(readyUrl.href)
+  } catch (error) {
+    runtimeUrl = undefined
+    await launchedRuntime.stop()
+    if (shutdownStarted || mainWindow !== window) return
+    const message = error instanceof Error ? error.message : String(error)
+    process.stderr.write(`Voyaseek runtime failed to start: ${message}\n`)
+    await showRuntimeFailure(message)
   }
+}
 
+function configureWindow(window: BrowserWindowInstance): void {
+  const contents = window.webContents
   contents.setWindowOpenHandler(() => ({ action: 'deny' }))
   contents.on('will-navigate', (event) => { event.preventDefault() })
   contents.on('will-redirect', (event) => { event.preventDefault() })
   contents.on('will-attach-webview', (event) => { event.preventDefault() })
   contents.on('did-navigate', (_event, url) => {
-    if (!isRuntimeDocument(url, runtimeUrl)) window.destroy()
+    if (!isOwnedDocument(url, startupDocumentUrl, runtimeUrl)) window.destroy()
   })
   contents.session.setPermissionRequestHandler((_webContents, _permission, callback) => { callback(false) })
   contents.session.setPermissionCheckHandler(() => false)
@@ -88,7 +155,62 @@ async function startApplication(): Promise<void> {
   window.once('closed', () => {
     if (mainWindow === window) mainWindow = undefined
   })
-  await window.loadURL(runtimeUrl.href)
+}
+
+function registerStartupIpc(window: BrowserWindowInstance): void {
+  const authorize = (event: Electron.IpcMainInvokeEvent): void => {
+    assertTrustedStartupSender(event, mainWindow, startupDocumentUrl, runtimeUrl)
+  }
+  ipcMain.handle(STARTUP_CHANNELS.getIntent, (event) => {
+    authorize(event)
+    return startupIntent
+  })
+  ipcMain.handle(STARTUP_CHANNELS.setIntent, (event, value: unknown) => {
+    authorize(event)
+    startupIntent = parseStartupIntent(value)
+    return startupIntent
+  })
+  ipcMain.handle(STARTUP_CHANNELS.acknowledge, (event) => {
+    authorize(event)
+    startupIntent = null
+  })
+  ipcMain.handle(STARTUP_CHANNELS.getState, (event) => {
+    authorize(event)
+    return startupState
+  })
+  ipcMain.handle(STARTUP_CHANNELS.retry, (event) => {
+    authorize(event)
+    if (startupState.phase === 'failed') beginRuntimeAttempt(window)
+    return startupState
+  })
+}
+
+function setStartupState(state: StartupState): void {
+  startupState = state
+  const window = mainWindow
+  if (window === undefined || window.isDestroyed()) return
+  window.webContents.send(STARTUP_CHANNELS.stateChanged, state)
+}
+
+async function showRuntimeFailure(message: string): Promise<void> {
+  runtimeUrl = undefined
+  if (shutdownStarted) return
+  setStartupState({ phase: 'failed', message: startupFailureMessage(message) })
+  const window = mainWindow
+  if (window === undefined || window.isDestroyed()) return
+  try {
+    await window.loadFile(startupDocument)
+    window.show()
+  } catch (error) {
+    const loadMessage = error instanceof Error ? error.message : String(error)
+    process.stderr.write(`Voyaseek failed to restore its startup page: ${loadMessage}\n`)
+  }
+}
+
+function startupFailureMessage(message: string): string {
+  const normalized = message.replace(/[\r\n]+/gu, ' ').trim()
+  if (normalized.length === 0) return '未知错误'
+  return normalized.slice(0, 500)
 }
 
 /** Install the branded menu; the Help submenu opens the bundled legal texts. */

@@ -1,3 +1,4 @@
 capture: 已记住验证饮料 lapsang-fixture。
 recall: MEMORY_RECALLED_lapsang-fixture
-source: {"kind":"plugin","plugin":"agent-memory-context","form":"recall"}
+maintenance: {"status":"changed","actions":["created"]}
+source: {"kind":"agent-memory","form":"recall","items":1}

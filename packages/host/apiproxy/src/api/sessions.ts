@@ -354,13 +354,16 @@ export interface SessionsApi {
    * turn is still open fails with `fork-unavailable` instead of clipping to
    * an earlier turn. The child inherits the source cwd, latest logged model
    * target and `parentSessionId` lineage; the seed prefix carries the source
-   * title. Reading the source uses attached state or persistence inspection
-   * without acquiring an Agent. Workspace attachment follows the source
-   * directly, or the nearest workspace-owning ancestor when the source is a
-   * subagent.
+   * title. An explicitly present `agentRuntime` selects the child runtime;
+   * the empty string selects the native loop. A cross-runtime child records a
+   * durable switch marker so provider-private continuation ids in the seed are
+   * not resumed. Omission keeps the source runtime. Reading the source uses
+   * attached state or persistence inspection without acquiring an Agent.
+   * Workspace attachment follows the source directly, or the nearest
+   * workspace-owning ancestor when the source is a subagent.
    */
-  fork(request: RpcRequest<{ sessionId: SessionId; atSeq?: number }>):
-  Promise<RpcResponse<{ sessionId: SessionId }>>
+  fork(request: RpcRequest<{ sessionId: SessionId; atSeq?: number; agentRuntime?: string }>):
+  Promise<RpcResponse<{ sessionId: SessionId; agentRuntime?: string }>>
 
   /**
    * Sends text and temporary image bytes to an ordinary session Agent after durable host admission.

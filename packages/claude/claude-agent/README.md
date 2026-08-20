@@ -27,6 +27,9 @@ for claude sessions. The driver:
   fold into `tool/result` linked to their call by `sourceEventSeqs`;
 - resumes the SDK conversation across turns by passing the recorded SDK
   session id as `resume`, restoring it from the log after a restart;
+- after a cross-runtime fork, ignores Claude session ids before the latest
+  `agent/runtime/switched` marker and starts a new SDK conversation with a
+  provider-neutral recall of the retained visible transcript;
 - spawns the Claude Code CLI through `dsh-subprocess` with a scrubbed parent
   environment, so the SDK child inherits exactly the intended `ANTHROPIC_*`
   endpoint and credentials.
@@ -35,6 +38,8 @@ Any Claude-API-compatible endpoint works: `baseUrl`/`authToken`/`apiKey`/
 `model` map onto `ANTHROPIC_BASE_URL` / `ANTHROPIC_AUTH_TOKEN` /
 `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL`, and unset fields fall through to the
 parent environment, so third-party gateways need only their env vars.
+
+Registered LLM routes whose exact model descriptor uses `anthropic-messages`, has an endpoint, and names a credential reference join the Claude model picker automatically. The driver resolves that route's current endpoint and credential for each query. OpenAI Responses and Chat Completions routes are not presented as Claude-compatible, even when the same account key can authenticate them.
 
 The SDK `canUseTool` hook carries two different interactions. `AskUserQuestion` delegates to the host question service and returns its answers to Claude; it never opens an approval panel. Other permission requests delegate to the host approval service and fail closed when that service is absent.
 
@@ -61,20 +66,19 @@ The approval panel offers a remembered action only when Claude's entire suggesti
 
 ## Model Experience
 
-- **Prompt and context**: the DSH system prompt is the SDK custom system
-  prompt; dynamic contexts are logged user-role snapshots and pass through
-  `agent/pre-step`. Claude Code still owns its built-in tools; DSH tool schemas
-  are not presented as Claude tools.
-- **Model**: the session's global selection passes through `agent/request` and
-  becomes the SDK model for that exact query. A runtime endpoint admits only
-  its configured provider/model subset; an incompatible global default falls
-  back to the runtime default instead of being silently sent elsewhere.
-- **Attachments**: this text bridge rejects non-text input explicitly; it never
-  drops an image while pretending the turn succeeded.
-- **Tokens**: usage accounting is the SDK's; DSH records no token counts for
-  claude turns in v1.
-- **KV cache**: DSH never builds model requests for this driver; the SDK owns
-  its own conversation cache under `~/.claude`.
+### Claude SDK query
+
+#### What the model sees
+
+The assembled DSH system prompt is the SDK custom system prompt. Logged dynamic-context snapshots and user text pass through `agent/pre-step`; the global provider/model selection passes through `agent/request` and becomes the exact query model. On the first turn after a cross-runtime fork, a user-level `recall` message carries retained user, assistant, and tool transcript text; it omits private reasoning and stale plugin context, and represents earlier images with a placeholder. Claude Code owns its built-in tools, so DSH tool schemas are not presented as Claude tools. This text bridge rejects images and every other non-text block in the new turn before the query.
+
+#### Token effect
+
+The custom system prompt, retained context snapshots, user input, cross-runtime recall when present, and Claude-owned tool transcript consume the SDK conversation context. DSH records no Claude token counts in this version.
+
+#### KV Cache effect
+
+Claude owns the conversation cache under `~/.claude`; DSH preserves its SDK session id across ordinary turns. A cross-runtime fork intentionally starts a new SDK conversation and therefore cannot reuse the source provider conversation cache; changing the selected model or assembled system prompt can also invalidate cache reuse.
 
 ## Known Limitations and Deferred Work
 

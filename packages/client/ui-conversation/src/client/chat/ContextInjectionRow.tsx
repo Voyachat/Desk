@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { ContextMessageNode } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { ChatViewSlotProps } from '../contract/slots.ts'
 import { DisclosureRow, IconBrowseOutline16 } from '@voyaseek-ai/dsh-client-ui-primitives'
@@ -15,6 +15,13 @@ export interface ContextInjectionRowProps {
   form: ContextMessageNode['form']
   /** The owning view's locale seat, passed down as a plain prop. */
   t: ChatViewSlotProps['t']
+  /** Feature-owned controls for this exact durable context source. */
+  actions?: ReactNode
+}
+
+function isAgentMemorySource(source: unknown): boolean {
+  return typeof source === 'object' && source !== null && !Array.isArray(source)
+    && (source as { kind?: unknown }).kind === 'agent-memory'
 }
 
 /**
@@ -28,30 +35,35 @@ export interface ContextInjectionRowProps {
  * @param props - Durable content, its projected producer role/name and form, and the locale seat.
  * @returns A collapsed context row with a bounded, form-specific body.
  */
-export function ContextInjectionRow({ content, source, provenance, form, t }: ContextInjectionRowProps) {
+export function ContextInjectionRow({ content, source, provenance, form, t, actions }: ContextInjectionRowProps) {
   const [open, setOpen] = useState(false)
+  const memory = isAgentMemorySource(source)
   // Resolved rather than declared: a form whose fields are unreadable renders
   // the opaque body, and the marker must say what the row actually shows.
   const { rendered, summary, body } = contextBody(form, { content, source, t })
 
   return (
     <DisclosureRow
-      className={css.root}
+      className={`${css.root}${memory ? ` ${css.memory}` : ''}`}
       icon={<IconBrowseOutline16 size={14} />}
       chevronClassName={css.chevron}
-      title={t(provenance.role === 'recall' ? 'message.contextRecall' : 'message.contextInjection')}
-      collapsedContent={provenance.label === null ? undefined : (
+      title={t(memory ? 'message.memory.recalled' : provenance.role === 'recall' ? 'message.contextRecall' : 'message.contextInjection')}
+      collapsedContent={provenance.label === null && actions === undefined ? undefined : (
         /* ToolRow's separator shape: an aria-hidden dot, so the accessible name
            stays the two readable parts and the two disclosure rows expose one
            name shape. A source that names no producer drops the dot with it. */
         <>
-          <span className={css.sep} aria-hidden />
-          <span className={css.source} data-context-source>{provenance.label}</span>
+          {provenance.label !== null && (
+            <><span className={css.sep} aria-hidden /><span className={css.source} data-context-source>{provenance.label}</span></>
+          )}
           {summary !== null && (
             <>
               <span className={css.sep} aria-hidden />
               <span className={css.summary} data-context-summary>{summary}</span>
             </>
+          )}
+          {actions !== undefined && (
+            <span className={css.actions} onClick={(event) => { event.stopPropagation() }}>{actions}</span>
           )}
         </>
       )}

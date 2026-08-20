@@ -104,6 +104,17 @@ const GENERIC_SKIPS: readonly GenericSkip[] = [
   // GROUP_ORDER holds `packages/<group>/` directory names, not package names.
   { file: 'scripts/gen-module-graph.ts', upstream: ['cordis'] },
   { file: 'scripts/gen-doc-graphs.ts', upstream: ['cordis'] },
+  // These browser-facing values are locale namespaces or trigger ids. They
+  // deliberately remain `cordis`; only imports name the rescoped package.
+  { file: 'packages/client/ui-settings-plugin-inventory/src/client/PluginInventorySettingsTab.tsx', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisActionRow.tsx', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisDefineRow.tsx', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisPanel.tsx', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/CordisRunRow.tsx', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/index.ts', upstream: ['cordis'] },
+  { file: 'packages/extensions/ui-cordis/src/client/locales.ts', upstream: ['cordis'] },
+  // Event documentation routes by the public `cordis/*` event prefix.
+  { file: 'scripts/gen-cordis-catalog.ts', upstream: ['cordis'] },
 ]
 
 /** A string that must appear exactly `count` times once the rescope has run. */
@@ -511,7 +522,15 @@ function rewriteLine(line: string, file: string, all: readonly Pattern[]): strin
   let out = line
   for (const pattern of all) {
     if (skipped(file, pattern)) continue
-    out = out.replace(pattern.token, (_match, quote: string, subpath: string) => `${quote}${pattern.to}${subpath}${quote}`)
+    out = out.replace(pattern.token, (match, quote: string, subpath: string) => {
+      const cordisEvent = subpath === '/'
+        || subpath === '/*'
+        || /^\/(?:request-run(?:-resolved)?|dynamic-(?:package|retract)|inspect-query(?:-resolved)?)\\?$/.test(subpath)
+      if (pattern.upstream === 'cordis' && cordisEvent) {
+        return match
+      }
+      return `${quote}${pattern.to}${subpath}${quote}`
+    })
     out = out.replace(pattern.yamlName, (_match, prefix: string, suffix: string) => `${prefix}${pattern.to}${suffix}`)
   }
   return out
@@ -597,9 +616,9 @@ function main(): void {
   const mode = args.includes('--apply') ? 'apply' : args.includes('--check') ? 'check' : 'dry'
   const reverse = args.includes('--reverse')
   const all = patterns(reverse)
-  const files = execFileSync('git', ['ls-files', '-z'], { cwd: root, encoding: 'utf8' })
+  const files = execFileSync('git', ['ls-files', '-z', '--cached', '--others', '--exclude-standard'], { cwd: root, encoding: 'utf8' })
     .split('\0')
-    .filter(file => file !== '' && !excluded(file))
+    .filter(file => file !== '' && existsSync(resolve(root, file)) && !excluded(file))
 
   const counts = new Map<string, { files: number; lines: number }>()
   const failures: string[] = []

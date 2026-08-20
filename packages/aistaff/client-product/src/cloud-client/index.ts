@@ -13,6 +13,7 @@ import { CloudAistaffWorkbench } from './CloudAistaffWorkbench.tsx'
 import { createCloudWorkbenchInjected, createLocalCapabilityWorkbenchInjected } from './adapter.ts'
 import { createEmployeeExperienceExternalStore, createLocalCapabilityExternalStore } from './external-store.ts'
 import { createCloudProductStore } from './store.ts'
+import { registerDesktopStartupHandoff } from '../startup-intent.ts'
 
 /** Services required by the explicit production Cloud entry. */
 export const inject = ['slots', 'employeeExperience']
@@ -23,6 +24,7 @@ export const inject = ['slots', 'employeeExperience']
  * @param ctx - Client root context carrying the explicit production provider.
  */
 export function apply(ctx: ClientContext): void {
+  registerDesktopStartupHandoff(ctx)
   const port: EmployeeExperiencePort = ctx.employeeExperience
   const externalStore = createEmployeeExperienceExternalStore(port)
   const localPort = ctx.get('localCapability') as LocalCapabilityPort | undefined
@@ -64,13 +66,13 @@ export function apply(ctx: ClientContext): void {
       ...(localPort === undefined || localExternalStore === undefined
         ? {}
         : {
-            localCapability: createLocalCapabilityWorkbenchInjected(
-              localPort,
-              localExternalStore,
-              actions,
-              refreshExperience,
-            ),
-          }),
+          localCapability: createLocalCapabilityWorkbenchInjected(
+            localPort,
+            localExternalStore,
+            actions,
+            refreshExperience,
+          ),
+        }),
     }),
   }, CloudAistaffWorkbench))
 }

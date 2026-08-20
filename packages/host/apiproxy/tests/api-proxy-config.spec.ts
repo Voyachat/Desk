@@ -9,7 +9,12 @@ import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
 import AgentRegistry from '@voyaseek-ai/dsh-agent'
-import SessionStore from '@voyaseek-ai/dsh-session'
+import AgentMemory, {
+  MemoryId, type CaptureMemoryRequest, type MemoryItem, type RecallMemoryRequest,
+  type MemoryMaintainer, type MemoryMaintenanceResult, type RememberMemoryRequest,
+  type UpdateMemoryRequest,
+} from '@voyaseek-ai/dsh-agent-memory'
+import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
 import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
 import ToolRuntime from '@voyaseek-ai/dsh-tools'
 import UserQuestionService from '@voyaseek-ai/dsh-user-questions'
@@ -85,6 +90,38 @@ class MemorySettings extends SettingsProvider {
     this.doc[ns] = structuredClone(section)
     return Promise.resolve()
   }
+}
+
+class TestAgentMemory extends AgentMemory {
+  readonly item: MemoryItem = {
+    id: MemoryId('memory-1'), kind: 'preference', key: 'drink', title: 'Drink',
+    content: 'The user prefers tea.', keywords: ['tea'], confidence: 0.9,
+    createdAt: 1, updatedAt: 2,
+    source: { sessionId: SessionId('source'), turn: 1, mode: 'automatic' },
+  }
+
+  override status() {
+    return { enabled: true, autoCapture: true, autoRecall: true, count: 1, pendingCount: 2, failedCount: 1, maxEntries: 2_000, maxHits: 5 }
+  }
+  override capture(_request: CaptureMemoryRequest): Promise<'queued'> { return Promise.resolve('queued') }
+  override maintain(_maintainer: MemoryMaintainer): Promise<MemoryMaintenanceResult> {
+    return Promise.resolve({ processed: 0, failed: 0, pending: 0, outcomes: [] })
+  }
+  override remember(_request: RememberMemoryRequest): Promise<MemoryItem> { return Promise.resolve(this.item) }
+  override update(request: UpdateMemoryRequest): Promise<MemoryItem> {
+    return Promise.resolve({
+      ...this.item,
+      title: request.title,
+      content: request.content,
+      keywords: request.keywords ?? this.item.keywords,
+    })
+  }
+  override recall(_request: RecallMemoryRequest): Promise<MemoryItem[]> { return Promise.resolve([this.item]) }
+  override list(): Promise<MemoryItem[]> { return Promise.resolve([this.item]) }
+  override forget(ids: readonly ReturnType<typeof MemoryId>[]): Promise<number> {
+    return Promise.resolve(ids.includes(this.item.id) ? 1 : 0)
+  }
+  override clear(): Promise<number> { return Promise.resolve(1) }
 }
 
 /** In-memory credential provider with an env-shadow double for the rejection path. */
@@ -233,6 +270,33 @@ function forwardedSettings(ns: string): HostFrame {
     args: [ns, expect.any(Number)], // oxlint-disable-line typescript/no-unsafe-assignment
   }
 }
+
+describe('memory domain', () => {
+  it('projects provider data and performs exact update/deletion without exposing a path', async () => {
+    const ctx = await harness()
+    await ctx.plugin(TestAgentMemory)
+    const api = createApiProxy(ctx, DEFAULTS)
+    const listed = expectOk(await api.memory.list(request({})))
+    expect(listed).toEqual({
+      entries: [{
+        id: 'memory-1', kind: 'preference', key: 'drink', title: 'Drink',
+        content: 'The user prefers tea.', keywords: ['tea'], confidence: 0.9,
+        createdAt: 1, updatedAt: 2,
+        source: { sessionId: 'source', turn: 1, mode: 'automatic' },
+      }],
+      pendingCount: 2, failedCount: 1, maxEntries: 2_000,
+    })
+    expect(JSON.stringify(listed)).not.toContain('sqlite')
+    expect(expectOk(await api.memory.update(request({
+      id: 'memory-1', title: 'Preferred drink', content: 'The user prefers coffee.', keywords: ['coffee'],
+    })))).toMatchObject({ entry: {
+      id: 'memory-1', title: 'Preferred drink', content: 'The user prefers coffee.', keywords: ['coffee'],
+    } })
+    expect(expectOk(await api.memory.forget(request({ ids: ['memory-1'] })))).toEqual({ deleted: 1 })
+    expect(expectOk(await api.memory.clear(request({})))).toEqual({ deleted: 1 })
+    await ctx.fiber.dispose()
+  })
+})
 
 describe('settings domain', () => {
   it('reports an actionable error when no settings provider is mounted', async () => {

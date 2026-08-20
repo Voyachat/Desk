@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { Context } from '@voyaseek-ai/cordis'
 import AgentRegistry, { agentEvents, Inbox, type Agent } from '@voyaseek-ai/dsh-agent'
 import AgentMemory, {
   MemoryId, type CaptureMemoryRequest, type MemoryItem, type RecallMemoryRequest,
-  type RememberMemoryRequest,
+  type MemoryMaintainer, type MemoryMaintenanceResult, type RememberMemoryRequest,
+  type UpdateMemoryRequest,
 } from '@voyaseek-ai/dsh-agent-memory'
 import LlmRuntime, { createAssistantMessage, createUserMessage } from '@voyaseek-ai/dsh-llm'
 import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
@@ -14,11 +15,23 @@ import * as memoryContext from '@voyaseek-ai/dsh-agent-memory-context'
 class TestMemory extends AgentMemory {
   captures: CaptureMemoryRequest[] = []
   recalled: MemoryItem[] = []
+  maintenance: MemoryMaintenanceResult = { processed: 0, failed: 0, pending: 0, outcomes: [] }
   override status() {
-    return { enabled: true, autoCapture: true, autoRecall: true, count: this.recalled.length, pendingCount: 0, failedCount: 0, maxEntries: 20, maxHits: 5 }
+    return {
+      enabled: true,
+      autoCapture: true,
+      autoRecall: true,
+      count: this.recalled.length,
+      pendingCount: 0,
+      failedCount: 0,
+      maxEntries: 20,
+      maxHits: 5,
+    }
   }
   override capture(request: CaptureMemoryRequest): Promise<'queued'> { this.captures.push(request); return Promise.resolve('queued') }
-  override maintain(): Promise<{ processed: number; failed: number; pending: number }> { return Promise.resolve({ processed: 0, failed: 0, pending: 0 }) }
+  override maintain(_maintainer: MemoryMaintainer): Promise<MemoryMaintenanceResult> {
+    return Promise.resolve(this.maintenance)
+  }
   override remember(request: RememberMemoryRequest): Promise<MemoryItem> {
     return Promise.resolve({
       id: MemoryId(request.key), kind: request.kind, key: request.key, title: request.title,
@@ -26,6 +39,19 @@ class TestMemory extends AgentMemory {
       createdAt: 1, updatedAt: 1, ...request.workspace === undefined ? {} : { workspace: request.workspace },
       source: { sessionId: request.sessionId, turn: request.turn, mode: 'explicit' },
     })
+  }
+  override update(request: UpdateMemoryRequest): Promise<MemoryItem> {
+    const index = this.recalled.findIndex(item => item.id === request.id)
+    const current = this.recalled[index]
+    if (current === undefined) return Promise.reject(new Error(`missing memory ${request.id}`))
+    const updated = {
+      ...current,
+      title: request.title,
+      content: request.content,
+      keywords: request.keywords ?? current.keywords,
+    }
+    this.recalled[index] = updated
+    return Promise.resolve(updated)
   }
   override recall(_request: RecallMemoryRequest): Promise<MemoryItem[]> { return Promise.resolve(this.recalled) }
   override list(): Promise<MemoryItem[]> { return Promise.resolve(this.recalled) }
@@ -90,7 +116,7 @@ describe('agent-memory context consumer', () => {
     await ctx.fiber.dispose()
   })
 
-  it('injects recalled data as a durable plugin-sourced message', async () => {
+  it('injects recalled data as a durable memory-sourced message', async () => {
     const { ctx, memory } = await harness()
     memory.recalled = [{
       id: MemoryId('one'),
@@ -116,12 +142,39 @@ describe('agent-memory context consumer', () => {
     expect(decision.kind).toBe('enter')
     if (decision.kind === 'enter') {
       const recalled = decision.messages[0]
-      expect(recalled?.source).toMatchObject({ kind: 'plugin', plugin: 'agent-memory-context', form: 'recall' })
+      expect(recalled?.source).toEqual({
+        kind: 'agent-memory',
+        form: 'recall',
+        items: [{ id: MemoryId('one'), kind: 'preference', title: 'drink' }],
+      })
       const recalledBlock = recalled?.content[0]
       expect(recalledBlock?.type).toBe('text')
       if (recalledBlock?.type === 'text') expect(recalledBlock.text).toContain('正山小种')
       expect(decision.messages.at(-1)?.source).toEqual({ kind: 'user' })
     }
+    await ctx.fiber.dispose()
+  })
+
+  it('logs the provider commit outcome in its originating session', async () => {
+    const { ctx, memory } = await harness()
+    memory.maintenance = {
+      processed: 1,
+      failed: 0,
+      pending: 0,
+      outcomes: [{ sessionId: SessionId('maintained'), turn: 1, status: 'changed', changes: [] }],
+    }
+    const session = ctx.sessions.create(SessionId('maintained'), { meta: { cwd: '/project' } })
+    session.append('turn/start', { turn: 1 })
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: '记住这个事实' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    session.append('turn/end', { turn: 1, reason: { kind: 'completed' } })
+    await vi.waitFor(() => {
+      expect(session.events.at(-1)).toMatchObject({
+        type: 'agent-memory/maintenance',
+        data: { turn: 1, status: 'changed', changes: [] },
+      })
+    })
     await ctx.fiber.dispose()
   })
 })

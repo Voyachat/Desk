@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self'; style-src 'self'; form-action 'none'; base-uri 'none'; frame-src 'none'"
+    >
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Voyaseek</title>
+    <link rel="stylesheet" href="startup.css">
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero" aria-labelledby="title">
+        <div class="brand" aria-hidden="true">V</div>
+        <div>
+          <p class="eyebrow">VOYASEEK</p>
+          <h1 id="title">准备好，从这里开始</h1>
+          <p class="lead">服务正在后台启动。你现在就可以整理问题并选择工作模式。</p>
+        </div>
+      </section>
+
+      <section class="composer" aria-label="启动输入">
+        <label class="sr-only" for="draft">输入你的任务</label>
+        <textarea id="draft" maxlength="32000" placeholder="描述你想完成的工作…" autofocus></textarea>
+        <div class="toolbar">
+          <label class="preset-label" for="preset">Agent 模式</label>
+          <select id="preset">
+            <option value="standard">Standard</option>
+            <option value="code">Code</option>
+          </select>
+          <div class="status" role="status" aria-live="polite">
+            <span id="status-dot" class="status-dot"></span>
+            <span id="status-text">服务启动中，可继续编辑</span>
+          </div>
+          <button id="retry" type="button" hidden>重新启动</button>
+        </div>
+      </section>
+      <p class="footnote">输入仅保留在当前应用进程中；服务就绪后不会自动发送。</p>
+    </main>
+    <script src="startup.js"></script>
+  </body>
+</html>

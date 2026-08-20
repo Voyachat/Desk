@@ -16,7 +16,7 @@
       "default": "./lib/invariant.js"
     },
     "./client": {
-      "types": "./lib/types/client/index.d.ts",
+      "types": "./lib/types/client/public.d.ts",
       "default": "./lib/client.js"
     },
     "./src/*": "./src/*",

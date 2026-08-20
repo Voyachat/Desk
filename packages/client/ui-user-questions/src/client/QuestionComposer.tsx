@@ -2,7 +2,7 @@ import { useMemo, useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import clsx from 'clsx'
 import {
   Button, IconCheckOutline14, IconChevronLeftOutline14, IconChevronRightOutline14,
-  IconCloseOutline16, IconEditOutline16, MarkdownText,
+  IconChevronDownOutline14, IconChevronUpOutline14, IconCloseOutline16, IconEditOutline16, MarkdownText,
 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import {
   PendingQuestion, planReviewOf,
@@ -62,12 +62,55 @@ export function QuestionComposer(props: QuestionComposerProps) {
   // select/render dispatch — per-dispatch minting would churn memo identity).
   const question = useMemo(() => new PendingQuestion(props.matched), [props.matched])
   const review = useMemo(() => planReviewOf(question.questions), [question])
-  return review === undefined
-    ? <QuestionFlow key={question.key} pending={question} t={props.t} />
-    : <PlanReviewPanel key={question.key} pending={question} review={review} t={props.t} />
+  const [collapsedKey, setCollapsedKey] = useState<string | null>(null)
+  const collapsed = collapsedKey === question.key
+  const summary = review?.question ?? question.questions[0]?.question ?? props.t('plan.header')
+  return (
+    <div data-question-composer={question.key}>
+      {collapsed && (
+        <div className={css.collapsedFrame}>
+          <button
+            type="button"
+            className={css.collapsedBar}
+            aria-expanded="false"
+            aria-label={props.t('nav.expand')}
+            onClick={() => { setCollapsedKey(null) }}
+          >
+            <IconChevronUpOutline14 />
+            <span>{summary}</span>
+            <span className={css.collapsedHint}>{props.t('nav.expand')}</span>
+          </button>
+        </div>
+      )}
+      <div hidden={collapsed}>
+        {review === undefined
+          ? (
+            <QuestionFlow
+              key={question.key}
+              pending={question}
+              t={props.t}
+              onCollapse={() => { setCollapsedKey(question.key) }}
+            />
+          )
+          : (
+            <PlanReviewPanel
+              key={question.key}
+              pending={question}
+              review={review}
+              t={props.t}
+              onCollapse={() => { setCollapsedKey(question.key) }}
+            />
+          )}
+      </div>
+    </div>
+  )
 }
 
-function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<QuestionComposerProps, 't'>) {
+function QuestionFlow({
+  pending,
+  t,
+  onCollapse,
+}: { pending: PendingQuestion; onCollapse: () => void } & Pick<QuestionComposerProps, 't'>) {
   const questions = pending.questions
   const [index, setIndex] = useState(0)
   const [drafts, setDrafts] = useState<DraftAnswer[]>(() => questions.map(() => ({
@@ -199,13 +242,21 @@ function QuestionFlow({ pending, t }: { pending: PendingQuestion } & Pick<Questi
               {question.question}
             </h2>
           </div>
-          <button
-            type="button" className={css.iconButton} aria-label={t('nav.cancel')}
-            title={t('nav.cancel')}
-            disabled={busy !== null} onClick={cancelFlow}
-          >
-            <IconCloseOutline16 />
-          </button>
+          <div className={css.headerActions}>
+            <button
+              type="button" className={css.iconButton} aria-label={t('nav.collapse')}
+              title={t('nav.collapse')} onClick={onCollapse}
+            >
+              <IconChevronDownOutline14 />
+            </button>
+            <button
+              type="button" className={css.iconButton} aria-label={t('nav.cancel')}
+              title={t('nav.cancel')}
+              disabled={busy !== null} onClick={cancelFlow}
+            >
+              <IconCloseOutline16 />
+            </button>
+          </div>
         </header>
 
         <div className={css.body} data-question-scroll>

@@ -83,6 +83,12 @@ declare module '@voyaseek-ai/dsh-client-ui-slots' {
       hookContext: string
       inject: ChatNodeTurnDataInjected
     }
+    /** Optional feature-owned actions beside one logged context row. */
+    'conversation.chat.context-actions': {
+      kind: 'list'
+      scope: 'session'
+      owner: ContextActionOwnerProps
+    }
     /**
      * The chat view's per-command row hole: keyed dispatch on the command
      * name (`command/run.name`; a run-less cross-window node has none and
@@ -366,6 +372,11 @@ export interface ChatNodeOwnerProps {
   /** Resolve a session-authorized historical image for inline display. */
   loadImage: (attachment: ImageAttachmentRef) => Promise<string>
   fileMentions: (owner: TurnTailOwnerProps) => MarkdownFileMentions | undefined
+}
+
+/** Durable context identity passed to additive context-row actions. */
+export interface ContextActionOwnerProps {
+  readonly source: unknown
 }
 
 /** Full props of one registered keyed Chat business renderer. */

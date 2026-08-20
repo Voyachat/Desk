@@ -48,6 +48,7 @@
     "@voyaseek-ai/dsh-attachment": "workspace:^",
     "@voyaseek-ai/dsh-agent": "workspace:^",
     "@voyaseek-ai/dsh-agent-default-model": "workspace:^",
+    "@voyaseek-ai/dsh-agent-memory": "workspace:^",
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
     "@voyaseek-ai/dsh-brand": "workspace:^",
     "@voyaseek-ai/dsh-commands": "workspace:^",

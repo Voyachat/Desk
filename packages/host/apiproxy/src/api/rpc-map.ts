@@ -76,6 +76,7 @@ export interface RpcMethodMap {
   'llm.models': LlmApi['models']
   'llm.discoverModels': LlmApi['discoverModels']
   'memory.list': MemoryApi['list']
+  'memory.update': MemoryApi['update']
   'memory.forget': MemoryApi['forget']
   'memory.clear': MemoryApi['clear']
 }

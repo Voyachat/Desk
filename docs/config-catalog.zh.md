@@ -1510,6 +1510,22 @@ export interface PlanModeConfig {
 
 来源：[`packages/plan/plan-mode/src/index.ts:70`](../packages/plan/plan-mode/src/index.ts)
 
+<a id="voyaseek-aidsh-premature-stop-recovery"></a>
+
+## `@voyaseek-ai/dsh-premature-stop-recovery`
+
+需要：`agents`
+
+```ts config-catalog
+/** Premature-stop recovery configuration. */
+export interface Config {
+  /** Maximum continuation prompts without an intervening tool result. */
+  maxContinuations?: number
+}
+```
+
+来源：[`packages/guard/premature-stop-recovery/src/index.ts:18`](../packages/guard/premature-stop-recovery/src/index.ts)
+
 <a id="voyaseek-aidsh-pwsh-local"></a>
 
 ## `@voyaseek-ai/dsh-pwsh-local`

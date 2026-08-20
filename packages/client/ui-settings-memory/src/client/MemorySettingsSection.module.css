@@ -20,6 +20,7 @@
 .list { display: flex; flex-direction: column; gap: 12px; }
 .entry { padding: 16px 18px; }
 .entryHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.entryActions { display: flex; align-items: center; gap: 6px; }
 .entryHeader strong, .entryHeader span { display: block; }
 .entryHeader span, .entry small { margin-top: 4px; color: var(--dsw-alias-label-tertiary); font-size: 12px; }
 .entry p { margin: 14px 0 10px; color: var(--dsw-alias-label-secondary); white-space: pre-wrap; overflow-wrap: anywhere; line-height: 22px; }

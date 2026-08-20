@@ -6,6 +6,7 @@ import type { SnapshotSelectorHook } from '@voyaseek-ai/dsh-client-web-react'
 import type { PropsRuntime } from '@voyaseek-ai/dsh-client-ui-slots'
 import type { MemorySettingsKey } from './locales.ts'
 import type { MemoryEntryView, MemorySettingsState, MemorySettingsStore } from './store.ts'
+import { MemoryEditorAction } from './MemoryEditor.tsx'
 import css from './MemorySettingsSection.module.css'
 
 /** Data and actions injected by the page registration. */
@@ -65,7 +66,6 @@ function Loaded({ controller, useSnapshot, t }: MemorySettingsSectionInjected): 
           <h2>{t('title')}</h2>
           <p>{t('description')}</p>
         </div>
-        <Button variant="outline" onClick={() => { void controller.openDocument() }}>{t('openFile')}</Button>
       </header>
 
       {state.error !== null && (
@@ -99,6 +99,9 @@ function Loaded({ controller, useSnapshot, t }: MemorySettingsSectionInjected): 
           <input value={query} placeholder={t('search')} onChange={(event) => { setQuery(event.currentTarget.value) }} />
         </label>
         <span>{format(t('capacity'), { count: String(state.entries.length), max: String(state.maxEntries) })}</span>
+        {(state.pendingCount > 0 || state.failedCount > 0) && (
+          <span>{format(t('maintenance'), { pending: String(state.pendingCount), failed: String(state.failedCount) })}</span>
+        )}
       </div>
 
       <div className={css.list}>
@@ -111,9 +114,12 @@ function Loaded({ controller, useSnapshot, t }: MemorySettingsSectionInjected): 
                 <strong>{entry.title}</strong>
                 <span>{entry.workspace === undefined ? t('personal') : `${t('project')} · ${basename(entry.workspace)}`}</span>
               </div>
-              <Button variant="outline" disabled={!state.writable || busy} onClick={() => { setPendingDelete(entry); setAcknowledged(false) }}>
-                {t('delete')}
-              </Button>
+              <div className={css.entryActions}>
+                <MemoryEditorAction ids={[entry.id]} controller={controller} useSnapshot={useSnapshot} t={t} />
+                <Button variant="outline" disabled={!state.writable || busy} onClick={() => { setPendingDelete(entry); setAcknowledged(false) }}>
+                  {t('delete')}
+                </Button>
+              </div>
             </div>
             <p>{entry.content}</p>
             <small>{format(t('source'), { session: entry.source.sessionId.slice(0, 8), turn: String(entry.source.turn) })}</small>

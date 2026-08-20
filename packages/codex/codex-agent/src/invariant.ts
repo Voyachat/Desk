@@ -9,7 +9,10 @@ export const name = 'codex-agent-invariant'
 export const inject = ['invariants']
 
 /** Turn/step balance belongs to the session invariant; process trees belong to subprocess. */
-const install: InvariantInstaller = () => {}
+const install: InvariantInstaller = () => {
+  // No runtime invariant: this package owns no relationship beyond session
+  // turn balance and subprocess-tree lifetime, whose owner packages verify it.
+}
 
 /** Register this package's invariant ownership. */
 export const apply = (ctx: Context): Promise<() => void> =>

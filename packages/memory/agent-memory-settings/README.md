@@ -2,17 +2,19 @@
 
 English | [中文](README.zh.md)
 
-Default local provider. It keeps a bounded item map in the existing user-editable settings document and serializes capture, recall, deletion, and clear operations.
+Default local provider. Settings owns live controls only; structured items and the extraction outbox live in an owner-only SQLite database at `$VOYASEEK_HOME/memory/agent-memory.sqlite`.
 
 | Config | Default | Meaning |
 | --- | ---: | --- |
 | `enabled` | `true` | Enables both automatic paths without deleting entries when disabled. |
 | `autoCapture` / `autoRecall` | `true` | Controls completed-turn writes and later-session reads. |
-| `maxEntries` | `200` | Evicts the oldest entries before adding beyond the limit. |
+| `maxEntries` | `2000` | Evicts the least recently updated structured items beyond the local product budget. |
 | `maxHits` | `5` | Bounds one recall result. |
-| `maxContentChars` / `maxTitleChars` | `4000` / `120` | Bounds each persisted item by Unicode code points. |
+| `maxContentChars` / `maxTitleChars` | `2000` / `120` | Bounds each persisted item by Unicode code points. |
+| `eventTtlDays` | `30` | Expires time-sensitive event memories. |
+| `maintenanceBatchSize` / `maintenanceMaxAttempts` | `4` / `5` | Bounds one background pass and failed extraction retries. |
 
-The provider uses `(session id, turn)` for deterministic capture identity, exact workspace matching for project-scoped entries, Chinese bigrams and ASCII words for lexical ranking, and the existing Settings write queue for serialization. The data lives under `agent-memory` in `$VOYASEEK_HOME/settings.yaml`; opening the memory file therefore opens the shared user settings document.
+Before any durable write or extraction call, the provider rejects turns that resemble credentials, bearer tokens, private keys, or secret assignments. Accepted turns enter an idempotent `(session id, turn)` outbox. Successful maintenance updates one row per `workspace + kind + semantic key`, so a correction replaces the old value instead of accumulating raw dialogue. Recall combines extractor keywords, Chinese bigrams, ASCII terms, confidence, and update recency. The Settings document contains only controls; opening it never exposes or edits the SQLite file.
 
 ## Model Experience
 
@@ -24,6 +26,6 @@ Storage alone adds no content; a recalled message changes the request suffix thr
 
 ## Known Limitations and Deferred Work
 
-- Whole-document settings writes and lexical retrieval target a bounded single-user desktop store.
-- A shared or remote multi-user Host must use an identity-scoped provider.
-- Dedicated SQLite is the replacement for larger personal stores, while a hardened remote provider serves fleets; neither requires a consumer rewrite, but a provider that does not own the Settings namespace needs its own privileged management adapter.
+- Retrieval is lexical and keyword-based rather than embedding/vector search; automatic recall plus explicit tools cover the default desktop workflow without another indexing runtime.
+- Project scope currently follows the trusted Session cwd. Moving a project creates a new local scope.
+- A shared or remote multi-user Host must use an authenticated identity-scoped provider.

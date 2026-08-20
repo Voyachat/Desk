@@ -30,8 +30,10 @@ export const zh = {
   errorListener: '监听器启动失败，请检查本机网络与防火墙。',
 } as const
 
+/** Translation key shared by the remote-view settings dictionaries. */
 export type MobileViewKey = keyof typeof zh
 
+/** English remote-view settings dictionary. */
 export const en: Record<MobileViewKey, string> = {
   nav: 'Remote View',
   title: 'Mobile Remote View',

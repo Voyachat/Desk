@@ -575,6 +575,28 @@ describe('Web session model selection', () => {
     await ctx.fiber.dispose()
   })
 
+  it('drops an inherited logged model when a cross-runtime child cannot serve it', async () => {
+    const { ctx, agent, sessionId } = await harness({
+      provider: 'deepseek-official',
+      model: 'deepseek-chat',
+    })
+    Object.assign(agent, {
+      modelConstraint: {
+        provider: 'deepseek-official',
+        defaultModel: 'deepseek-reasoner',
+        models: ['deepseek-reasoner'],
+      },
+    })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'broken', model: 'unusable-global-default' }),
+      cwd: '/tmp',
+    })
+
+    expect(expectValue(await api.sessions.models(request({ sessionId }))).current)
+      .toEqual({ provider: 'deepseek-official', model: 'deepseek-reasoner' })
+    await ctx.fiber.dispose()
+  })
+
   it('accepts an advisory-unlisted model, rejects an unavailable provider, and switches only after the next assembly', async () => {
     const { ctx, agent, sessionId } = await harness()
     const api = createApiProxy(ctx, { defaultModelSelection: () => ({ provider: 'deepseek-official', model: 'deepseek-chat' }), cwd: '/tmp' })

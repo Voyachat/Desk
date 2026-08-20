@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-19-independent-complex-goal-verification.md
-2026-08-19-independent-complex-goal-verification.md: 60031060f01361bd0c8c7788e5767f5a3275c5b5
-2026-08-19-independent-complex-goal-verification.zh.md: 555b4d0d1aecd3e02609186de2ec405b4d94d13a
+2026-08-19-independent-complex-goal-verification.md: 4fb3ad450c028f2ddecc849f2f65433fec2c041c
+2026-08-19-independent-complex-goal-verification.zh.md: 8aac9eb2260cab1dc926e20ac475b81fe55b9fb8

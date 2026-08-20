@@ -6,6 +6,34 @@ import type { SessionId } from '@voyaseek-ai/dsh-session'
 /** Durable orchestration phase. Process-local activation is deliberately absent. */
 export type ComplexGoalPhase = 'planning' | 'executing' | 'auditing' | 'paused' | 'blocked' | 'complete'
 
+/** Workspace selected before the first task round. */
+export type ComplexGoalWorkspace = SharedComplexGoalWorkspace | IsolatedComplexGoalWorkspace
+
+/** A goal that intentionally continues in its owning session directory. */
+export interface SharedComplexGoalWorkspace {
+  readonly kind: 'shared'
+  readonly sourceCwd: string
+  readonly taskCwd: string
+  readonly reason: 'disabled' | 'missing-cwd' | 'subprocess-unavailable' | 'not-git' | 'dirty'
+}
+
+/** A detached Git worktree whose exact patch is promoted after independent audit. */
+export interface IsolatedComplexGoalWorkspace {
+  readonly kind: 'git-worktree'
+  readonly sourceRoot: string
+  readonly sourceCwd: string
+  readonly taskRoot: string
+  readonly taskCwd: string
+  readonly baseCommit: string
+}
+
+/** Durable bounded retry state for automatic restart reconciliation. */
+export interface ComplexGoalRecovery {
+  readonly attempt: number
+  readonly nextAttemptAtMs: number
+  readonly lastError: string
+}
+
 /** One bounded unit selected by the Manager. */
 export interface ComplexGoalContract {
   readonly task: string
@@ -102,6 +130,7 @@ export interface ComplexGoalSnapshot {
   readonly phase: ComplexGoalPhase
   readonly round: number
   readonly maxRounds: number
+  readonly workspace: ComplexGoalWorkspace
   readonly verificationGates: readonly ComplexGoalVerificationGate[]
   readonly verificationOutputMaxBytes: number
   readonly trustedState: VerifiedComplexGoalState
@@ -109,17 +138,19 @@ export interface ComplexGoalSnapshot {
   readonly latestExecution?: ComplexGoalExecution
   readonly latestVerification?: ComplexGoalVerification
   readonly latestAudit?: ComplexGoalAudit
+  readonly promotion?: 'not-required' | 'no-changes' | 'applied' | 'already-applied'
   readonly resumeAt?: 'planning' | 'auditing'
   readonly blocker?: string
+  readonly recovery?: ComplexGoalRecovery
 }
 
 /** Why one complete snapshot was committed. */
-export type ComplexGoalOperation = 'start' | 'manage' | 'execute' | 'verify' | 'audit' | 'interrupt' | 'resume' | 'block'
+export type ComplexGoalOperation = 'start' | 'manage' | 'execute' | 'verify' | 'audit' | 'interrupt' | 'resume' | 'retry' | 'block'
 
 /** Durable whole-snapshot mutation. */
 export interface ComplexGoalChange {
   readonly kind: 'complex-goal/change'
-  readonly version: 2
+  readonly version: 3
   readonly operation: ComplexGoalOperation
   readonly snapshot: ComplexGoalSnapshot
 }

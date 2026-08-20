@@ -39,6 +39,8 @@ export interface Gate {
   command: string
   args: string[]
   needs?: string[]
+  /** Gates that must settle first without making their outcome a prerequisite. */
+  after?: string[]
   env?: Record<string, string | undefined>
   allowFailure?: boolean
 }
@@ -223,7 +225,7 @@ export function gatesForMode(selected: Mode): Gate[] {
         pnpmScript('runtime-closure', 'verify-runtime-closure', { label: 'runtime closure' }),
         pnpmScript('cordis-config', 'verify-cordis-config', { label: 'Cordis config' }),
         pnpmScript('client-domain-graph', 'verify-client-domain-graph', { label: 'client domain graph' }),
-        pnpmScript('test', 'test'),
+        pnpmScript('test', 'test', { after: ['build', 'knip'] }),
         pnpmScript('issue-management', 'test:issue-management', { label: 'Issue management policy' }),
         pnpmScript('duplication', 'duplication'),
         snapshotGate(),
@@ -660,6 +662,11 @@ function validateGateGraph(gates: readonly Gate[]): void {
         throw new Error(`run-gates: gate ${JSON.stringify(gate.id)} depends on unknown gate ${JSON.stringify(dependency)}.`)
       }
     }
+    for (const predecessor of gate.after ?? []) {
+      if (!ids.has(predecessor)) {
+        throw new Error(`run-gates: gate ${JSON.stringify(gate.id)} orders after unknown gate ${JSON.stringify(predecessor)}.`)
+      }
+    }
   }
 
   const cycle = findDependencyCycle(gates)
@@ -681,7 +688,7 @@ function findDependencyCycle(gates: readonly Gate[]): string[] | undefined {
 
     active.set(id, path.length)
     path.push(id)
-    for (const dependency of gate.needs ?? []) {
+    for (const dependency of [...(gate.needs ?? []), ...(gate.after ?? [])]) {
       const cycle = visit(dependency)
       if (cycle !== undefined) return cycle
     }
@@ -778,6 +785,10 @@ export async function runGates(
 
 function dependenciesPassed(gate: Gate, states: Map<string, GateState>): boolean {
   return (gate.needs ?? []).every(id => states.get(id) === 'passed')
+    && (gate.after ?? []).every((id) => {
+      const state = states.get(id)
+      return state === 'passed' || state === 'failed' || state === 'skipped'
+    })
 }
 
 /**

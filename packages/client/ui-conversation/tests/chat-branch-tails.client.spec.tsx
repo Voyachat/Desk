@@ -68,7 +68,13 @@ function MessageItem({ node, t: translate }: MessageItemProps) {
     case 'steering':
       return <UserMessageNodeView {...props as ChatNodeViewProps<'user' | 'steering'>} />
     case 'context':
-      return <ContextMessageNodeView {...props as ChatNodeViewProps<'context'>} />
+      return (
+        <ContextMessageNodeView
+          {...props as ChatNodeViewProps<'context'>}
+          renderSlot={() => null}
+          SessionProvider={() => null}
+        />
+      )
     case 'compaction':
       return <CompactionNodeView {...props as ChatNodeViewProps<'compaction'>} />
     case 'model-retry':
@@ -726,6 +732,27 @@ describe('MessageItem arms', () => {
     const rows = [...view.container.querySelectorAll('[data-context-recalls] li')].map(node => node.textContent)
     expect(rows).toEqual(['重构 loader保留 18 条 · 省略 42 条已截断', '修 CI保留 3 条 · 省略 0 条'])
     expect(view.container.querySelector('[data-context-text]')?.textContent).toBe('recalled material')
+  })
+
+  it('presents agent memory recall as a compact count instead of opaque source JSON', () => {
+    const view = render(
+      <MessageItem t={t} node={{
+        kind: 'context',
+        seq: 4,
+        content: [{ type: 'text', text: '1. [preference] 用户偏好正山小种。' }],
+        source: {
+          kind: 'agent-memory', form: 'recall',
+          items: [{ id: 'memory-1', kind: 'preference', title: '验证饮料' }],
+        },
+        provenance: { role: 'recall', label: null },
+        form: 'recall',
+      } as never}
+      />,
+    )
+    fireEvent.click(view.getByRole('button', { name: /已调用长期记忆\s*1 条相关记忆/ }))
+    expect(view.container.querySelector('[data-context-memories]')?.textContent).toBe('验证饮料preference')
+    expect(view.container.querySelector('[data-context-fields]')).toBeNull()
+    expect(view.container.querySelector('[data-context-text]')?.textContent).toContain('用户偏好正山小种')
   })
 
   it('unknown nodes retain the generic JSON row', () => {

@@ -1,75 +1,77 @@
 import { describe, expect, it, vi } from 'vitest'
 import { MemorySettingsStore } from '../src/client/store.ts'
 
-function view(entries: Record<string, unknown>, revision = 1) {
+function view(enabled = true, revision = 1) {
   return {
-    ns: 'agent-memory',
-    schema: {},
-    value: {
-      enabled: true,
-      autoCapture: true,
-      autoRecall: true,
-      maxEntries: 200,
-      entries,
-    },
-    applies: 'live',
-    secrets: [],
-    revision,
+    ns: 'agent-memory', schema: {}, value: { enabled }, applies: 'live' as const,
+    secrets: [], revision,
   }
 }
 
 const entry = {
-  id: 'memory-1',
-  title: '验证饮料',
-  content: '用户：正山小种\n助手：已记住',
-  createdAt: 1,
-  updatedAt: 2,
-  workspace: '/project',
-  source: { sessionId: 'session-1', turn: 1 },
+  id: 'memory-1', kind: 'preference' as const, key: 'verification-drink', title: '验证饮料',
+  content: '用户的验证饮料是正山小种。', keywords: ['验证饮料'], confidence: 0.95,
+  createdAt: 1, updatedAt: 2, workspace: '/project',
+  source: { sessionId: 'session-1', turn: 1, mode: 'automatic' as const },
+}
+
+function face(entries = [entry]) {
+  const list = vi.fn().mockResolvedValue({
+    result: { ok: true, value: { entries, pendingCount: 0, failedCount: 0, maxEntries: 2_000 } },
+  })
+  const forget = vi.fn().mockResolvedValue({ result: { ok: true, value: { deleted: 1 } } })
+  const clear = vi.fn().mockResolvedValue({ result: { ok: true, value: { deleted: entries.length } } })
+  const update = vi.fn().mockResolvedValue({ result: { ok: true, value: { entry } } })
+  const describe = vi.fn().mockResolvedValue({
+    result: { ok: true, value: { writable: true, hasDocument: true, namespaces: [view()] } },
+  })
+  const mutate = vi.fn().mockResolvedValue({ result: { ok: true, value: view(false, 2) } })
+  return {
+    list, forget, clear, update, describe, mutate,
+    api: {
+      settings: { describe, mutate, openDocument: vi.fn(), update: vi.fn(), replace: vi.fn() },
+      memory: { list, forget, clear, update },
+    },
+  }
 }
 
 describe('MemorySettingsStore', () => {
-  it('loads the exposed namespace and deletes by path with its revision', async () => {
-    const describeCall = vi.fn().mockResolvedValue({
-      result: { ok: true, value: { writable: true, hasDocument: true, namespaces: [view({ 'memory-1': entry })] } },
+  it('joins settings controls with Host-owned entries and deletes through memory API', async () => {
+    const fixture = face()
+    fixture.list.mockResolvedValueOnce({
+      result: { ok: true, value: { entries: [entry], pendingCount: 1, failedCount: 0, maxEntries: 2_000 } },
+    }).mockResolvedValueOnce({
+      result: { ok: true, value: { entries: [], pendingCount: 0, failedCount: 0, maxEntries: 2_000 } },
     })
-    const mutate = vi.fn().mockResolvedValue({
-      result: { ok: true, value: view({}, 2) },
-    })
-    const controller = new MemorySettingsStore({ settings: {
-      describe: describeCall,
-      mutate,
-      openDocument: vi.fn(),
-      update: vi.fn(),
-      replace: vi.fn(),
-    } })
+    const controller = new MemorySettingsStore(fixture.api)
     await controller.load()
-    expect(controller.store.getSnapshot()).toMatchObject({ status: 'ready', enabled: true, entries: [entry] })
+    expect(controller.store.getSnapshot()).toMatchObject({ status: 'ready', enabled: true, pendingCount: 1, entries: [entry] })
     await controller.forget('memory-1')
-    expect(mutate).toHaveBeenCalledWith({
-      ns: 'agent-memory',
-      ops: [{ op: 'unset', path: ['entries', 'memory-1'] }],
-      expectedRevision: 1,
-    })
+    expect(fixture.forget).toHaveBeenCalledWith({ ids: ['memory-1'] })
     expect(controller.store.getSnapshot().entries).toEqual([])
   })
 
-  it('pauses memory without clearing entries', async () => {
-    const mutate = vi.fn().mockResolvedValue({
-      result: { ok: true, value: { ...view({ 'memory-1': entry }, 2), value: { ...view({}).value, enabled: false, entries: { 'memory-1': entry } } } },
-    })
-    const controller = new MemorySettingsStore({ settings: {
-      describe: vi.fn().mockResolvedValue({ result: { ok: true, value: { writable: true, hasDocument: true, namespaces: [view({ 'memory-1': entry })] } } }),
-      mutate,
-      openDocument: vi.fn(),
-      update: vi.fn(),
-      replace: vi.fn(),
-    } })
+  it('pauses automatic memory through Settings without clearing SQLite entries', async () => {
+    const fixture = face()
+    const controller = new MemorySettingsStore(fixture.api)
     await controller.load()
     await controller.setEnabled(false)
     expect(controller.store.getSnapshot()).toMatchObject({ enabled: false, entries: [entry] })
-    expect(mutate).toHaveBeenCalledWith(expect.objectContaining({
-      ops: [{ op: 'set', path: ['enabled'], value: false }],
-    }))
+    expect(fixture.mutate).toHaveBeenCalledWith({
+      ns: 'agent-memory', ops: [{ op: 'set', path: ['enabled'], value: false }], expectedRevision: 1,
+    })
+    expect(fixture.clear).not.toHaveBeenCalled()
+  })
+
+  it('updates an exact memory through the dedicated loopback domain', async () => {
+    const fixture = face()
+    const controller = new MemorySettingsStore(fixture.api)
+    await controller.load()
+    await expect(controller.update('memory-1', {
+      title: '验证饮品', content: '用户的验证饮料是咖啡。', keywords: ['咖啡'],
+    })).resolves.toBe(true)
+    expect(fixture.update).toHaveBeenCalledWith({
+      id: 'memory-1', title: '验证饮品', content: '用户的验证饮料是咖啡。', keywords: ['咖啡'],
+    })
   })
 })

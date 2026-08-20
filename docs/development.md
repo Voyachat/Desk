@@ -124,6 +124,14 @@ The keyless [CI workflow](../.github/workflows/ci.yml) groups independent gates 
 
 The root [contributor instructions](../AGENTS.md#commands) summarize common commands, while [`package.json`](../package.json) and [scripts/run-gates.ts](../scripts/run-gates.ts) own the current script and gate inventories. Select the smallest checks that cover the changed surface. Documentation changes use `pnpm run doc-sync`; package-public behavior changes also update the owning README or JSDoc, and built-artifact checks require `pnpm run build` first.
 
+### Web acceptance
+
+Run `pnpm run accept:web` from the repository root to validate the current AiDesktop checkout in a browser. The foreground launcher completes the ordered repository build, starts the isolated Aistaff source profile and Client plugin watcher, verifies that the selected loopback URL serves the assembled application with its boot data, and then opens that URL in the default browser. Terminal output names each lifecycle state (`构建中`, `启动中`, `已就绪`, `已停止`, or `失败`) and publishes a plain clickable `Web 地址` only with `已就绪`, after the assembled-application check succeeds. If the default port `3081` is occupied, the launcher leaves its owner untouched and selects the next available port. Passing `-- --port <port>` requires that exact port and fails when it is occupied; pass `-- --no-open` when the caller only needs the verified URL.
+
+[`scripts/aidesktop-accept`](../scripts/aidesktop-accept) is the checkout-relative command entry for use outside the repository root. Install it once into a directory already present in `PATH`, for example `ln -s "$PWD/scripts/aidesktop-accept" "$HOME/.local/bin/aidesktop-accept"` from the repository root, then run `aidesktop-accept` from any directory. The entry resolves the checkout through its own real path and forwards every argument to `accept:web`; the installed item remains a symbolic link, so moving or deleting the checkout makes the command fail explicitly instead of selecting another repository.
+
+Keep the launcher running during acceptance and press `Ctrl+C` to stop both the Host and watcher. Client plugin source changes rebuild and reload automatically. Web shell changes, Host contract changes, and other plain-package changes require stopping and rerunning `aidesktop-accept` (or `pnpm run accept:web` in the repository root) so its complete build refreshes every consumed artifact before the page is reloaded.
+
 ### Demos
 
 Run the repository build separately before using these source-checkout demos:

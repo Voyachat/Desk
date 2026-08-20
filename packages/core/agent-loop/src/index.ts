@@ -5,7 +5,7 @@
  * @module @voyaseek-ai/dsh-agent-loop
  */
 
-import { Context, FiberState, Service } from '@voyaseek-ai/cordis'
+import { Context, Service } from '@voyaseek-ai/cordis'
 import { randomUUID } from 'node:crypto'
 import z from '@voyaseek-ai/schemastery'
 import { emitAgentEvent } from '@voyaseek-ai/dsh-agent'
@@ -31,14 +31,10 @@ import { DEFAULT_MAX_PARALLEL_TOOL_CALLS } from './constants.ts'
 import type { AgentDriver, AgentDriverFactory } from './driver.ts'
 
 export type { AgentDriver, AgentDriverFactory, CreateDriverInput } from './driver.ts'
-export { RuntimeContextProjection } from './runtime-context.ts'
+export { RuntimeContextProjection, runtimeHandoffMessage } from './runtime-context.ts'
 
-/** Fiber states that cannot own or serve a new lifecycle. */
-const INACTIVE_STATES: ReadonlySet<FiberState> = new Set([
-  FiberState.UNLOADING,
-  FiberState.DISPOSED,
-  FiberState.FAILED,
-])
+/** First terminal Cordis fiber state; the public `FiberState` is a compile-time-only const enum. */
+const FIRST_INACTIVE_FIBER_STATE = 3
 
 /** Factory-level ownership: live agent teardowns plus config startup work. */
 class FactoryOwnership {
@@ -56,7 +52,7 @@ class FactoryOwnership {
   }
 
   isActive(): boolean {
-    return this.accepting && !INACTIVE_STATES.has(this.fiber.state)
+    return this.accepting && this.fiber.state < FIRST_INACTIVE_FIBER_STATE
   }
 
   /** Track one live agent's shared teardown until it has run. */

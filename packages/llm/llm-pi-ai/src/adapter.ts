@@ -40,6 +40,8 @@ import {
 } from '@voyaseek-ai/dsh-llm'
 import type {
   GenerateOptions,
+  LlmExternalRuntime,
+  LlmExternalRuntimeRoute,
   LlmModelInfo,
   LlmProviderInfo,
   LlmResolvedModelInfo,
@@ -295,6 +297,39 @@ export class PiAiAdapter extends LlmAdapter {
         ...reasoningInfo(resolvedModel, defaultLevel),
       }
     })
+  }
+
+  override externalRuntimeModels(provider: string, runtime: LlmExternalRuntime): readonly string[] {
+    const snapshot = this.current()
+    const profile = this.profileOf(snapshot, provider)
+    if (profile.apiKeyEnv === undefined) return []
+    const api = runtime === 'codex' ? 'openai-responses' : 'anthropic-messages'
+    return snapshot.models.getModels(provider)
+      .filter(model => servesAgentConversation(model.id, profile) && model.api === api && model.baseUrl.length > 0)
+      .map(model => model.id)
+  }
+
+  override externalRuntimeRoute(
+    provider: string,
+    model: string,
+    runtime: LlmExternalRuntime,
+  ): LlmExternalRuntimeRoute | undefined {
+    const snapshot = this.current()
+    const profile = this.profileOf(snapshot, provider)
+    const resolved = this.modelOf(snapshot, provider, model)
+    const api = runtime === 'codex' ? 'openai-responses' : 'anthropic-messages'
+    if (profile.apiKeyEnv === undefined
+      || !servesAgentConversation(resolved.id, profile)
+      || resolved.api !== api
+      || resolved.baseUrl.length === 0) {
+      return undefined
+    }
+    return {
+      provider,
+      model,
+      baseURL: resolved.baseUrl,
+      apiKeyEnv: String(profile.apiKeyEnv),
+    }
   }
 
   async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {

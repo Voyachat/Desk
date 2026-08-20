@@ -840,6 +840,9 @@ importers:
       '@voyaseek-ai/dsh-compaction-tool-result-pruner':
         specifier: workspace:*
         version: link:../packages/compaction/compaction-tool-result-pruner
+      '@voyaseek-ai/dsh-complex-goal':
+        specifier: workspace:*
+        version: link:../packages/goal/complex-goal
       '@voyaseek-ai/dsh-cordis-host-runner':
         specifier: workspace:*
         version: link:../packages/extensions/cordis-host-runner
@@ -1905,6 +1908,9 @@ importers:
       '@voyaseek-ai/dsh-plan-mode':
         specifier: workspace:^
         version: link:../../plan/plan-mode
+      '@voyaseek-ai/dsh-premature-stop-recovery':
+        specifier: workspace:^
+        version: link:../../guard/premature-stop-recovery
       '@voyaseek-ai/dsh-pwsh-sandbox':
         specifier: workspace:^
         version: link:../../shell/pwsh-sandbox
@@ -3463,6 +3469,9 @@ importers:
       '@voyaseek-ai/cordis':
         specifier: workspace:^
         version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-agent-memory':
+        specifier: workspace:^
+        version: link:../../memory/agent-memory
       '@voyaseek-ai/dsh-api-remotes':
         specifier: workspace:^
         version: link:../../api/remotes
@@ -3475,6 +3484,9 @@ importers:
       '@voyaseek-ai/dsh-client-runtime':
         specifier: workspace:^
         version: link:../runtime
+      '@voyaseek-ai/dsh-client-ui-conversation':
+        specifier: workspace:^
+        version: link:../ui-conversation
       '@voyaseek-ai/dsh-client-ui-primitives':
         specifier: workspace:^
         version: link:../ui-primitives
@@ -4211,8 +4223,8 @@ importers:
   packages/codex/codex-agent:
     dependencies:
       '@openai/codex':
-        specifier: 0.148.0
-        version: 0.148.0
+        specifier: 0.147.0
+        version: 0.147.0
       '@voyaseek-ai/schemastery':
         specifier: link:../../../vendor/schemastery
         version: link:../../../vendor/schemastery
@@ -5631,12 +5643,18 @@ importers:
       '@voyaseek-ai/dsh-agent':
         specifier: workspace:^
         version: link:../../core/agent
+      '@voyaseek-ai/dsh-agent-default-model':
+        specifier: workspace:^
+        version: link:../../core/agent-default-model
       '@voyaseek-ai/dsh-agent-loop':
         specifier: workspace:^
         version: link:../../core/agent-loop
       '@voyaseek-ai/dsh-agent-loop-testkit':
         specifier: workspace:^
         version: link:../../test-support/agent-loop-testkit
+      '@voyaseek-ai/dsh-agent-presets':
+        specifier: workspace:^
+        version: link:../../preset/agent-presets
       '@voyaseek-ai/dsh-commands':
         specifier: workspace:^
         version: link:../../interaction/commands
@@ -5658,6 +5676,12 @@ importers:
       '@voyaseek-ai/dsh-session':
         specifier: workspace:^
         version: link:../../core/session
+      '@voyaseek-ai/dsh-session-persistence':
+        specifier: workspace:^
+        version: link:../../session/session-persistence
+      '@voyaseek-ai/dsh-session-persistence-jsonl':
+        specifier: workspace:^
+        version: link:../../session/session-persistence-jsonl
       '@voyaseek-ai/dsh-shell':
         specifier: workspace:^
         version: link:../../shell/shell
@@ -5670,6 +5694,12 @@ importers:
       '@voyaseek-ai/dsh-subagent-spawn-in-process':
         specifier: workspace:^
         version: link:../../subagent/subagent-spawn-in-process
+      '@voyaseek-ai/dsh-subprocess':
+        specifier: workspace:^
+        version: link:../../subprocess/subprocess
+      '@voyaseek-ai/dsh-subprocess-local':
+        specifier: workspace:^
+        version: link:../../subprocess/subprocess-local
       '@voyaseek-ai/dsh-system-prompt':
         specifier: workspace:^
         version: link:../../core/system-prompt
@@ -5780,6 +5810,40 @@ importers:
       '@voyaseek-ai/dsh-goal':
         specifier: workspace:^
         version: link:../goal
+      '@voyaseek-ai/dsh-invariants':
+        specifier: workspace:^
+        version: link:../../runtime-diagnostics/invariants
+      '@voyaseek-ai/dsh-llm':
+        specifier: workspace:^
+        version: link:../../llm/llm
+      '@voyaseek-ai/dsh-session':
+        specifier: workspace:^
+        version: link:../../core/session
+      '@voyaseek-ai/dsh-system-prompt':
+        specifier: workspace:^
+        version: link:../../core/system-prompt
+      '@voyaseek-ai/dsh-tools':
+        specifier: workspace:^
+        version: link:../../core/tools
+
+  packages/guard/premature-stop-recovery:
+    dependencies:
+      '@voyaseek-ai/schemastery':
+        specifier: link:../../../vendor/schemastery
+        version: link:../../../vendor/schemastery
+    devDependencies:
+      '@voyaseek-ai/cordis':
+        specifier: workspace:^
+        version: link:../../../vendor/cordis
+      '@voyaseek-ai/dsh-agent':
+        specifier: workspace:^
+        version: link:../../core/agent
+      '@voyaseek-ai/dsh-agent-loop':
+        specifier: workspace:^
+        version: link:../../core/agent-loop
+      '@voyaseek-ai/dsh-agent-loop-testkit':
+        specifier: workspace:^
+        version: link:../../test-support/agent-loop-testkit
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../runtime-diagnostics/invariants
@@ -5969,6 +6033,9 @@ importers:
       '@voyaseek-ai/dsh-agent-default-model':
         specifier: workspace:^
         version: link:../../core/agent-default-model
+      '@voyaseek-ai/dsh-agent-memory':
+        specifier: workspace:^
+        version: link:../../memory/agent-memory
       '@voyaseek-ai/dsh-api-remotes':
         specifier: workspace:^
         version: link:../../api/remotes
@@ -9789,6 +9856,9 @@ importers:
       '@voyaseek-ai/dsh-credentials':
         specifier: workspace:^
         version: link:../../packages/credentials/credentials
+      '@voyaseek-ai/dsh-document-converter':
+        specifier: workspace:^
+        version: link:../../packages/document/document-converter
       '@voyaseek-ai/dsh-fs':
         specifier: workspace:^
         version: link:../../packages/fs/fs
@@ -9819,6 +9889,9 @@ importers:
       '@voyaseek-ai/dsh-hooks-codex':
         specifier: workspace:^
         version: link:../../packages/hooks/hooks-codex
+      '@voyaseek-ai/dsh-image-fallback':
+        specifier: workspace:^
+        version: link:../../packages/llm/image-fallback
       '@voyaseek-ai/dsh-invariants':
         specifier: workspace:^
         version: link:../../packages/runtime-diagnostics/invariants
@@ -11640,47 +11713,6 @@ packages:
 
   '@openai/codex@0.147.0-win32-x64':
     resolution: {integrity: sha512-oT7Ss5fAPf2fiWE9QNURqZcQGAAawSVxmIUdgPzckq4KFZAM+pRz9JbM4Rr498CjtbNgTOjWvDJ+DXvIBSfOPA==}
-    engines: {node: '>=16'}
-    cpu: [x64]
-    os: [win32]
-
-  '@openai/codex@0.148.0':
-    resolution: {integrity: sha512-bh5kH9+BMrFaHGmLeoSansPdfRksvr4UXzjQInns/KRO7r8VJ+6AAW+SqUsE8XcG3+OW/mI4EEy8Gpo9UDXGvQ==}
-    engines: {node: '>=16'}
-    hasBin: true
-
-  '@openai/codex@0.148.0-darwin-arm64':
-    resolution: {integrity: sha512-xgBPFiF1fHUlRS7HE6wGB56LjBJh16kGD7b4TTbwdVBZNB4QDkTok+vdkAGrfpVkfKcwGNhPSKDgCw+KMZOVug==}
-    engines: {node: '>=16'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@openai/codex@0.148.0-darwin-x64':
-    resolution: {integrity: sha512-qepQolhJutfOp+e9i7L3xsi8aoWeCUiiRq274WMWqRj50rKTrXxsuAgkAwDbqEfT3G5VynhYZuQvDsW37JgdNQ==}
-    engines: {node: '>=16'}
-    cpu: [x64]
-    os: [darwin]
-
-  '@openai/codex@0.148.0-linux-arm64':
-    resolution: {integrity: sha512-51DCd+izzk6n4mMh4w2utWj3lTLhSTnCOEJQfRh0LS9nBDkcYZcK3iSKOST6fByRIlLSXuLO33LlYYA1VPot6A==}
-    engines: {node: '>=16'}
-    cpu: [arm64]
-    os: [linux]
-
-  '@openai/codex@0.148.0-linux-x64':
-    resolution: {integrity: sha512-uDT9s7AfMr9xLuJX3ZLVWHgHkUpCnZ33CZjZEdVQhrYCIErkDHsCW5TG290nNjaKngK0WxGt5uCcxeUHv9MWWA==}
-    engines: {node: '>=16'}
-    cpu: [x64]
-    os: [linux]
-
-  '@openai/codex@0.148.0-win32-arm64':
-    resolution: {integrity: sha512-a8iOwLzs8UdnlWDHjgK3W/YSBBsUImG8X5XLBjengp3XGJRruhiIsQtUDUOYimCmotKPM4aX7Ub6zjl/KPxMQQ==}
-    engines: {node: '>=16'}
-    cpu: [arm64]
-    os: [win32]
-
-  '@openai/codex@0.148.0-win32-x64':
-    resolution: {integrity: sha512-/Jg8eYw0BqTGNUpnrzzWlK2kbu29NWg7t6pnUDEfxqpTUf+mK8r3okXQn60Zjbk9InYZ4d8SwSjrtOa+i5hSPw==}
     engines: {node: '>=16'}
     cpu: [x64]
     os: [win32]
@@ -17745,33 +17777,6 @@ snapshots:
     optional: true
 
   '@openai/codex@0.147.0-win32-x64':
-    optional: true
-
-  '@openai/codex@0.148.0':
-    optionalDependencies:
-      '@openai/codex-darwin-arm64': '@openai/codex@0.148.0-darwin-arm64'
-      '@openai/codex-darwin-x64': '@openai/codex@0.148.0-darwin-x64'
-      '@openai/codex-linux-arm64': '@openai/codex@0.148.0-linux-arm64'
-      '@openai/codex-linux-x64': '@openai/codex@0.148.0-linux-x64'
-      '@openai/codex-win32-arm64': '@openai/codex@0.148.0-win32-arm64'
-      '@openai/codex-win32-x64': '@openai/codex@0.148.0-win32-x64'
-
-  '@openai/codex@0.148.0-darwin-arm64':
-    optional: true
-
-  '@openai/codex@0.148.0-darwin-x64':
-    optional: true
-
-  '@openai/codex@0.148.0-linux-arm64':
-    optional: true
-
-  '@openai/codex@0.148.0-linux-x64':
-    optional: true
-
-  '@openai/codex@0.148.0-win32-arm64':
-    optional: true
-
-  '@openai/codex@0.148.0-win32-x64':
     optional: true
 
   '@opentelemetry/api-logs@0.220.0':

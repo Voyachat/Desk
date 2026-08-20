@@ -144,44 +144,63 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
   },
   {
     key: 'agentMemory',
-    summary: 'Provider-neutral service consumed by context and management plugins.',
-    description: 'Provider-neutral service consumed by context and management plugins.',
+    summary: 'Provider-neutral service consumed by context, tool, and management plugins.',
+    description: 'Provider-neutral service consumed by context, tool, and management plugins.',
     methods: [
       {
         signature: 'abstract status(): AgentMemoryStatus',
-        description: 'Read current live configuration and item count.',
+        description: 'Read current configuration, item count, and pending maintenance state.',
         parameters: [],
-        returns: 'provider status and capacity.',
+        returns: 'current provider status.',
       },
       {
-        signature: 'abstract capture(request: CaptureMemoryRequest, options?: MemoryOperationOptions): Promise<\'stored\' | \'duplicate\' | \'disabled\'>',
-        description: 'Store one completed turn idempotently.',
-        parameters: [{ name: 'request', description: 'trusted session-derived completed-turn content.' }, { name: 'options', description: 'optional operation cancellation.' }],
-        returns: 'whether the turn was stored, already present, or disabled.',
+        signature: 'abstract capture( request: CaptureMemoryRequest, options?: MemoryOperationOptions, ): Promise<\'queued\' | \'duplicate\' | \'disabled\' | \'filtered\'>',
+        description: 'Durably queue one completed turn after provider-owned secret filtering.',
+        parameters: [{ name: 'request', description: 'trusted Session-derived completed turn.' }, { name: 'options', description: 'optional cancellation.' }],
+        returns: 'queue outcome.',
+      },
+      {
+        signature: 'abstract maintain( maintainer: MemoryMaintainer, options?: MemoryMaintenanceOptions, ): Promise<MemoryMaintenanceResult>',
+        description: 'Process durable pending captures through the supplied automatic maintainer.',
+        parameters: [{ name: 'maintainer', description: 'candidate-aware extractor and consolidation callback.' }, { name: 'options', description: 'optional cancellation.' }],
+        returns: 'bounded pass counts.',
+      },
+      {
+        signature: 'abstract remember(request: RememberMemoryRequest, options?: MemoryOperationOptions): Promise<MemoryItem>',
+        description: 'Store or replace one explicit structured memory.',
+        parameters: [{ name: 'request', description: 'trusted Session-derived explicit memory.' }, { name: 'options', description: 'optional cancellation.' }],
+        returns: 'committed item.',
+      },
+      {
+        signature: 'abstract update(request: UpdateMemoryRequest, options?: MemoryOperationOptions): Promise<MemoryItem>',
+        description: 'Correct one existing item without changing its identity, kind, scope, or origin.',
+        parameters: [{ name: 'request', description: 'exact provider-issued identity and replacement user-visible fields.' }, { name: 'options', description: 'optional cancellation.' }],
+        returns: 'committed item.',
+        throws: ['when the item does not exist or the replacement contains sensitive content.'],
       },
       {
         signature: 'abstract recall(request: RecallMemoryRequest, options?: MemoryOperationOptions): Promise<MemoryItem[]>',
-        description: 'Recall relevant prior-session items in provider-defined rank order.',
-        parameters: [{ name: 'request', description: 'trusted session-derived query and scope.' }, { name: 'options', description: 'optional operation cancellation.' }],
+        description: 'Recall relevant, unexpired items in provider-defined rank order.',
+        parameters: [{ name: 'request', description: 'trusted query and scope.' }, { name: 'options', description: 'optional cancellation.' }],
         returns: 'ordered matching items.',
       },
       {
         signature: 'abstract list(options?: MemoryOperationOptions): Promise<MemoryItem[]>',
         description: 'List stored items newest first for a local management surface.',
-        parameters: [{ name: 'options', description: 'optional operation cancellation.' }],
-        returns: 'all user-manageable items.',
+        parameters: [{ name: 'options', description: 'optional cancellation.' }],
+        returns: 'every user-manageable item.',
       },
       {
         signature: 'abstract forget(ids: readonly MemoryId[], options?: MemoryOperationOptions): Promise<number>',
         description: 'Delete explicitly identified items.',
-        parameters: [{ name: 'ids', description: 'provider-issued identities to delete.' }, { name: 'options', description: 'optional operation cancellation.' }],
-        returns: 'number of items deleted.',
+        parameters: [{ name: 'ids', description: 'exact provider-issued identities.' }, { name: 'options', description: 'optional cancellation.' }],
+        returns: 'number deleted.',
       },
       {
         signature: 'abstract clear(options?: MemoryOperationOptions): Promise<number>',
-        description: 'Delete every stored item while retaining configuration.',
-        parameters: [{ name: 'options', description: 'optional operation cancellation.' }],
-        returns: 'number of items deleted.',
+        description: 'Delete every stored item and pending capture while retaining configuration.',
+        parameters: [{ name: 'options', description: 'optional cancellation.' }],
+        returns: 'number of committed items deleted.',
       },
     ],
   },
@@ -886,6 +905,18 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         description: 'Describe provider routes with a registered adapter.',
         parameters: [],
         returns: 'detached provider metadata in registration order.',
+      },
+      {
+        signature: 'listExternalRuntimeRoutes(runtime: LlmExternalRuntime): Array<{ provider: string; models: string[] }>',
+        description: 'List registered provider/model subsets admitted by an alternative runtime.',
+        parameters: [{ name: 'runtime', description: 'alternative runtime protocol.' }],
+        returns: 'provider routes with non-empty exact model lists.',
+      },
+      {
+        signature: 'resolveExternalRuntimeRoute( provider: string, model: string, runtime: LlmExternalRuntime, ): LlmExternalRuntimeRoute | undefined',
+        description: 'Resolve exact process metadata for an alternative runtime request.',
+        parameters: [{ name: 'provider', description: 'registered provider route.' }, { name: 'model', description: 'exact selected model id.' }, { name: 'runtime', description: 'alternative runtime protocol.' }],
+        returns: 'validated endpoint metadata, or `undefined` when unsupported.',
       },
       {
         signature: 'registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle',
@@ -2702,7 +2733,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'Agent',
-    declaration: 'export interface Agent {\n    readonly id: SessionId;\n    readonly options: AgentOptions;\n    readonly session: Session;\n    readonly inbox: Inbox;\n    readonly status: AgentStatus;\n    readonly ctx: Context;\n    cancel(cause: AgentCancelCause, options?: CancelOptions): void;\n    whenIdle(): Promise<void>;\n    runMaintenance<T>(task: (signal: AbortSignal) => Promise<T>): Promise<T>;\n    send(message: UserMessage, target: InboxTarget, wakeup: boolean): void;\n    followup(message: UserMessage): void;\n    steer(message: UserMessage): void;\n    inject(message: UserMessage): void;\n}',
+    declaration: 'export interface Agent {\n    readonly id: SessionId;\n    readonly options: AgentOptions;\n    readonly modelConstraint?: AgentModelConstraint;\n    readonly session: Session;\n    readonly inbox: Inbox;\n    readonly status: AgentStatus;\n    readonly ctx: Context;\n    cancel(cause: AgentCancelCause, options?: CancelOptions): void;\n    whenIdle(): Promise<void>;\n    runMaintenance<T>(task: (signal: AbortSignal) => Promise<T>): Promise<T>;\n    send(message: UserMessage, target: InboxTarget, wakeup: boolean): void;\n    followup(message: UserMessage): void;\n    steer(message: UserMessage): void;\n    inject(message: UserMessage): void;\n}',
   },
   {
     name: 'AgentCancelCause',
@@ -2726,7 +2757,15 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'AgentMemoryStatus',
-    declaration: 'export interface AgentMemoryStatus {\n    readonly enabled: boolean;\n    readonly autoCapture: boolean;\n    readonly autoRecall: boolean;\n    readonly count: number;\n    readonly maxEntries: number;\n    readonly maxHits: number;\n}',
+    declaration: 'export interface AgentMemoryStatus {\n    readonly enabled: boolean;\n    readonly autoCapture: boolean;\n    readonly autoRecall: boolean;\n    readonly count: number;\n    readonly pendingCount: number;\n    readonly failedCount: number;\n    readonly maxEntries: number;\n    readonly maxHits: number;\n}',
+  },
+  {
+    name: 'AgentModelConstraint',
+    declaration: 'export interface AgentModelConstraint {\n    readonly provider: string;\n    readonly defaultModel: string;\n    readonly models?: readonly string[];\n    readonly routes?: readonly AgentModelRouteConstraint[];\n}',
+  },
+  {
+    name: 'AgentModelRouteConstraint',
+    declaration: 'export interface AgentModelRouteConstraint {\n    readonly provider: string;\n    readonly models?: readonly string[];\n}',
   },
   {
     name: 'AgentOptions',
@@ -2838,7 +2877,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'CaptureMemoryRequest',
-    declaration: 'export interface CaptureMemoryRequest {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly workspace?: string;\n    readonly userText: string;\n    readonly assistantText: string;\n}',
+    declaration: 'export interface CaptureMemoryRequest {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly workspace?: string;\n    readonly userText: string;\n    readonly assistantText: string;\n    readonly provider?: string;\n    readonly model?: string;\n}',
   },
   {
     name: 'ClientResponse',
@@ -3402,7 +3441,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LlmAdapter',
-    declaration: 'export abstract class LlmAdapter {\n    providerInfo(provider: string): LlmProviderInfo;\n    providerRetryPolicy(_provider: string): ResolvedRetryPolicy | undefined;\n    listModels(_provider: string): Promise<readonly LlmModelInfo[]>;\n    resolveModel(provider: string, model: string, _signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    abstract stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
+    declaration: 'export abstract class LlmAdapter {\n    providerInfo(provider: string): LlmProviderInfo;\n    providerRetryPolicy(_provider: string): ResolvedRetryPolicy | undefined;\n    listModels(_provider: string): Promise<readonly LlmModelInfo[]>;\n    resolveModel(provider: string, model: string, _signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    externalRuntimeModels(_provider: string, _runtime: LlmExternalRuntime): readonly string[];\n    externalRuntimeRoute(_provider: string, _model: string, _runtime: LlmExternalRuntime): LlmExternalRuntimeRoute | undefined;\n    abstract stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
   },
   {
     name: 'LlmCallConfig',
@@ -3419,6 +3458,14 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'LlmDiscoveredModel',
     declaration: 'export interface LlmDiscoveredModel {\n    id: string;\n    name?: string;\n    contextWindow?: number;\n    maxTokens?: number;\n}',
+  },
+  {
+    name: 'LlmExternalRuntime',
+    declaration: 'export type LlmExternalRuntime = \'codex\' | \'claude\';',
+  },
+  {
+    name: 'LlmExternalRuntimeRoute',
+    declaration: 'export interface LlmExternalRuntimeRoute {\n    provider: string;\n    model: string;\n    baseURL: string;\n    apiKeyEnv: string;\n}',
   },
   {
     name: 'LlmFailure',
@@ -3454,7 +3501,7 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'LlmRuntime',
-    declaration: 'export class LlmRuntime extends Service {\n    constructor(ctx: Context);\n    registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle;\n    listProviders(): LlmProviderInfo[];\n    registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle;\n    listConfigurableProviders(): LlmConfigurableProvider[];\n    registerModelDiscovery(settingsNs: string, discover: (request: LlmModelDiscoveryRequest) => Promise<readonly LlmDiscoveredModel[]>): () => void;\n    async discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest): Promise<LlmDiscoveredModel[]>;\n    providerRetryPolicy(provider: string): ResolvedRetryPolicy;\n    async listModels(provider: string): Promise<LlmModelInfo[]>;\n    async resolveModelInfo(provider: string, model: string, signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    async resolveCallConfig(config: LlmCallConfig, signal?: AbortSignal): Promise<LlmCallConfig>;\n    async prepareCall(config: LlmCallConfig, signal?: AbortSignal): Promise<PreparedLlmCall>;\n    stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
+    declaration: 'export class LlmRuntime extends Service {\n    constructor(ctx: Context);\n    registerAdapter(providers: string[], adapter: LlmAdapter): AdapterRegistrationHandle;\n    listProviders(): LlmProviderInfo[];\n    listExternalRuntimeRoutes(runtime: LlmExternalRuntime): Array<{\n        provider: string;\n        models: string[];\n    }>;\n    resolveExternalRuntimeRoute(provider: string, model: string, runtime: LlmExternalRuntime): LlmExternalRuntimeRoute | undefined;\n    registerConfigurableProviders(entries: readonly LlmConfigurableProvider[]): DirectoryRegistrationHandle;\n    listConfigurableProviders(): LlmConfigurableProvider[];\n    registerModelDiscovery(settingsNs: string, discover: (request: LlmModelDiscoveryRequest) => Promise<readonly LlmDiscoveredModel[]>): () => void;\n    async discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest): Promise<LlmDiscoveredModel[]>;\n    providerRetryPolicy(provider: string): ResolvedRetryPolicy;\n    async listModels(provider: string): Promise<LlmModelInfo[]>;\n    async resolveModelInfo(provider: string, model: string, signal?: AbortSignal): Promise<LlmResolvedModelInfo>;\n    async resolveCallConfig(config: LlmCallConfig, signal?: AbortSignal): Promise<LlmCallConfig>;\n    async prepareCall(config: LlmCallConfig, signal?: AbortSignal): Promise<PreparedLlmCall>;\n    stream(options: GenerateOptions): AsyncIterable<StreamChunk>;\n}',
   },
   {
     name: 'LspHover',
@@ -3506,7 +3553,39 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   },
   {
     name: 'MemoryItem',
-    declaration: 'export interface MemoryItem {\n    readonly id: MemoryId;\n    readonly kind: \'conversation\';\n    readonly title: string;\n    readonly content: string;\n    readonly createdAt: number;\n    readonly updatedAt: number;\n    readonly workspace?: string;\n    readonly source: {\n        readonly sessionId: SessionId;\n        readonly turn: number;\n    };\n}',
+    declaration: 'export interface MemoryItem {\n    readonly id: MemoryId;\n    readonly kind: MemoryKind;\n    readonly key: string;\n    readonly title: string;\n    readonly content: string;\n    readonly keywords: readonly string[];\n    readonly confidence: number;\n    readonly createdAt: number;\n    readonly updatedAt: number;\n    readonly expiresAt?: number;\n    readonly workspace?: string;\n    readonly source: {\n        readonly sessionId: SessionId;\n        readonly turn: number;\n        readonly mode: \'automatic\' | \'explicit\';\n    };\n}',
+  },
+  {
+    name: 'MemoryKind',
+    declaration: 'export type MemoryKind = \'preference\' | \'fact\' | \'constraint\' | \'event\';',
+  },
+  {
+    name: 'MemoryMaintainer',
+    declaration: 'export type MemoryMaintainer = (input: MemoryMaintenanceInput, options?: MemoryOperationOptions) => Promise<readonly MemoryMutation[]>;',
+  },
+  {
+    name: 'MemoryMaintenanceChange',
+    declaration: 'export interface MemoryMaintenanceChange {\n    readonly action: \'created\' | \'updated\' | \'deleted\';\n    readonly id: MemoryId;\n    readonly kind: MemoryKind;\n    readonly title: string;\n}',
+  },
+  {
+    name: 'MemoryMaintenanceInput',
+    declaration: 'export interface MemoryMaintenanceInput {\n    readonly capture: CaptureMemoryRequest;\n    readonly candidates: readonly MemoryItem[];\n}',
+  },
+  {
+    name: 'MemoryMaintenanceOptions',
+    declaration: 'export interface MemoryMaintenanceOptions extends MemoryOperationOptions {\n    readonly sessionId?: SessionId;\n}',
+  },
+  {
+    name: 'MemoryMaintenanceOutcome',
+    declaration: 'export interface MemoryMaintenanceOutcome {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly status: \'changed\' | \'unchanged\' | \'failed\';\n    readonly changes: readonly MemoryMaintenanceChange[];\n}',
+  },
+  {
+    name: 'MemoryMaintenanceResult',
+    declaration: 'export interface MemoryMaintenanceResult {\n    readonly processed: number;\n    readonly failed: number;\n    readonly pending: number;\n    readonly outcomes: readonly MemoryMaintenanceOutcome[];\n}',
+  },
+  {
+    name: 'MemoryMutation',
+    declaration: 'export type MemoryMutation = {\n    readonly action: \'upsert\';\n    readonly kind: MemoryKind;\n    readonly key: string;\n    readonly title: string;\n    readonly content: string;\n    readonly keywords: readonly string[];\n    readonly confidence: number;\n} | {\n    readonly action: \'delete\';\n    readonly id: MemoryId;\n} | {\n    readonly action: \'none\';\n};',
   },
   {
     name: 'MemoryOperationOptions',
@@ -3731,6 +3810,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'RedactedSecret',
     declaration: 'export interface RedactedSecret {\n    path: string[];\n    set: boolean;\n}',
+  },
+  {
+    name: 'RememberMemoryRequest',
+    declaration: 'export interface RememberMemoryRequest {\n    readonly sessionId: SessionId;\n    readonly turn: number;\n    readonly workspace?: string;\n    readonly kind: Exclude<MemoryKind, \'event\'>;\n    readonly key: string;\n    readonly title: string;\n    readonly content: string;\n    readonly keywords?: readonly string[];\n}',
   },
   {
     name: 'RequestContext',
@@ -4695,6 +4778,10 @@ export const TYPE_API: readonly TypeApiEntry[] = [
   {
     name: 'TypertTypeModel',
     declaration: 'export interface TypertTypeModel {\n    readonly name: string;\n    readonly declaration: string;\n}',
+  },
+  {
+    name: 'UpdateMemoryRequest',
+    declaration: 'export interface UpdateMemoryRequest {\n    readonly id: MemoryId;\n    readonly title: string;\n    readonly content: string;\n    readonly keywords?: readonly string[];\n}',
   },
   {
     name: 'UserMessage',

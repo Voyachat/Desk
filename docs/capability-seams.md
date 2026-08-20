@@ -7,15 +7,22 @@ A service can be a core spine service, a swappable capability seam, or a bundle/
 
 ```mermaid
 flowchart LR
+  pkg_agent_memory["agent-memory"]
+  svc_agentMemory["ctx.agentMemory<br/>Structured cross-session memory"]
+  pkg_agent_memory_settings["agent-memory-settings"]
+  pkg_agent_memory_context["agent-memory-context"]
+  pkg_apiproxy["apiproxy"]
   pkg_attachment["attachment"]
   svc_attachments["ctx.attachments<br/>Durable binary attachment storage"]
   pkg_attachment_local["attachment-local"]
   pkg_host_runtime["host-runtime"]
   pkg_llm_pi_ai["llm-pi-ai"]
+  pkg_image_fallback["image-fallback"]
+  svc_imageFallback["ctx.imageFallback<br/>Image-to-text fallback routing"]
+  pkg_tool_fs["tool-fs"]
   pkg_document_converter["document-converter"]
   svc_documentConverter["ctx.documentConverter<br/>Document-to-Markdown conversion"]
   pkg_document_converter_mac_ocr["document-converter-mac-ocr"]
-  pkg_apiproxy["apiproxy"]
   pkg_llm["llm"]
   svc_llm["ctx.llm<br/>LLM adapter registry"]
   pkg_llm_deepseek["llm-deepseek"]
@@ -77,7 +84,6 @@ flowchart LR
   pkg_system_prompt["system-prompt"]
   svc_systemPrompt["ctx.systemPrompt<br/>System prompt assembly registry"]
   pkg_tools["tools"]
-  pkg_tool_fs["tool-fs"]
   pkg_tool_terminal["tool-terminal"]
   pkg_tool_web["tool-web"]
   svc_tools["ctx.tools<br/>Tool registry and guarded execution pipeline"]
@@ -200,6 +206,8 @@ flowchart LR
   pkg_agent --> svc_agents
   pkg_agent_default_model --> svc_agentDefaultModel
   pkg_agent_loop --> svc_agentLoop
+  pkg_agent_memory --> svc_agentMemory
+  pkg_agent_memory_settings --> svc_agentMemory
   pkg_agent_presets --> svc_agentPresets
   pkg_api_gateway --> svc_typertGateway
   pkg_apiproxy --> svc_apiProxy
@@ -229,6 +237,7 @@ flowchart LR
   pkg_fs_local --> svc_fs
   pkg_fs_sandbox --> svc_fs
   pkg_goal --> svc_goals
+  pkg_image_fallback --> svc_imageFallback
   pkg_invariants --> svc_invariants
   pkg_jobs --> svc_jobs
   pkg_jobs_local --> svc_jobs
@@ -302,6 +311,8 @@ flowchart LR
   svc_agentDefaultModel --> pkg_headless
   svc_agentDefaultModel --> pkg_host_apiproxy
   svc_agentLoop --> pkg_agent_spine_demo
+  svc_agentMemory --> pkg_agent_memory_context
+  svc_agentMemory --> pkg_apiproxy
   svc_agents --> pkg_acp
   svc_agents --> pkg_agent_loop
   svc_agents --> pkg_subagent_inprocess
@@ -323,6 +334,8 @@ flowchart LR
   svc_e2b --> pkg_fs_e2b
   svc_e2b --> pkg_subprocess_e2b
   svc_fs --> pkg_tool_fs
+  svc_imageFallback --> pkg_apiproxy
+  svc_imageFallback --> pkg_tool_fs
   svc_invariants --> pkg_agent
   svc_invariants --> pkg_agent_loop
   svc_invariants --> pkg_scope
@@ -417,7 +430,9 @@ flowchart LR
 
 | ctx key | Role | Owner | Implementations | Direct consumers | Companion plugins | Note |
 | --- | --- | --- | --- | --- | --- | --- |
+| `ctx.agentMemory` | `seam` | [`agent-memory`](../packages/memory/agent-memory) | [`agent-memory-settings`](../packages/memory/agent-memory-settings) | [`agent-memory-context`](../packages/memory/agent-memory-context), `apiproxy` | - | The provider owns durable capture, maintenance, recall, and mutation; the context plugin supplies logged model-visible recall and the Host exposes user management operations. |
 | `ctx.attachments` | `seam` | [`attachment`](../packages/attachment/attachment) | [`attachment-local`](../packages/attachment/attachment-local) | `host-runtime`, [`llm-pi-ai`](../packages/llm/llm-pi-ai) | - | The host commits accepted images before session events; provider adapters resolve authorized durable references into provider-native content. |
+| `ctx.imageFallback` | `core` | [`image-fallback`](../packages/llm/image-fallback) | - | [`tool-fs`](../packages/fs/tool-fs), `apiproxy` | - | The service resolves ordered hosted-vision and local-document fallbacks for text-only model routes; file tools and Host diagnostics consume its bounded result. |
 | `ctx.documentConverter` | `seam` | [`document-converter`](../packages/document/document-converter) | [`document-converter-mac-ocr`](../packages/document/document-converter-mac-ocr) | `apiproxy` | - | Providers convert local document bytes into bounded Markdown; the Host image fallback consumes the service before an optional hosted vision route. |
 | `ctx.llm` | `seam` | [`llm`](../packages/llm/llm) | [`llm-deepseek`](../packages/llm/llm-deepseek), [`llm-pi-ai`](../packages/llm/llm-pi-ai), [`llm-replay`](../packages/test-support/llm-replay) | [`agent-loop`](../packages/core/agent-loop), [`compaction-basic`](../packages/compaction/compaction-basic) | - | Adapters register provider implementations; the loop and compaction call the provider-neutral stream service. |
 | `ctx.tokenMeter` | `core` | [`token-meter`](../packages/llm/token-meter) | - | [`compaction-basic`](../packages/compaction/compaction-basic) | - | Owns isolated per-session replay folds; pressure consumers share immutable revisioned measurements. |

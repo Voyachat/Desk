@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-19-bounded-cross-session-agent-memory.md
-2026-08-19-bounded-cross-session-agent-memory.md: 9c2394a0192760f2d082c0951317408324853503
-2026-08-19-bounded-cross-session-agent-memory.zh.md: 79763762a2863cb41736a723f08955a2ab0cbe32
+2026-08-19-bounded-cross-session-agent-memory.md: 4aba53b2b0da824680cde06fde6acda95c9b6654
+2026-08-19-bounded-cross-session-agent-memory.zh.md: 060e79f3045e7fb023c656a1a1c6a2bdf7c04594

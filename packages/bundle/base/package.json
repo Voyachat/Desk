@@ -72,6 +72,7 @@
     "@voyaseek-ai/dsh-llm-retry": "workspace:^",
     "@voyaseek-ai/dsh-permission-presets": "workspace:^",
     "@voyaseek-ai/dsh-plan-mode": "workspace:^",
+    "@voyaseek-ai/dsh-premature-stop-recovery": "workspace:^",
     "@voyaseek-ai/dsh-pwsh-sandbox": "workspace:^",
     "@voyaseek-ai/dsh-repeat-tool-reminder": "workspace:^",
     "@voyaseek-ai/dsh-sandbox-local": "workspace:^",

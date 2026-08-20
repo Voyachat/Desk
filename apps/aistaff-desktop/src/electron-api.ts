@@ -5,4 +5,4 @@ import { createRequire } from 'node:module'
 // initialize safeStorage and prompt for a Keychain item we never use.
 const electron = createRequire(import.meta.url)('electron') as typeof import('electron')
 
-export const { app, BrowserWindow, dialog, Menu, session, shell } = electron
+export const { app, BrowserWindow, dialog, ipcMain, Menu, session, shell } = electron

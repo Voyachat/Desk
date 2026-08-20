@@ -148,6 +148,21 @@ export interface LlmProviderInfo {
   name: string
 }
 
+/** Alternative agent runtimes that can reuse a provider's native endpoint. */
+export type LlmExternalRuntime = 'codex' | 'claude'
+
+/** Exact provider/model endpoint materialized for an alternative agent runtime. */
+export interface LlmExternalRuntimeRoute {
+  /** Provider route retained in the session request log. */
+  provider: string
+  /** Exact model id admitted by this protocol endpoint. */
+  model: string
+  /** Protocol-compatible endpoint base URL. */
+  baseURL: string
+  /** Credential reference resolved immediately before the child process starts. */
+  apiKeyEnv: string
+}
+
 /** Merge-extensible provider model modality vocabulary. */
 export interface ModelModalityMap {
   text: 'text'

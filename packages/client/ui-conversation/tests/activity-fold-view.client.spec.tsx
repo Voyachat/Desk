@@ -21,6 +21,26 @@ function renderMember(key: string) {
 }
 
 describe('ActivityFold', () => {
+  it('shows bounded key outcomes without exposing folded reasoning', () => {
+    const view = render(
+      <ActivityFold
+        members={['tool', 'narration']}
+        running={false}
+        toolCalls={1}
+        startTime={null}
+        endTime={null}
+        highlights={[
+          { kind: 'tool', name: 'Read', status: 'error' },
+          { kind: 'text', text: '已定位缺少 file_path，并准备按正确参数重试。' },
+        ]}
+        renderMember={renderMember}
+        t={t}
+      />,
+    )
+    expect(view.getByText('Read 失败 · 已定位缺少 file_path，并准备按正确参数重试。 · 1 步')).toBeTruthy()
+    expect(view.container.textContent).not.toContain('private reasoning')
+  })
+
   it('starts collapsed with the done label and summary figures', () => {
     const view = render(
       <ActivityFold

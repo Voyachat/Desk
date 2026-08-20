@@ -113,6 +113,19 @@ describe('planReviewOf', () => {
 })
 
 describe('PlanReviewPanel', () => {
+  it('collapses and reopens without resolving the pending review', () => {
+    const { carrier, respond } = wait()
+    render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)
+
+    fireEvent.click(screen.getByRole('button', { name: zh['nav.collapse'] }))
+    expect(screen.queryByRole('heading', { name: 'Ship the picker' })).toBeNull()
+    expect(respond).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: zh['nav.expand'] }))
+
+    expect(screen.getByRole('heading', { name: 'Ship the picker' })).toBeTruthy()
+    expect(respond).not.toHaveBeenCalled()
+  })
+
   it('renders the plan under a review strip, with none of the quiz affordances', () => {
     const { carrier } = wait()
     render(<QuestionComposer matched={carrier} interactions={[carrier]} {...kit} />)

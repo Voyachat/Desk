@@ -16,7 +16,7 @@ import type {
   PermissionUpdate,
   Settings,
 } from '@anthropic-ai/claude-agent-sdk'
-import type { Agent } from '@voyaseek-ai/dsh-agent'
+import type { Agent, AgentModelRouteConstraint } from '@voyaseek-ai/dsh-agent'
 import type { AgentDriverFactory } from '@voyaseek-ai/dsh-agent-loop'
 import { credentialRef } from '@voyaseek-ai/dsh-credentials'
 import { launchEnvironmentOf } from '@voyaseek-ai/dsh-launch-environment'
@@ -114,6 +114,18 @@ export function claudeChildEnv(config: ResolvedConfig): Record<string, string> {
   if (config.apiKey !== undefined) env['ANTHROPIC_API_KEY'] = config.apiKey
   if (config.model !== undefined) env['ANTHROPIC_MODEL'] = config.model
   return env
+}
+
+function admittedRuntimeRoutes(ctx: Context, resolved: ResolvedConfig): AgentModelRouteConstraint[] {
+  const routes: AgentModelRouteConstraint[] = [{
+    provider: resolved.provider,
+    ...resolved.models === undefined || resolved.models.length === 0 ? {} : { models: [...resolved.models] },
+  }]
+  for (const route of ctx.get('llm')?.listExternalRuntimeRoutes('claude') ?? []) {
+    if (route.provider === resolved.provider) continue
+    routes.push({ provider: route.provider, models: [...route.models] })
+  }
+  return routes
 }
 
 /**
@@ -380,18 +392,27 @@ export function apply(ctx: Context, config: Config): void {
   }
   const { model: _configuredModel, ...withoutModel } = resolved
   const baseChildEnv = claudeChildEnv(withoutModel)
-  const childEnv = async (model: string): Promise<Record<string, string>> => {
+  const childEnv = async (request: { provider: string; model: string }): Promise<Record<string, string>> => {
+    const route = request.provider === resolved.provider
+      ? undefined
+      : ctx.get('llm')?.resolveExternalRuntimeRoute(request.provider, request.model, 'claude')
+    if (request.provider !== resolved.provider && route === undefined) {
+      throw new Error(`claude-agent: provider "${request.provider}" model "${request.model}" has no Anthropic-compatible runtime route`)
+    }
+    const routeConfig: ResolvedConfig = route === undefined
+      ? withoutModel as ResolvedConfig
+      : { ...withoutModel, provider: route.provider, baseUrl: route.baseURL, apiKeyEnv: route.apiKeyEnv }
     const env: Record<string, string> = {
-      ...baseChildEnv,
-      ANTHROPIC_MODEL: model,
-      ANTHROPIC_DEFAULT_HAIKU_MODEL: model,
-      ANTHROPIC_DEFAULT_SONNET_MODEL: model,
-      ANTHROPIC_DEFAULT_OPUS_MODEL: model,
-      CLAUDE_CODE_SUBAGENT_MODEL: model,
+      ...claudeChildEnv(routeConfig),
+      ANTHROPIC_MODEL: request.model,
+      ANTHROPIC_DEFAULT_HAIKU_MODEL: request.model,
+      ANTHROPIC_DEFAULT_SONNET_MODEL: request.model,
+      ANTHROPIC_DEFAULT_OPUS_MODEL: request.model,
+      CLAUDE_CODE_SUBAGENT_MODEL: request.model,
       CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: '1',
     }
-    if (resolved.apiKeyEnv === undefined) return env
-    const ref = credentialRef(resolved.apiKeyEnv)
+    if (routeConfig.apiKeyEnv === undefined) return env
+    const ref = credentialRef(routeConfig.apiKeyEnv)
     const credentials = ctx.get('credentials')
     const value = credentials === undefined
       ? launchEnvironmentOf(ctx).get(ref)?.value
@@ -437,6 +458,7 @@ export function apply(ctx: Context, config: Config): void {
         resolved.model,
         childEnv,
         resolved.models,
+        admittedRuntimeRoutes(ctx, resolved),
       )
     },
   }

@@ -47,9 +47,9 @@ describe('rebrand', () => {
   })
 
   it('masks vendored upstream provenance while rebranding the rest of the file', () => {
-    const source = '| `cordis/` | `@deepseek-ai/cordis` | https://github.com/deepseek-harness/cordis | MIT |'
+    const source = '| `@voyaseek-ai/cordis/` | `@deepseek-ai/cordis` | https://github.com/deepseek-harness/cordis | MIT |'
     const { text } = rebrand(source, 'vendor/README.md')
-    expect(text).toBe('| `cordis/` | `@voyaseek-ai/cordis` | https://github.com/deepseek-harness/cordis | MIT |')
+    expect(text).toBe('| `@voyaseek-ai/cordis/` | `@voyaseek-ai/cordis` | https://github.com/deepseek-harness/cordis | MIT |')
   })
 
   it('renames only the standalone home-directory token', () => {

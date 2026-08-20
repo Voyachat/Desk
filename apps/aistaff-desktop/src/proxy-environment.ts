@@ -4,16 +4,21 @@ const GOOGLE_API_URL = 'https://generativelanguage.googleapis.com/'
 const DASHSCOPE_API_URL = 'https://dashscope.aliyuncs.com/'
 const LOOPBACK_NO_PROXY = ['127.0.0.1', 'localhost'] as const
 
+/** Maximum time system PAC discovery may delay the managed runtime. */
+export const DEFAULT_PROXY_RESOLUTION_TIMEOUT_MS = 3_000
+
 /**
  * Resolve the environment additions needed for a Node child to follow Electron's
  * effective HTTPS proxy without replacing an explicitly inherited HTTPS proxy.
  * @param resolveProxy - Electron-compatible resolver returning a PAC proxy list.
  * @param inherited - Environment that will be spread before the returned additions.
+ * @param timeoutMs - Upper bound for both system PAC lookups together.
  * @returns A fresh, credential-free environment overlay.
  */
 export async function resolveProxyEnvironment(
   resolveProxy: (url: string) => Promise<string>,
   inherited: Readonly<NodeJS.ProcessEnv>,
+  timeoutMs = DEFAULT_PROXY_RESOLUTION_TIMEOUT_MS,
 ): Promise<Readonly<NodeJS.ProcessEnv>> {
   const noProxy = mergeNoProxy(inherited.NO_PROXY ?? inherited.no_proxy)
   if (
@@ -32,10 +37,13 @@ export async function resolveProxyEnvironment(
   let googleProxy: string | undefined
   let dashscopeProxy: string | undefined
   try {
-    [googleProxy, dashscopeProxy] = await Promise.all([
-      resolveProxy(GOOGLE_API_URL).then(parseHttpProxy),
-      resolveProxy(DASHSCOPE_API_URL).then(parseHttpProxy),
-    ])
+    [googleProxy, dashscopeProxy] = await withTimeout(
+      Promise.all([
+        resolveProxy(GOOGLE_API_URL).then(parseHttpProxy),
+        resolveProxy(DASHSCOPE_API_URL).then(parseHttpProxy),
+      ]),
+      timeoutMs,
+    )
   } catch {
     // A system proxy lookup failure must not prevent the local desktop from starting.
     return {}
@@ -48,6 +56,19 @@ export async function resolveProxyEnvironment(
     NODE_USE_ENV_PROXY: '1',
     NO_PROXY: noProxy,
     no_proxy: noProxy,
+  }
+}
+
+async function withTimeout<T>(task: Promise<T>, timeoutMs: number): Promise<T> {
+  let timer: NodeJS.Timeout | undefined
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => { reject(new Error('system proxy resolution timed out')) }, timeoutMs)
+    timer.unref()
+  })
+  try {
+    return await Promise.race([task, timeout])
+  } finally {
+    clearTimeout(timer)
   }
 }
 
@@ -89,7 +110,7 @@ function isValidHostname(host: string): boolean {
 
   const hostname = host.endsWith('.') ? host.slice(0, -1) : host
   if (hostname.length === 0 || hostname.length > 253) return false
-  return hostname.split('.').every((label) => (
+  return hostname.split('.').every(label => (
     label.length <= 63
     && /^[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?$/u.test(label)
   ))
@@ -101,9 +122,9 @@ function isValidPort(port: string): boolean {
 }
 
 function mergeNoProxy(existing: string | undefined): string {
-  const entries = existing?.split(',').map((entry) => entry.trim()).filter((entry) => entry.length > 0) ?? []
-  const normalizedEntries = new Set(entries.map((entry) => entry.toLowerCase()))
-  const missingEntries = LOOPBACK_NO_PROXY.filter((entry) => !normalizedEntries.has(entry))
+  const entries = existing?.split(',').map(entry => entry.trim()).filter(entry => entry.length > 0) ?? []
+  const normalizedEntries = new Set(entries.map(entry => entry.toLowerCase()))
+  const missingEntries = LOOPBACK_NO_PROXY.filter(entry => !normalizedEntries.has(entry))
   if (existing === undefined || existing.trim().length === 0) return LOOPBACK_NO_PROXY.join(',')
   if (missingEntries.length === 0) return existing
   const separator = existing.trimEnd().endsWith(',') ? '' : ','

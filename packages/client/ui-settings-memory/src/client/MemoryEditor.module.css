@@ -1,0 +1,24 @@
+.trigger, .compactTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--dsw-alias-label-tertiary);
+  font: inherit;
+  cursor: pointer;
+}
+.trigger { padding: 4px 6px; }
+.compactTrigger { padding: 0; font-size: 12px; line-height: 20px; }
+.trigger:hover, .compactTrigger:hover { color: var(--dsw-alias-label-secondary); }
+.trigger:focus-visible, .compactTrigger:focus-visible { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 2px; border-radius: 4px; }
+.modalContent { width: min(560px, calc(100vw - 32px)); }
+.choices { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.choices button { padding: 5px 9px; border: 1px solid var(--dsw-alias-border-l1); border-radius: 8px; background: transparent; color: var(--dsw-alias-label-secondary); cursor: pointer; }
+.choices button[data-selected] { border-color: var(--dsw-alias-label-tertiary); background: var(--dsw-alias-interactive-bg-hover); color: var(--dsw-alias-label-primary); }
+.form { display: flex; flex-direction: column; gap: 14px; }
+.form label { display: flex; flex-direction: column; gap: 6px; color: var(--dsw-alias-label-secondary); font-size: 13px; }
+.form input, .form textarea { box-sizing: border-box; width: 100%; border: 1px solid var(--dsw-alias-border-l1); border-radius: 10px; padding: 9px 11px; background: var(--dsw-alias-bg-base); color: var(--dsw-alias-label-primary); font: inherit; resize: vertical; }
+.form input:focus, .form textarea:focus { outline: 2px solid var(--dsw-alias-brand-primary); outline-offset: 1px; }
+.missing { margin: 18px 0; color: var(--dsw-alias-label-tertiary); }
+.error { margin: 12px 0 0; color: var(--dsw-alias-state-error-primary); font-size: 13px; }

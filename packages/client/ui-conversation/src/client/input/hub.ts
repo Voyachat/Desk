@@ -13,7 +13,7 @@ import type {
 } from '@voyaseek-ai/dsh-client-runtime/client'
 import type { InputTriggerController } from '@voyaseek-ai/dsh-client-ui-input-trigger/client'
 import type { TranslateNS } from '@voyaseek-ai/dsh-client-locale/client'
-import { queueReadFaceOf } from '../queue/store.ts'
+import { queueReadFaceOf } from '../contract/queue-read-face.ts'
 import type {
   ComposerKeyboard, DraftAttachmentId, PendingSend, SessionInputResolver, SessionInput,
 } from './contract.ts'

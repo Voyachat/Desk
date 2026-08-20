@@ -22,6 +22,11 @@ export interface FoldFacts {
   readonly closedWithClosing: ReadonlySet<number>
 }
 
+/** Deterministic key information retained in a collapsed activity summary. */
+export type ActivityHighlight =
+  | { readonly kind: 'tool'; readonly name: string; readonly status: 'running' | 'success' | 'error' }
+  | { readonly kind: 'text'; readonly text: string }
+
 /** One rendered row of the grouped chat flow. */
 export type ChatFlowRow =
   | { readonly kind: 'node'; readonly key: string }
@@ -38,6 +43,8 @@ export type ChatFlowRow =
     readonly startTime: number | null
     /** Latest member end time (epoch ms); null while the fold still runs. */
     readonly endTime: number | null
+    /** At most two recent tool outcomes plus the last visible narration. */
+    readonly highlights: readonly ActivityHighlight[]
   }
 
 /**
@@ -171,6 +178,27 @@ function memberTimes(node: ChatNode): MemberTimes {
   return { start: null, end: null }
 }
 
+function boundedLine(text: string, maxChars = 120): string {
+  const normalized = text.replaceAll(/\s+/gu, ' ').trim()
+  const points = Array.from(normalized)
+  return points.length <= maxChars ? normalized : `${points.slice(0, maxChars - 1).join('')}…`
+}
+
+function memberHighlight(node: ChatNode): ActivityHighlight | undefined {
+  if (node.kind === 'tool-call') {
+    const root = node.data.root
+    const name = isRunningTool(root) ? root.name : root.call?.name ?? root.callId
+    return {
+      kind: 'tool',
+      name: boundedLine(name, 80),
+      status: isRunningTool(root) ? 'running' : root.isError ? 'error' : 'success',
+    }
+  }
+  if (node.kind !== 'assistant-step') return
+  const text = node.data.blocks.findLast(block => block.kind === 'text' && block.text.trim() !== '')
+  return text?.kind === 'text' ? { kind: 'text', text: boundedLine(text.text) } : undefined
+}
+
 /**
  * Group the visible flow into single rows and activity folds.
  * @param order - visible flow keys in render order.
@@ -193,6 +221,8 @@ export function groupChatFlow(
   let toolCalls = 0
   let startTime: number | null = null
   let endTime: number | null = null
+  let toolHighlights: ActivityHighlight[] = []
+  let textHighlight: ActivityHighlight | undefined
   const flush = (): void => {
     if (members === null) return
     const first = members[0]
@@ -205,12 +235,15 @@ export function groupChatFlow(
       toolCalls,
       startTime,
       endTime: running ? null : endTime,
+      highlights: [...toolHighlights, ...(textHighlight === undefined ? [] : [textHighlight])],
     })
     members = null
     running = false
     toolCalls = 0
     startTime = null
     endTime = null
+    toolHighlights = []
+    textHighlight = undefined
   }
   for (const key of order) {
     const node = store.get(key)
@@ -222,6 +255,9 @@ export function groupChatFlow(
     if (members === null) members = []
     members.push(key)
     if (node.kind === 'tool-call') toolCalls += 1
+    const highlight = memberHighlight(node)
+    if (highlight?.kind === 'tool') toolHighlights = [...toolHighlights, highlight].slice(-2)
+    if (highlight?.kind === 'text') textHighlight = highlight
     const times = memberTimes(node)
     const open = times.end === null
     running ||= open

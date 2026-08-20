@@ -10,14 +10,15 @@
 import type { Context } from '@voyaseek-ai/cordis'
 import type {
   AgentCancelCause,
+  AgentModelRouteConstraint,
   AgentOptions,
   AgentStatus,
   CancelOptions,
   InboxTarget,
   PreStepDecision,
 } from '@voyaseek-ai/dsh-agent'
-import { Inbox, agentEvents, assembleContextFor, type AgentEventDispatch } from '@voyaseek-ai/dsh-agent'
-import { RuntimeContextProjection, type AgentDriver } from '@voyaseek-ai/dsh-agent-loop'
+import { Inbox, agentEvents, assembleContextFor, modelConstraintAllows, type AgentEventDispatch } from '@voyaseek-ai/dsh-agent'
+import { RuntimeContextProjection, runtimeHandoffMessage, type AgentDriver } from '@voyaseek-ai/dsh-agent-loop'
 import { errorChain } from '@voyaseek-ai/dsh-llm'
 import type { LlmCallConfig, LlmFailure, UserMessage } from '@voyaseek-ai/dsh-llm'
 import { createScope, type Scope } from '@voyaseek-ai/dsh-scope'
@@ -58,8 +59,11 @@ export function promptText(messages: readonly UserMessage[]): string {
  * @returns the last recorded SDK session id, or `undefined` before the first.
  */
 export function restoreClaudeSessionId(session: Session): string | undefined {
+  const switched = session.events.findLast(candidate => candidate.type === 'agent/runtime/switched')
   const event = session.events.findLast(candidate => candidate.type === 'claude-agent/runtime')
-  return event?.type === 'claude-agent/runtime' ? event.data.claudeSessionId : undefined
+  return event?.type === 'claude-agent/runtime' && (switched === undefined || event.seq > switched.seq)
+    ? event.data.claudeSessionId
+    : undefined
 }
 
 /** Flatten an unknown driver failure into the durable turn-end shape. */
@@ -108,8 +112,9 @@ export class ClaudeSdkAgent implements AgentDriver {
     private readonly cwd: string,
     private readonly runtimeProvider: string,
     private readonly defaultModel: string | undefined = runtimeProvider,
-    private readonly childEnv: (model: string) => Promise<Record<string, string> | undefined> = async () => undefined,
+    private readonly childEnv: (request: LlmCallConfig) => Promise<Record<string, string> | undefined> = async () => undefined,
     admittedModels?: readonly string[],
+    admittedRoutes?: readonly AgentModelRouteConstraint[],
   ) {
     this.dispatch = agentEvents(driverCtx, this)
     this.scope = createScope(driverCtx, this)
@@ -126,6 +131,10 @@ export class ClaudeSdkAgent implements AgentDriver {
       provider: runtimeProvider,
       defaultModel: defaultModel ?? runtimeProvider,
       ...admittedModels === undefined ? {} : { models: [...admittedModels] },
+      ...admittedRoutes === undefined ? {} : { routes: admittedRoutes.map(route => ({
+        provider: route.provider,
+        ...route.models === undefined ? {} : { models: [...route.models] },
+      })) },
     }
   }
 
@@ -257,12 +266,22 @@ export class ClaudeSdkAgent implements AgentDriver {
         : await systemPromptService.assemble(assembleContextFor(this, abort.signal))
       const sections = renderContextSections(assembly)
       const context = this.runtimeContext.project(joinContextSections(sections), sections)
+      const handoff = runtimeHandoffMessage(
+        this.session,
+        this.session.header.agentRuntime ?? 'claude',
+        'claude-agent/runtime',
+      )
+      const proposed = [
+        ...(handoff === undefined ? [] : [handoff]),
+        ...claimed,
+        ...(context === undefined ? [] : [context]),
+      ]
       const decision = await this.dispatch.waterfall(
         'agent/pre-step',
         { messages: claimed, turn, step, signal: abort.signal },
         (): Promise<PreStepDecision> => Promise.resolve({
           kind: 'enter',
-          messages: context === undefined ? claimed : [...claimed, context],
+          messages: proposed,
         }),
       )
       abort.signal.throwIfAborted()
@@ -289,11 +308,12 @@ export class ClaudeSdkAgent implements AgentDriver {
         if (!config.provider || !config.model) {
           throw new Error(`agent "${this.id}" has no provider/model for Claude mode`)
         }
-        if (config.provider !== this.runtimeProvider) {
-          throw new Error(`claude-agent: provider "${config.provider}" is not served by this runtime; expected "${this.runtimeProvider}"`)
-        }
-        if (this.modelConstraint.models !== undefined && !this.modelConstraint.models.includes(config.model)) {
+        if (!modelConstraintAllows(this.modelConstraint, config.provider, config.model)) {
           throw new Error(`claude-agent: model "${config.model}" is not served by this Anthropic-compatible endpoint`)
+        }
+        const previousProvider = this.session.requestHeader()?.config.provider
+        if (this.claudeSessionId !== undefined && previousProvider !== undefined && previousProvider !== config.provider) {
+          throw new Error(`claude-agent: session thread uses provider "${previousProvider}"; start a new Claude conversation to use "${config.provider}"`)
         }
         const systemPrompt = renderPrompt(assembly)
         this.logRequestHeader(canonicalHeader({ config, ...systemPrompt.length === 0 ? {} : { system: systemPrompt } }))
@@ -304,7 +324,7 @@ export class ClaudeSdkAgent implements AgentDriver {
             ...model === undefined ? {} : { model },
           })
         })
-        const childEnv = await this.childEnv(config.model)
+        const childEnv = await this.childEnv(config)
         const outcome = await this.engine.run({
           prompt,
           cwd: this.cwd,

@@ -70,6 +70,15 @@ const child = spawn(process.execPath, [
   stdio: 'inherit',
 })
 
+const forwardSignal = (signal: NodeJS.Signals): void => {
+  if (child.exitCode === null && child.signalCode === null) child.kill(signal)
+}
+const forwardSigint = (): void => { forwardSignal('SIGINT') }
+const forwardSigterm = (): void => { forwardSignal('SIGTERM') }
+process.once('SIGINT', forwardSigint)
+process.once('SIGTERM', forwardSigterm)
 const [code, signal] = await once(child, 'exit') as [number | null, NodeJS.Signals | null]
+process.off('SIGINT', forwardSigint)
+process.off('SIGTERM', forwardSigterm)
 if (signal !== null) process.kill(process.pid, signal)
 process.exitCode = code ?? 1

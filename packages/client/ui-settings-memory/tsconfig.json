@@ -5,12 +5,14 @@
   "references": [
     { "path": "../../../vendor/cordis" },
     { "path": "../runtime" },
+    { "path": "../ui-conversation" },
     { "path": "../ui-settings" },
     { "path": "../ui-slots" },
     { "path": "../locale" },
     { "path": "../ui-primitives" },
     { "path": "../web-react" },
     { "path": "../../api/remotes/tsconfig.client.json" },
+    { "path": "../../memory/agent-memory" },
     { "path": "../../runtime-diagnostics/invariants" }
   ]
 }

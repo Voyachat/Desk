@@ -32,7 +32,7 @@ function observableList<T>(initial: T): {
   }
 }
 
-async function bench(current?: { id: SessionId; agentRuntime?: string }) {
+async function bench(current?: { id: SessionId; agentRuntime?: string; blank?: boolean; running?: boolean }) {
   const ctx = new Context()
   await ctx.plugin(SlotRegistry).await()
   const slots = ctx.get('slots') as SlotRegistry
@@ -41,7 +41,7 @@ async function bench(current?: { id: SessionId; agentRuntime?: string }) {
     children: { 'conversation.input.left': { kind: 'list', scope: 'session' } },
   } as never, () => null)
 
-  const byId: Record<string, { id: SessionId; agentRuntime?: string }> = {}
+  const byId: Record<string, { id: SessionId; agentRuntime?: string; blank?: boolean; running?: boolean }> = {}
   if (current !== undefined) byId[current.id] = current
   const sessionsList = observableList({
     ids: current === undefined ? [] : [current.id],
@@ -50,7 +50,9 @@ async function bench(current?: { id: SessionId; agentRuntime?: string }) {
     phase: 'ready' as const,
   })
   const open = vi.fn()
-  ctx.provide('sessions', { list: sessionsList, open })
+  const fork = vi.fn((_opts: { sessionId: SessionId; agentRuntime?: string }) =>
+    Promise.resolve('s-fork' as SessionId))
+  ctx.provide('sessions', { list: sessionsList, open, fork })
 
   const connectWorkspace = vi.fn((_workspaceId: string, _opts?: { agentRuntime?: string }) =>
     Promise.resolve('s-next' as SessionId))
@@ -62,7 +64,7 @@ async function bench(current?: { id: SessionId; agentRuntime?: string }) {
     connectWorkspace,
   })
   ctx.provide('locale', new LocaleRuntime(ctx))
-  return { ctx, slots, sessionsList, open, connectWorkspace }
+  return { ctx, slots, sessionsList, open, fork, connectWorkspace }
 }
 
 describe('claude-runtime-ui browser apply', () => {
@@ -125,6 +127,22 @@ describe('claude-runtime-ui browser apply', () => {
     await Promise.resolve()
     await Promise.resolve()
     expect(b.connectWorkspace).toHaveBeenCalledWith('w1', {})
+    await fiber.dispose()
+  })
+
+  it('forks retained conversation history under the selected runtime', async () => {
+    const b = await bench({ id: SID, agentRuntime: 'claude', blank: false, running: false })
+    const fiber = b.ctx.plugin({ inject: [...inject], apply })
+    await fiber.await()
+    const entry = b.slots.entries('conversation.input.left')[0]!
+    const injected = (entry.inject as unknown as (id: SessionId) => RuntimeSelectorInjected)(SID)
+    injected.select('codex')
+    await Promise.resolve()
+    await Promise.resolve()
+    expect(b.fork).toHaveBeenCalledWith({ sessionId: SID, agentRuntime: 'codex' })
+    expect(b.connectWorkspace).not.toHaveBeenCalled()
+    expect(b.open).toHaveBeenCalledWith('s-fork')
+    expect(injected.hooks.runtimeSelector.getSnapshot().warningSeq).toBe(1)
     await fiber.dispose()
   })
 

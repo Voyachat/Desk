@@ -4,11 +4,9 @@
  * current session runs under — Native (the DSH loop), Claude (the Claude
  * Agent SDK driver), or Codex (the OpenAI Codex driver).
  *
- * A session never changes its own runtime: its history was produced under
- * the driver it was created with, and the host refuses to rebuild it under
- * another. Switching therefore connects the current workspace under the
- * chosen runtime — reusing a blank session minted under it, else creating
- * one — and opens the result.
+ * A session never changes its own runtime. Switching a blank session connects
+ * another blank session; switching after completed work forks the retained
+ * transcript under the selected driver and opens that child.
  */
 
 import type { ClientContext, SessionId } from '@voyaseek-ai/dsh-client-runtime/client'
@@ -45,6 +43,8 @@ export interface RuntimeSelectorInjected {
    * @param runtime - the runtime id; empty string selects the default loop.
    */
   select: (runtime: string) => void
+  /** Dismiss the transient warning shown for a conversation handoff. */
+  dismissWarning: () => void
 }
 
 /** Required services: the seat registry, locale, session and workspace faces. */
@@ -65,13 +65,14 @@ export function apply(ctx: ClientContext): void {
     const injected = (sessionId: SessionId): RuntimeSelectorInjected => ({
       hooks: { runtimeSelector: controller.store },
       select: (runtime: string) => { void switchRuntime(scope, controller, sessionId, runtime) },
+      dismissWarning: () => { controller.dismissWarning() },
     })
 
     scope.effect(() => {
       const sync = (): void => {
         const state = scope.sessions.list.getSnapshot()
         const summary = state.current === undefined ? undefined : state.byId[state.current]
-        controller.sync(state.current, summary?.agentRuntime)
+        controller.sync(state.current, summary?.agentRuntime, summary?.blank, summary?.running)
       }
       sync()
       const stop = scope.sessions.list.subscribe(sync)
@@ -104,9 +105,10 @@ function workspaceFor(scope: ClientContext, sessionId: SessionId): string | unde
 }
 
 /**
- * Execute a runtime switch: connect the owning workspace under the chosen
- * runtime and open the resulting session. A switch in flight swallows
- * further picks; a failure surfaces on the chip until the next attempt.
+ * Execute a runtime switch. Blank sessions use ordinary workspace connection;
+ * a non-blank session forks its latest completed turn under the target runtime
+ * so visible history and DSH context remain available. A switch in flight
+ * swallows further picks; a failure surfaces on the chip until the next attempt.
  * @param scope - context carrying session and workspace services.
  * @param controller - the display state carrier.
  * @param sessionId - the session the pick was made under.
@@ -124,12 +126,16 @@ async function switchRuntime(
     controller.fail('no workspace available for the runtime switch')
     return
   }
-  controller.begin()
+  const summary = scope.sessions.list.getSnapshot().byId[sessionId]
+  const carriesHistory = summary?.blank === false
+  controller.begin(carriesHistory)
   try {
-    const target = await scope.workspaces.connectWorkspace(
-      workspaceId as never,
-      runtime === '' ? {} : { agentRuntime: runtime },
-    )
+    const target = carriesHistory
+      ? await scope.sessions.fork({ sessionId, agentRuntime: runtime })
+      : await scope.workspaces.connectWorkspace(
+        workspaceId as never,
+        runtime === '' ? {} : { agentRuntime: runtime },
+      )
     controller.done()
     if (target !== sessionId) scope.sessions.open(target)
   } catch (error) {

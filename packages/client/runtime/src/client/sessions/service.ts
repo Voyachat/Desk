@@ -29,7 +29,7 @@ import type { SnapshotStore } from '../contract/store.ts'
 import { createSnapshotStore } from '../contract/store.ts'
 import type { SessionFace } from '../contract/session.ts'
 import type { AgentContext, ISessions } from '../contract/sessions.ts'
-import { createScope, scopeOf as scopeTagOf } from '../agents/scope.ts'
+import { createScope, scopeOf as scopeTagOf } from '../contract/agent-scope.ts'
 import type { ConversationRuntime } from './conversation-assembler.ts'
 import { SessionManager } from './manager.ts'
 import type { SessionRemotes } from './remotes.ts'
@@ -149,10 +149,10 @@ export interface SessionBinding {
   readonly ctx: AgentContext
 }
 
-// Scope primitives live in ../agents/scope.ts (the client mirror of host
+// Scope primitives live in ../contract/agent-scope.ts (the client mirror of host
 // dsh-scope, keyed by Agent identity); re-exported here so existing
 // consumers keep their import site.
-export { scopeOf } from '../agents/scope.ts'
+export { scopeOf } from '../contract/agent-scope.ts'
 
 /**
  * Workspace display title of a session cwd: the path's last non-empty
@@ -502,7 +502,8 @@ export class SessionRuntime implements ISessions {
    * @param opts - source session id, the optional event seq anchoring the
    *   cut (the boundary is the first turn/end at or after it; an in-log
    *   anchor in an open turn is unavailable rather than clipped backward),
-   *   and whether to increment an inherited durable title before resolving.
+   *   whether to increment an inherited durable title before resolving, and
+   *   an optional target runtime (`''` selects the native loop).
    *   A fractional anchor floors to a real event seq: the frozen nodes of an
    *   interrupted turn carry flow-ordering seqs between two events, and the
    *   wire takes integers only.
@@ -514,6 +515,7 @@ export class SessionRuntime implements ISessions {
     sessionId: SessionId
     atSeq?: number
     increaseTitle?: boolean
+    agentRuntime?: string
   }): Promise<SessionId> {
     const sourceTitle = opts.increaseTitle
       ? this.list.getSnapshot().byId[opts.sessionId]?.title
@@ -524,6 +526,7 @@ export class SessionRuntime implements ISessions {
       // turn/start), so the host's first-turn/end-at-or-after cut still ends
       // on that turn — never clipped back to the previous one.
       ...(opts.atSeq === undefined ? {} : { atSeq: Math.floor(opts.atSeq) }),
+      ...(opts.agentRuntime === undefined ? {} : { agentRuntime: opts.agentRuntime }),
     })
     if (!result.ok) throw new SessionForkError(result.error, opts.sessionId)
     this.projectList()

@@ -4,6 +4,15 @@
   min-width: 0;
 }
 
+.memory {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--dsw-alias-interactive-bg-hover);
+}
+
 .root[data-open] {
   padding-bottom: 4px;
 }
@@ -44,6 +53,13 @@
   line-height: 24px;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.actions {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
 }
 
 .body {

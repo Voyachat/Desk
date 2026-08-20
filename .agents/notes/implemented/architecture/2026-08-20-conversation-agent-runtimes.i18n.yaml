@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-20-conversation-agent-runtimes.md
-2026-08-20-conversation-agent-runtimes.md: aa59ba902a7844ed28d811936fdc60b0b958ca0b
-2026-08-20-conversation-agent-runtimes.zh.md: 02190dc596ed7b681143ee000e415963a0618914
+2026-08-20-conversation-agent-runtimes.md: 89a04dcfe3bdfb2d480777180a1f3d2e4cc2fa9f
+2026-08-20-conversation-agent-runtimes.zh.md: 4cc94e6c6ba9c48173fda445584c65cb2a9590bc

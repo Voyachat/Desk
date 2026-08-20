@@ -8,11 +8,15 @@
 
 import type { Context } from '@voyaseek-ai/cordis'
 import z from '@voyaseek-ai/schemastery'
-import type { Agent } from '@voyaseek-ai/dsh-agent'
+import { installModelSelection } from '@voyaseek-ai/dsh-agent'
+import type { Agent, AgentHandle, AgentOptions, ModelSelection } from '@voyaseek-ai/dsh-agent'
+import { resolveSessionPreset } from '@voyaseek-ai/dsh-agent-presets'
 import type { CommandInvocation, CommandResult } from '@voyaseek-ai/dsh-commands'
 import type { GoalRef, GoalView } from '@voyaseek-ai/dsh-goal'
 import type { ContentBlock } from '@voyaseek-ai/dsh-llm'
-import type { SessionId } from '@voyaseek-ai/dsh-session'
+import { foldRequestHeader } from '@voyaseek-ai/dsh-session'
+import type { SessionEvent, SessionId } from '@voyaseek-ai/dsh-session'
+import type { SessionPersistence } from '@voyaseek-ai/dsh-session-persistence'
 import type { ShellRunResult } from '@voyaseek-ai/dsh-shell'
 import type { ResolvedSubagentStartRequest, SubagentProvider, SubagentResult } from '@voyaseek-ai/dsh-subagent'
 import { startInProcessRun } from '@voyaseek-ai/dsh-subagent-in-process-driver'
@@ -23,6 +27,8 @@ import type { GenericCallView, ObjectJsonSchema, ToolRestriction } from '@voyase
 import type {} from '@voyaseek-ai/dsh-sandbox-policy'
 import type {} from '@voyaseek-ai/dsh-system-prompt'
 import type {} from '@voyaseek-ai/dsh-user-approval'
+import type {} from '@voyaseek-ai/dsh-agent-default-model'
+import type {} from '@voyaseek-ai/dsh-subprocess'
 import {
   COMPLEX_GOAL_CHANGE_VERSION,
   decodeAudit,
@@ -40,6 +46,11 @@ import type {
   ComplexGoalVerificationGate,
   ComplexGoalVerificationGateResult,
 } from './types.ts'
+import {
+  prepareComplexGoalWorkspace,
+  promoteComplexGoalWorkspace,
+  type ComplexGoalWorkspaceOptions,
+} from './workspace.ts'
 
 export type * from './types.ts'
 export {
@@ -64,13 +75,22 @@ export const inject = [
 
 const COMMAND_NAME = 'goal-complex'
 const AUDITOR_PROVIDER = 'complex-goal-auditor'
+const EXECUTOR_PROVIDER = 'complex-goal-executor'
 const USAGE = 'Usage: /goal-complex [<objective>|resume]'
 const TIME_LIMIT_CODE = 'COMPLEX_GOAL_TIME_LIMIT'
 const DEFAULT_VERIFICATION_TIMEOUT_MS = 120_000
 const DEFAULT_VERIFICATION_OUTPUT_MAX_BYTES = 8_192
 const DEFAULT_MAX_DURATION_MS = 3_600_000
+const DEFAULT_SCHEDULER_POLL_INTERVAL_MS = 5_000
+const DEFAULT_RETRY_INITIAL_DELAY_MS = 2_000
+const DEFAULT_RETRY_MAX_DELAY_MS = 60_000
+const DEFAULT_MAX_RECOVERY_ATTEMPTS = 5
+const DEFAULT_MAX_AUTOMATIC_RESUMES = 2
+const DEFAULT_WORKSPACE_COMMAND_TIMEOUT_MS = 30_000
+const DEFAULT_PROMOTION_PATCH_MAX_BYTES = 8 * 1_024 * 1_024
 const MAX_VERIFICATION_OUTPUT_BYTES = 65_536
 const MAX_VERIFICATION_GATES = 32
+const MAX_PROMOTION_PATCH_BYTES = 64 * 1_024 * 1_024
 
 /** One trusted deployment command used as a deterministic completion gate. */
 export interface VerificationGateConfig {
@@ -92,6 +112,26 @@ export interface Config {
   verificationOutputMaxBytes?: number
   /** Total wall-clock lifetime retained across pause and process restart. */
   maxDurationMs?: number
+  /** Automatically reconcile nonterminal persisted goals without a slash command. */
+  automaticResume?: boolean
+  /** Interval between durable session reconciliation passes. */
+  schedulerPollIntervalMs?: number
+  /** First delay after an automatically resumed run fails. */
+  retryInitialDelayMs?: number
+  /** Maximum exponential retry delay. */
+  retryMaxDelayMs?: number
+  /** Consecutive automatic run failures before the goal is blocked. */
+  maxRecoveryAttempts?: number
+  /** Maximum automatically reconciled goals running concurrently. */
+  maxAutomaticResumes?: number
+  /** Git workspace policy; `auto` degrades explicitly for non-Git or dirty sources. */
+  workspaceIsolation?: 'off' | 'auto' | 'required'
+  /** Durable parent directory for detached per-goal Git worktrees. */
+  workspaceRoot?: string
+  /** Timeout for each trusted Git workspace command. */
+  workspaceCommandTimeoutMs?: number
+  /** Maximum exact binary patch promoted from an audited worktree. */
+  promotionPatchMaxBytes?: number
 }
 
 /** Schemastery configuration for deterministic verification and the total budget. */
@@ -106,12 +146,34 @@ export const Config: z<Config> = z.object({
   verificationOutputMaxBytes: z.number().step(1).min(1).max(MAX_VERIFICATION_OUTPUT_BYTES)
     .default(DEFAULT_VERIFICATION_OUTPUT_MAX_BYTES),
   maxDurationMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS).default(DEFAULT_MAX_DURATION_MS),
+  automaticResume: z.boolean().default(true),
+  schedulerPollIntervalMs: z.number().step(1).min(250).max(MAX_TIMER_DELAY_MS)
+    .default(DEFAULT_SCHEDULER_POLL_INTERVAL_MS),
+  retryInitialDelayMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS)
+    .default(DEFAULT_RETRY_INITIAL_DELAY_MS),
+  retryMaxDelayMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS)
+    .default(DEFAULT_RETRY_MAX_DELAY_MS),
+  maxRecoveryAttempts: z.number().step(1).min(1).max(100).default(DEFAULT_MAX_RECOVERY_ATTEMPTS),
+  maxAutomaticResumes: z.number().step(1).min(1).max(32).default(DEFAULT_MAX_AUTOMATIC_RESUMES),
+  workspaceIsolation: z.union(['off', 'auto', 'required'] as const).default('off'),
+  workspaceRoot: z.string(),
+  workspaceCommandTimeoutMs: z.number().step(1).min(1).max(MAX_TIMER_DELAY_MS)
+    .default(DEFAULT_WORKSPACE_COMMAND_TIMEOUT_MS),
+  promotionPatchMaxBytes: z.number().step(1).min(1).max(MAX_PROMOTION_PATCH_BYTES)
+    .default(DEFAULT_PROMOTION_PATCH_MAX_BYTES),
 })
 
 interface ResolvedConfig {
   readonly verificationGates: readonly ComplexGoalVerificationGate[]
   readonly verificationOutputMaxBytes: number
   readonly maxDurationMs: number
+  readonly automaticResume: boolean
+  readonly schedulerPollIntervalMs: number
+  readonly retryInitialDelayMs: number
+  readonly retryMaxDelayMs: number
+  readonly maxRecoveryAttempts: number
+  readonly maxAutomaticResumes: number
+  readonly workspace: ComplexGoalWorkspaceOptions
 }
 
 const MANAGER_SCHEMA: ObjectJsonSchema = {
@@ -200,18 +262,22 @@ interface ActiveRun {
   done: Promise<unknown>
 }
 
-/** Fresh in-process provider whose child receives a final read-only override before publication. */
-class ReadOnlyAuditorProvider implements SubagentProvider {
-  readonly name = AUDITOR_PROVIDER
+/** Fresh role provider whose child runs in the durable task workspace. */
+class ComplexGoalRoleProvider implements SubagentProvider {
   readonly capabilities = { outputSchema: true, depthLimit: true, toolFilter: true, persona: true }
   readonly inheritsParentContext = false
 
+  constructor(readonly name: string, private readonly readOnly: boolean) {}
+
   start(request: ResolvedSubagentStartRequest) {
+    const snapshot = foldComplexGoal(request.parent.session.events)
+    if (snapshot === undefined) throw new Error(`${this.name} requires a durable complex-goal snapshot`)
     return startInProcessRun(request, {
-      setup(childCtx) {
+      cwd: snapshot.workspace.taskCwd,
+      ...this.readOnly ? { setup: (childCtx: Context) => {
         const child = childCtx.agent as Agent
         child.session.append('sandbox/mode', { mode: 'read-only', source: 'delegation' })
-      },
+      } } : {},
     })
   }
 }
@@ -241,6 +307,9 @@ function positiveInteger(value: number, field: string, max: number): number {
 
 /** Validate config even when a caller bypasses Loader normalization. */
 function resolveConfig(config: Config): ResolvedConfig {
+  if (config.automaticResume !== undefined && typeof config.automaticResume !== 'boolean') {
+    throw new TypeError('automaticResume must be a boolean')
+  }
   const verificationTimeoutMs = positiveInteger(
     config.verificationTimeoutMs ?? DEFAULT_VERIFICATION_TIMEOUT_MS,
     'verificationTimeoutMs',
@@ -255,6 +324,55 @@ function resolveConfig(config: Config): ResolvedConfig {
     config.maxDurationMs ?? DEFAULT_MAX_DURATION_MS,
     'maxDurationMs',
     MAX_TIMER_DELAY_MS,
+  )
+  const schedulerPollIntervalMs = positiveInteger(
+    config.schedulerPollIntervalMs ?? DEFAULT_SCHEDULER_POLL_INTERVAL_MS,
+    'schedulerPollIntervalMs',
+    MAX_TIMER_DELAY_MS,
+  )
+  if (schedulerPollIntervalMs < 250) throw new TypeError('schedulerPollIntervalMs must be at least 250')
+  const retryInitialDelayMs = positiveInteger(
+    config.retryInitialDelayMs ?? DEFAULT_RETRY_INITIAL_DELAY_MS,
+    'retryInitialDelayMs',
+    MAX_TIMER_DELAY_MS,
+  )
+  const retryMaxDelayMs = positiveInteger(
+    config.retryMaxDelayMs ?? DEFAULT_RETRY_MAX_DELAY_MS,
+    'retryMaxDelayMs',
+    MAX_TIMER_DELAY_MS,
+  )
+  if (retryMaxDelayMs < retryInitialDelayMs) {
+    throw new TypeError('retryMaxDelayMs must be greater than or equal to retryInitialDelayMs')
+  }
+  const maxRecoveryAttempts = positiveInteger(
+    config.maxRecoveryAttempts ?? DEFAULT_MAX_RECOVERY_ATTEMPTS,
+    'maxRecoveryAttempts',
+    100,
+  )
+  const maxAutomaticResumes = positiveInteger(
+    config.maxAutomaticResumes ?? DEFAULT_MAX_AUTOMATIC_RESUMES,
+    'maxAutomaticResumes',
+    32,
+  )
+  const workspaceMode = config.workspaceIsolation ?? 'off'
+  if (!['off', 'auto', 'required'].includes(workspaceMode)) {
+    throw new TypeError('workspaceIsolation must be off, auto, or required')
+  }
+  const workspaceRoot = config.workspaceRoot === undefined
+    ? undefined
+    : normalizedText(config.workspaceRoot, 'workspaceRoot')
+  if (workspaceMode !== 'off' && workspaceRoot === undefined) {
+    throw new TypeError('workspaceRoot is required when workspaceIsolation is enabled')
+  }
+  const workspaceCommandTimeoutMs = positiveInteger(
+    config.workspaceCommandTimeoutMs ?? DEFAULT_WORKSPACE_COMMAND_TIMEOUT_MS,
+    'workspaceCommandTimeoutMs',
+    MAX_TIMER_DELAY_MS,
+  )
+  const promotionPatchMaxBytes = positiveInteger(
+    config.promotionPatchMaxBytes ?? DEFAULT_PROMOTION_PATCH_MAX_BYTES,
+    'promotionPatchMaxBytes',
+    MAX_PROMOTION_PATCH_BYTES,
   )
   const configured = config.verificationGates ?? []
   if (configured.length > MAX_VERIFICATION_GATES) {
@@ -278,7 +396,23 @@ function resolveConfig(config: Config): ResolvedConfig {
       ),
     }
   })
-  return { verificationGates, verificationOutputMaxBytes, maxDurationMs }
+  return {
+    verificationGates,
+    verificationOutputMaxBytes,
+    maxDurationMs,
+    automaticResume: config.automaticResume ?? true,
+    schedulerPollIntervalMs,
+    retryInitialDelayMs,
+    retryMaxDelayMs,
+    maxRecoveryAttempts,
+    maxAutomaticResumes,
+    workspace: {
+      mode: workspaceMode,
+      ...workspaceRoot === undefined ? {} : { root: workspaceRoot },
+      commandTimeoutMs: workspaceCommandTimeoutMs,
+      promotionPatchMaxBytes,
+    },
+  }
 }
 
 function decodeManager(value: unknown): ManagerDecision {
@@ -438,7 +572,10 @@ async function commit(
   operation: ComplexGoalOperation,
   changes: SnapshotChanges,
 ): Promise<ComplexGoalSnapshot> {
-  const next = nextSnapshot(snapshot, operation, changes)
+  const next = nextSnapshot(snapshot, operation,
+    operation === 'interrupt' || operation === 'resume' || operation === 'retry'
+      ? changes
+      : { ...changes, recovery: undefined })
   agent.session.append('complex-goal/change', next.change)
   await ctx.sessions.flush(agent.session)
   return next.snapshot
@@ -483,11 +620,11 @@ function gateResult(
   const stdout = boundedText(result.stdout.text, outputMaxBytes)
   const sandbox = result.sandbox?.mode === 'read-only'
     ? {
-        mode: 'read-only' as const,
-        denied: result.sandbox.denied,
-        ...result.sandbox.enforcement === undefined ? {} : { enforcement: result.sandbox.enforcement },
-        ...result.sandbox.runnerFailed === undefined ? {} : { runnerFailed: result.sandbox.runnerFailed },
-      }
+      mode: 'read-only' as const,
+      denied: result.sandbox.denied,
+      ...result.sandbox.enforcement === undefined ? {} : { enforcement: result.sandbox.enforcement },
+      ...result.sandbox.runnerFailed === undefined ? {} : { runnerFailed: result.sandbox.runnerFailed },
+    }
     : undefined
   const status = sandbox === undefined || sandbox.runnerFailed === true || result.aborted
     ? 'runner-failed'
@@ -538,6 +675,7 @@ async function runVerificationGate(
   parent: Agent,
   gate: ComplexGoalVerificationGate,
   outputMaxBytes: number,
+  workdir: string,
   signal: AbortSignal,
 ): Promise<ComplexGoalVerificationGateResult> {
   if (ctx.shell.sandboxMode === undefined) {
@@ -550,11 +688,14 @@ async function runVerificationGate(
   try {
     const result = await ctx.shell.run(ctx.shell.resolve({
       command: gate.command,
-      ...parent.session.header.cwd === undefined ? {} : { workdir: parent.session.header.cwd },
+      workdir,
       timeoutMs: gate.timeoutMs,
       stdoutMaxBytes: outputMaxBytes,
       signal,
-      sandboxPolicy: ctx.sandboxPolicy.resolve({ session: parent.session, mode: 'read-only' }),
+      sandboxPolicy: {
+        ...ctx.sandboxPolicy.resolve({ session: parent.session, mode: 'read-only' }),
+        workspaceRoot: workdir,
+      },
     }))
     if (signal.aborted) signal.throwIfAborted()
     return gateResult(gate, result, outputMaxBytes)
@@ -575,7 +716,14 @@ async function verifyRound(
   }
   const gates: ComplexGoalVerificationGateResult[] = []
   for (const gate of snapshot.verificationGates) {
-    gates.push(await runVerificationGate(ctx, parent, gate, snapshot.verificationOutputMaxBytes, signal))
+    gates.push(await runVerificationGate(
+      ctx,
+      parent,
+      gate,
+      snapshot.verificationOutputMaxBytes,
+      snapshot.workspace.taskCwd,
+      signal,
+    ))
   }
   const verification: ComplexGoalVerification = {
     round: snapshot.round,
@@ -600,6 +748,9 @@ function render(snapshot: ComplexGoalSnapshot): string {
     `Objective: ${snapshot.objective}`,
     `Rounds: ${snapshot.round}/${snapshot.maxRounds}`,
     `Deadline: ${new Date(snapshot.deadlineAtMs).toISOString()}`,
+    snapshot.workspace.kind === 'git-worktree'
+      ? `Workspace: isolated at ${snapshot.workspace.taskCwd}`
+      : `Workspace: shared (${snapshot.workspace.reason}) at ${snapshot.workspace.taskCwd}`,
   ]
   if (snapshot.verificationGates.length > 0) {
     lines.push(`Verification: ${snapshot.latestVerification?.status ?? 'pending'}`)
@@ -613,6 +764,10 @@ function render(snapshot: ComplexGoalSnapshot): string {
     if (snapshot.latestAudit.missing.length > 0) lines.push(`Missing: ${snapshot.latestAudit.missing.join('; ')}`)
   }
   if (snapshot.blocker !== undefined) lines.push(`Blocker: ${snapshot.blocker}`)
+  if (snapshot.recovery !== undefined) {
+    lines.push(`Automatic retry: ${snapshot.recovery.attempt} at ${new Date(snapshot.recovery.nextAttemptAtMs).toISOString()}`)
+  }
+  if (snapshot.promotion !== undefined) lines.push(`Promotion: ${snapshot.promotion}`)
   lines.push('', snapshot.phase === 'paused' || snapshot.phase === 'blocked'
     ? 'Command: /goal-complex resume'
     : USAGE)
@@ -623,6 +778,7 @@ async function runLoop(
   ctx: Context,
   parent: Agent,
   initial: ComplexGoalSnapshot,
+  config: ResolvedConfig,
   signal: AbortSignal,
 ): Promise<ComplexGoalSnapshot> {
   let snapshot = initial
@@ -672,10 +828,29 @@ async function runLoop(
           && audit.alignment === 'aligned'
           && verificationPassed(snapshot)
         if (verifiedComplete) {
+          let promotion: NonNullable<ComplexGoalSnapshot['promotion']> = 'not-required'
+          if (snapshot.workspace.kind === 'git-worktree') {
+            try {
+              promotion = await promoteComplexGoalWorkspace(ctx, snapshot.workspace, config.workspace, signal)
+            } catch (error: unknown) {
+              const blocker = `Audited task workspace could not be promoted: ${error instanceof Error ? error.message : String(error)}`
+              snapshot = await commit(ctx, parent, snapshot, 'audit', {
+                phase: 'blocked',
+                trustedState: audit.verifiedState,
+                latestAudit: audit,
+                resumeAt: 'auditing',
+                blocker,
+              })
+              blockGoal(ctx, parent, snapshot, 'promotion-blocked', blocker)
+              await ctx.sessions.flush(parent.session)
+              return snapshot
+            }
+          }
           snapshot = await commit(ctx, parent, snapshot, 'audit', {
             phase: 'complete',
             trustedState: audit.verifiedState,
             latestAudit: audit,
+            promotion,
             resumeAt: undefined,
             blocker: undefined,
           })
@@ -754,7 +929,7 @@ async function runLoop(
 
       const executed = await runStructuredRole(
         ctx,
-        'spawn',
+        EXECUTOR_PROVIDER,
         parent,
         signal,
         `Complex goal Executor ${snapshot.round}`,
@@ -799,6 +974,7 @@ async function startGoal(
   agent: Agent,
   objective: string,
   config: ResolvedConfig,
+  signal: AbortSignal,
 ): Promise<ComplexGoalSnapshot> {
   const current = foldComplexGoal(agent.session.events)
   if (current !== undefined && current.phase !== 'complete') {
@@ -808,6 +984,12 @@ async function startGoal(
   if (existingGoal !== undefined && existingGoal.phase !== 'complete') {
     throw new Error('The session already has a non-complete ordinary goal. Pause, complete, or clear it before starting a complex task goal.')
   }
+  const workspace = await prepareComplexGoalWorkspace(
+    ctx,
+    agent.session.header.cwd,
+    config.workspace,
+    signal,
+  )
   const goal = ctx.goals.create(agent, { objective })
   ctx.goals.disarm(agent)
   const startedAtMs = Date.now()
@@ -820,6 +1002,7 @@ async function startGoal(
     phase: 'planning',
     round: 0,
     maxRounds: goal.maxGoalRounds,
+    workspace,
     verificationGates: config.verificationGates,
     verificationOutputMaxBytes: config.verificationOutputMaxBytes,
     trustedState: emptyVerifiedState(),
@@ -838,6 +1021,7 @@ async function runWithinBudget(
   ctx: Context,
   agent: Agent,
   initial: ComplexGoalSnapshot,
+  config: ResolvedConfig,
   signal: AbortSignal,
 ): Promise<ComplexGoalSnapshot> {
   if (initial.phase === 'complete' || initial.phase === 'blocked' && Date.now() >= initial.deadlineAtMs) {
@@ -855,7 +1039,7 @@ async function runWithinBudget(
   }
   const runDeadline = deadline(signal, remaining, TIME_LIMIT_CODE)
   try {
-    return await runLoop(ctx, agent, initial, runDeadline.signal)
+    return await runLoop(ctx, agent, initial, config, runDeadline.signal)
   } finally {
     runDeadline[Symbol.dispose]()
   }
@@ -879,10 +1063,262 @@ async function trackedRun(
   }
 }
 
+function automaticCandidate(snapshot: ComplexGoalSnapshot | undefined, now = Date.now()): snapshot is ComplexGoalSnapshot {
+  if (snapshot === undefined || snapshot.phase === 'complete' || snapshot.phase === 'blocked') return false
+  return snapshot.recovery === undefined || snapshot.recovery.nextAttemptAtMs <= now
+}
+
+function boundedError(error: unknown): string {
+  const rendered = (error instanceof Error ? error.message : String(error)).trim() || 'unknown automatic recovery failure'
+  return rendered.length <= 2_048 ? rendered : `${rendered.slice(0, 2_048)}…`
+}
+
+function retryDelay(config: ResolvedConfig, attempt: number): number {
+  return Math.min(config.retryMaxDelayMs, config.retryInitialDelayMs * 2 ** Math.min(attempt - 1, 30))
+}
+
+function selectedModel(ctx: Context, events: readonly SessionEvent[]): ModelSelection | undefined {
+  const logged = foldRequestHeader(events)?.config
+  if (logged !== undefined) {
+    return {
+      provider: logged.provider,
+      model: logged.model,
+      ...logged.reasoningEffort === undefined ? {} : { reasoningEffort: logged.reasoningEffort },
+    }
+  }
+  return ctx.get('agentDefaultModel')?.currentSelection()
+}
+
+async function resumeColdAgent(
+  ctx: Context,
+  sessionId: SessionId,
+  meta: Parameters<typeof resolveSessionPreset>[0]['header'],
+  events: readonly SessionEvent[],
+  signal: AbortSignal,
+): Promise<AgentHandle> {
+  const selection = selectedModel(ctx, events)
+  const presetId = resolveSessionPreset({ header: meta, events })
+  const presets = ctx.get('agentPresets')
+  const setup = selection === undefined && presets === undefined
+    ? undefined
+    : async (agentCtx: Context): Promise<void> => {
+      if (selection !== undefined) {
+        installModelSelection(agentCtx, { current: selection, assembled: undefined })
+      }
+      if (presets !== undefined) await presets.mount(agentCtx, presetId)
+    }
+  const agentOptions: AgentOptions | undefined = selection === undefined
+    ? undefined
+    : {
+      provider: selection.provider,
+      model: selection.model,
+      ...selection.reasoningEffort === undefined ? {} : { reasoningEffort: selection.reasoningEffort },
+    }
+  return ctx.agents.resume({
+    resumeSessionId: sessionId,
+    signal,
+    ...agentOptions === undefined ? {} : { agentOptions },
+    ...setup === undefined ? {} : { setup },
+  })
+}
+
+async function recordAutomaticFailure(
+  ctx: Context,
+  agent: Agent,
+  config: ResolvedConfig,
+  error: unknown,
+): Promise<void> {
+  const snapshot = foldComplexGoal(agent.session.events)
+  if (snapshot === undefined || snapshot.phase === 'complete' || snapshot.phase === 'blocked') return
+  if (snapshot.phase !== 'paused') {
+    ctx.logger.warn(`complex-goal scheduler: session "${agent.id}" failed before a retry checkpoint: ${boundedError(error)}`)
+    return
+  }
+  const attempt = (snapshot.recovery?.attempt ?? 0) + 1
+  const lastError = boundedError(error)
+  if (attempt >= config.maxRecoveryAttempts) {
+    const blocker = `Automatic recovery failed ${attempt} consecutive times: ${lastError}`
+    const blocked = await commit(ctx, agent, snapshot, 'block', {
+      phase: 'blocked', resumeAt: snapshot.resumeAt ?? 'planning', blocker,
+    })
+    blockGoal(ctx, agent, blocked, 'automatic-recovery-exhausted', blocker)
+    await ctx.sessions.flush(agent.session)
+    return
+  }
+  await commit(ctx, agent, snapshot, 'retry', {
+    phase: 'paused',
+    recovery: {
+      attempt,
+      nextAttemptAtMs: Date.now() + retryDelay(config, attempt),
+      lastError,
+    },
+  })
+}
+
+interface ComplexGoalScheduler {
+  dispose(): Promise<void>
+}
+
+function startScheduler(
+  ctx: Context,
+  persistence: SessionPersistence,
+  active: Map<Agent, ActiveRun>,
+  config: ResolvedConfig,
+): ComplexGoalScheduler {
+  const controller = new AbortController()
+  const scheduled = new Set<SessionId>()
+  const coldFailures = new Map<SessionId, { readonly attempt: number; readonly nextAttemptAtMs: number }>()
+  const observed = new Map<SessionId, {
+    readonly revision: unknown
+    readonly snapshot: ComplexGoalSnapshot | undefined
+  }>()
+  const tasks = new Set<Promise<void>>()
+  let scan: Promise<void> | undefined
+
+  const deferCold = (sessionId: SessionId, error: unknown): void => {
+    const attempt = (coldFailures.get(sessionId)?.attempt ?? 0) + 1
+    coldFailures.set(sessionId, {
+      attempt,
+      nextAttemptAtMs: Date.now() + retryDelay(config, attempt),
+    })
+    ctx.logger.warn(`complex-goal scheduler: reconcile failed for session "${sessionId}": ${boundedError(error)}`)
+  }
+
+  const track = (task: Promise<void>): void => {
+    tasks.add(task)
+    void task.then(
+      () => { tasks.delete(task) },
+      () => { tasks.delete(task) },
+    )
+  }
+
+  const drive = async (agent: Agent): Promise<void> => {
+    let claimed = false
+    try {
+      await agent.whenIdle()
+      const initial = foldComplexGoal(agent.session.events)
+      if (!automaticCandidate(initial) || active.has(agent)) return
+      await trackedRun(active, agent, controller.signal, (signal) => {
+        const maintenance = agent.runMaintenance(maintenanceSignal => runWithinBudget(
+          ctx,
+          agent,
+          initial,
+          config,
+          AbortSignal.any([signal, maintenanceSignal]),
+        ))
+        claimed = true
+        return maintenance
+      })
+    } catch (error: unknown) {
+      if (controller.signal.aborted || !claimed) return
+      try {
+        await recordAutomaticFailure(ctx, agent, config, error)
+      } catch (checkpointError: unknown) {
+        ctx.logger.warn(`complex-goal scheduler: could not persist retry for session "${agent.id}": ${boundedError(checkpointError)}`)
+      }
+    }
+  }
+
+  const reconcileCold = async (sessionId: SessionId): Promise<void> => {
+    if (scheduled.has(sessionId) || controller.signal.aborted) return
+    scheduled.add(sessionId)
+    let handle: AgentHandle | undefined
+    try {
+      if (ctx.agents.get(sessionId) !== undefined) return
+      const inspected = await persistence.inspect(sessionId, controller.signal)
+      if (!automaticCandidate(foldComplexGoal(inspected.events)) || ctx.agents.get(sessionId) !== undefined) return
+      handle = await resumeColdAgent(ctx, sessionId, inspected.meta, inspected.events, controller.signal)
+      coldFailures.delete(sessionId)
+      await drive(handle.agent)
+    } catch (error: unknown) {
+      if (!controller.signal.aborted) deferCold(sessionId, error)
+    } finally {
+      if (handle !== undefined) {
+        try {
+          await handle.dispose()
+        } catch (error: unknown) {
+          ctx.logger.warn(`complex-goal scheduler: could not dispose resumed session "${sessionId}": ${boundedError(error)}`)
+        }
+      }
+      scheduled.delete(sessionId)
+    }
+  }
+
+  const scheduleLive = (agent: Agent): void => {
+    if (
+      controller.signal.aborted
+      || scheduled.has(agent.id)
+      || active.has(agent)
+      || scheduled.size >= config.maxAutomaticResumes
+      || !automaticCandidate(foldComplexGoal(agent.session.events))
+    ) return
+    scheduled.add(agent.id)
+    track(drive(agent).finally(() => { scheduled.delete(agent.id) }))
+  }
+
+  const scanOnce = async (): Promise<void> => {
+    if (controller.signal.aborted) return
+    const snapshots = await persistence.listSnapshots(controller.signal)
+    const present = new Set(snapshots.map(candidate => candidate.header.id))
+    for (const sessionId of observed.keys()) {
+      if (!present.has(sessionId)) observed.delete(sessionId)
+    }
+    for (const candidate of snapshots) {
+      if (controller.signal.aborted) break
+      const live = ctx.agents.get(candidate.header.id)
+      if (live !== undefined) {
+        scheduleLive(live)
+        continue
+      }
+      if (scheduled.has(candidate.header.id)) continue
+      if ((coldFailures.get(candidate.header.id)?.nextAttemptAtMs ?? 0) > Date.now()) continue
+      let observation = observed.get(candidate.header.id)
+      if (observation?.revision !== candidate.revision) {
+        try {
+          const inspected = await persistence.inspect(candidate.header.id, controller.signal)
+          observation = { revision: candidate.revision, snapshot: foldComplexGoal(inspected.events) }
+          observed.set(candidate.header.id, observation)
+          coldFailures.delete(candidate.header.id)
+        } catch (error: unknown) {
+          if (!controller.signal.aborted) deferCold(candidate.header.id, error)
+          continue
+        }
+      }
+      if (observation === undefined) continue
+      if (scheduled.size >= config.maxAutomaticResumes || !automaticCandidate(observation.snapshot)) continue
+      track(reconcileCold(candidate.header.id))
+    }
+  }
+
+  const requestScan = (): void => {
+    if (scan !== undefined || controller.signal.aborted) return
+    scan = scanOnce().catch((error: unknown) => {
+      if (!controller.signal.aborted) ctx.logger.warn(`complex-goal scheduler: scan failed: ${boundedError(error)}`)
+    }).finally(() => { scan = undefined })
+  }
+
+  const timer = setInterval(requestScan, config.schedulerPollIntervalMs)
+  requestScan()
+  const stopSessionStart = ctx.on('agent/session-start', ({ agent }) => { scheduleLive(agent) })
+
+  return {
+    async dispose(): Promise<void> {
+      clearInterval(timer)
+      stopSessionStart()
+      controller.abort(new Error('complex-goal scheduler disposed'))
+      await Promise.allSettled([
+        ...tasks,
+        ...scan === undefined ? [] : [scan],
+      ])
+    },
+  }
+}
+
 interface ComplexGoalToolValue {
   readonly phase: ComplexGoalSnapshot['phase']
   readonly round: number
   readonly maxRounds: number
+  readonly workspace: 'isolated' | 'shared'
   readonly verification: 'not-configured' | 'pending' | 'passed' | 'failed'
   readonly summary: string
 }
@@ -892,6 +1328,7 @@ function toolValue(snapshot: ComplexGoalSnapshot): ComplexGoalToolValue {
     phase: snapshot.phase,
     round: snapshot.round,
     maxRounds: snapshot.maxRounds,
+    workspace: snapshot.workspace.kind === 'git-worktree' ? 'isolated' : 'shared',
     verification: snapshot.verificationGates.length === 0
       ? 'not-configured'
       : snapshot.latestVerification?.status ?? 'pending',
@@ -907,7 +1344,15 @@ function presentComplexGoal(args: { objective: string }): GenericCallView {
 export function apply(ctx: Context, config: Config = {}): void {
   const resolved = resolveConfig(config)
   const active = new Map<Agent, ActiveRun>()
-  ctx.subagents.registerProvider(new ReadOnlyAuditorProvider())
+  ctx.subagents.registerProvider(new ComplexGoalRoleProvider(EXECUTOR_PROVIDER, false))
+  ctx.subagents.registerProvider(new ComplexGoalRoleProvider(AUDITOR_PROVIDER, true))
+
+  if (resolved.automaticResume) {
+    ctx.inject(['sessionPersistence'], (schedulerCtx) => {
+      const scheduler = startScheduler(schedulerCtx, schedulerCtx.sessionPersistence, active, resolved)
+      schedulerCtx.effect(() => () => scheduler.dispose(), 'complex-goal: durable scheduler')
+    })
+  }
 
   ctx.systemPrompt.section({
     name: 'tool:complex-goal',
@@ -933,6 +1378,7 @@ export function apply(ctx: Context, config: Config = {}): void {
           phase: { type: 'string', required: true, enum: ['planning', 'executing', 'auditing', 'paused', 'blocked', 'complete'] },
           round: { type: 'integer', required: true },
           maxRounds: { type: 'integer', required: true },
+          workspace: { type: 'string', required: true, enum: ['isolated', 'shared'] },
           verification: { type: 'string', required: true, enum: ['not-configured', 'pending', 'passed', 'failed'] },
           summary: { type: 'string', required: true },
         },
@@ -943,9 +1389,9 @@ export function apply(ctx: Context, config: Config = {}): void {
       const execution = goalToolExecution(ctx, exec)
       requireDirectHuman(ctx, execution)
       const objective = normalizedText(args.objective.trim(), 'complex goal objective')
-      const initial = await startGoal(ctx, execution.agent, objective, resolved)
+      const initial = await startGoal(ctx, execution.agent, objective, resolved, exec.signal)
       return toolValue(await trackedRun(active, execution.agent, exec.signal,
-        signal => runWithinBudget(ctx, execution.agent, initial, signal)))
+        signal => runWithinBudget(ctx, execution.agent, initial, resolved, signal)))
     },
     presentCall: presentComplexGoal,
   }))
@@ -972,13 +1418,13 @@ export function apply(ctx: Context, config: Config = {}): void {
       try {
         const initial = input.toLowerCase() === 'resume'
           ? current
-          : await startGoal(ctx, invocation.agent, input, resolved)
+          : await startGoal(ctx, invocation.agent, input, resolved, invocation.signal)
         if (initial === undefined) {
           return { kind: 'error', text: `No resumable complex task goal is recorded.\n${USAGE}` }
         }
         const result = await trackedRun(active, invocation.agent, invocation.signal, signal =>
           invocation.agent.runMaintenance(maintenanceSignal =>
-            runWithinBudget(ctx, invocation.agent, initial, AbortSignal.any([signal, maintenanceSignal]))))
+            runWithinBudget(ctx, invocation.agent, initial, resolved, AbortSignal.any([signal, maintenanceSignal]))))
         return { kind: 'success', text: render(result) }
       } catch (error: unknown) {
         const failed = foldComplexGoal(invocation.agent.session.events)

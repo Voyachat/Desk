@@ -62,8 +62,8 @@
   height: 100%;
   overflow: hidden;
   background: var(--dsw-alias-bg-base);
-  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l1);
-  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l1);
+  --dsh-scrollbar-thumb: var(--dsw-alias-scrollbar-bg-l2);
+  --dsh-scrollbar-thumb-hover: var(--dsw-alias-scrollbar-hover-l2);
 }
 
 /* Persistent settings sidebar. Top padding reserves the return control's

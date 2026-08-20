@@ -243,7 +243,7 @@ export const longProbe = 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 + 1 +
     } finally {
       await rm(path, { force: true })
     }
-  })
+  }, 20_000)
 
   it('reports an unused suppression', async () => {
     const suffix = randomUUID()

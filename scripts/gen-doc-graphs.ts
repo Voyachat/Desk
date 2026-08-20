@@ -98,6 +98,15 @@ const GROUP_ORDER = [
 
 const SERVICE_ROLES: ServiceRole[] = [
   {
+    key: 'agentMemory',
+    pkg: 'agent-memory',
+    title: 'Structured cross-session memory',
+    mode: 'seam',
+    implementations: ['agent-memory-settings'],
+    consumers: ['agent-memory-context', 'apiproxy'],
+    note: 'The provider owns durable capture, maintenance, recall, and mutation; the context plugin supplies logged model-visible recall and the Host exposes user management operations.',
+  },
+  {
     key: 'attachments',
     pkg: 'attachment',
     title: 'Durable binary attachment storage',
@@ -105,6 +114,14 @@ const SERVICE_ROLES: ServiceRole[] = [
     implementations: ['attachment-local'],
     consumers: ['host-runtime', 'llm-pi-ai'],
     note: 'The host commits accepted images before session events; provider adapters resolve authorized durable references into provider-native content.',
+  },
+  {
+    key: 'imageFallback',
+    pkg: 'image-fallback',
+    title: 'Image-to-text fallback routing',
+    mode: 'core',
+    consumers: ['tool-fs', 'apiproxy'],
+    note: 'The service resolves ordered hosted-vision and local-document fallbacks for text-only model routes; file tools and Host diagnostics consume its bounded result.',
   },
   {
     key: 'documentConverter',

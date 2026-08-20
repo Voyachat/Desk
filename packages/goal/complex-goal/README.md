@@ -2,7 +2,7 @@
 
 English | [中文](README.zh.md)
 
-Complex goals with independent environment verification. A root Agent may select `complex_goal` from the semantics of a direct human request in any language; `/goal-complex <objective>` remains available as the explicit Web command. The package reuses `ctx.goals` for the objective lifecycle, the owning session log for durable state, and fresh in-process subagents for Manager, Executor, and Auditor roles. The design adapts the Manager–Executor–Auditor boundaries from the MIT-licensed LongHorizon-Harness baseline recorded in [the open-source adoption ledger](../../../.open-source/adoptions.yaml); no upstream Python runtime, file ledger, dashboard, or source code is embedded.
+Complex goals with independent environment verification, durable automatic recovery, and optional per-task Git worktrees. A root Agent may select `complex_goal` from the semantics of a direct human request in any language; `/goal-complex <objective>` remains available as the explicit Web command. The package reuses `ctx.goals` for the objective lifecycle, the owning session log for durable state, `ctx.agents` for cold resume, and fresh in-process subagents for Manager, Executor, and Auditor roles. The design adapts the Manager–Executor–Auditor boundaries from the MIT-licensed LongHorizon-Harness baseline recorded in [the open-source adoption ledger](../../../.open-source/adoptions.yaml), and the outer reconciliation pattern from the Apache-2.0 Symphony baseline recorded in [the reconciliation Agent Note](../../../.agents/notes/implemented/architecture/2026-08-20-durable-complex-goal-reconciliation.md); no upstream runtime, file ledger, dashboard, or source code is embedded.
 
 ## Behavior
 
@@ -12,7 +12,13 @@ Before the Auditor starts, the host runs every command in `verificationGates` th
 
 The Auditor starts in another fresh session. A provider-owned creation hook appends `sandbox/mode: read-only` before publication and the shared delegation path pins approval to `never`; a fixed allowlist further limits the Auditor to observational tools present in the parent. Only `status: complete`, `integrity: clean`, and `alignment: aligned`, together with passed deterministic checks, commits completion. An Auditor response that claims completion while a check failed cannot replace trusted state. Every accepted audit replaces the complete trusted requirement, artifact, fact, and evidence state that a later Manager may read.
 
-Every transition appends a complete version-2 `complex-goal/change` snapshot and flushes the parent session before the next side-effecting Executor starts. The snapshot freezes `verificationGates`, bounded evidence size, start time, and wall-clock deadline, so restart cannot silently weaken the current goal. The ordinary same-session goal driver is disarmed synchronously after goal creation. An interruption records whether explicit `/goal-complex resume` must continue planning or audit current environment state. A persisted executing or auditing state also resumes with verification and audit, so an unknown side effect is never retried blindly.
+Every transition appends a complete version-3 `complex-goal/change` snapshot and flushes the parent session before the next side-effecting Executor starts. The snapshot freezes the task workspace, `verificationGates`, bounded evidence size, start time, wall-clock deadline, and any recovery attempt. The ordinary same-session goal driver is disarmed synchronously after goal creation. A persisted planning, executing, auditing, or paused state is discovered from session persistence and resumed automatically; executing or auditing always re-enters verification and audit before another Executor may run. Consecutive automatic failures use durable exponential backoff and become a visible blocked goal after the configured limit. `/goal-complex resume` remains a manual recovery entry, not a required switch.
+
+## Task workspace and promotion
+
+`workspaceIsolation: auto` creates a detached Git worktree only when the session has a cwd, the source is a clean Git worktree, and `ctx.subprocess` is available. Non-Git and dirty sources continue in the shared session directory with a persisted degradation reason; `required` fails before goal creation instead. Manager has no environment tools, while the private Executor and Auditor providers both receive the frozen task cwd. Verification commands run there under read-only sandboxing.
+
+An isolated goal never edits the source checkout during execution. After deterministic checks and the independent audit accept the full objective, the host builds one bounded binary diff against the frozen source commit, validates it with `git apply --check`, and applies it to the source checkout. Source HEAD movement or a patch conflict blocks completion and retains the worktree. A crash after application is idempotent: reverse-apply validation recognizes the exact patch as already present before the completion event is retried. Worktrees are retained for inspection; this package never deletes them.
 
 ## Automatic model entry
 
@@ -36,6 +42,16 @@ The bare command shows the current durable state. One non-complete ordinary or c
 - id: complex-goal
   name: '@voyaseek-ai/dsh-complex-goal'
   config:
+    automaticResume: true
+    schedulerPollIntervalMs: 5000
+    retryInitialDelayMs: 2000
+    retryMaxDelayMs: 60000
+    maxRecoveryAttempts: 5
+    maxAutomaticResumes: 2
+    workspaceIsolation: auto
+    workspaceRoot: /absolute/durable/complex-goal-workspaces
+    workspaceCommandTimeoutMs: 30000
+    promotionPatchMaxBytes: 8388608
     maxDurationMs: 3600000
     verificationTimeoutMs: 120000
     verificationOutputMaxBytes: 8192
@@ -47,11 +63,11 @@ The bare command shows the current durable state. One non-complete ordinary or c
         timeoutMs: 300000
 ```
 
-Command order is stable and every configured command runs once per round. A restart reuses the persisted plan for the active goal; configuration changes apply only to a later goal.
+Command order is stable and every configured command runs once per round. A restart reuses the persisted task workspace, verification plan, deadline, and retry state for the active goal; configuration changes apply only to a later goal. The package default keeps workspace isolation off for minimal compositions, while the shipped base bundle sets `auto` with a durable harness-home root.
 
 ## Extension points
 
-The package consumes the existing goal, session, shell, subagent, tool, sandbox-policy, approval, system-prompt, and command services. It reuses the goal-tool direct-human authority check and registers one private `complex-goal-auditor` in-process provider solely to apply the read-only child setup through the shared driver. It does not expose a second workflow engine or modify `agent-loop`.
+The package consumes the existing agent, goal, session, shell, subagent, tool, sandbox-policy, approval, system-prompt, and command services. Session persistence activates its thin poll/reconcile/retry task plane; subprocess is used only for trusted argument-vector Git operations when workspace isolation is enabled. Two private role providers reuse the shared in-process driver to select the task cwd, with the Auditor adding the read-only override. It does not use process-local Jobs as durable authority, expose a second workflow engine, or modify `agent-loop`.
 
 ## Model Experience
 
@@ -85,8 +101,10 @@ Each role runs in an independent fresh session. Stable persona and schema prefix
 
 ## Known Limitations and Deferred Work
 
-- **Foreground activation** — durable snapshots survive restart, but execution resumes only after an explicit `/goal-complex resume`; there is no scheduler or background job identity.
-- **No automatic rollback** — an Executor may modify the workspace before an Auditor rejects its claims. Rejection prevents certified completion but does not undo filesystem effects.
+- **One coordinator per persistence root** — poll/reconcile deduplicates work inside one process and the Agent registry remains the live collision boundary. It is not a distributed lease protocol; two harness processes must not coordinate the same writable session store.
+- **Isolation is conditional** — `auto` records `not-git`, `dirty`, or unavailable-provider degradation and uses the shared workspace. Isolated promotion requires the source HEAD to remain at the frozen commit. It preserves staged and unrelated files but blocks on conflicting task paths.
+- **Filesystem recovery is not external exactly-once** — an unknown Executor result is audited before re-execution and worktree promotion is idempotent, but tools that mutate remote systems still require their own idempotency keys and evidence. The filesystem sandbox cannot roll back or prove a remote side effect.
+- **Retained worktrees** — successful and blocked task worktrees are not deleted automatically. Lifecycle cleanup and disk quotas belong to a later workspace-management surface.
 - **Project-specific verification** — the safe default has no commands. A repository that requires deterministic tests must configure them in a trusted patch; model-generated commands are deliberately rejected as verification policy. The filesystem sandbox does not prevent a configured command from changing a remote service, so deployments must use observational commands and separately restrict network credentials.
 - **Bounded Auditor tools** — the shipped Auditor can read/search files and session evidence but cannot invoke Bash or mutation-capable tools. Configured commands cover deterministic runtime checks, while GUI acceptance still needs observational tooling or a later dedicated verification provider.
 - **No token or price budget** — round count and total elapsed time are bounded, but provider token and price accounting are not yet admission controls for this mode.

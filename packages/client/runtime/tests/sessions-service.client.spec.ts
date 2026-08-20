@@ -564,6 +564,20 @@ describe('fork', () => {
     expect(b.api.callsOf('session.fork')).toEqual([{ sessionId: 'source', atSeq: 41 }])
   })
 
+  it('passes a target runtime and projects it on the addressable child', async () => {
+    const b = bench()
+    await feedList(b, [{ id: 'source', cwd: '/work' }])
+    b.api.onFork = () => Promise.resolve(ok({ sessionId: sid('child'), agentRuntime: 'codex' }))
+
+    await expect(b.svc.fork({ sessionId: sid('source'), agentRuntime: 'codex' }))
+      .resolves.toBe('child')
+
+    expect(b.api.callsOf('session.fork')).toEqual([{ sessionId: 'source', agentRuntime: 'codex' }])
+    expect(b.svc.list.getSnapshot().byId[sid('child')]).toMatchObject({
+      parentId: 'source', agentRuntime: 'codex', blank: false,
+    })
+  })
+
   it('does not rename without the title policy or a durable source title', async () => {
     const b = bench()
     await feedList(b, [{ id: 'source', cwd: '/work' }])

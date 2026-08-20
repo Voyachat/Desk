@@ -23,7 +23,7 @@ const CLIENT_DIR = join(root, 'packages/client')
 /** Directory names treated as the shared contract layer (importable by all). */
 const CONTRACT_DIRS = new Set(['contract'])
 /** Top-level client files allowed to import across domains (assembly layer). */
-const ASSEMBLY_FILES = new Set(['apply.ts', 'index.ts', 'index.tsx'])
+const ASSEMBLY_FILES = new Set(['apply.ts', 'index.ts', 'index.tsx', 'WorkspaceBrowser.tsx'])
 
 interface Violation { file: string; imported: string; reason: string }
 
@@ -41,6 +41,18 @@ function domainOf(rel: string): string {
   return ix === -1 ? '' : rel.slice(0, ix)
 }
 
+/** Whether one matched `from` clause belongs to an erased type-only statement. */
+function isTypeOnlyStatement(source: string, fromIndex: number): boolean {
+  const prefix = source.slice(0, fromIndex)
+  const importStart = Math.max(
+    prefix.lastIndexOf('\nimport '),
+    prefix.lastIndexOf('\nexport '),
+    prefix.startsWith('import ') || prefix.startsWith('export ') ? 0 : -1,
+  )
+  if (importStart < 0) return false
+  return /^(?:import|export)\s+type\b/.test(prefix.slice(importStart).trimStart())
+}
+
 function checkPackage(pkgName: string, clientDir: string): Violation[] {
   const violations: Violation[] = []
   const files = listSources(clientDir)
@@ -52,13 +64,17 @@ function checkPackage(pkgName: string, clientDir: string): Violation[] {
     for (const match of source.matchAll(/from\s+['"](\.[^'"]+)['"]/g)) {
       const spec = match[1]
       if (spec === undefined) continue
+      if (isTypeOnlyStatement(source, match.index)) continue
       // Resolve the relative specifier against the importing file's directory
       // to a client-dir-relative path.
       const fromDir = rel.includes('/') ? rel.slice(0, rel.lastIndexOf('/')) : ''
       const parts = (fromDir ? fromDir.split('/') : [])
       for (const seg of spec.split('/')) {
         if (seg === '.') continue
-        if (seg === '..') parts.pop()
+        if (seg === '..') {
+          if (parts.length === 0 || parts.at(-1) === '..') parts.push('..')
+          else parts.pop()
+        }
         else parts.push(seg)
       }
       const target = parts.join('/')

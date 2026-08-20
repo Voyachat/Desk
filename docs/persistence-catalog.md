@@ -115,7 +115,46 @@ Sources: [`packages/core/session/src/types.ts:345`](../packages/core/session/src
 }
 ```
 
-Source: [`packages/core/agent/src/types.ts:19`](../packages/core/agent/src/types.ts)
+Source: [`packages/core/agent/src/types.ts:29`](../packages/core/agent/src/types.ts)
+
+<a id="agentruntimeswitched--log-only"></a>
+
+#### `agent/runtime/switched` — log-only
+
+```ts persistence-catalog
+/**
+ * Records that a fork keeps the source transcript but starts its next
+ * turn under another agent driver. An absent runtime names the native
+ * loop. Alternative drivers use the marker to reject provider-private
+ * continuation ids from the inherited prefix.
+ */
+'agent/runtime/switched': {
+  fromRuntime?: string
+  toRuntime?: string
+}
+```
+
+Source: [`packages/core/agent/src/types.ts:20`](../packages/core/agent/src/types.ts)
+
+### `agent-memory/*`
+
+<a id="agent-memorymaintenance--log-only"></a>
+
+#### `agent-memory/maintenance` — log-only
+
+```ts persistence-catalog
+/**
+ * Reports the committed automatic memory-maintenance outcome for one completed turn.
+ * The event is informational: it changes neither model history nor session reconstruction.
+ */
+'agent-memory/maintenance': {
+  turn: number
+  status: MemoryMaintenanceOutcome['status']
+  changes: readonly MemoryMaintenanceChange[]
+}
+```
+
+Source: [`packages/memory/agent-memory/src/index.ts:170`](../packages/memory/agent-memory/src/index.ts)
 
 ### `agent-preset/*`
 
@@ -453,7 +492,7 @@ Source: [`packages/compaction/compaction/src/types.ts:33`](../packages/compactio
 'complex-goal/change': ComplexGoalChange
 ```
 
-Source: [`packages/goal/complex-goal/src/domain.ts:29`](../packages/goal/complex-goal/src/domain.ts)
+Source: [`packages/goal/complex-goal/src/domain.ts:33`](../packages/goal/complex-goal/src/domain.ts)
 
 ### `feedback/*`
 

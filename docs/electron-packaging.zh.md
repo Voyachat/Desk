@@ -19,22 +19,28 @@
 
 Web 前端是由 Host 组装的插件应用，不是独立静态 SPA。`apps/web` 构建外壳，[`@voyaseek-ai/dsh-client-modules`](../packages/client/modules/README.md) 发现每个 `dsh.client` 声明、提供其 `lib/client.js` 并注入 `window.__DSH_BOOT__`。[`@voyaseek-ai/dsh-client-connection`](../packages/client/connection/README.md) 通过 HTTP 承载一元请求，并通过 WebSocket 承载 mux 和 host 事件流。
 
-现有 Web profile 已经组合完整的 Host 运行时。[`prepareProfile()`](../packages/boot/app-boot/src/profile.ts) 将 `web` 解析为 base 与 Web 应用组合包，Web 服务器可以绑定端口 `0`，[`@voyaseek-ai/dsh-web-app`](../packages/bundle/web-app/README.md) 只在 loader 完全停稳后输出 `dsh web: http://127.0.0.1:<port>`。第一版桌面交付使用这条就绪输出，不在 Electron 中重复组装 Host。
+现有 Web profile 已经组合完整的 Host 运行时。[`prepareProfile()`](../packages/boot/app-boot/src/profile.ts) 将 `web` 解析为 base 与 Web 应用组合包，Web 服务器可以绑定端口 `0`，[`@voyaseek-ai/dsh-web-app`](../packages/bundle/web-app/README.md) 只在 loader 完全停稳后输出 `dsh web: http://127.0.0.1:<port>`。桌面进程仍使用这条就绪输出，但不再等它出现后才显示首个可交互窗口。
 
 ```text
 Electron main
+  -> local ASAR startup composer (interactive)
   -> Electron executable in Node mode
   -> @voyaseek-ai/dsh/lib/bin.js --profile web --port 0
   -> Cordis Host, HTTP/WebSocket API, client bundles, and Web dist
   -> dsh web: http://127.0.0.1:<port>
+  -> apply retained preset and draft to a real blank Session
   -> BrowserWindow.loadURL(exactReadyUrl)
 ```
 
 直接加载 `apps/web/dist/index.html` 不是有效的第一版交付方式：构建后的 HTML 使用根相对资源路径，Host 提供启动图与插件脚本，并且当前客户端连接需要 HTTP 与 WebSocket 端点。
 
-## 第一版交付：loopback 桌面外壳
+## Loopback 桌面外壳
 
-Electron 主进程把已部署的 CLI 作为受管子进程启动。它使用带 `ELECTRON_RUN_AS_NODE=1` 的 `process.execPath`，传入 `--profile web --port 0`，仅接受 stdout 中精确的 loopback 就绪行，并在就绪后打开该 URL。用户选择的工作区同时作为子进程 `cwd` 和 `DSH_CWD`；Electron 启动目录绝不作为工作区。
+`app.whenReady()` 后，Electron 先创建窗口并加载 ASAR 所有的 `startup.html`，不等待 profile 准备、系统代理发现或受管运行时启动。本地输入壳最多接受 32,000 个 UTF-16 code unit，以及固定的 `standard` 或 `code` Agent Preset。主进程只在当前应用进程内保留该意图。窄化的 preload API 会验证所属窗口、main frame、精确启动文件或受管运行时 origin、channel 名称、草稿上限和 preset；它不暴露原始 `ipcRenderer`。
+
+本地页面显示后，profile 准备、凭据读取、系统代理发现和完整 Host 才在后台启动。系统 PAC 发现的总等待上限为三秒；查找失败或超时后沿用现有的空 overlay 降级语义。受管子进程使用带 `ELECTRON_RUN_AS_NODE=1` 的 `process.execPath`，传入 `--profile web --port 0`，仅接受 stdout 中精确的 loopback 就绪行，并在就绪后打开该 URL。用户选择的工作区同时作为子进程 `cwd` 和 `DSH_CWD`；Electron 启动目录绝不作为工作区。
+
+产品只在存在真实的当前空白 Session 后消费保留输入。它先应用并记录所选 Agent Preset，再将文本写入该 Session 的草稿，最后确认 Electron 意图。它不创建虚假 Session，也不自动发送草稿。preset、草稿或确认中的任一操作失败，都会保留未确认意图，且不会自动重试，因为传输写入可能处于结果未知状态。受管运行时或导航失败时，应用恢复本地输入壳、保留输入并提供窗口内重试，而不是退出应用。
 
 窗口以 `nodeIntegration: false`、`contextIsolation: true`、`sandbox: true` 和 `webviewTag: false` 启动。导航仅允许精确的就绪 origin，拒绝新窗口，默认拒绝权限请求，renderer 既不能访问 Node 全局对象，也不能访问原始 `ipcRenderer`。
 
@@ -42,9 +48,23 @@ Electron 主进程把已部署的 CLI 作为受管子进程启动。它使用带
 
 loopback API 是交付步骤，不是最终桌面信任模型。Host 和 Origin 检查降低浏览器可达性，但不认证本机进程，因此桌面包不会把 loopback 形式描述为经过加固的本地 API。
 
+## 启动分类与预算
+
+桌面启动分类采用三个可执行类别，而不是被动标签：
+
+| 类别 | 当前内容 | 必需行为 |
+|---|---|---|
+| `required` | Electron main/preload 代码与本地启动输入壳 | 位于 ASAR、本地加载、保持在字节预算内，并在受管运行时工作完成前可交互 |
+| `deferred` | 完整的已部署 Host 运行时 | 包含在应用内，但只在本地输入壳显示后启动；失败时降级到可见重试状态 |
+| `excluded` | 所选 macOS x86_64 发行目标以外的原生 prebuild | 从暂存运行时中物理删除；一旦发现即拒绝构建 |
+
+[`apps/aistaff-desktop-runtime/startup-policy.json`](../apps/aistaff-desktop-runtime/startup-policy.json) 是分类的唯一 owner。其 verifier 会拒绝类别重叠、required 文件缺失、启动页远程引用、required 闭包超出预算、deferred 运行时缺失，以及与 stager 目标不一致的 excluded 平台规则。桌面编译在生成 main 与 preload 产物后验证 required 闭包；package 与 make 命令还会验证生成后的 deferred 和 excluded 内容。运行时暂存会裁掉非目标 `node-pty` prebuild，随后拒绝超过 470 MiB 或 27,000 个普通文件的闭包，并打印机器可读测量结果。
+
+`required`、`deferred` 与 `excluded` 描述的是可观察加载与产物行为。Cordis 当前没有通用的产品启动阶段：Loader 的 `disabled` 会阻止 import，而客户端 `immediately` 只改变预取顺序，当前 Web kernel 仍在 settled UI 前创建全部 row。因此 Host 或客户端内部的细粒度延迟需要后续 phase controller 先组合 required row、再动态创建 deferred row；添加一个无人消费的 `phase` 字段不构成优化。
+
 ## 可部署运行时闭包
 
-`apps/cli/package.json` 是应用 manifest，不是桌面部署根目录。桌面实现新增纯生产 manifest `apps/desktop-runtime/package.json`，其直接依赖为 Web profile 所需的每个 workspace peer 提供依赖。[`verify-runtime-closure`](../scripts/verify-runtime-closure.ts) 必须在打包前接受该 manifest。
+`apps/cli/package.json` 是应用 manifest，不是桌面部署根目录。桌面实现使用纯生产 manifest [`apps/aistaff-desktop-runtime/package.json`](../apps/aistaff-desktop-runtime/package.json)，其直接依赖为 Web profile 所需的每个 workspace peer 提供依赖。
 
 部署流水线沿用 [`build-exe-for-python-sdk.ts`](../scripts/build-exe-for-python-sdk.ts) 中已验证的暂存模式：运行仓库构建，使用 hoisted linker 且关闭自动 peer 安装来执行生产 `pnpm deploy`，只恢复必需的旧式 hoist 包，解引用 workspace 链接，并拒绝所有剩余符号链接。Electron 运行时是部署后的目录，不是 Python JSON-RPC 可执行文件，也不是仓库根 `node_modules` 树。
 
@@ -80,8 +100,8 @@ Forge 通过 `extraResources` 将结果复制到 `process.resourcesPath/runtime`
 
 | 位置 | 职责 |
 |---|---|
-| `apps/desktop` | Electron main 与 preload 入口、窗口策略、受管运行时生命周期、Forge 配置、图标和 maker |
-| `apps/desktop-runtime` | 仅用于暂存已打包 Host 运行时的闭合生产依赖 manifest |
+| `apps/aistaff-desktop` | Electron main 与 preload 入口、本地启动输入壳、窗口策略、受管运行时生命周期、Forge 配置、图标和 maker |
+| `apps/aistaff-desktop-runtime` | 启动分类、运行时预算，以及用于暂存已打包 Host 运行时的闭合生产依赖 manifest |
 | `scripts/` | 可复用的运行时暂存、符号链接拒绝、产物检查和打包后冒烟启动器 |
 | `packages/bundle/desktop` | 当本地协议和 IPC 载体替换 loopback 交付时使用的桌面专用 Cordis 组合 |
 | 根脚本 | 显式的桌面构建、package、make、运行时闭包和打包后冒烟入口 |
@@ -90,14 +110,16 @@ Forge 通过 `extraResources` 将结果复制到 `process.resourcesPath/runtime`
 
 ## 打包验收
 
-1. 构建 Host 库、Client 库与 Web dist，验证桌面运行时闭包，暂存生产运行时，并从干净 checkout 创建 Forge package。
-2. 在仓库之外、没有系统 Node 或 pnpm 的机器上启动打包应用；确认首次运行 profile 初始化和精确的就绪 URL。
-3. 创建并重新打开会话，通过无密钥测试提供方发送提示词、流式输出、取消轮次并完成 approval 交互。
-4. 从打包资源运行 terminal PTY、code-runtime worker、workflow worker、ripgrep 搜索和原生目录选择器。
-5. 退出应用，确认 loopback 端口已释放，且没有遗留受管子进程、worker、PTY 或 helper 进程。
-6. 检查产物中是否存在仓库路径、pnpm store 路径、符号链接、缺失的客户端 bundle、缺失的 worker 文件，以及未签名或不可执行的原生 helper。
-7. 执行平台原生打包检查：macOS 的代码签名与 notarization、Windows 的安装程序与 ACL 行为，以及 Linux 的沙箱或明确降级行为。
-8. 对目标 IPC 载体，额外证明没有 API socket 监听、renderer 不存在 Node 全局对象、CSP 排除 `unsafe-eval`、导航和新窗口快速失败、畸形 IPC 请求被拒绝，并且 reload 或 close 会清理每条流。
+1. 构建 Host 库、Client 库、Web dist、桌面 main 与 preload；验证启动分类与桌面运行时预算；暂存生产运行时；并从干净 checkout 创建 Forge package。
+2. 对 macOS 包完成签名与 notarization，在仓库之外、没有系统 Node 或 pnpm 的机器上安装并启动；确认首次运行 profile 初始化和精确的就绪 URL。未签名开发包的 Gatekeeper 行为不同，不能作为冷启动证据。
+3. 从应用启动请求开始计时，直到启动 textarea 可见、获得焦点且可写。在发行目标硬件上至少执行 20 次冷启动，必须满足 `P95 <= 3,000 ms`；完整 Host 就绪时间单独报告。人为延迟 Host 30 秒时，文本编辑与 preset 选择仍必须可用。
+4. 确认启动输入在导航以及 Host 失败/重试后仍保留，严格按 preset 选择 → preset 记录 → 草稿写入的顺序进入唯一一个真实空白 Session，且绝不自动发送。
+5. 创建并重新打开会话，通过无密钥测试提供方发送提示词、流式输出、取消轮次并完成 approval 交互。
+6. 从打包资源运行 terminal PTY、code-runtime worker、workflow worker、ripgrep 搜索和原生目录选择器。
+7. 退出应用，确认 loopback 端口已释放，且没有遗留受管子进程、worker、PTY 或 helper 进程。
+8. 检查产物中是否存在仓库路径、pnpm store 路径、符号链接、缺失的客户端 bundle、缺失的 worker 文件、非目标原生 prebuild，以及未签名或不可执行的原生 helper。
+9. 执行平台原生打包检查：macOS 的代码签名与 notarization、Windows 的安装程序与 ACL 行为，以及 Linux 的沙箱或明确降级行为。
+10. 对目标 IPC 载体，额外证明没有 API socket 监听、renderer 不存在 Node 全局对象、CSP 排除 `unsafe-eval`、导航和新窗口快速失败、畸形 IPC 请求被拒绝，并且 reload 或 close 会清理每条流。
 
 ## 发行边界
 

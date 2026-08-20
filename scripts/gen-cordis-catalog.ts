@@ -114,7 +114,7 @@ export const SERVICE_PAGE: Record<string, string> = {
 /**
  * Context keys declared in `interface Context` merges that the rendering
  * projection cannot see, each with the reason and its documentation owner.
- * The scan that enforces this list reads EVERY `declare module '@voyaseek-ai/cordis'`
+ * The scan that enforces this list reads EVERY `declare module 'cordis'`
  * Context merge under `packages/x/x/src/**` — any depth, not only root
  * `index.ts` files with a same-named service class — so a new service can
  * never silently join this blind spot: it either enters {@link SERVICE_PAGE}
@@ -203,7 +203,7 @@ export const EVENT_SCOPE_PAGE: Record<string, string> = {
  * Event names declared in `interface Events` merges that the rendering
  * projection cannot see, each with the reason and its documentation owner.
  * The mirror of {@link SERVICE_WALK_EXEMPTIONS} for events: an independent
- * scan reads EVERY `declare module '@voyaseek-ai/cordis'` Events merge under
+ * scan reads EVERY `declare module 'cordis'` Events merge under
  * `packages/x/x/src/**`, so a declared event either renders onto a subsystems
  * page (via {@link EVENT_SCOPE_PAGE}) or names itself here — never vanishes
  * silently. Keys are full event names rather than scopes, so a scope-level
@@ -246,8 +246,13 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   CaptureMemoryRequest: 'memory.md',
   MemoryId: 'memory.md',
   MemoryItem: 'memory.md',
+  MemoryMaintainer: 'memory.md',
+  MemoryMaintenanceOptions: 'memory.md',
+  MemoryMaintenanceResult: 'memory.md',
   MemoryOperationOptions: 'memory.md',
   RecallMemoryRequest: 'memory.md',
+  RememberMemoryRequest: 'memory.md',
+  UpdateMemoryRequest: 'memory.md',
   ResumeAgentOptions: 'core.md',
   SettleReason: 'core.md',
   AdapterRegistrationHandle: 'llm-streaming.md',
@@ -257,6 +262,8 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
   LlmModelReasoningInfo: 'llm-streaming.md',
   LlmResolvedModelInfo: 'llm-streaming.md',
   LlmFailure: 'llm-streaming.md',
+  LlmExternalRuntime: 'llm-streaming.md',
+  LlmExternalRuntimeRoute: 'llm-streaming.md',
   LlmModelInfo: 'llm-streaming.md',
   LlmProviderInfo: 'llm-streaming.md',
   LlmConfigurableProvider: 'llm-streaming.md',
@@ -517,6 +524,7 @@ export const LINK_MAP: Readonly<Record<string, string>> = {
 /** TypeScript lib and pinned framework types with no repository-owned data page. */
 export const FOUNDATION_TYPE_NAMES: ReadonlySet<string> = new Set([
   'AbortSignal',
+  'Array',
   'AsyncIterable',
   'Context',
   'Error',

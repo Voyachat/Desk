@@ -6,7 +6,7 @@ import SessionStore, { SessionId } from '@voyaseek-ai/dsh-session'
 import SystemPrompt from '@voyaseek-ai/dsh-system-prompt'
 import ToolRuntime from '@voyaseek-ai/dsh-tools'
 import type { SubprocessHandle, SubprocessOutcome } from '@voyaseek-ai/dsh-subprocess'
-import { CodexAgent } from '../src/driver.ts'
+import { CodexAgent, restoreCodexRuntime } from '../src/driver.ts'
 import { CodexAppServerEngine } from '../src/engine.ts'
 import type {} from '../src/types.ts'
 
@@ -40,8 +40,8 @@ class ProtocolPeer {
       const remaining = deadline - Date.now()
       if (remaining <= 0) throw new Error(`no ${method} frame; frames=${JSON.stringify(this.frames)}`)
       await Promise.race([
-        new Promise<void>(resolve => { this.wakeups.add(resolve) }),
-        new Promise<void>(resolve => { setTimeout(resolve, remaining) }),
+        new Promise<void>((resolve) => { this.wakeups.add(resolve) }),
+        new Promise<void>((resolve) => { setTimeout(resolve, remaining) }),
       ])
     }
   }
@@ -68,7 +68,7 @@ function fakeChild(): FakeChild {
   const peer = new ProtocolPeer(toChild, fromChild)
   let exited = false
   let resolveDone!: (outcome: SubprocessOutcome) => void
-  const done = new Promise<SubprocessOutcome>(resolve => { resolveDone = resolve })
+  const done = new Promise<SubprocessOutcome>((resolve) => { resolveDone = resolve })
   const terminate = vi.fn(() => {
     if (exited) return
     exited = true
@@ -105,17 +105,17 @@ async function waitIdle(driver: CodexAgent): Promise<void> {
 }
 
 async function nextTask(): Promise<void> {
-  await new Promise<void>(resolve => { setImmediate(resolve) })
+  await new Promise<void>((resolve) => { setImmediate(resolve) })
 }
 
-async function makeDriver(children: FakeChild[] = [fakeChild()]) {
+async function makeDriver(children: FakeChild[] = [fakeChild()], runtime = 'codex') {
   const ctx = new Context()
   await ctx.plugin(LlmRuntime)
   await ctx.plugin(SessionStore)
   await ctx.plugin(ToolRuntime)
   await ctx.plugin(SystemPrompt, { persona: 'Follow the shared policy.' })
   const session = ctx.sessions.create(SessionId('codex-test'), {
-    meta: { cwd: '/tmp/codex-test', agentRuntime: 'codex' },
+    meta: { cwd: '/tmp/codex-test', agentRuntime: runtime },
   })
   const queue = [...children]
   const engine = new CodexAppServerEngine(() => {
@@ -143,7 +143,7 @@ function prompt(driver: CodexAgent, text: string): void {
 
 async function initialize(peer: ProtocolPeer): Promise<void> {
   const request = await peer.nextMethod('initialize')
-  peer.respond(request, { userAgent: 'codex-cli 0.148.0' })
+  peer.respond(request, { userAgent: 'codex-cli 0.147.0' })
   await peer.nextMethod('initialized')
 }
 
@@ -158,6 +158,16 @@ async function openFreshTurn(peer: ProtocolPeer, id = 'turn-1'): Promise<JsonObj
 }
 
 describe('CodexAgent', () => {
+  it('does not resume a Codex thread inherited across a later runtime switch', async () => {
+    const ctx = new Context()
+    await ctx.plugin(SessionStore)
+    const session = ctx.sessions.create(SessionId('codex-provider-reset'))
+    session.append('codex-agent/runtime', { threadId: 'thread-old' })
+    expect(restoreCodexRuntime(session)?.threadId).toBe('thread-old')
+    session.append('agent/runtime/switched', { fromRuntime: 'claude', toRuntime: 'codex' })
+    expect(restoreCodexRuntime(session)).toBeUndefined()
+    await ctx.fiber.dispose()
+  })
   it('streams a balanced turn and resumes the same thread in a later process', async () => {
     const first = fakeChild()
     const second = fakeChild()
@@ -181,6 +191,8 @@ describe('CodexAgent', () => {
       'assistant/chunk', 'assistant/message', 'step/end', 'turn/end',
     ]))
     expect(session.events.findLast(event => event.type === 'turn/end')?.data.reason).toEqual({ kind: 'completed' })
+    expect(session.events.find(event => event.type === 'assistant/message')?.data.message.source)
+      .toEqual({ kind: 'model', provider: 'dashscope', model: 'qwen-test' })
     expect(first.terminate).toHaveBeenCalledOnce()
     expect(first.waitForExit).toHaveBeenCalledOnce()
 
@@ -198,6 +210,55 @@ describe('CodexAgent', () => {
     await waitIdle(driver)
     expect(session.events.filter(event => event.type === 'codex-agent/runtime')).toHaveLength(1)
     expect(session.events.filter(event => event.type === 'turn/end')).toHaveLength(2)
+  })
+
+  it('prepends retained visible history on the first turn after a runtime switch', async () => {
+    const child = fakeChild()
+    const { session, driver } = await makeDriver([child])
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: 'earlier task' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    session.append('agent/runtime/switched', { fromRuntime: 'claude', toRuntime: 'codex' })
+
+    prompt(driver, 'continue here')
+    const turn = await openFreshTurn(child.peer)
+    expect(turn.params).toMatchObject({
+      input: [
+        { type: 'text', text: expect.stringContaining('[User]\nearlier task') },
+        { type: 'text', text: 'continue here' },
+      ],
+    })
+    child.peer.send({
+      method: 'turn/completed',
+      params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed', error: null } },
+    })
+    await waitIdle(driver)
+    expect(session.events.find(event => event.type === 'user/message'
+      && event.data.source.kind === 'plugin'
+      && event.data.source.plugin === '@voyaseek-ai/dsh-agent-loop/runtime-handoff')).toBeDefined()
+  })
+
+  it('uses the configured runtime id when matching a cross-runtime handoff', async () => {
+    const child = fakeChild()
+    const { session, driver } = await makeDriver([child], 'codex-custom')
+    session.append('user/message', createUserMessage({
+      content: [{ type: 'text', text: 'custom runtime history' }], source: { kind: 'user' },
+    }), { surfaceOp: 'append' })
+    session.append('agent/runtime/switched', { fromRuntime: 'native', toRuntime: 'codex-custom' })
+
+    prompt(driver, 'continue')
+    const turn = await openFreshTurn(child.peer)
+    expect(turn.params).toMatchObject({
+      input: [
+        { type: 'text', text: expect.stringContaining('custom runtime history') },
+        { type: 'text', text: 'continue' },
+      ],
+    })
+    child.peer.send({
+      method: 'turn/completed',
+      params: { threadId: 'thread-1', turn: { id: 'turn-1', status: 'completed', error: null } },
+    })
+    await waitIdle(driver)
   })
 
   it('interrupts cancellation and reaches process-tree quiescence', async () => {
@@ -236,7 +297,16 @@ describe('CodexAgent', () => {
     const child = fakeChild()
     const { session, driver } = await makeDriver([child])
     driver.followup(createUserMessage({
-      content: [{ type: 'image', attachment: { id: 'image-1', mimeType: 'image/png', width: 1, height: 1 } }],
+      content: [{
+        type: 'image',
+        attachment: {
+          attachmentId: 'image-1' as never,
+          mediaType: 'image/png',
+          bytes: 1,
+          width: 1,
+          height: 1,
+        },
+      }],
       source: { kind: 'user' },
     }))
     await waitIdle(driver)

@@ -44,6 +44,15 @@ function numberOf(model: ModelDraft, key: string): number | undefined {
   return typeof value === 'number' ? value : undefined
 }
 
+type RuntimeCompatibility = 'supported' | 'unsupported' | 'unprobed'
+
+function runtimeCompatibility(api: string | undefined, runtime: 'native' | 'claude' | 'codex'): RuntimeCompatibility {
+  if (runtime === 'native') return 'supported'
+  if (api === undefined) return 'unprobed'
+  if (runtime === 'codex') return api === 'openai-responses' ? 'supported' : 'unsupported'
+  return api === 'anthropic-messages' ? 'supported' : 'unsupported'
+}
+
 /** Vendor-like prefix used to group one discovered model identifier. */
 function manufacturerOf(id: string): string {
   const slash = id.indexOf('/')
@@ -427,6 +436,26 @@ export function ModelListEditor(props: ModelListEditorProps): ReactNode {
             >
               <IconTrash />
             </button>
+          </div>
+          <div className={styles['runtimeCompatibility']} aria-label={`${t('runtimeCompatibility')} ${index + 1}`}>
+            {(['native', 'claude', 'codex'] as const).map((runtime) => {
+              const status = runtimeCompatibility(textOf(model, 'api') || probe.api, runtime)
+              const runtimeLabel = runtime === 'native'
+                ? t('runtimeNative')
+                : runtime === 'claude' ? t('runtimeClaude') : t('runtimeCodex')
+              const statusLabel = status === 'supported'
+                ? t('runtimeSupported')
+                : status === 'unsupported' ? t('runtimeUnsupported') : t('runtimeUnprobed')
+              return (
+                <span
+                  className={`${styles['runtimeBadge']} ${styles[`runtimeBadge-${status}`]}`}
+                  title={`${runtimeLabel}: ${statusLabel}`}
+                  key={runtime}
+                >
+                  {runtimeLabel} · {statusLabel}
+                </span>
+              )
+            })}
           </div>
           {expanded.has(index)
             ? (

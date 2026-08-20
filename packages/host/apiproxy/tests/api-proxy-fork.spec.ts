@@ -28,6 +28,7 @@ async function composed(workspaces: readonly Workspace[] = []): Promise<Context>
   await ctx.plugin(SystemPrompt, { persona: '' })
   await ctx.plugin(AgentRegistry)
   await ctx.plugin(UserQuestionService)
+  ctx.provide('agentLoop', { driverRuntimes: () => ['claude', 'codex'] } as never)
   ctx.provide('workspaceRegistry', { list: () => workspaces } as never)
   ctx.agents.setFactory({
     createAgent: async (ownerCtx: Context, options: CreateAgentOptions): Promise<AgentHandle> => {
@@ -55,7 +56,7 @@ function liveAgent(
   id: string,
   turns: number,
   tail: Tail = 'none',
-  lineage: { parentSession?: SessionId; origin?: 'subagent' } = {},
+  lineage: { parentSession?: SessionId; origin?: 'subagent'; agentRuntime?: string } = {},
 ): Session {
   const session = ctx.sessions.create(sid(id), { meta: { cwd: '/proj', ...lineage } })
   for (let turn = 1; turn <= turns; turn++) {
@@ -99,6 +100,62 @@ describe('sessions.fork', () => {
     ])
     expect(child?.header.parentSession).toBe(source.id)
     expect(child?.header.cwd).toBe('/proj')
+    await ctx.fiber.dispose()
+  })
+
+  it('forks retained history under another runtime and records the provider reset', async () => {
+    const ctx = await composed()
+    const source = liveAgent(ctx, 'session-runtime-source', 1, 'none', { agentRuntime: 'claude' })
+
+    const response = await api(ctx).sessions.fork(request({
+      sessionId: source.id,
+      agentRuntime: 'codex',
+    }))
+
+    expect(response.result).toMatchObject({
+      ok: true,
+      value: { agentRuntime: 'codex' },
+    })
+    if (!response.result.ok) return
+    const child = ctx.sessions.get(response.result.value.sessionId)
+    expect(child?.header.agentRuntime).toBe('codex')
+    expect(child?.events.at(-2)).toMatchObject({
+      type: 'agent/runtime/switched',
+      data: { fromRuntime: 'claude', toRuntime: 'codex' },
+    })
+    expect(child?.events.at(-1)?.type).toBe('session/end-seed')
+    expect(source.header.agentRuntime).toBe('claude')
+    await ctx.fiber.dispose()
+  })
+
+  it('uses an explicit empty runtime to switch a child to the native loop', async () => {
+    const ctx = await composed()
+    const source = liveAgent(ctx, 'session-native-target', 1, 'none', { agentRuntime: 'claude' })
+
+    const response = await api(ctx).sessions.fork(request({ sessionId: source.id, agentRuntime: '' }))
+
+    expect(response.result.ok).toBe(true)
+    if (!response.result.ok) return
+    expect(response.result.value.agentRuntime).toBeUndefined()
+    const child = ctx.sessions.get(response.result.value.sessionId)
+    expect(child?.header.agentRuntime).toBeUndefined()
+    expect(child?.events.at(-2)).toMatchObject({
+      type: 'agent/runtime/switched', data: { fromRuntime: 'claude' },
+    })
+    await ctx.fiber.dispose()
+  })
+
+  it('rejects an unregistered target runtime before publishing a child', async () => {
+    const ctx = await composed()
+    const source = liveAgent(ctx, 'session-unknown-runtime', 1)
+
+    const response = await api(ctx).sessions.fork(request({ sessionId: source.id, agentRuntime: 'other' }))
+
+    expect(response.result).toMatchObject({
+      ok: false,
+      error: { code: 'runtime-not-found', details: { agentRuntime: 'other', available: ['claude', 'codex'] } },
+    })
+    expect(ctx.sessions.list().map(session => session.id)).toEqual([source.id])
     await ctx.fiber.dispose()
   })
 

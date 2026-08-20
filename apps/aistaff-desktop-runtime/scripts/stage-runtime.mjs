@@ -29,6 +29,14 @@ const supervisorTargetDir = join(supervisorCrateDir, 'target')
 const supervisorName = 'aistaff-desktop-supervisor'
 const supervisorRuntimePath = join('native', supervisorName)
 const expectedMachOArchitecture = 'x86_64'
+/** Native node-pty build shipped by the macOS x86_64 desktop product. */
+export const TARGET_NODE_PTY_PREBUILD = 'darwin-x64'
+
+/** Maximum logical bytes accepted in the staged runtime. */
+export const MAX_RUNTIME_BYTES = 470 * 1024 * 1024
+
+/** Maximum regular-file count accepted in the staged runtime. */
+export const MAX_RUNTIME_FILE_COUNT = 27_000
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.length === 2) stageRuntime()
@@ -76,6 +84,7 @@ export function stageRuntime() {
     materializeLinks(stageDir)
     removeDeployMetadata(stageDir)
     pruneDevelopmentArtifacts(stageDir)
+    pruneNodePtyPrebuilds(stageDir)
     rejectLinks(stageDir)
     verifyRuntime(stageDir)
 
@@ -305,6 +314,7 @@ function rejectLinks(directory) {
 export function verifyRuntime(runtimeRoot) {
   rejectLinks(runtimeRoot)
   rejectDevelopmentArtifacts(runtimeRoot)
+  rejectNonTargetNodePtyPrebuilds(runtimeRoot)
   const required = [
     'apps/cli/lib/bin.js',
     supervisorRuntimePath,
@@ -318,6 +328,8 @@ export function verifyRuntime(runtimeRoot) {
     const path = join(runtimeRoot, ...artifact.split('/'))
     if (!existsSync(path)) throw new Error(`runtime artifact is missing: ${artifact}`)
   }
+  const nodePtyLicense = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}LICENSE`))
+  if (nodePtyLicense === undefined) throw new Error('runtime is missing the node-pty license')
   const nativeAddon = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}prebuilds${sep}darwin-x64${sep}pty.node`))
   if (nativeAddon === undefined) throw new Error('runtime is missing the macOS x86_64 node-pty prebuild')
   const spawnHelper = findPath(runtimeRoot, (path) => path.endsWith(`${sep}node-pty${sep}prebuilds${sep}darwin-x64${sep}spawn-helper`))
@@ -330,7 +342,124 @@ export function verifyRuntime(runtimeRoot) {
   verifyEsmImport(runtimeRoot, 'node_modules/@voyaseek-ai/dsh-aistaff-language-policy/lib/index.js')
   verifySupervisorSidecar(join(runtimeRoot, supervisorRuntimePath))
   rejectRuntimeDevelopmentPaths(runtimeRoot)
-  process.stdout.write(`Verified AI Staff runtime closure at ${runtimeRoot}\n`)
+  const statistics = inspectRuntime(runtimeRoot)
+  assertRuntimeBudget(statistics)
+  process.stdout.write(`${JSON.stringify({
+    event: 'aistaff_desktop_runtime_verified',
+    runtimeRoot,
+    targetNodePtyPrebuild: TARGET_NODE_PTY_PREBUILD,
+    ...statistics,
+    budgets: {
+      maxTotalBytes: MAX_RUNTIME_BYTES,
+      maxFileCount: MAX_RUNTIME_FILE_COUNT,
+    },
+  })}\n`)
+}
+
+/**
+ * Return the logical size and regular-file count of a runtime directory.
+ *
+ * @param {string} runtimeRoot Staged runtime directory to inspect.
+ * @returns {{ totalBytes: number, fileCount: number }} Runtime measurements.
+ */
+export function inspectRuntime(runtimeRoot) {
+  let totalBytes = 0
+  let fileCount = 0
+  const walk = (directory) => {
+    for (const entry of readdirSync(directory)) {
+      const path = join(directory, entry)
+      const metadata = lstatSync(path)
+      if (metadata.isDirectory()) { walk(path); continue }
+      if (!metadata.isFile()) continue
+      totalBytes += metadata.size
+      fileCount += 1
+    }
+  }
+  walk(runtimeRoot)
+  return { totalBytes, fileCount }
+}
+
+/**
+ * Refuse a runtime whose physical closure exceeds the packaged-product budgets.
+ *
+ * @param {{ totalBytes: number, fileCount: number }} statistics Runtime measurements.
+ * @returns {void}
+ */
+export function assertRuntimeBudget({ totalBytes, fileCount }) {
+  if (totalBytes > MAX_RUNTIME_BYTES) {
+    throw new Error(`runtime byte budget exceeded: ${String(totalBytes)} > ${String(MAX_RUNTIME_BYTES)}`)
+  }
+  if (fileCount > MAX_RUNTIME_FILE_COUNT) {
+    throw new Error(`runtime file-count budget exceeded: ${String(fileCount)} > ${String(MAX_RUNTIME_FILE_COUNT)}`)
+  }
+}
+
+/**
+ * Remove node-pty native builds that cannot execute in the macOS x86_64 product.
+ *
+ * @param {string} runtimeRoot Staged runtime directory to prune.
+ * @returns {{ event: string, targetNodePtyPrebuild: string, removedPrebuilds: string[], removedBytes: number, removedFiles: number }} Pruning measurements.
+ */
+export function pruneNodePtyPrebuilds(runtimeRoot) {
+  let removedBytes = 0
+  let removedFiles = 0
+  const removedPrebuilds = []
+  for (const prebuildRoot of findNodePtyPrebuildRoots(runtimeRoot)) {
+    for (const entry of readdirSync(prebuildRoot)) {
+      if (entry === TARGET_NODE_PTY_PREBUILD) continue
+      const path = join(prebuildRoot, entry)
+      const metadata = lstatSync(path)
+      if (!metadata.isDirectory()) continue
+      const statistics = inspectRuntime(path)
+      removedBytes += statistics.totalBytes
+      removedFiles += statistics.fileCount
+      removedPrebuilds.push(entry)
+      rmSync(path, { recursive: true })
+    }
+  }
+  const summary = {
+    event: 'aistaff_desktop_runtime_node_pty_pruned',
+    targetNodePtyPrebuild: TARGET_NODE_PTY_PREBUILD,
+    removedPrebuilds: [...new Set(removedPrebuilds)].sort(),
+    removedBytes,
+    removedFiles,
+  }
+  process.stdout.write(`${JSON.stringify(summary)}\n`)
+  return summary
+}
+
+/**
+ * Refuse node-pty prebuild content outside the packaged macOS x86_64 target.
+ *
+ * @param {string} runtimeRoot Staged runtime directory to inspect.
+ * @returns {void}
+ */
+export function rejectNonTargetNodePtyPrebuilds(runtimeRoot) {
+  for (const prebuildRoot of findNodePtyPrebuildRoots(runtimeRoot)) {
+    for (const entry of readdirSync(prebuildRoot)) {
+      if (entry !== TARGET_NODE_PTY_PREBUILD) {
+        throw new Error(`runtime contains a non-target node-pty prebuild: ${relative(runtimeRoot, join(prebuildRoot, entry))}`)
+      }
+    }
+  }
+}
+
+function findNodePtyPrebuildRoots(runtimeRoot) {
+  const roots = []
+  const walk = (directory) => {
+    for (const entry of readdirSync(directory)) {
+      const path = join(directory, entry)
+      const metadata = lstatSync(path)
+      if (!metadata.isDirectory()) continue
+      if (entry === 'prebuilds' && directory.endsWith(`${sep}node-pty`)) {
+        roots.push(path)
+        continue
+      }
+      walk(path)
+    }
+  }
+  walk(runtimeRoot)
+  return roots
 }
 
 function verifyEsmImport(runtimeRoot, entry) {

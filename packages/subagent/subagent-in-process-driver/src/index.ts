@@ -68,6 +68,8 @@ function toStopReason(reason: TurnEndReason | undefined): SubagentStopReason {
 export interface InProcessRunOptions {
   /** Completed-turn seed for fork, or undefined for a fresh spawn. */
   readonly seed?: SessionEvent[]
+  /** Provider-owned child cwd; omitted to inherit the parent session cwd. */
+  readonly cwd?: string
   /**
    * Provider-owned synchronous composition inside the unpublished child scope.
    * Runs after shared child composition and before the structured-output runtime.
@@ -138,7 +140,10 @@ export async function startInProcessRun(
 
   const handle = await parent.ctx.agents.create({
     sessionId: childId,
-    meta: childSessionMeta(parent, childDepth, activationBoundary),
+    meta: {
+      ...childSessionMeta(parent, childDepth, activationBoundary),
+      ...options.cwd === undefined ? {} : { cwd: options.cwd },
+    },
     ...seed !== undefined ? { seed } : {},
     agentOptions: resolveChildAgentOptions(parent, request.agentOptions, childDepth),
     signal: request.signal,

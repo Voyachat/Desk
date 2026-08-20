@@ -12,9 +12,12 @@ DSH 会话的 Claude Agent SDK 驱动：以 `claude` runtime 创建的会话由 
 - 组装与本机循环相同的作用域系统提示词和动态上下文，执行 `agent/pre-step` 与 `agent/request`，并在每次 SDK query 前把实际 provider／model／system 快照记录到 `request/header`；
 - 在会话 cwd 中每轮运行一次 SDK `query()`，并将 SDK 消息映射到持久会话事件：`system/init` 记录 `claude-agent/runtime` 事件（SDK 会话 id 与模型），assistant 文本／思考／工具块折叠为 `assistant/message` 和 `tool/call`，SDK 工具结果折叠为通过 `sourceEventSeqs` 关联调用的 `tool/result`；
 - 跨轮次把已记录的 SDK 会话 id 作为 `resume` 传入，并在重启后从日志恢复该 id；
+- 跨 Runtime fork 后忽略最新 `agent/runtime/switched` 标记之前的 Claude 会话 id，并使用所保留可见 transcript 的提供方无关 recall 来启动新的 SDK 对话；
 - 通过 `dsh-subprocess` 和清理后的父环境启动 Claude Code CLI，因此 SDK 子进程只继承预期的 `ANTHROPIC_*` endpoint 与凭据。
 
 任何兼容 Claude API 的 endpoint 都可使用：`baseUrl`／`authToken`／`apiKey`／`model` 分别映射到 `ANTHROPIC_BASE_URL`／`ANTHROPIC_AUTH_TOKEN`／`ANTHROPIC_API_KEY`／`ANTHROPIC_MODEL`；未设置字段继续使用父环境，因此第三方 gateway 只需提供相应环境变量。
+
+若已注册 LLM 路由的具体模型描述使用 `anthropic-messages`、具有 endpoint 且指名凭据引用，它会自动加入 Claude 模型选择器。Driver 每次 query 都重新解析该路由的当前 endpoint 与凭据。OpenAI Responses 与 Chat Completions 路由不会被呈现为 Claude 兼容，即使同一个账户密钥能够认证它们。
 
 SDK `canUseTool` hook 承载两类不同交互。`AskUserQuestion` 委托给 host 问题服务，并把答案返回 Claude，绝不打开审批面板。其他权限请求委托给 host 审批服务；缺少该服务时按拒绝处理。
 
@@ -41,11 +44,19 @@ SDK `canUseTool` hook 承载两类不同交互。`AskUserQuestion` 委托给 hos
 
 ## 模型体验
 
-- **提示词与上下文**：DSH 系统提示词作为 SDK 自定义系统提示词；动态上下文作为有日志记录的 user-role 快照，并经过 `agent/pre-step`。Claude Code 仍拥有自己的内置工具，DSH 工具 schema 不会冒充 Claude 工具。
-- **模型**：会话全局选择经过 `agent/request`，成为该次 query 的真实 SDK model。Runtime endpoint 只接纳配置的 provider／model 子集；全局默认不兼容时回退到 Runtime 默认，而不是静默发往错误 endpoint。
-- **附件**：当前文本桥会明确拒绝非文本输入，绝不会丢掉图片却报告成功。
-- **Tokens**：用量记账由 SDK 拥有；v1 中 DSH 不记录 Claude 轮次的 token 数量。
-- **KV cache**：DSH 不为该驱动构建模型请求；SDK 在 `~/.claude` 下拥有自己的会话缓存。
+### Claude SDK 请求
+
+#### 模型看到的内容
+
+组装后的 DSH 系统提示词成为 SDK 自定义系统提示词。有日志记录的动态上下文快照与用户文本经过 `agent/pre-step`；全局 provider／model 选择经过 `agent/request`，成为该次请求的实际模型。跨 Runtime fork 后的首轮会增加一条 user 级 `recall` 消息，携带所保留的 user、assistant 与工具 transcript 文本；它会省略私有推理和陈旧插件上下文，并用占位文本表示早先图片。Claude Code 拥有其内置工具，因此 DSH 工具 schema 不会作为 Claude 工具呈现。该文本桥会在请求前拒绝新轮次中的图片及所有其他非文本 block。
+
+#### 对 token 的影响
+
+自定义系统提示词、保留的上下文快照、用户输入、存在时的跨 Runtime recall，以及 Claude 自有工具 transcript 会占用 SDK 对话上下文。当前版本的 DSH 不记录 Claude token 数量。
+
+#### 对 KV Cache 的影响
+
+Claude 拥有 `~/.claude` 下的对话缓存；DSH 在普通轮次之间保留 SDK Session id。跨 Runtime fork 会有意启动新的 SDK 对话，因此不能复用源 provider 的对话 cache；改变所选模型或组装后的系统提示词也可能使 cache 无法复用。
 
 ## 已知限制与暂缓事项
 
