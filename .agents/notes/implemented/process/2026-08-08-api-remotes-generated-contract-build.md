@@ -17,7 +17,7 @@ The root build completes Host tsc and Host tsdown first, with Host tsdown runnin
 ~~~text
 tsc -b tsconfig.host.json
 tsdown --env.DSH_BUILD_FACE host
-tsc -b tsconfig.client.json
+tsc -b tsconfig.client.json tsconfig.hybrid.json
 tsdown --env.DSH_BUILD_FACE client
 Vite Web build
 ~~~
@@ -58,6 +58,8 @@ The Typert analyzer distinguishes compiler faces from runtime faces. Direct Proj
 Both the Host and Client tsdown passes receive the same complete workspace of `vendor/*`, `packages/*/*`, and `apps/cli`. The root config does not scan `lib/types/client/index.js`, maintain a package classification table, or use a tsdown filter; package-local configs return entries for the current phase according to `DSH_BUILD_FACE`.
 
 An ordinary Client plugin returns an empty config during the Host pass and produces both its Node loader entry and browser bundle during the Client pass. The `clientBundle(..., { hostPhase: true })` used by `api-remotes` is the only phase exception: the Host pass produces its Host entry, and the Client pass produces only its browser bundle. Package-local tsdown without `DSH_BUILD_FACE` still returns that package's normal entries together for local single-package development.
+
+A package whose config returns no Host entries belongs only to the Client Project Reference aggregate. Adding that package to the Host aggregate cannot create Host output; it only advances its Client dependencies ahead of Host Typert generation and makes a clean build fail on missing `/remote` declarations.
 
 ## Alternatives considered
 

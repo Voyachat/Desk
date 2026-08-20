@@ -17,7 +17,7 @@ Host 的 `@Remote` 方法需要先由 Typert 生成 `/remote` 声明和运行时
 ~~~text
 tsc -b tsconfig.host.json
 tsdown --env.DSH_BUILD_FACE host
-tsc -b tsconfig.client.json
+tsc -b tsconfig.client.json tsconfig.hybrid.json
 tsdown --env.DSH_BUILD_FACE client
 Vite Web build
 ~~~
@@ -58,6 +58,8 @@ TypeScript compiler face 与 Typert 运行时产物 face 是两层概念。普�
 Host 与 Client 两次 tsdown 都接收 `vendor/*`、`packages/*/*` 和 `apps/cli` 这组完整 workspace。根配置不扫描 `lib/types/client/index.js`，不维护 package 分类表，也不使用 tsdown filter；包内配置根据 `DSH_BUILD_FACE` 返回本阶段入口。
 
 普通 Client plugin 在 Host pass 返回空配置，在 Client pass 同时生成 Node loader 入口与 browser bundle。`api-remotes` 的 `clientBundle(..., { hostPhase: true })` 是唯一阶段例外：Host pass 生成其 Host 入口，Client pass 只生成 browser bundle。未指定 `DSH_BUILD_FACE` 的 package-local tsdown 仍同时返回该 package 的正常入口，供本地单包开发使用。
+
+配置在 Host 阶段不返回任何入口的 package 只能属于 Client Project Reference aggregate。把这类 package 加入 Host aggregate 不会产生 Host 产物，只会让它的 Client 依赖早于 Host Typert 生成而进入编译，并使干净构建因缺少 `/remote` 声明而失败。
 
 ## 考虑过的替代方案
 

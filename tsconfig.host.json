@@ -319,7 +319,6 @@
     { "path": "./packages/aistaff/cloud-conformance" },
     { "path": "./packages/aistaff/cloud-local-conformance" },
     { "path": "./packages/aistaff/employee-experience-remote" },
-    { "path": "./packages/aistaff/cloud-client-product" },
     { "path": "./packages/aistaff/cloud-product-bundle" },
     { "path": "./packages/aistaff/cloud-conformance-bundle" },
     { "path": "./packages/aistaff/cloud-local-conformance-bundle" },

@@ -1,6 +1,6 @@
 /** Regression coverage for source declarations and split compiler aggregates. */
 
-import { existsSync, readdirSync } from 'node:fs'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { resolve, sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
@@ -51,6 +51,21 @@ describe('client TypeScript aggregate', () => {
     expect(loaded).toEqual(clientCssDeclarations())
   })
 
+  it('runs the hybrid compiler program only after Host Typert generation', () => {
+    const manifest = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf8')) as {
+      scripts: Record<string, string>
+    }
+    expect(manifest.scripts['build:lib:host']).toBe(
+      'tsc -b tsconfig.host.json && tsdown --env.DSH_BUILD_FACE host',
+    )
+    expect(manifest.scripts['build:lib:client']).toBe(
+      'tsc -b tsconfig.client.json tsconfig.hybrid.json && tsdown --env.DSH_BUILD_FACE client',
+    )
+    expect(manifest.scripts['typecheck:contracts-ready']).toBe(
+      'tsc -b tsconfig.client.json tsconfig.hybrid.json',
+    )
+  })
+
   it('isolates the cross-runtime HMR integration from both service faces', () => {
     const hostPath = resolve(root, 'tsconfig.host.json')
     const host = ts.readConfigFile(hostPath, file => ts.sys.readFile(file))
@@ -60,6 +75,9 @@ describe('client TypeScript aggregate', () => {
     expect(stringArrayProperty(host.config, 'exclude')).toContain(
       'packages/extensions/cordis-host-runner/tests/development-hmr.spec.ts',
     )
+
+    const hostReferences = (host.config.references as Array<{ path: string }>).map(reference => reference.path)
+    expect(hostReferences).not.toContain('./packages/aistaff/cloud-client-product')
 
     const hybridPath = resolve(root, 'tsconfig.hybrid.json')
     const hybrid = ts.readConfigFile(hybridPath, file => ts.sys.readFile(file))

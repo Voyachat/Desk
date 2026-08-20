@@ -14,7 +14,7 @@
 
 Host 在发布前编译 JavaScript 或 TypeScript，Client 编译 JavaScript、TypeScript 或 TSX。Client JSX 降级为现有求值器已经提供的 `React` 参数。动态两半仍是没有模块解析能力的函数体，因此拒绝 import 和 export。生产运行时方法只消费编译后的产物文本。
 
-跨运行时 development-HMR 集成规格使用独立的 `tsconfig.hybrid.json` 编译程序。它有意同时加载两个 service face，而仓库 Host 与 Client 聚合保持隔离，避免互不兼容的 `Context.sessions` 声明影响无关测试。常规 Host 构建在打包前编译这个第三程序。
+跨运行时 development-HMR 集成规格使用独立的 `tsconfig.hybrid.json` 编译程序。它有意同时加载两个 service face，而仓库 Host 与 Client 聚合保持隔离，避免互不兼容的 `Context.sessions` 声明影响无关测试。Client 编译阶段在 Host Typert 生成后运行这个第三程序，因为该集成规格会进入 Client remote 图。
 
 稳定的开发工作副本位于 `$DSH_HOME/dynamic-cordis/sources/<pluginId>/host.ts` 和 `client.tsx`。默认禁用的 watcher 串行比较文件字节。有效变更会编译当前存在的所有半边，追加并原子发布不可变 Package；只有 Plugin 正在运行且先前用户决策覆盖未来 Client 版本时，才使用常规运行请求。Client runner 的每 Plugin 队列会先移除并排空旧 Loader Fiber，再挂载新的激活实例。构建失败既不改变 manifest，也不改变当前激活状态，并以符号源路径出现在 inventory 中。释放 watcher 后不会再发生后续激活。
 
