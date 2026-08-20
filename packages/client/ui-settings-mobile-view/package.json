@@ -37,7 +37,7 @@
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "react": "^18.2.0"
+    "react": "^19.2.7"
   },
   "devDependencies": {
     "@testing-library/react": "^16.1.0",
@@ -50,8 +50,8 @@
     "@voyaseek-ai/dsh-client-ui-settings": "workspace:^",
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
-    "@types/react": "~18.3.1",
-    "react": "^18.2.0"
+    "@types/react": "~19.2.17",
+    "react": "^19.2.7"
   },
   "files": ["lib/index.js", "lib/invariant.js", "lib/client.js", "lib/types/**/*.d.ts"]
 }

@@ -49,7 +49,7 @@
     "@voyaseek-ai/dsh-client-ui-workspace": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "react": "^19.2.7"
   },
   "devDependencies": {
     "@voyaseek-ai/dsh-client-runtime": "workspace:^",
@@ -57,9 +57,9 @@
     "@voyaseek-ai/dsh-client-ui-workspace": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@testing-library/react": "^16.1.0",
-    "@types/react": "~18.3.1",
+    "@types/react": "~19.2.17",
     "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0",
+    "react": "^19.2.7",
     "react-dom": "^18.2.0"
   },
   "files": [

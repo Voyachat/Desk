@@ -74,7 +74,7 @@
     "@voyaseek-ai/dsh-session-stats": "workspace:^",
     "@voyaseek-ai/dsh-token-meter": "workspace:^",
     "@voyaseek-ai/dsh-tools": "workspace:^",
-    "react": "^18.2.0"
+    "react": "^19.2.7"
   },
   "devDependencies": {
     "@voyaseek-ai/cordis": "workspace:^",
@@ -104,8 +104,8 @@
     "@voyaseek-ai/dsh-token-meter": "workspace:^",
     "@voyaseek-ai/dsh-tool-todo": "workspace:^",
     "@voyaseek-ai/dsh-tools": "workspace:^",
-    "@types/react": "~18.3.1",
-    "react": "^18.2.0"
+    "@types/react": "~19.2.17",
+    "react": "^19.2.7"
   },
   "files": [
     "lib/index.js",

@@ -64,7 +64,7 @@
     "@voyaseek-ai/dsh-client-web-react": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^",
-    "react": "^18.2.0"
+    "react": "^19.2.7"
   },
   "devDependencies": {
     "@voyaseek-ai/dsh-api-remotes": "workspace:^",
@@ -79,8 +79,8 @@
     "@voyaseek-ai/dsh-client-web-react": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/cordis": "workspace:^",
-    "@types/react": "~18.3.1",
-    "react": "^18.2.0"
+    "@types/react": "~19.2.17",
+    "react": "^19.2.7"
   },
   "files": [
     "lib/index.js",

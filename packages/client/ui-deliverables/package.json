@@ -46,7 +46,7 @@
   },
   "license": "MIT",
   "dependencies": {
-    "react": "^18.2.0"
+    "react": "^19.2.7"
   },
   "peerDependencies": {
     "@voyaseek-ai/dsh-client-connection": "workspace:^",
@@ -69,7 +69,7 @@
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "@voyaseek-ai/dsh-invariants": "workspace:^",
     "@voyaseek-ai/dsh-system-prompt": "workspace:^",
-    "@types/react": "~18.3.1",
+    "@types/react": "~19.2.17",
     "@voyaseek-ai/cordis": "workspace:^"
   },
   "files": [
