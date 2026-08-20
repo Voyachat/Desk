@@ -7,9 +7,16 @@ import { runFixtureTurn } from '@voyaseek-ai/dsh-loader-smoke'
 import type { SessionEvent } from '@voyaseek-ai/dsh-session'
 
 const NAME = 'headless-test-driver'
+const MAX_MODEL_STEPS_ENV = 'DSH_FIXTURE_MAX_MODEL_STEPS'
 const [configPath, ...taskParts] = process.argv.slice(2)
 if (configPath === undefined || taskParts.length === 0 || taskParts.every(part => part.trim() === '')) {
   throw new Error(`${NAME}: expected <config-path> <task...>`)
+}
+
+const rawMaxModelSteps = process.env[MAX_MODEL_STEPS_ENV]
+const maxModelSteps = rawMaxModelSteps === undefined ? undefined : Number(rawMaxModelSteps)
+if (maxModelSteps !== undefined && (!Number.isInteger(maxModelSteps) || maxModelSteps < 1)) {
+  throw new Error(`${NAME}: ${MAX_MODEL_STEPS_ENV} must be a positive integer`)
 }
 
 const uninstallFailLoud = installFailLoud(NAME)
@@ -19,6 +26,7 @@ try {
   ctx = await boot(NAME, resolveConfigPath(configPath, undefined))
   const result = await runFixtureTurn(ctx, {
     task: taskParts.join(' '),
+    ...maxModelSteps === undefined ? {} : { maxModelSteps },
     onEvent: (sessionId: string, event: SessionEvent) => {
       process.stdout.write(`${JSON.stringify({ type: 'session_event', sessionId, event })}\n`)
     },

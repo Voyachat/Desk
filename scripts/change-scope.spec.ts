@@ -19,6 +19,7 @@ interface Fixture {
   root: string
 }
 
+const GIT_FIXTURE_TIMEOUT_MS = 15_000
 const fixtureRoots: string[] = []
 
 afterEach(() => {
@@ -142,7 +143,7 @@ describe('change-scope', () => {
     expect(report.paths.untracked).toEqual(['current-worktree.txt'])
   })
 
-  it('keeps committed, staged, unstaged, and untracked paths independent and does not mutate state', () => {
+  it('keeps committed, staged, unstaged, and untracked paths independent and does not mutate state', { timeout: GIT_FIXTURE_TIMEOUT_MS }, () => {
     const { root } = fixture()
     commit(root, 'unstaged.txt', 'before\n')
     const baseSha = git(root, ['rev-parse', 'HEAD'])

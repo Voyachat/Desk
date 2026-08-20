@@ -14,6 +14,7 @@ function turnHarness(): {
   readonly emit: (session: unknown, value: object) => void
   readonly setFollowup: (callback: (message: { readonly id: unknown }) => void) => void
   readonly whenIdle: ReturnType<typeof vi.fn>
+  readonly cancel: ReturnType<typeof vi.fn>
   readonly disposeListener: ReturnType<typeof vi.fn>
   readonly flush: ReturnType<typeof vi.fn>
 } {
@@ -22,11 +23,13 @@ function turnHarness(): {
   let listener: Listener | undefined
   let followup = (_message: { readonly id: unknown }): void => {}
   const whenIdle = vi.fn(async () => {})
+  const cancel = vi.fn()
   const disposeListener = vi.fn()
   const flush = vi.fn(async () => {})
   const agent = {
     session,
     whenIdle,
+    cancel,
     followup: vi.fn((message: { readonly id: unknown }) => { followup(message) }),
   }
   const ctx = {
@@ -44,6 +47,7 @@ function turnHarness(): {
     emit: (target, value) => { listener?.(target, event(value)) },
     setFollowup: (callback) => { followup = callback },
     whenIdle,
+    cancel,
     disposeListener,
     flush,
   }
@@ -147,6 +151,34 @@ describe('runFixtureTurn', () => {
       sessionId: 'fixture-session',
       output: '',
     })
+  })
+
+  it('cancels before the first model step beyond the declared budget', async () => {
+    const harness = turnHarness()
+    harness.setFollowup((message) => {
+      harness.emit(harness.session, {
+        type: 'agent/inbox/spliced', seq: 0, time: 0, data: { inserted: [message] },
+      })
+      for (let step = 1; step <= 3; step += 1) {
+        harness.emit(harness.session, {
+          type: 'step/start', seq: step, time: step, data: { turn: 1, step },
+        })
+      }
+    })
+
+    await expect(runFixtureTurn(harness.ctx, { task: 'bounded', maxModelSteps: 2 }))
+      .rejects.toThrow('fixture turn exceeded the 2-step model budget')
+    expect(harness.cancel).toHaveBeenCalledOnce()
+    expect(harness.cancel).toHaveBeenCalledWith({ kind: 'user' })
+    expect(harness.flush).toHaveBeenCalledWith(harness.session)
+    expect(harness.disposeListener).toHaveBeenCalledOnce()
+  })
+
+  it('rejects an invalid model-step budget before starting the agent', async () => {
+    const harness = turnHarness()
+    await expect(runFixtureTurn(harness.ctx, { task: 'invalid', maxModelSteps: 0 }))
+      .rejects.toThrow('fixture turn maxModelSteps must be a positive integer, got 0')
+    expect(harness.whenIdle).not.toHaveBeenCalled()
   })
 
   it('always removes its listener when the turn fails', async () => {

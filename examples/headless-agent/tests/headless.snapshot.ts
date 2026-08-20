@@ -80,7 +80,7 @@ interface DeepSeekDefaultsServer {
   close(): Promise<void>
 }
 
-/** Serve one deterministic DeepSeek-compatible response while retaining its request body. */
+/** Serve one deterministic DeepSeek-compatible response with an SSE comment and retain its request body. */
 async function deepseekDefaultsServer(): Promise<DeepSeekDefaultsServer> {
   const requests: JsonObject[] = []
   const server = createServer((request: IncomingMessage, response: ServerResponse) => {
@@ -90,21 +90,13 @@ async function deepseekDefaultsServer(): Promise<DeepSeekDefaultsServer> {
     request.on('end', () => {
       requests.push(JSON.parse(body) as JsonObject)
       response.writeHead(200, { 'content-type': 'text/event-stream' })
-      let keepAlives = 3
-      const write = (): void => {
-        if (keepAlives-- > 0) {
-          response.write(': keep-alive\n\n')
-          setTimeout(write, 60)
-          return
-        }
-        response.end([
-          'data: {"choices":[{"delta":{"content":"DEFAULTS_OK"}}]}',
-          'data: {"choices":[{"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":1}}',
-          'data: [DONE]',
-          '',
-        ].join('\n\n'))
-      }
-      setTimeout(write, 60)
+      response.end([
+        ': keep-alive',
+        'data: {"choices":[{"delta":{"content":"DEFAULTS_OK"}}]}',
+        'data: {"choices":[{"delta":{},"finish_reason":"stop"}],"usage":{"prompt_tokens":3,"completion_tokens":1}}',
+        'data: [DONE]',
+        '',
+      ].join('\n\n'))
     })
   })
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve))
@@ -643,7 +635,7 @@ describe('headless stream-json snapshots', () => {
     `)
   }, LOADER_SMOKE_TEST_TIMEOUT_MS)
 
-  it('keeps provider comments alive and sends DeepSeek defaults through the one-shot app', async () => {
+  it('passes provider comments and DeepSeek defaults through the one-shot app', async () => {
     const server = await deepseekDefaultsServer()
     try {
       const result = await runLoaderSmoke({

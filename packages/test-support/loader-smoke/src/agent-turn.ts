@@ -20,6 +20,8 @@ export interface FixtureTurnResult {
 export interface FixtureTurnOptions {
   readonly task: string
   readonly onEvent?: (sessionId: string, event: SessionEvent) => void
+  /** Hard ceiling on model steps; the first excess step is cancelled before its request begins. */
+  readonly maxModelSteps?: number
 }
 
 function addUsage(total: TokenUsage | undefined, step: TokenUsage): TokenUsage {
@@ -50,10 +52,14 @@ function onlyRootAgent(ctx: Context): Agent {
 /**
  * Drive one task from its durable inbox receipt through whole-agent idle.
  * @param ctx - settled Loader context with exactly one configured root agent.
- * @param options - task and optional canonical-event observer.
+ * @param options - task, optional canonical-event observer, and optional hard model-step budget.
  * @returns the final assistant text and accumulated model usage.
  */
 export async function runFixtureTurn(ctx: Context, options: FixtureTurnOptions): Promise<FixtureTurnResult> {
+  if (options.maxModelSteps !== undefined
+    && (!Number.isInteger(options.maxModelSteps) || options.maxModelSteps < 1)) {
+    throw new Error(`fixture turn maxModelSteps must be a positive integer, got ${String(options.maxModelSteps)}`)
+  }
   const agent = onlyRootAgent(ctx)
   await agent.whenIdle()
 
@@ -63,6 +69,8 @@ export async function runFixtureTurn(ctx: Context, options: FixtureTurnOptions):
   })
   let received = false
   let output = ''
+  let modelSteps = 0
+  let modelStepBudgetExceeded = false
   const usageByStep = new Map<string, TokenUsage>()
   const disposeListener = ctx.on('session/event', (session, event) => {
     if (session !== agent.session) return
@@ -72,6 +80,13 @@ export async function runFixtureTurn(ctx: Context, options: FixtureTurnOptions):
       received = true
     }
     options.onEvent?.(session.id, event)
+    if (event.type === 'step/start') {
+      modelSteps += 1
+      if (options.maxModelSteps !== undefined && modelSteps > options.maxModelSteps) {
+        modelStepBudgetExceeded = true
+        agent.cancel({ kind: 'user' })
+      }
+    }
     if (event.type === 'assistant/chunk' && event.data.chunk.type === 'usage') {
       usageByStep.set(`${event.data.turn}/${event.data.step}`, event.data.chunk.usage)
     }
@@ -90,6 +105,9 @@ export async function runFixtureTurn(ctx: Context, options: FixtureTurnOptions):
     disposeListener()
   }
   await ctx.sessions.flush(agent.session)
+  if (modelStepBudgetExceeded) {
+    throw new Error(`fixture turn exceeded the ${String(options.maxModelSteps)}-step model budget`)
+  }
   const usage = [...usageByStep.values()].reduce<TokenUsage | undefined>(addUsage, undefined)
   return {
     type: 'result',

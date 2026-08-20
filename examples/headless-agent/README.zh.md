@@ -17,6 +17,12 @@ pnpm dsh --profile headless "fix the failing test in this workspace"
 
 快照套件通过 [`tests/fixtures/headless-driver.ts`](tests/fixtures/headless-driver.ts) 运行本目录的配置。这个未导出且仅供测试使用的进程会在结果记录之前，以 JSONL 发出规范会话事件。该事件流属于测试基础设施，不是受支持的 CLI（命令行界面）输出格式。子会话只通过父会话的工具事件和结果对外显示。
 
+## 真实提供方变体
+
+默认真实产品组装仍使用 DeepSeek。[`tests/fixtures/qwen-real.cordis.yml`](tests/fixtures/qwen-real.cordis.yml) 仅将 LLM 路由替换为 DashScope `qwen-plus`；Loader 启动、本地工具、agent loop 和 JSONL 持久化保持不变。
+
+Qwen 场景通过 `maxRetries: 0` 禁用提供方重试，对该付费用例禁用 Vitest 重试，将每次响应限制为 `maxTokens: 1024`，并在第五次模型请求开始前强制停止。父测试进程只有在从临时工作区重新读取 `task.txt`、观察到预期修改，并确认持久化的 `assistant/message` 步骤与进程记录一致后才接受该次运行，而不会信任模型的最终声明。
+
 ## E2B POC overlay
 
 [`e2b.cordis.yml`](e2b.cordis.yml) 使用一个共享 E2B 沙箱替换本地文件系统与子进程提供方，同时保留 `dsh-bash-local` 和相同的面向模型工具。请在 git 忽略的根目录 `.env` 中，将 `E2B_API_KEY` 与 `DEEPSEEK_API_KEY` 放在一起，然后运行凭据门控的实机组合测试；它在同一个沙箱中驱动 FS、Bash、PTY 和 LSP，并证明沙箱最终被删除：

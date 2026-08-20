@@ -1,0 +1,43 @@
+# Credential-gated real-provider variant of the assembled headless agent. It
+# preserves the shipping Loader, tools, loop, and persistence composition while
+# replacing only the LLM route with bounded DashScope Qwen inference.
+- id: base
+  name: '@voyaseek-ai/cordis-plugin-include'
+  config:
+    path: ../../cordis.yml
+    patches:
+      - id: llm-deepseek
+        name: '@voyaseek-ai/dsh-llm-deepseek'
+        disabled: true
+      - id: agent-spine
+        name: '@voyaseek-ai/dsh-agent-spine-demo'
+        config:
+          agents:
+            - id: main
+              provider: dashscope
+              model: qwen-plus
+              cwd: !!js process.cwd()
+          workspaceContext: false
+          persona: |
+            You are a coding agent. Complete the requested workspace change with the available tools, verify it, and answer briefly.
+      - id: persistence
+        name: '@voyaseek-ai/dsh-session-persistence-jsonl'
+        config:
+          root: './.sessions'
+      - insert:
+          - id: llm-pi-ai
+            name: '@voyaseek-ai/dsh-llm-pi-ai'
+            config:
+              providers:
+                dashscope:
+                  displayName: DashScope
+                  apiKeyEnv: DASHSCOPE_API_KEY
+                  api: openai-completions
+                  baseURL: https://dashscope.aliyuncs.com/compatible-mode/v1
+                  retryPolicy:
+                    mode: normal
+                    maxRetries: 0
+                  models:
+                    - id: qwen-plus
+                      contextWindow: 131072
+                      maxTokens: 1024

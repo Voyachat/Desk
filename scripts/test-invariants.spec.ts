@@ -13,6 +13,9 @@ import {
   usesManualInvariantTree,
 } from './test-invariants.ts'
 
+/** Budget for repository-wide companion imports while check:all shares CPU with build and documentation gates. */
+const EXHAUSTIVE_TOPOLOGY_TIMEOUT_MS = 15_000
+
 declare module '@voyaseek-ai/cordis' {
   interface Context {
     testInvariantProbe: TestInvariantProbe
@@ -115,7 +118,7 @@ describe('global test invariant host', () => {
       }
     }
     expect(unreserved).toEqual([])
-  })
+  }, EXHAUSTIVE_TOPOLOGY_TIMEOUT_MS)
 
   it('mounts the owning package companion while leaving non-package roots service-only', () => {
     expect(testInvariantCompanionPaths('/repo/packages/core/tools/tests/tools.spec.ts'))
@@ -149,7 +152,7 @@ describe('global test invariant host', () => {
       registrations.set(path, call[0])
     }
     expect(registrations).toEqual(owners)
-  })
+  }, EXHAUSTIVE_TOPOLOGY_TIMEOUT_MS)
 
   it('recognizes focused invariant suites without a package inventory', () => {
     expect(usesManualInvariantTree('/repo/packages/core/session/tests/invariant.spec.ts')).toBe(true)

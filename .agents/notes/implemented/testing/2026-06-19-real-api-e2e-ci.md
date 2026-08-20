@@ -22,6 +22,10 @@ ci.yml's value is that it is keyless, forkable, and always-green: any contributo
 
 Internal inference cost is not the limiting constraint, so the workflow optimizes for coverage and signal. It runs every matching `*.e2e.ts` file on multiple triggers and every trusted PR, implementing the [docs/testing.md](../../../../docs/testing.md) with-key policy.
 
+### Local provider variants supplement the DeepSeek workflow
+
+On an authorized local machine, a live scenario may use another installed model provider and its provider-specific key to exercise the same assembled product entry point. A paid local variant owns explicit provider-retry, test-retry, response-token, and model-step budgets; the step budget cancels before the first excess request starts. This evidence supplements provider coverage but does not replace the dedicated DeepSeek CI workflow, its external API, or its secret-bearing trigger policy.
+
 ### Triggers: trusted events only
 
 `workflow_dispatch` + `push` to `main`/`master` + nightly `schedule` (`17 0 * * *`, 08:17 Asia/Shanghai) + `pull_request`. Push gives a post-merge signal; schedule catches external-API drift; dispatch is the manual escape hatch; and trusted pull requests get a pre-merge gate. That pre-merge signal deliberately accepts the larger key-exposure surface described under § Security.
