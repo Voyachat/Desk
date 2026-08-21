@@ -29,7 +29,7 @@
   "dependencies": {
     "@voyaseek-ai/dsh-client-ui-slots": "workspace:^",
     "react": "^18.2.0",
-    "use-sync-external-store": "1.2.0"
+    "use-sync-external-store": "1.6.0"
   },
   "peerDependencies": {
     "@voyaseek-ai/dsh-invariants": "workspace:^",
