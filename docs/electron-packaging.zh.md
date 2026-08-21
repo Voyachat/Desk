@@ -8,6 +8,7 @@
 
 - 桌面应用将 `electron` 精确固定为 `42.7.0`，不使用版本范围。Electron 42.7.0 内置 Node.js 24.18.0，满足仓库的引擎要求 `^22.19.0 || >=24.0.0`（[Electron 发行记录](https://releases.electronjs.org/release/v42.7.0)）。
 - Electron Forge 是打包与安装程序工具。它集成 Electron 打包、原生依赖重建、平台 maker、签名和 fuse；除非出现 Forge 无法满足的要求，否则不引入第二套发布编排工具。
+- Forge 不翻转 Electron fuse。打包应用保留 Electron 42.7.0 默认状态，因为 ASAR 所有的启动输入壳通过 Chromium 的 `file` 协议加载；关闭 `GrantFileProtocolExtraPrivileges` 会让这个真实存在的文件以 `ERR_FILE_NOT_FOUND` 失败（[决策](../.agents/notes/implemented/bug-fix/2026-08-21-desktop-default-electron-fuses.md)）。
 - Electron 和 Forge 以版本化依赖方式采用，不复制或 fork 源码。添加依赖时，其许可证和传递依赖声明一并加入 `THIRD_PARTY_NOTICES.md`。
 - 第一版打包运行时位于 ASAR 之外。Cordis 包发现、profile 包链接、客户端 bundle、worker 入口、原生 addon 和辅助可执行文件都需要真实文件系统路径。后续改用 ASAR 时，必须证明每个此类路径在所有目标平台均已解包且可执行。
 

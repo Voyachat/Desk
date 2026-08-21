@@ -1,7 +1,5 @@
 const path = require('node:path')
 const { MakerDMG } = require('@electron-forge/maker-dmg')
-const { FusesPlugin } = require('@electron-forge/plugin-fuses')
-const { FuseV1Options, FuseVersion } = require('@electron/fuses')
 
 const appIcon = path.resolve(__dirname, 'assets/app-icon.icns')
 
@@ -39,20 +37,5 @@ module.exports = {
   },
   makers: [
     new MakerDMG({ format: 'ULFO', icon: appIcon }, ['darwin']),
-  ],
-  plugins: [
-    new FusesPlugin({
-      version: FuseVersion.V1,
-      strictlyRequireAllFuses: true,
-      [FuseV1Options.RunAsNode]: true,
-      [FuseV1Options.EnableCookieEncryption]: false,
-      [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
-      [FuseV1Options.EnableNodeCliInspectArguments]: false,
-      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: true,
-      [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: false,
-      [FuseV1Options.GrantFileProtocolExtraPrivileges]: false,
-      [FuseV1Options.WasmTrapHandlers]: true,
-    }),
   ],
 }

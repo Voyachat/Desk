@@ -48,7 +48,8 @@
     "@voyaseek-ai/dsh-subprocess": "workspace:^",
     "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@voyaseek-ai/dsh-timeout": "workspace:^",
-    "@voyaseek-ai/dsh-user-approval": "workspace:^"
+    "@voyaseek-ai/dsh-user-approval": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^"
   },
   "dependencies": {
     "@openai/codex": "0.147.0",

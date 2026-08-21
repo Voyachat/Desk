@@ -6,7 +6,7 @@
 
 ## 组合
 
-将本插件与 `dsh-agent-loop`、`dsh-system-prompt` 和一个 subprocess provider 一起挂载。Session 通过 `agentRuntime: 'codex'` 选择它；没有该 header 的 Session 继续使用默认 loop。
+将本插件与 `dsh-agent-loop`、`dsh-tools`、`dsh-system-prompt` 和一个 subprocess provider 一起挂载。Session 通过 `agentRuntime: 'codex'` 选择它；没有该 header 的 Session 继续使用默认 loop。
 
 ```yaml
 - id: codex-agent
@@ -21,9 +21,9 @@
     apiKeyEnv: DASHSCOPE_API_KEY
 ```
 
-配置的 endpoint 必须实现 OpenAI Responses 语义。`provider` 是默认 Codex model-provider id；`model` 必填并作为其回退模型，非空 `models` 是该默认路由的准确允许模型集合。若已注册 LLM 路由的具体模型描述使用 `openai-responses`、具有 endpoint 且指名凭据引用，它会自动加入同一 Runtime。每轮都会重新解析该路由的当前 endpoint 与凭据，密钥不会进入 argv。使用 Chat Completions 或 Anthropic Messages 的路由仍被排除，并在进程启动前失败。
+配置的 endpoint 必须实现 OpenAI Responses 语义。`provider` 是默认 Codex model-provider id；`model` 必填并作为其回退模型，非空 `models` 是该默认路由的准确允许模型集合。若已注册 LLM 路由的具体模型描述使用 `openai-responses`、具有 endpoint 且指名凭据引用，它会自动加入同一 Runtime。每轮都会重新解析所选路由的当前 endpoint 与凭据，包括 provider id 与已配置默认值相同时；密钥不会进入 argv。使用 Chat Completions 或 Anthropic Messages 的路由仍被排除，并在进程启动前失败。
 
-`apiKeyEnv` 是凭据引用，不是 secret 值。Driver 在每轮之前通过 `ctx.credentials` 解析它，只把值注入该轮经过清理的子进程环境。`baseUrl` 会生成 `wire_api="responses"` 的 app-server model-provider override。`executable` 替换 `codex` 命令；`argv` 为受控部署替换完整固定命令。`disposeGraceMs` 默认是 3000 毫秒。
+`apiKeyEnv` 是凭据引用，不是 secret 值。Driver 在每轮之前通过 `ctx.credentials` 解析它，只把值注入该轮经过清理的子进程环境。`baseUrl` 会生成 `wire_api="responses"` 的 app-server model-provider override。Driver 默认从锁定版本 `@openai/codex` 的平台包解析 native executable，因此桌面启动不依赖全局 `codex` 命令或继承的 `PATH`。`executable` 替换该随包 binary；`argv` 为受控部署替换完整固定命令。`disposeGraceMs` 默认是 3000 毫秒。
 
 ## 生命周期与权限
 

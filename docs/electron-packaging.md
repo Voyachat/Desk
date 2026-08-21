@@ -8,6 +8,7 @@ This reference defines how Voyaseek Harness is packaged as a desktop application
 
 - The desktop application pins `electron` to exactly `42.7.0`; do not use a range. Electron 42.7.0 embeds Node.js 24.18.0, which satisfies the repository engine requirement `^22.19.0 || >=24.0.0` ([Electron release](https://releases.electronjs.org/release/v42.7.0)).
 - Electron Forge is the packaging and installer tool. It integrates Electron packaging, native dependency rebuilds, platform makers, signing, and fuses; do not add a second release orchestrator without a requirement Forge cannot meet.
+- Forge does not flip Electron fuses. The packaged application keeps the Electron 42.7.0 defaults because the ASAR-owned startup composer loads through Chromium's `file` protocol; disabling `GrantFileProtocolExtraPrivileges` makes that existing file fail with `ERR_FILE_NOT_FOUND` ([decision](../.agents/notes/implemented/bug-fix/2026-08-21-desktop-default-electron-fuses.md)).
 - Electron and Forge are adopted as versioned dependencies, not copied or forked source. Their licenses and transitive notices join `THIRD_PARTY_NOTICES.md` when the dependencies are added.
 - The first packaged runtime remains outside ASAR. Cordis package discovery, profile package links, client bundles, worker entrypoints, native addons, and helper executables require real filesystem paths. A later ASAR change must prove every such path is unpacked and executable on each target.
 

@@ -19,7 +19,7 @@ import type {} from './types.ts'
 import type { CodexServerRequestHandler } from './wire.ts'
 
 export const name = 'codex-agent'
-export const inject = ['agentLoop', 'subprocess', 'systemPrompt']
+export const inject = ['agentLoop', 'subprocess', 'systemPrompt', 'tools']
 
 /** Deployment configuration for the Codex runtime. */
 export interface Config {
@@ -37,7 +37,7 @@ export interface Config {
   readonly apiKeyEnv?: string
   /** Explicit environment layered over the credential-scrubbed parent environment. */
   readonly env?: Record<string, string>
-  /** Executable replacing `codex` while retaining `app-server --stdio`. */
+  /** Executable replacing the bundled Codex binary while retaining `app-server --stdio`. */
   readonly executable?: string
   /** Complete argv override for deployments and deterministic tests. */
   readonly argv?: string[]
@@ -110,7 +110,7 @@ export async function resolveCodexTurnConfig(
   config: ResolvedConfig,
   request?: { provider: string; model: string },
 ): Promise<CodexTurnConfig> {
-  const route = request === undefined || request.provider === config.provider
+  const route = request === undefined
     ? undefined
     : ctx.get('llm')?.resolveExternalRuntimeRoute(request.provider, request.model, 'codex')
   if (request !== undefined && request.provider !== config.provider && route === undefined) {

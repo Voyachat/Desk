@@ -6,7 +6,7 @@ Reference for the alternative `codex` AgentDriver. Each DSH Session owns one dur
 
 ## Composition
 
-Mount this plugin beside `dsh-agent-loop`, `dsh-system-prompt`, and a subprocess provider. A Session selects it with `agentRuntime: 'codex'`; sessions without that header retain the default loop.
+Mount this plugin beside `dsh-agent-loop`, `dsh-tools`, `dsh-system-prompt`, and a subprocess provider. A Session selects it with `agentRuntime: 'codex'`; sessions without that header retain the default loop.
 
 ```yaml
 - id: codex-agent
@@ -21,9 +21,9 @@ Mount this plugin beside `dsh-agent-loop`, `dsh-system-prompt`, and a subprocess
     apiKeyEnv: DASHSCOPE_API_KEY
 ```
 
-The configured endpoint must implement OpenAI Responses semantics. `provider` is the default Codex model-provider id; `model` is required and becomes its fallback model, while `models`, when non-empty, is its exact admitted model set. Registered LLM routes whose exact model descriptor uses `openai-responses`, has an endpoint, and names a credential reference join the same Runtime automatically. Each turn resolves that route's current endpoint and credential without placing the key in argv. A route using Chat Completions or Anthropic Messages remains excluded and fails before process startup.
+The configured endpoint must implement OpenAI Responses semantics. `provider` is the default Codex model-provider id; `model` is required and becomes its fallback model, while `models`, when non-empty, is its exact admitted model set. Registered LLM routes whose exact model descriptor uses `openai-responses`, has an endpoint, and names a credential reference join the same Runtime automatically. Each turn resolves the selected route's current endpoint and credential, including when its provider id matches the configured default, without placing the key in argv. A route using Chat Completions or Anthropic Messages remains excluded and fails before process startup.
 
-`apiKeyEnv` is a credential reference, not a secret value. The driver resolves it through `ctx.credentials` before each turn and injects the value only into that turn's scrubbed child environment. `baseUrl` produces an app-server model-provider override with `wire_api="responses"`. `executable` replaces the `codex` command; `argv` replaces the complete fixed command for controlled deployments. `disposeGraceMs` defaults to 3000 milliseconds.
+`apiKeyEnv` is a credential reference, not a secret value. The driver resolves it through `ctx.credentials` before each turn and injects the value only into that turn's scrubbed child environment. `baseUrl` produces an app-server model-provider override with `wire_api="responses"`. By default the driver resolves the native executable from the pinned `@openai/codex` platform package, so desktop launches do not depend on a global `codex` command or inherited `PATH`. `executable` replaces that bundled binary; `argv` replaces the complete fixed command for controlled deployments. `disposeGraceMs` defaults to 3000 milliseconds.
 
 ## Lifecycle and permissions
 

@@ -16,6 +16,7 @@
     { "path": "../../credentials/credentials" },
     { "path": "../../core/scope" },
     { "path": "../../core/session" },
+    { "path": "../../core/tools" },
     { "path": "../../core/system-prompt" },
     { "path": "../../llm/llm" },
     { "path": "../../sandbox/sandbox-policy" },

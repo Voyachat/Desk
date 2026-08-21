@@ -11,6 +11,10 @@ import * as codexAgent from '../src/index.ts'
 import { CodexAgent } from '../src/driver.ts'
 
 describe('codex-agent composition', () => {
+  it('declares the tool runtime required by agent-scoped extensions', () => {
+    expect(codexAgent.inject).toContain('tools')
+  })
+
   it('registers and serves the codex runtime without spawning during creation', async () => {
     const ctx = new Context()
     await ctx.plugin(LlmRuntime)
