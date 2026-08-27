@@ -440,6 +440,26 @@ function matchesSpecifier(patterns: readonly RegExp[], specifier: string): boole
 function clientConfig(id: string, entry: string): UserConfig {
   const cssFiles = new Map<string, string>()
   const isRequested = (specifier: string): boolean => clientExternalSpecifiers(id).has(specifier)
+  /**
+   * Register one stylesheet under a repository-relative virtual id, so the
+   * bundle's module banners never embed a build-machine path. Every CSS
+   * virtual loader shares this map: prefixes keep the ids disjoint.
+   */
+  const registerStylesheet = (prefix: string, abs: string): string => {
+    const virtualId = prefix + repositoryAssetId(abs) + CSS_VIRTUAL_SUFFIX
+    const existing = cssFiles.get(virtualId)
+    if (existing !== undefined && existing !== abs) {
+      throw new Error(`client CSS virtual id collision: ${virtualId}`)
+    }
+    cssFiles.set(virtualId, abs)
+    return virtualId
+  }
+  /** Resolve a virtual id back to the physical stylesheet that registered it. */
+  const stylesheetFor = (virtualId: string): string => {
+    const fileId = cssFiles.get(virtualId)
+    if (fileId === undefined) throw new Error(`missing CSS source for ${virtualId}`)
+    return fileId
+  }
   return {
     name: `${id}/client`,
     entry: { client: entry },
@@ -504,18 +524,11 @@ function clientConfig(id: string, entry: string): UserConfig {
       resolveId(source: string, importer: string | undefined) {
         if (!source.endsWith('.module.css')) return null
         const abs = importer !== undefined ? sourceAssetPath(source, importer) : source
-        const virtualId = CSS_VIRTUAL_PREFIX + repositoryAssetId(abs) + CSS_VIRTUAL_SUFFIX
-        const existing = cssFiles.get(virtualId)
-        if (existing !== undefined && existing !== abs) {
-          throw new Error(`client CSS virtual id collision: ${virtualId}`)
-        }
-        cssFiles.set(virtualId, abs)
-        return virtualId
+        return registerStylesheet(CSS_VIRTUAL_PREFIX, abs)
       },
       async load(virtualId: string) {
         if (!virtualId.startsWith(CSS_VIRTUAL_PREFIX)) return null
-        const fileId = cssFiles.get(virtualId)
-        if (fileId === undefined) throw new Error(`missing CSS source for ${virtualId}`)
+        const fileId = stylesheetFor(virtualId)
         // The virtual id otherwise hides the physical stylesheet from Rolldown's watch graph.
         this.addWatchFile(fileId)
         const source = await readFile(fileId)
@@ -537,11 +550,11 @@ function clientConfig(id: string, entry: string): UserConfig {
         if (!source.endsWith(`.css${INLINE_CSS_QUERY}`)) return null
         const stylesheet = source.slice(0, -INLINE_CSS_QUERY.length)
         const abs = importer !== undefined ? sourceAssetPath(stylesheet, importer) : stylesheet
-        return INLINE_CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
+        return registerStylesheet(INLINE_CSS_VIRTUAL_PREFIX, abs)
       },
       async load(virtualId: string) {
         if (!virtualId.startsWith(INLINE_CSS_VIRTUAL_PREFIX)) return null
-        const fileId = virtualId.slice(INLINE_CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
+        const fileId = stylesheetFor(virtualId)
         this.addWatchFile(fileId)
         const source = await readFile(fileId)
         const { code } = transform({ filename: fileId, code: source, minify: true })
@@ -552,11 +565,11 @@ function clientConfig(id: string, entry: string): UserConfig {
       resolveId(source: string, importer: string | undefined) {
         if (!source.endsWith('.css') || source.endsWith('.module.css')) return null
         const abs = importer !== undefined ? sourceAssetPath(source, importer) : source
-        return GLOBAL_CSS_VIRTUAL_PREFIX + abs + CSS_VIRTUAL_SUFFIX
+        return registerStylesheet(GLOBAL_CSS_VIRTUAL_PREFIX, abs)
       },
       async load(virtualId: string) {
         if (!virtualId.startsWith(GLOBAL_CSS_VIRTUAL_PREFIX)) return null
-        const fileId = virtualId.slice(GLOBAL_CSS_VIRTUAL_PREFIX.length, -CSS_VIRTUAL_SUFFIX.length)
+        const fileId = stylesheetFor(virtualId)
         this.addWatchFile(fileId)
         const source = await readFile(fileId)
         const { code } = transform({ filename: fileId, code: source, minify: true })

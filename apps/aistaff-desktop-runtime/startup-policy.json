@@ -1,13 +1,6 @@
 {
   "schemaVersion": 1,
   "required": {
-    "startupShell": {
-      "html": "apps/aistaff-desktop/assets/startup.html",
-      "resources": [
-        "apps/aistaff-desktop/assets/startup.css",
-        "apps/aistaff-desktop/assets/startup.js"
-      ]
-    },
     "desktopDist": {
       "root": "apps/aistaff-desktop/dist",
       "extensions": [
@@ -19,7 +12,7 @@
   },
   "deferred": {
     "managedRuntimeRoot": "apps/aistaff-desktop-runtime/runtime",
-    "activation": "after-startup-shell-show"
+    "activation": "after-browser-window-create"
   },
   "excluded": {
     "nodePtyPrebuilds": {

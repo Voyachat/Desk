@@ -6,7 +6,7 @@ import { TARGET_NODE_PTY_PREBUILD } from './stage-runtime.mjs'
 const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const defaultRepoRoot = resolve(packageDir, '..', '..')
 const defaultPolicyPath = resolve(packageDir, 'startup-policy.json')
-const expectedActivation = 'after-startup-shell-show'
+const expectedActivation = 'after-browser-window-create'
 const expectedDistExtensions = new Set(['.cjs', '.js'])
 
 if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
@@ -19,7 +19,7 @@ if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(
 }
 
 /**
- * Verify the files and activation rule that define interactive desktop startup.
+ * Verify the files and activation rule that define desktop startup.
  *
  * @param {string} policyPath Startup policy JSON path.
  * @param {string} repoRoot Repository root used to resolve policy paths.
@@ -28,23 +28,17 @@ if (process.argv[1] !== undefined && resolve(process.argv[1]) === fileURLToPath(
  */
 export function verifyStartupPolicy(policyPath, repoRoot, options = {}) {
   const policy = parsePolicy(policyPath)
-  const shellHtml = resolvePolicyPath(repoRoot, policy.required.startupShell.html)
-  const shellResources = policy.required.startupShell.resources.map(path => resolvePolicyPath(repoRoot, path))
   const distRoot = resolvePolicyPath(repoRoot, policy.required.desktopDist.root)
   const managedRuntimeRoot = resolvePolicyPath(repoRoot, policy.deferred.managedRuntimeRoot)
   const nodePtyPrebuildRoot = resolvePolicyPath(repoRoot, policy.excluded.nodePtyPrebuilds.root)
 
-  assertPhysicalFile(shellHtml, 'required startup HTML')
-  for (const resource of shellResources) assertPhysicalFile(resource, 'required startup resource')
-  const distFiles = collectDistFiles(distRoot, policy.required.desktopDist.extensions)
-  const requiredFiles = [shellHtml, ...shellResources, ...distFiles]
+  const requiredFiles = collectDistFiles(distRoot, policy.required.desktopDist.extensions)
   assertUniquePaths(requiredFiles, 'required startup file')
   if (options.requiredOnly !== true) {
     assertDirectory(managedRuntimeRoot, 'deferred managed runtime root')
     assertDirectory(nodePtyPrebuildRoot, 'excluded node-pty prebuild root')
   }
   assertCategoriesAreDisjoint(requiredFiles, managedRuntimeRoot, nodePtyPrebuildRoot)
-  verifyStartupHtml(shellHtml, shellResources)
   if (options.requiredOnly !== true) {
     verifyExcludedNodePtyPrebuilds(nodePtyPrebuildRoot, policy.excluded.nodePtyPrebuilds.target)
   }
@@ -83,27 +77,7 @@ function parsePolicy(policyPath) {
   if (policy.schemaVersion !== 1) throw new Error('startup policy schemaVersion must be 1')
 
   assertRecord(policy.required, 'startup policy required category')
-  assertExactKeys(policy.required, ['startupShell', 'desktopDist', 'maxTotalBytes'], 'startup policy required category')
-  assertRecord(policy.required.startupShell, 'startup policy required.startupShell')
-  assertExactKeys(policy.required.startupShell, ['html', 'resources'], 'startup policy required.startupShell')
-  assertRelativePath(policy.required.startupShell.html, 'startup policy required.startupShell.html')
-  if (extname(policy.required.startupShell.html) !== '.html') {
-    throw new Error('startup policy required.startupShell.html must be an HTML file')
-  }
-  assertStringArray(policy.required.startupShell.resources, 'startup policy required.startupShell.resources')
-  for (const path of policy.required.startupShell.resources) {
-    assertRelativePath(path, 'startup policy required.startupShell.resources entry')
-    if (!['.css', '.js'].includes(extname(path))) {
-      throw new Error(`startup shell resource must be CSS or JS: ${path}`)
-    }
-  }
-  if (new Set(policy.required.startupShell.resources).size !== policy.required.startupShell.resources.length) {
-    throw new Error('startup policy required.startupShell.resources contains a duplicate')
-  }
-  const shellExtensions = new Set(policy.required.startupShell.resources.map(path => extname(path)))
-  if (!shellExtensions.has('.css') || !shellExtensions.has('.js')) {
-    throw new Error('startup policy required.startupShell.resources must include CSS and JS')
-  }
+  assertExactKeys(policy.required, ['desktopDist', 'maxTotalBytes'], 'startup policy required category')
 
   assertRecord(policy.required.desktopDist, 'startup policy required.desktopDist')
   assertExactKeys(policy.required.desktopDist, ['root', 'extensions'], 'startup policy required.desktopDist')
@@ -179,12 +153,6 @@ function resolvePolicyPath(repoRoot, path) {
   return resolved
 }
 
-function assertPhysicalFile(path, label) {
-  if (!existsSync(path)) throw new Error(`${label} is missing: ${path}`)
-  const metadata = lstatSync(path)
-  if (metadata.isSymbolicLink() || !metadata.isFile()) throw new Error(`${label} must be a regular file: ${path}`)
-}
-
 function assertDirectory(path, label) {
   if (!existsSync(path)) throw new Error(`${label} is missing: ${path}`)
   const metadata = lstatSync(path)
@@ -236,29 +204,6 @@ function assertCategoriesAreDisjoint(requiredFiles, managedRuntimeRoot, nodePtyP
 function isWithin(root, candidate) {
   const child = relative(root, candidate)
   return child === '' || (!child.startsWith(`..${sep}`) && child !== '..' && !isAbsolute(child))
-}
-
-function verifyStartupHtml(htmlPath, shellResources) {
-  const html = readFileSync(htmlPath, 'utf8')
-  if (/https?:\/\//iu.test(html)) throw new Error('startup HTML must not contain an http or https URL')
-  const references = []
-  const attributePattern = /\b(?:href|src)\s*=\s*(["'])(.*?)\1/giu
-  for (const match of html.matchAll(attributePattern)) {
-    const reference = match[2]
-    if (reference === undefined || reference.length === 0) throw new Error('startup HTML contains an empty resource reference')
-    if (/^(?:[a-z][a-z0-9+.-]*:|\/)/iu.test(reference) || reference.includes('?') || reference.includes('#')) {
-      throw new Error(`startup HTML resource reference must be a local file: ${reference}`)
-    }
-    if (!['.css', '.js'].includes(extname(reference))) {
-      throw new Error(`startup HTML may reference only local CSS or JS: ${reference}`)
-    }
-    references.push(resolve(dirname(htmlPath), reference))
-  }
-  const expected = [...shellResources].sort()
-  const actual = [...new Set(references)].sort()
-  if (actual.length !== expected.length || actual.some((path, index) => path !== expected[index])) {
-    throw new Error('startup HTML local CSS and JS references must match required.startupShell.resources')
-  }
 }
 
 function verifyExcludedNodePtyPrebuilds(prebuildRoot, target) {

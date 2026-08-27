@@ -2,7 +2,9 @@
 
 [English](README.md) | 中文
 
-此包使用 Electron 封装 Voyaseek Web 产品。Renderer 不接收 Node 或 IPC bridge。主进程使用 Electron 内置的 Node Runtime 启动随附的 DSH CLI，并传入 loader 所需的 `--expose-internals` 标志；它只接受内容完全匹配的 `127.0.0.1` 就绪行，并负责关闭子进程。
+此包使用 Electron 封装 Voyaseek Web 产品。Renderer 不接收 Node 或 IPC bridge。主进程先创建隐藏窗口，再使用 Electron 内置的 Node Runtime 启动随附的 DSH CLI，并传入 loader 所需的 `--expose-internals` 标志；它只接受内容完全匹配的 `127.0.0.1` 就绪行，并在默认 Web 首页加载且完成首帧渲染后才首次显示窗口。有界的导航失败会通过原生错误框报告并退出，不会恢复独立启动页。主进程负责关闭子进程。
+
+本分支打包 `Voyaseek 0.2` 对比构建：应用、可执行文件和 DMG 都使用 `Voyaseek 0.2` 名称，Bundle Identifier 为 `ai.voyaseek.desktop.v02`，`CFBundleShortVersionString` 为 `0.2`，`CFBundleVersion` 记录底层的 `0.1.0-rc.8` 包版本。由于应用名不同，userData 会解析到独立的 `~/Library/Application Support/Voyaseek 0.2` 目录，因此该构建可以与稳定版 `Voyaseek` 0.1.x 应用同时安装、同时运行，且不共享设置、会话或 Runtime 状态。
 
 生成的 AI Staff profile 会禁用通用基础 bundle 中的 `llm-deepseek` 插件，因此未修改过的安装不会显示或要求配置默认 DeepSeek 提供方。与旧版生成内容完全一致的 profile 会迁移到这套组合；用户编辑过的 profile 保持不变。
 

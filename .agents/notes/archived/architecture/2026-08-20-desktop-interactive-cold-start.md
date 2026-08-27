@@ -1,6 +1,7 @@
 # Agent Note: desktop startup is interactive before Host readiness
 
 Status: implemented
+Archived: 2026-08-22
 
 English | [中文](2026-08-20-desktop-interactive-cold-start.zh.md)
 

@@ -10,4 +10,4 @@ Electron Forge 将暂存目录复制为 `app.asar` 外部的 `Contents/Resources
 
 该目录是生成产物，任何 DSH 运行时包发生变更后都必须重新构建。必须先完成仓库根目录的 pnpm install 和全仓构建：暂存会有意跳过依赖 lifecycle script，并在 Electron Forge 使用运行时前证明最终物理闭包中的 `koffi` 与 `node-pty` 可以加载，再通过真实 PTY 启动 `/bin/sh`，要求输出 marker、退出码为 0 且在 3 秒内完成。
 
-[`startup-policy.json`](./startup-policy.json) 是桌面冷启动粗粒度分类和 required 字节预算的唯一权威文件。本地 HTML、CSS、JavaScript 以及构建后的 Desktop `.js`/`.cjs` 文件必须在可交互前就绪。完整受管运行时延迟到启动壳显示后加载；该策略不细分 Host 插件阶段。除 `darwin-x64` 外的所有 `node-pty` 预构建均被排除。普通 Desktop 编译使用 `node scripts/verify-startup-policy.mjs --required-only` 检查生成后的启动代码；打包前使用不带该标志的命令继续检查生成后的运行时。两种形式都只输出一条 JSON 摘要。
+[`startup-policy.json`](./startup-policy.json) 是桌面冷启动粗粒度分类和 required 字节预算的唯一权威文件。Electron `BrowserWindow` 创建前只要求构建后的 Desktop `.js`/`.cjs` 文件就绪。完整受管运行时启动期间窗口保持隐藏，只有 Runtime 首页加载成功后才首次显示；该策略不细分 Host 插件阶段。除 `darwin-x64` 外的所有 `node-pty` 预构建均被排除。普通 Desktop 编译使用 `node scripts/verify-startup-policy.mjs --required-only` 检查生成后的启动代码；打包前使用不带该标志的命令继续检查生成后的运行时。两种形式都只输出一条 JSON 摘要。

@@ -188,6 +188,13 @@ describe('web e2e: Models settings page configures a dormant provider', () => {
 
     const picker = page.getByRole('dialog', { name: '选择要添加的模型' })
     await picker.waitFor({ timeout: 10_000 })
+    const candidateList = picker.getByRole('list')
+    const scrollStyle = await candidateList.evaluate((element) => {
+      const style = getComputedStyle(element)
+      return { maxHeight: style.maxHeight, overflowY: style.overflowY }
+    })
+    expect(scrollStyle).toEqual({ maxHeight: '320px', overflowY: 'auto' })
+
     const boxes = picker.getByRole('checkbox')
     const count = await boxes.count()
     expect(count).toBeGreaterThan(0)

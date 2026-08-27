@@ -134,7 +134,7 @@ function registerTextOnly(ctx: Context): void {
 }
 
 function providePromptImages(ctx: Context): void {
-  ctx.provide('attachments', {
+  const attachments = {
     imageLimits: {
       maxImageBytes: 4,
       maxImagesPerMessage: 2,
@@ -152,6 +152,12 @@ function providePromptImages(ctx: Context): void {
       ...input.name === undefined ? {} : { name: input.name },
     }),
     readImage: (ref: ImageAttachmentRef) => Promise.resolve({ ref, data: Uint8Array.of(1) }),
+  }
+  ctx.provide('attachments', {
+    ...attachments,
+    saveImages(inputs: readonly Parameters<typeof attachments.saveImage>[0][]) {
+      return AttachmentStore.prototype.saveImages.call(attachments, inputs)
+    },
   } as never)
 }
 

@@ -127,8 +127,6 @@ External packages **directly declared** only by repository tooling, test infrast
 | [`@braintree/sanitize-url`](https://github.com/braintree/sanitize-url) | MIT |
 | [`@electron-forge/cli`](https://github.com/electron/forge) | MIT |
 | [`@electron-forge/maker-dmg`](https://github.com/electron/forge) | MIT |
-| [`@electron-forge/plugin-fuses`](https://github.com/electron/forge) | MIT |
-| [`@electron/fuses`](https://github.com/electron/fuses) | MIT |
 | [`@modelcontextprotocol/server-everything`](https://github.com/modelcontextprotocol/servers) | MIT / Apache-2.0 |
 | [`@modelcontextprotocol/server-filesystem`](https://github.com/modelcontextprotocol/servers) | MIT / Apache-2.0 |
 | [`@stylistic/eslint-plugin`](https://github.com/eslint-stylistic/eslint-stylistic) | MIT |

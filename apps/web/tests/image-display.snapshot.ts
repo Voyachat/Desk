@@ -5,7 +5,7 @@
 // user image and a native assistant image, and pins the product surfaces: the
 // history ImageGallery loading real fixture bytes through the authorized
 // sessions.attachment route, the single-click ImageLightbox, and the composer
-// intake chain (paste → ordered thumbnail rail → image-only send enablement → remove).
+// intake chain (file picker/paste → ordered thumbnail rail → image-only send enablement → remove).
 import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { expect, it } from 'vitest'
 import { installAssembledBootEnv, mountAssembledApp } from './assembled-boot.ts'
@@ -150,6 +150,33 @@ it('accepts pasted images into the composer rail in order and removes them', asy
   await waitFor(() => {
     expect(screen.queryByText(unsupportedMessage)).toBeNull()
   }, { timeout: 6_000 })
+})
+
+it('accepts selected images through the composer file picker', async () => {
+  mountAssembledApp()
+
+  const tree = await screen.findByRole('tree', { name: 'Sessions' }, { timeout: 10_000 })
+  const start = tree.querySelector<HTMLButtonElement>('button[aria-label="New session in fixture"]')
+  if (start === null) throw new Error('fixture Workspace new-session action missing')
+  fireEvent.click(start)
+  await screen.findByPlaceholderText('Describe what you want to build', {}, { timeout: 10_000 })
+
+  const picker = await screen.findByRole('button', { name: 'Drag images here to add them' })
+  expect(picker.hasAttribute('disabled')).toBe(false)
+  const input = document.querySelector<HTMLInputElement>(
+    'input[type="file"][multiple][accept="image/png,image/jpeg,image/webp,image/gif"]',
+  )
+  if (input === null) throw new Error('composer image file input missing')
+
+  const image = new File([new Uint8Array([137, 80, 78, 71])], 'selected.png', { type: 'image/png' })
+  fireEvent.change(input, { target: { files: [image] } })
+
+  await waitFor(() => {
+    const rail = document.querySelector('[role="group"][aria-label="Pending images"]')
+    if (rail === null) throw new Error('attachment rail missing after file selection')
+    expect([...rail.querySelectorAll('img')].map(img => img.getAttribute('alt'))).toEqual(['selected.png'])
+  }, { timeout: 5_000 })
+  expect(input.value).toBe('')
 })
 
 it('accepts a whole-page drop under the limits-labeled overlay and refuses an over-limit batch at intake', async () => {

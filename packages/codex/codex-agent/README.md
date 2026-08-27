@@ -6,7 +6,7 @@ Reference for the alternative `codex` AgentDriver. Each DSH Session owns one dur
 
 ## Composition
 
-Mount this plugin beside `dsh-agent-loop`, `dsh-system-prompt`, and a subprocess provider. A Session selects it with `agentRuntime: 'codex'`; sessions without that header retain the default loop.
+Mount this plugin beside `dsh-agent-loop`, `dsh-system-prompt`, `dsh-tools`, and a subprocess provider. The driver captures `sessions`, `agents`, and `tools` in its injected agent scope because system-prompt contributors may inspect the active agent's tool registry while assembling `developerInstructions`. A Session selects it with `agentRuntime: 'codex'`; sessions without that header retain the default loop.
 
 ```yaml
 - id: codex-agent

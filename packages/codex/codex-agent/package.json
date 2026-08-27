@@ -48,6 +48,7 @@
     "@voyaseek-ai/dsh-subprocess": "workspace:^",
     "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@voyaseek-ai/dsh-timeout": "workspace:^",
+    "@voyaseek-ai/dsh-tools": "workspace:^",
     "@voyaseek-ai/dsh-user-approval": "workspace:^"
   },
   "dependencies": {
@@ -69,7 +70,7 @@
     "@voyaseek-ai/dsh-subprocess-local": "workspace:^",
     "@voyaseek-ai/dsh-system-prompt": "workspace:^",
     "@voyaseek-ai/dsh-timeout": "workspace:^",
-    "@voyaseek-ai/dsh-user-approval": "workspace:^",
-    "@voyaseek-ai/dsh-tools": "workspace:^"
+    "@voyaseek-ai/dsh-tools": "workspace:^",
+    "@voyaseek-ai/dsh-user-approval": "workspace:^"
   }
 }

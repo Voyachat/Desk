@@ -13,23 +13,12 @@ afterEach(() => {
 function createFixture() {
   const root = mkdtempSync(join(tmpdir(), 'aistaff-startup-policy-test-'))
   fixtures.push(root)
-  writeFixtureFile(join(root, 'desktop', 'assets', 'startup.html'), [
-    '<!doctype html>',
-    '<link rel="stylesheet" href="startup.css">',
-    '<script src="startup.js"></script>',
-  ].join('\n'))
-  writeFixtureFile(join(root, 'desktop', 'assets', 'startup.css'), 'body{}')
-  writeFixtureFile(join(root, 'desktop', 'assets', 'startup.js'), 'void 0')
   writeFixtureFile(join(root, 'desktop', 'dist', 'main.js'), 'export {}')
   writeFixtureFile(join(root, 'desktop', 'dist', 'preload.cjs'), 'module.exports = {}')
   writeFixtureFile(join(root, 'runtime', 'node_modules', 'node-pty', 'prebuilds', 'darwin-x64', 'pty.node'), 'native')
   const policy = {
     schemaVersion: 1,
     required: {
-      startupShell: {
-        html: 'desktop/assets/startup.html',
-        resources: ['desktop/assets/startup.css', 'desktop/assets/startup.js'],
-      },
       desktopDist: {
         root: 'desktop/dist',
         extensions: ['.js', '.cjs'],
@@ -38,7 +27,7 @@ function createFixture() {
     },
     deferred: {
       managedRuntimeRoot: 'runtime',
-      activation: 'after-startup-shell-show',
+      activation: 'after-browser-window-create',
     },
     excluded: {
       nodePtyPrebuilds: {
@@ -63,7 +52,7 @@ function writePolicy(path: string, policy: object) {
 }
 
 describe('desktop startup policy verifier', () => {
-  it('classifies the local shell as required and the complete managed runtime as deferred', () => {
+  it('classifies Electron code as required and the complete managed runtime as deferred', () => {
     const { root, policyPath } = createFixture()
 
     expect(verifyStartupPolicy(policyPath, root)).toEqual({
@@ -71,13 +60,13 @@ describe('desktop startup policy verifier', () => {
       verification: 'full',
       policyPath: 'startup-policy.json',
       required: {
-        totalBytes: 133,
-        fileCount: 5,
+        totalBytes: 28,
+        fileCount: 2,
         maxTotalBytes: 1024,
       },
       deferred: {
         managedRuntimeRoot: 'runtime',
-        activation: 'after-startup-shell-show',
+        activation: 'after-browser-window-create',
       },
       excluded: {
         nodePtyPrebuildRoot: 'runtime/node_modules/node-pty/prebuilds',
@@ -92,7 +81,7 @@ describe('desktop startup policy verifier', () => {
 
     expect(verifyStartupPolicy(policyPath, root, { requiredOnly: true })).toMatchObject({
       verification: 'required-only',
-      required: { fileCount: 5 },
+      required: { fileCount: 2 },
     })
   })
 
@@ -104,14 +93,29 @@ describe('desktop startup policy verifier', () => {
     expect(() => verifyStartupPolicy(policyPath, root)).toThrow('required-byte budget exceeded')
   })
 
-  it('rejects external or unclassified startup HTML resources', () => {
-    const { root, policyPath } = createFixture()
-    const html = join(root, 'desktop', 'assets', 'startup.html')
-    writeFixtureFile(html, '<script src="https://example.com/startup.js"></script>')
-    expect(() => verifyStartupPolicy(policyPath, root)).toThrow('must not contain an http or https URL')
+  it('rejects obsolete startup-shell classification', () => {
+    const { root, policy, policyPath } = createFixture()
+    writePolicy(policyPath, {
+      ...policy,
+      required: {
+        ...policy.required,
+        startupShell: { html: 'desktop/assets/startup.html', resources: [] },
+      },
+    })
 
-    writeFixtureFile(html, '<script src="other.js"></script>')
-    expect(() => verifyStartupPolicy(policyPath, root)).toThrow('must match required.startupShell.resources')
+    expect(() => verifyStartupPolicy(policyPath, root)).toThrow(
+      'startup policy required category keys must be exactly: desktopDist, maxTotalBytes',
+    )
+  })
+
+  it('rejects the obsolete startup-shell activation point', () => {
+    const { root, policy, policyPath } = createFixture()
+    policy.deferred.activation = 'after-startup-shell-show'
+    writePolicy(policyPath, policy)
+
+    expect(() => verifyStartupPolicy(policyPath, root)).toThrow(
+      'startup policy deferred.activation must be after-browser-window-create',
+    )
   })
 
   it('rejects category overlap and a missing deferred runtime', () => {

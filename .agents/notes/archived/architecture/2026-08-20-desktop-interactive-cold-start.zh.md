@@ -1,6 +1,7 @@
-# Agent Note：桌面启动在 Host 就绪前即可交互
+# Agent Note: 桌面启动在 Host 就绪前即可交互
 
-状态：已实现
+Status: implemented
+Archived: 2026-08-22
 
 [English](2026-08-20-desktop-interactive-cold-start.md) | 中文
 

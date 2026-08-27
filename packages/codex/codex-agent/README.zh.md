@@ -6,7 +6,7 @@
 
 ## 组合
 
-将本插件与 `dsh-agent-loop`、`dsh-system-prompt` 和一个 subprocess provider 一起挂载。Session 通过 `agentRuntime: 'codex'` 选择它；没有该 header 的 Session 继续使用默认 loop。
+将本插件与 `dsh-agent-loop`、`dsh-system-prompt`、`dsh-tools` 和一个 subprocess provider 一起挂载。Driver 会在注入后的 agent scope 中捕获 `sessions`、`agents` 与 `tools`，因为 system prompt 贡献方在组装 `developerInstructions` 时可能读取当前 agent 的工具注册表。Session 通过 `agentRuntime: 'codex'` 选择它；没有该 header 的 Session 继续使用默认 loop。
 
 ```yaml
 - id: codex-agent

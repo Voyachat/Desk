@@ -18,6 +18,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+  vi.restoreAllMocks()
 })
 
 const t = ((key: string, params?: Readonly<Record<string, unknown>>): string => {
@@ -65,6 +66,31 @@ function props(overrides: Partial<ComposerAttachmentsOwnerProps> = {}): Composer
 }
 
 describe('ComposerAttachments', () => {
+  it('opens the image picker and forwards selected files through the intake callback', () => {
+    const onAddImages = vi.fn()
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click')
+    const view = render(<ComposerAttachments {...props({ onAddImages })} />)
+    const picker = view.getByRole('button', { name: '图片拖动到此处即可添加' })
+    fireEvent.click(picker)
+    expect(click).toHaveBeenCalledOnce()
+
+    const input = view.container.querySelector('input[type="file"]') as HTMLInputElement
+    const first = attachment('selected-1').file
+    const second = attachment('selected-2').file
+    fireEvent.change(input, { target: { files: [first, second] } })
+    expect(onAddImages).toHaveBeenCalledWith([first, second])
+    expect(input.value).toBe('')
+  })
+
+  it('disables the image picker when the composer cannot accept attachments', () => {
+    const click = vi.spyOn(HTMLInputElement.prototype, 'click')
+    const view = render(<ComposerAttachments {...props({ canAcceptDrop: false })} />)
+    const picker = view.getByRole('button', { name: '图片拖动到此处即可添加' })
+    expect(picker.hasAttribute('disabled')).toBe(true)
+    fireEvent.click(picker)
+    expect(click).not.toHaveBeenCalled()
+  })
+
   it('accepts file drops anywhere on the document and keeps non-file drags native', () => {
     const onAddImages = vi.fn()
     const view = render(<ComposerAttachments {...props({

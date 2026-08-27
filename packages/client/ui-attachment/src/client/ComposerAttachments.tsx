@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type { ChangeEvent } from 'react'
 import type {
   ComposerAttachment, ComposerAttachmentsProps,
 } from '@voyaseek-ai/dsh-client-ui-conversation/client'
+import { IconPaperclipOutline16 } from '@voyaseek-ai/dsh-client-ui-primitives'
 import { AttachmentRail } from '../AttachmentRail.tsx'
 import type { AttachmentRailItem } from '../AttachmentRail.tsx'
 import { DropOverlay } from '../DropOverlay.tsx'
@@ -21,6 +23,7 @@ export function ComposerAttachments({
   const [preview, setPreview] = useState<ComposerAttachment | null>(null)
   const [dragActive, setDragActive] = useState(false)
   const dragDepth = useRef(0)
+  const fileInput = useRef<HTMLInputElement | null>(null)
   const closePreview = useCallback(() => { setPreview(null) }, [])
 
   useEffect(() => {
@@ -78,6 +81,12 @@ export function ComposerAttachments({
     }
   }, [canAcceptDrop, onAddImages])
 
+  const onFilesSelected = useCallback((event: ChangeEvent<HTMLInputElement>): void => {
+    const files = event.currentTarget.files
+    if (files !== null && files.length > 0) onAddImages([...files])
+    event.currentTarget.value = ''
+  }, [onAddImages])
+
   const railItems = useMemo<ComposerRailItem[]>(() => attachments.map(attachment => ({
     id: attachment.id,
     previewUrl: attachment.previewUrl,
@@ -88,6 +97,27 @@ export function ComposerAttachments({
 
   return (
     <>
+      <div className={css.pickerRow}>
+        <input
+          ref={fileInput}
+          className={css.fileInput}
+          type="file"
+          accept="image/png,image/jpeg,image/webp,image/gif"
+          multiple
+          disabled={!canAcceptDrop}
+          onChange={onFilesSelected}
+        />
+        <button
+          type="button"
+          className={css.picker}
+          aria-label={t('image.dropTitle')}
+          title={t('image.dropTitle')}
+          disabled={!canAcceptDrop}
+          onClick={() => { if (canAcceptDrop) fileInput.current?.click() }}
+        >
+          <IconPaperclipOutline16 size={16} />
+        </button>
+      </div>
       {dragActive && (
         <DropOverlay
           disabled={!canAcceptDrop}

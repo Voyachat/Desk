@@ -1,10 +1,8 @@
 /**
  * Stylesheets enter client bundles through virtual modules, so the loader must
- * register their physical files as watch dependencies.
+ * register their physical files as watch dependencies, and the virtual ids must
+ * stay repository-relative so built bundles never embed a build-machine path.
  */
-import { mkdtemp, rm, writeFile } from 'node:fs/promises'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { clientBundle } from '../packages/client/tsdown.client.ts'
@@ -57,48 +55,53 @@ describe('client bundle CSS Modules', () => {
 
 describe('client bundle global CSS', () => {
   it('compiles a side-effect stylesheet into a watched style injector', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-client-global-css-watch-'))
-    try {
-      const stylesheet = join(root, 'base.css')
-      const importer = join(root, 'index.ts')
-      await writeFile(stylesheet, 'body { color: red; }\n')
-      const plugin = cssPlugin('dsh-css-global-inline')
-      const virtualId = plugin.resolveId?.('./base.css', importer)
-      if (typeof virtualId !== 'string' || plugin.load === undefined) {
-        throw new Error('global CSS plugin hooks are incomplete')
-      }
-      const watched: string[] = []
-
-      const output = await plugin.load.call({ addWatchFile: id => watched.push(id) }, virtualId)
-
-      expect(watched).toEqual([stylesheet])
-      expect(output).toContain('data-plugin-css')
-      expect(output).toContain('body{color:red}')
-    } finally {
-      await rm(root, { recursive: true, force: true })
+    const repositoryRoot = fileURLToPath(new URL('..', import.meta.url))
+    const stylesheet = fileURLToPath(new URL(
+      '../packages/client/ui-theme/src/styles/base.css',
+      import.meta.url,
+    ))
+    const importer = fileURLToPath(new URL(
+      '../packages/client/ui-theme/src/client/styles.ts',
+      import.meta.url,
+    ))
+    const plugin = cssPlugin('dsh-css-global-inline')
+    const virtualId = plugin.resolveId?.('../styles/base.css', importer)
+    if (typeof virtualId !== 'string' || plugin.load === undefined) {
+      throw new Error('global CSS plugin hooks are incomplete')
     }
+    const watched: string[] = []
+
+    const output = await plugin.load.call({ addWatchFile: id => watched.push(id) }, virtualId)
+
+    expect(virtualId).toBe('\0dsh-global-css:packages/client/ui-theme/src/styles/base.css.mjs')
+    expect(virtualId).not.toContain(repositoryRoot)
+    expect(watched).toEqual([stylesheet])
+    expect(output).toContain('data-plugin-css')
   })
 
   it('compiles inline stylesheets as watched text without a module side effect', async () => {
-    const root = await mkdtemp(join(tmpdir(), 'dsh-client-inline-css-watch-'))
-    try {
-      const stylesheet = join(root, 'base.css')
-      const importer = join(root, 'index.ts')
-      await writeFile(stylesheet, 'body { color: red; }\n')
-      const plugin = cssPlugin('dsh-css-text-inline')
-      const virtualId = plugin.resolveId?.('./base.css?inline', importer)
-      if (typeof virtualId !== 'string' || plugin.load === undefined) {
-        throw new Error('inline CSS plugin hooks are incomplete')
-      }
-      const watched: string[] = []
-
-      const output = await plugin.load.call({ addWatchFile: id => watched.push(id) }, virtualId)
-
-      expect(watched).toEqual([stylesheet])
-      expect(output).toContain('export default "body{color:red}"')
-      expect(output).not.toContain('data-plugin-css')
-    } finally {
-      await rm(root, { recursive: true, force: true })
+    const repositoryRoot = fileURLToPath(new URL('..', import.meta.url))
+    const stylesheet = fileURLToPath(new URL(
+      '../packages/client/ui-theme/src/styles/scrollbar.css',
+      import.meta.url,
+    ))
+    const importer = fileURLToPath(new URL(
+      '../packages/client/ui-theme/src/client/styles.ts',
+      import.meta.url,
+    ))
+    const plugin = cssPlugin('dsh-css-text-inline')
+    const virtualId = plugin.resolveId?.('../styles/scrollbar.css?inline', importer)
+    if (typeof virtualId !== 'string' || plugin.load === undefined) {
+      throw new Error('inline CSS plugin hooks are incomplete')
     }
+    const watched: string[] = []
+
+    const output = await plugin.load.call({ addWatchFile: id => watched.push(id) }, virtualId)
+
+    expect(virtualId).toBe('\0dsh-inline-css:packages/client/ui-theme/src/styles/scrollbar.css.mjs')
+    expect(virtualId).not.toContain(repositoryRoot)
+    expect(watched).toEqual([stylesheet])
+    expect(output).toMatch(/^export default "/)
+    expect(output).not.toContain('data-plugin-css')
   })
 })

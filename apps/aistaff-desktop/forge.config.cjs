@@ -1,19 +1,21 @@
 const path = require('node:path')
 const { MakerDMG } = require('@electron-forge/maker-dmg')
-const { FusesPlugin } = require('@electron-forge/plugin-fuses')
-const { FuseV1Options, FuseVersion } = require('@electron/fuses')
 
 const appIcon = path.resolve(__dirname, 'assets/app-icon.icns')
 
 module.exports = {
   packagerConfig: {
-    appBundleId: 'ai.voyaseek.desktop',
+    // The 0.2 comparison build owns a distinct bundle identifier so macOS
+    // treats it as a separate application from the stable 0.1.x install.
+    appBundleId: 'ai.voyaseek.desktop.v02',
     appCategoryType: 'public.app-category.productivity',
+    appVersion: '0.2',
     asar: true,
+    buildVersion: '0.1.0-rc.8',
     download: {
       mirrorOptions: { mirror: 'https://npmmirror.com/mirrors/electron/' },
     },
-    executableName: 'Voyaseek',
+    executableName: 'Voyaseek 0.2',
     icon: appIcon,
     extraResource: [
       path.resolve(__dirname, '../aistaff-desktop-runtime/runtime'),
@@ -27,7 +29,7 @@ module.exports = {
       /^\/node_modules(?:\/|$)/,
       /^\/(?:forge\.config\.cjs|package-lock\.json|tsconfig(?:\.test)?\.json|vitest\.config\.ts)$/,
     ],
-    name: 'Voyaseek',
+    name: 'Voyaseek 0.2',
     osxSign: false,
     prune: false,
     extendInfo: {
@@ -38,21 +40,6 @@ module.exports = {
     },
   },
   makers: [
-    new MakerDMG({ format: 'ULFO', icon: appIcon }, ['darwin']),
-  ],
-  plugins: [
-    new FusesPlugin({
-      version: FuseVersion.V1,
-      strictlyRequireAllFuses: true,
-      [FuseV1Options.RunAsNode]: true,
-      [FuseV1Options.EnableCookieEncryption]: false,
-      [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
-      [FuseV1Options.EnableNodeCliInspectArguments]: false,
-      [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: true,
-      [FuseV1Options.OnlyLoadAppFromAsar]: true,
-      [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: false,
-      [FuseV1Options.GrantFileProtocolExtraPrivileges]: false,
-      [FuseV1Options.WasmTrapHandlers]: true,
-    }),
+    new MakerDMG({ format: 'ULFO', icon: appIcon, name: 'Voyaseek 0.2' }, ['darwin']),
   ],
 }

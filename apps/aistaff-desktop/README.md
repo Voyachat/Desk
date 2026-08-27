@@ -2,7 +2,9 @@
 
 English | [中文](README.zh.md)
 
-This package wraps the Voyaseek web product in Electron. The renderer receives no Node or IPC bridge. The main process starts the bundled DSH CLI with Electron's embedded Node runtime and the loader's required `--expose-internals` flag, accepts only its exact `127.0.0.1` readiness line, and owns child shutdown.
+This package wraps the Voyaseek web product in Electron. The renderer receives no Node or IPC bridge. The main process creates the window hidden, starts the bundled DSH CLI with Electron's embedded Node runtime and the loader's required `--expose-internals` flag, accepts only its exact `127.0.0.1` readiness line, and first shows the window after the default Web home has loaded and rendered. A bounded navigation failure is reported with a native error dialog and exits instead of restoring a separate startup page. The main process owns child shutdown.
+
+This branch packages the `Voyaseek 0.2` comparison build: the application, executable, and DMG use the `Voyaseek 0.2` name, the bundle identifier is `ai.voyaseek.desktop.v02`, `CFBundleShortVersionString` is `0.2`, and `CFBundleVersion` records the underlying `0.1.0-rc.8` package version. The distinct app name resolves a separate `~/Library/Application Support/Voyaseek 0.2` userData directory, so this build installs and runs next to the stable `Voyaseek` 0.1.x app without sharing settings, sessions, or runtime state.
 
 The generated AI Staff profile disables the generic base bundle's `llm-deepseek` plugin, so an untouched installation does not show or require the default DeepSeek provider. Exact older generated profiles migrate to this composition; user-edited profiles remain untouched.
 

@@ -9,7 +9,6 @@ import { AistaffFooterAction } from './AistaffFooterAction.tsx'
 import { AistaffWorkbench } from './AistaffWorkbench.tsx'
 import { createWorkbenchInjected } from './adapter.ts'
 import { createAistaffProductStore } from './store.ts'
-import { registerDesktopStartupHandoff } from '../startup-intent.ts'
 
 /** Services required by the two declaration-aware Slot registrations. */
 export const inject = ['slots', 'aistaffProductPort']
@@ -19,7 +18,6 @@ export const inject = ['slots', 'aistaffProductPort']
  * @param ctx - Client root context.
  */
 export function apply(ctx: ClientContext): void {
-  registerDesktopStartupHandoff(ctx)
   const port: AistaffClientPort = ctx.aistaffProductPort
   const store = createAistaffProductStore()
 

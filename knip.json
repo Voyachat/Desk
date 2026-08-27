@@ -742,7 +742,6 @@
     },
     "apps/aistaff-desktop": {
       "entry": [
-        "assets/startup.js",
         "tests/**/*.spec.ts"
       ],
       "project": [
